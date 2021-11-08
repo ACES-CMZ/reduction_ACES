@@ -7,6 +7,7 @@ assignees: ''
 
 ---
 
+* [ ] Observations completed?
 * [ ] Delivered?
 * [ ] Downloaded? (specify where)
 * [ ] Weblog Quality Assessment?
