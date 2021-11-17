@@ -7,6 +7,7 @@ import regions
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 
 
+# load the HCO+ (and maybe HNCO) cubes
 hcopcube = SpectralCube.read('/orange/adamginsburg/cmz/mopra/CMZ_3mm_HCO+.fits')
 hncocube = SpectralCube.read('/orange/adamginsburg/cmz/mopra/CMZ_3mm_HNCO.fits')
 
@@ -15,7 +16,9 @@ tbl = Table.read('../SB_naming.tsv', format='ascii.csv', delimiter='\t')
 vwidth = 102.585 * 2048 *u.m/u.s
 
 mask = hcopcube.mask.include()
-print(mask.sum())
+#print(mask.sum())
+
+# start with a blank mask and include only observed regions
 bmask = np.zeros_like(mask)
 
 
@@ -28,6 +31,7 @@ for row in tbl:
     # just for debug purposes / progress tracking, print out some stats
     print(f"Row {indx}: mask sum = {bmask.sum()}, which is {bmask.sum() / mask.sum() * 100:0.2f} percent of original")
 
+    # load up regions
     regs = regions.Regions.read(f'../regions/final_cmz{indx}.reg')
     pregs = [reg.to_pixel(hcopcube.wcs.celestial) for reg in regs]
 
@@ -40,12 +44,14 @@ for row in tbl:
 
     insidespecslice = (hcopcube.spectral_axis > vmin) & (hcopcube.spectral_axis < vmax)
     outsidespecslice = (hcopcube.spectral_axis < vmin) & (hcopcube.spectral_axis > vmax)
-    print(f"Specslice includes {insidespecslice.sum()} and excludes {outsidespecslice.sum()} out of {hcopcube.shape[0]}")
+    #print(f"Specslice includes {insidespecslice.sum()} and excludes {outsidespecslice.sum()} out of {hcopcube.shape[0]}")
 
+    # loop over all of the individual circle regions in the region file
     for preg in pregs:
         msk = preg.to_mask()
         slcs_big, slcs_small = msk.get_overlap_slices(mask.shape[1:])
 
+        # logic: we're adding by "or" any region that is observed
         bmask[insidespecslice, slcs_big[0], slcs_big[1]] |= msk.data.astype('bool')[slcs_small]
         #print(f"total included: {bmask.sum()}")
 
