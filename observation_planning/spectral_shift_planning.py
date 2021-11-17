@@ -102,9 +102,46 @@ ax2.contour(flagmap[:,250:], levels=np.arange(flagmap.max()), colors=['w','r']*5
 
 pl.savefig("peak_missed_hcop_regcontours.png")
 
+
 fig2 = pl.figure(2)
 pl.imshow(flagmap[:,250:])
 
 flagmapfits = fits.PrimaryHDU(data=flagmap[:,250:],
                               header=hcopcube.wcs.celestial[:,250:].to_header())
 flagmapfits.writeto('region_number_map.fits', overwrite=True)
+
+
+
+
+voff = 0
+vmin, vmax = voff-vwidth/2, voff+vwidth/2
+
+outsidespecslice = (hcopcube.spectral_axis < vmin) | (hcopcube.spectral_axis > vmax)
+
+origslab = hcopcube.with_mask(bmask.any(axis=0)).with_mask(outsidespecslice[:,None,None])[:,:,250:]
+mxmissed_noshift = origslab.max(axis=0)
+vmaxmissed_noshift = origslab.with_spectral_unit(u.km/u.s).argmax_world(axis=0)
+
+fig = pl.figure(3, figsize=(20,20))
+fig.clf()
+ax1 = pl.subplot(2, 1, 1, projection=mxmissed_noshift.wcs)
+
+im1 = ax1.imshow(mxmissed_noshift.value)
+cb1 = pl.colorbar(mappable=im1)
+cb1.set_label("K")
+ax1.set_title("Peak missed intensity")
+
+ax2 = pl.subplot(2, 1, 2, projection=vmaxmissed_noshift.wcs)
+im2 = ax2.imshow(vmaxmissed_noshift.value)
+cb2 = pl.colorbar(mappable=im2)
+cb2.set_label("km/s")
+ax2.set_title("Peak missed velocity")
+
+pl.savefig("peak_missed_hcop_noshift.png")
+
+ax1.contour(flagmap[:,250:], levels=np.arange(flagmap.max()), colors=['w','r']*50,
+            linewidths=[0.2]*50)
+ax2.contour(flagmap[:,250:], levels=np.arange(flagmap.max()), colors=['w','r']*50,
+            linewidths=[0.2]*50)
+
+pl.savefig("peak_missed_hcop_noshift_regcontours.png")
