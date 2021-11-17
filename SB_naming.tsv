@@ -1,46 +1,46 @@
-Proposal ID	Obs ID	alternative name
-cmz01	a	
-cmz02	b	
-cmz03	c	
-cmz04	d	
-cmz05	e	
-cmz06	f	
-cmz07	g	
-cmz08	h	
-cmz09	i	
-cmz10	j	
-cmz11	k	
-cmz12	l	
-cmz13	m	
-cmz14	n	
-cmz15	o	
-cmz16	p	
-cmz17	q	
-cmz18	r	
-cmz19	s	
-cmz20	t	
-cmz21	u	
-cmz22	v	
-cmz23	w	
-cmz24	x	
-cmz25	y	
-cmz26	z	
-cmz27	aa	
-cmz28	ab	
-cmz29	ac	
-cmz30	ad	
-cmz31	ae	
-cmz32	af	
-cmz33	ag	
-cmz34	ah	
-cmz35	ai	
-cmz36	aj	
-cmz37	ak	
-cmz38	al	
-cmz39	am	
-cmz40	an	
-cmz41	ao	brick
-cmz42	ap	
-cmz43	aq	
-cmz44	ar	
-cmz45	as	
+Proposal ID	Obs ID	alternative name	velocity offset
+cmz01	a		30
+cmz02	b		40
+cmz03	c		
+cmz04	d		
+cmz05	e		-30
+cmz06	f		
+cmz07	g		30
+cmz08	h		
+cmz09	i		30
+cmz10	j		30
+cmz11	k		
+cmz12	l		
+cmz13	m		30
+cmz14	n		30
+cmz15	o		
+cmz16	p		
+cmz17	q		
+cmz18	r		
+cmz19	s		
+cmz20	t		
+cmz21	u		30
+cmz22	v		30
+cmz23	w		30
+cmz24	x		
+cmz25	y		
+cmz26	z		
+cmz27	aa		
+cmz28	ab		
+cmz29	ac		
+cmz30	ad		
+cmz31	ae		
+cmz32	af		
+cmz33	ag		
+cmz34	ah		30
+cmz35	ai		
+cmz36	aj		-30
+cmz37	ak		
+cmz38	al		
+cmz39	am		30
+cmz40	an		
+cmz41	ao	brick	
+cmz42	ap		
+cmz43	aq		
+cmz44	ar		
+cmz45	as		
