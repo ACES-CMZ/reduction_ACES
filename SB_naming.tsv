@@ -1,5 +1,5 @@
 Proposal ID	Obs ID	alternative name	velocity offset
-cmz01	a	-	30
+cmz01	a	-	40
 cmz02	b	-	40
 cmz03	c	-	0
 cmz04	d	-	30
@@ -24,7 +24,7 @@ cmz22	v	-	30
 cmz23	w	-	30
 cmz24	x	-	0
 cmz25	y	-	0
-cmz26	z	-	30
+cmz26	z	-	40
 cmz27	aa	-	0
 cmz28	ab	-	0
 cmz29	ac	-	0
@@ -42,5 +42,5 @@ cmz40	an	-	30
 cmz41	ao	brick	0
 cmz42	ap	-	0
 cmz43	aq	-	0
-cmz44	ar	-	30
+cmz44	ar	-	40
 cmz45	as	-	0
