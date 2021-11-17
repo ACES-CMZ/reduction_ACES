@@ -68,7 +68,7 @@ for cube, name in ((hcopcube, 'hcop'), (hncocube, 'hnco')):
     import pylab as pl
     pl.ion()
 
-    fig = pl.figure(1, figsize=(20,20))
+    fig = pl.figure(1, figsize=(14,7))
     fig.clf()
     ax1 = pl.subplot(2, 1, 1, projection=mx_missed.wcs)
 
@@ -83,7 +83,7 @@ for cube, name in ((hcopcube, 'hcop'), (hncocube, 'hnco')):
     cb2.set_label("km/s")
     ax2.set_title("Peak missed velocity")
 
-    pl.savefig(f"peak_missed_{name}.png")
+    pl.savefig(f"peak_missed_{name}.png", bbox_inches='tight')
 
     flagmap = np.zeros(cube.shape[1:], dtype='int')
 
@@ -101,7 +101,7 @@ for cube, name in ((hcopcube, 'hcop'), (hncocube, 'hnco')):
     ax2.contour(flagmap[:,250:], levels=np.arange(flagmap.max()), colors=['w','r']*50,
                 linewidths=[0.2]*50)
 
-    pl.savefig(f"peak_missed_{name}_regcontours.png")
+    pl.savefig(f"peak_missed_{name}_regcontours.png", bbox_inches='tight')
 
 
     fig2 = pl.figure(2)
@@ -122,7 +122,7 @@ for cube, name in ((hcopcube, 'hcop'), (hncocube, 'hnco')):
     mxmissed_noshift = origslab.max(axis=0)
     vmaxmissed_noshift = origslab.with_spectral_unit(u.km/u.s).argmax_world(axis=0)
 
-    fig = pl.figure(3, figsize=(20,20))
+    fig = pl.figure(3, figsize=(14,7))
     fig.clf()
     ax1 = pl.subplot(2, 1, 1, projection=mxmissed_noshift.wcs)
 
@@ -137,11 +137,11 @@ for cube, name in ((hcopcube, 'hcop'), (hncocube, 'hnco')):
     cb2.set_label("km/s")
     ax2.set_title("Peak missed velocity")
 
-    pl.savefig(f"peak_missed_{name}_noshift.png")
+    pl.savefig(f"peak_missed_{name}_noshift.png", bbox_inches='tight')
 
     ax1.contour(flagmap[:,250:], levels=np.arange(flagmap.max()), colors=['w','r']*50,
                 linewidths=[0.2]*50)
     ax2.contour(flagmap[:,250:], levels=np.arange(flagmap.max()), colors=['w','r']*50,
                 linewidths=[0.2]*50)
 
-    pl.savefig(f"peak_missed_{name}_noshift_regcontours.png")
+    pl.savefig(f"peak_missed_{name}_noshift_regcontours.png", bbox_inches='tight')
