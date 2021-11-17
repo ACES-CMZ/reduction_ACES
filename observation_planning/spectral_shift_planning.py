@@ -2,6 +2,7 @@ import numpy as np
 from astropy import units as u
 from spectral_cube import SpectralCube
 from astropy.table import Table
+from astropy.io import fits
 import regions
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 
@@ -17,10 +18,14 @@ mask = hcopcube.mask.include()
 print(mask.sum())
 bmask = np.zeros_like(mask)
 
+
+# create a list of composite regions for labeling purposes
 composites = []
 
+# loop over the SB_naming table
 for row in tbl:
     indx = row['Proposal ID'][3:]
+    # just for debug purposes / progress tracking, print out some stats
     print(f"Row {indx}: mask sum = {bmask.sum()}, which is {bmask.sum() / mask.sum() * 100:0.2f} percent of original")
 
     regs = regions.Regions.read(f'../regions/final_cmz{indx}.reg')
@@ -58,17 +63,42 @@ pl.ion()
 
 fig = pl.figure(1, figsize=(20,20))
 fig.clf()
-ax1 = pl.subplot(2, 1, 1)
+ax1 = pl.subplot(2, 1, 1, projection=mx_missed.wcs)
 
 im1 = ax1.imshow(mx_missed.value)
 cb1 = pl.colorbar(mappable=im1)
 cb1.set_label("K")
 ax1.set_title("Peak missed intensity")
 
-ax2 = pl.subplot(2, 1, 2)
+ax2 = pl.subplot(2, 1, 2, projection=vmax_missed.wcs)
 im2 = ax2.imshow(vmax_missed.value)
 cb2 = pl.colorbar(mappable=im2)
 cb2.set_label("km/s")
 ax2.set_title("Peak missed velocity")
 
 pl.savefig("peak_missed_hcop.png")
+
+flagmap = np.zeros(hcopcube.shape[1:], dtype='int')
+
+for comp in composites:
+    cmsk = comp.to_mask()
+
+    slcs_big, slcs_small = cmsk.get_overlap_slices(hcopcube.shape[1:])
+    flagmap[slcs_big] += (cmsk.data[slcs_small] * int(comp.meta['label'])) * (flagmap[slcs_big] == 0)
+    #_, glat, glon = hcopcube.world[0,slcs_big[0],slcs_big[1]]
+    #ax2.contour(glon, glat, cmsk.data, levels=[0.5], colors=['r'],
+    #           transform=ax2.get_transform('galactic'))
+
+ax1.contour(flagmap[:,250:], levels=np.arange(flagmap.max()), colors=['w','r']*50,
+            linewidths=[0.2]*50)
+ax2.contour(flagmap[:,250:], levels=np.arange(flagmap.max()), colors=['w','r']*50,
+            linewidths=[0.2]*50)
+
+pl.savefig("peak_missed_hcop_regcontours.png")
+
+fig2 = pl.figure(2)
+pl.imshow(flagmap[:,250:])
+
+flagmapfits = fits.PrimaryHDU(data=flagmap[:,250:],
+                              header=hcopcube.wcs.celestial[:,250:].to_header())
+flagmapfits.writeto('region_number_map.fits', overwrite=True)
