@@ -10,6 +10,8 @@ else:
     username = six.moves.input("Username: ")
 
 alma = Alma()
+alma.archive_url = 'https://almascience.eso.org'
+alma.dataarchive_url = 'https://almascience.eso.org'
 alma.cache_location = Alma.cache_location = '.'
 alma.login(username)
 
