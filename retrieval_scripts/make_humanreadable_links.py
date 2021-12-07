@@ -7,7 +7,7 @@ import json
 if 'weblog_dir' not in locals():
     weblog_dir = os.getenv('WEBLOG_DIR')
     if weblog_dir is None:
-        raise ValueError("Set an environmental varaible 'WEBLOG_DIR' or a local variable `weblog_dir` to specify where to extract the weblogs.")
+        raise ValueError("Set an environmental variable 'WEBLOG_DIR' or a local variable `weblog_dir` to specify where to extract the weblogs.")
 
 os.chdir(weblog_dir)
 

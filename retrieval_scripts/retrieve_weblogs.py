@@ -17,7 +17,8 @@ alma = Alma()
 alma.cache_location = Alma.cache_location = '.'
 
 # try the ESO servers?
-#alma.archive_url = 'https://almascience.eso.org'
+alma.archive_url = 'https://almascience.eso.org'
+alma.dataarchive_url = 'https://almascience.eso.org'
 
 alma.login(username)
 
