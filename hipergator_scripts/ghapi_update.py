@@ -76,7 +76,7 @@ for new_sb in unique_sbs:
     if new_sb in new_sbs:
         issuebody = f"""
 {new_sb}
-{new_uid}
+[{new_uid}](https://almascience.org/aq/?result_view=observation&mous={new_uid})
 
 * [x] Observations completed?
 * [{'x' if delivered else ' '}] Delivered?
