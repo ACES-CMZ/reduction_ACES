@@ -15,6 +15,9 @@
 
 date
 
+. ~/.gh_token
+echo $GITHUB_TOKEN
+
 cd /orange/adamginsburg/ACES/rawdata
 
 echo "Retrieve data"
@@ -29,3 +32,7 @@ echo "Make links"
 /orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/retrieval_scripts/make_humanreadable_links.py
 echo "Update github"
 /orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/hipergator_scripts/ghapi_update.py
+
+
+echo "Make 7m mosaic"
+/orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/imaging/mosaic_7m.py
