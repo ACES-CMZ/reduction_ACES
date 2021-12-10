@@ -9,8 +9,14 @@
 #SBATCH --qos=adamginsburg-b
 #SBATCH --account=adamginsburg
 
+env
+pwd; hostname; date
+echo "Memory=${MEM}"
 
-module load intel/2019.1.144 openmpi/4.0.1
+module load cuda/11.0.207 intel/2019.1.144 openmpi/4.0.4 libfuse/3.10.4
+
+LOG_DIR=/blue/adamginsburg/adamginsburg/ACES/logs
+export LOGFILENAME="${LOG_DIR}/casa_log_line_${jobname}_$(date +%Y-%m-%d_%H_%M_%S).log"
 
 WORK_DIR='/orange/adamginsburg/ACES/rawdata/2021.1.00172.L'
 cd ${WORK_DIR}
@@ -21,8 +27,26 @@ CASAVERSION=casa-6.2.1-7-pipeline-2021.2.0.128
 export MPICASA=/orange/adamginsburg/casa/${CASAVERSION}/bin/mpicasa
 export CASA=/orange/adamginsburg/casa/${CASAVERSION}/bin/casa
 
+export OMPI_COMM_WORLD_SIZE=$SLURM_NTASKS
+
 # since we're bursting, be careful not to partially start a pipeline run
 export RUNONCE=True
 
-# casa's python requires a DISPLAY for matplot so create a virtual X server
-xvfb-run -d ${MPICASA} -n 8 ${CASA} --pipeline --nogui --nologger -c "execfile('$ACES_ROOTDIR/run_pipeline.py')"
+echo xvfb-run -d ${MPICASA} -n 8 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger -c "execfile('${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py')"
+xvfb-run -d ${MPICASA} -n ${SLURM_NTASKS} ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger -c "execfile('${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py')" &
+ppid="$!"; childPID="$(ps -C ${CASA} -o ppid=,pid= | awk -v ppid="$ppid" '$1==ppid {print $2}')"
+echo PID=${ppid} childPID=${childPID}
+
+if [[ ! -z $childPID ]]; then 
+    # /orange/adamginsburg/miniconda3/bin/python ${ALMAIMF_ROOTDIR}/slurm_scripts/monitor_memory.py ${childPID}
+    echo PID=${childPID}
+else
+    echo "FAILURE: PID=$PID was not set."
+fi
+
+wait $ppid
+exitcode=$?
+
+cd -
+
+exit $exitcode
