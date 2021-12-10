@@ -144,27 +144,61 @@ for new_sb in unique_sbs:
                               title=issue.title,
                               body=issuebody)
 
-# TODO: finish this
-# issues = api('/repos/ACES-CMZ/reduction_ACES/issues')
-# projects = api('/repos/ACES-CMZ/reduction_ACES/projects')
-# columns = api(projects[0].columns_url)
-# coldict = {column.name: column for column in columns}
-# cards = [api(col.cards_url) for col in columns]
-# issue_urls_in_cards = [card.content_url for ccard in cards for card in ccard]
-# issue_urls = [issue.url for issue in issues]
-# 
-# for issue in issues:
-#     if 'EB' in [label.name for label in issue.labels]:
-#         if issue.url not in issue_urls_in_cards:
-#             # need to add it
-#             completed = '[x] Observations completed' in issue.body
-#             delivered = '[x] Delivered' in issue.body
-#             if completed and not delivered:
-#                 col = coldict['Completed but not delivered/downloaded']
-#             elif completed and delivered:
-#                 col = coldict['Delivered Execution Blocks']
-#             else:
-#                 continue
-#             api.projects.create_card(col.id, note=f'{issue.title} {issue.html_url}', content_id=issue.id)
-# 
-# 
+issues = api('/repos/ACES-CMZ/reduction_ACES/issues')
+projects = api('/repos/ACES-CMZ/reduction_ACES/projects')
+columns = api(projects[0].columns_url)
+coldict = {column.name: column for column in columns}
+cards = [api(col.cards_url) for col in columns]
+issue_urls_in_cards = [card.content_url for ccard in cards for card in ccard]
+issue_urls = [issue.url for issue in issues]
+
+for issue in issues:
+    if 'EB' in [label.name for label in issue.labels]:
+        completed = '[x] Observations completed' in issue.body
+        delivered = '[x] Delivered' in issue.body
+
+        if issue.url not in issue_urls_in_cards:
+            # need to add it
+            if completed and not delivered:
+                col = coldict['Completed but not delivered/downloaded']
+            elif completed and delivered:
+                col = coldict['Delivered Execution Blocks']
+            else:
+                continue
+
+            print(f"Adding issue {issue.title} to the {'Completed' if completed else ''}{'Delivered' if delivered else ''} column")
+            api(path=f'/projects/columns/{col.id}/cards', verb='POST',
+                data={'content_id': issue.id,
+                      'column_id': col.id,
+                      'content_type': 'Issue'
+                     },
+                     headers={"Accept": "application/vnd.github.v3+json"}
+                  )
+        else:
+            # check if issue is categorized right
+            
+            completed_not_delivered = api(coldict['Completed but not delivered/downloaded'].cards_url)
+            completed_and_delivered = api(coldict['Delivered Execution Blocks'].cards_url)
+            other = [api(coldict[key].cards_url) for key in coldict if key not in ['Completed but not delivered/downloaded', 'Delivered Execution Blocks']]
+
+            if completed and delivered and issue.url not in [card.content_url for ccard in other for card in ccard]:
+                if issue.url not in [card.content_url for card in completed_and_delivered]:
+                    # move issue to completed_and_delivered
+                    current_card = [card for card in completed_not_delivered if card.content_url == issue.url][0]
+                    print(f"MOVING issue {issue.title}")
+
+                    # remove it from current location
+                    api(path=f'/projects/columns/cards/{current_card.id}',
+                        verb='DELETE', headers={"Accept":
+                                                "application/vnd.github.v3+json"})
+
+                    # add it to new location
+                    CADid = coldict['Delivered Execution Blocks'].id
+                    api(path=f'/projects/columns/{CADid}/cards', verb='POST',
+                        data={'content_id': issue.id,
+                              'column_id': CADid,
+                              'content_type': 'Issue'
+                             },
+                             headers={"Accept": "application/vnd.github.v3+json"}
+                          )
+
