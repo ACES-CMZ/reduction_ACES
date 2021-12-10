@@ -55,7 +55,10 @@ import shutil
 import os
 
 if os.getenv('LOGFILENAME'):
-    casalog.setlogfile(os.path.join(os.getcwd(), os.getenv('LOGFILENAME')))
+    if os.getenv('LOGFILENAME').startswith('/'):
+        casalog.setlogfile(os.getenv('LOGFILENAME'))
+    else:
+        casalog.setlogfile(os.path.join(os.getcwd(), os.getenv('LOGFILENAME')))
 print("CASA log file name is {0}".format(casalog.logfile()))
 
 
