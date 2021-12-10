@@ -143,3 +143,28 @@ for new_sb in unique_sbs:
             api.issues.update(issue_number=issue.number,
                               title=issue.title,
                               body=issuebody)
+
+# TODO: finish this
+# issues = api('/repos/ACES-CMZ/reduction_ACES/issues')
+# projects = api('/repos/ACES-CMZ/reduction_ACES/projects')
+# columns = api(projects[0].columns_url)
+# coldict = {column.name: column for column in columns}
+# cards = [api(col.cards_url) for col in columns]
+# issue_urls_in_cards = [card.content_url for ccard in cards for card in ccard]
+# issue_urls = [issue.url for issue in issues]
+# 
+# for issue in issues:
+#     if 'EB' in [label.name for label in issue.labels]:
+#         if issue.url not in issue_urls_in_cards:
+#             # need to add it
+#             completed = '[x] Observations completed' in issue.body
+#             delivered = '[x] Delivered' in issue.body
+#             if completed and not delivered:
+#                 col = coldict['Completed but not delivered/downloaded']
+#             elif completed and delivered:
+#                 col = coldict['Delivered Execution Blocks']
+#             else:
+#                 continue
+#             api.projects.create_card(col.id, note=f'{issue.title} {issue.html_url}', content_id=issue.id)
+# 
+# 
