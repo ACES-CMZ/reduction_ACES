@@ -20,3 +20,19 @@ results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=False, 
 obsids = np.unique(results['obs_id'])
 
 data = alma.retrieve_data_from_uid(obsids)
+
+
+# Optional: %run retrieve_data <username> True will extract files
+if len(sys.argv) > 2:
+    extract = bool(sys.argv[2])
+else:
+    extract = False
+
+if extract:
+    import tarfile
+    for fn in data:
+        if fn.endswith('.tar'):
+            with tarfile.TarFile(fn) as tf:
+                for member in tf.getmembers():
+                    if not os.path.exists(member.name):
+                        tf.extract(member)

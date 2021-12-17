@@ -21,7 +21,7 @@ echo $GITHUB_TOKEN
 cd /orange/adamginsburg/ACES/rawdata
 
 echo "Retrieve data"
-/orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/retrieval_scripts/retrieve_data.py keflavich
+/orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/retrieval_scripts/retrieve_data.py keflavich True
 echo "Retrieve weblogs"
 /orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/retrieval_scripts/retrieve_weblogs.py keflavich
 
