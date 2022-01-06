@@ -30,10 +30,12 @@ export CASA=/orange/adamginsburg/casa/${CASAVERSION}/bin/casa
 export OMPI_COMM_WORLD_SIZE=$SLURM_NTASKS
 
 # since we're bursting, be careful not to partially start a pipeline run
-export RUNONCE=True
+#export RUNONCE=True
 
-echo xvfb-run -d ${MPICASA} -n 8 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger -c "execfile('${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py')"
-xvfb-run -d ${MPICASA} -n ${SLURM_NTASKS} ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger -c "execfile('${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py')" &
+# echo xvfb-run -d ${MPICASA} -n 8 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger -c "execfile('${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py')"
+# xvfb-run -d ${MPICASA} -n ${SLURM_NTASKS} ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger -c "execfile('${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py')" &
+echo ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger -c "execfile('${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py')"
+${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger -c "execfile('${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py')" &
 ppid="$!"; childPID="$(ps -C ${CASA} -o ppid=,pid= | awk -v ppid="$ppid" '$1==ppid {print $2}')"
 echo PID=${ppid} childPID=${childPID}
 
