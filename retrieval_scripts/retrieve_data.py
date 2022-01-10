@@ -1,6 +1,7 @@
 import numpy as np
 from astroquery.alma import Alma
 import six
+import os
 import sys
 
 if len(sys.argv) > 1:

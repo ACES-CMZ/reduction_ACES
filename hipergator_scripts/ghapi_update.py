@@ -15,7 +15,7 @@ issues = api('/repos/ACES-CMZ/reduction_ACES/issues')
 uid_re = re.compile("uid://A[0-9]*/X[a-z0-9]*/X[a-z0-9]*")
 
 # Sgr_A_st_ak_03_7M
-sb_re = re.compile('Sgr_A_st_([a-z]*)_03_(7M|12M|TP)')
+sb_re = re.compile('Sgr_A_st_([a-z]*)_03_(7M|12M|TP|TM1|TM2)')
 
 
 sb_searches = [sb_re.search(issue.title) for issue in issues]
