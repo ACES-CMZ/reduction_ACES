@@ -16,7 +16,7 @@ alma.dataarchive_url = 'https://almascience.eso.org'
 alma.cache_location = Alma.cache_location = '.'
 alma.login(username)
 
-results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=False, cache=False)
+results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
 
 obsids = np.unique(results['obs_id'])
 
@@ -33,6 +33,7 @@ if extract:
     import tarfile
     for fn in data:
         if fn.endswith('.tar'):
+            print(f"Extracting {fn}")
             with tarfile.TarFile(fn) as tf:
                 for member in tf.getmembers():
                     if not os.path.exists(member.name):
