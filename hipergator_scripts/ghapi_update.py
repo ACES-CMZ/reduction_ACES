@@ -39,7 +39,7 @@ from astroquery.alma import Alma
 alma = Alma()
 alma.archive_url = 'https://almascience.eso.org'
 alma.dataarchive_url = 'https://almascience.eso.org'
-results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=False, cache=False)
+results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
 
 unique_oids = np.unique(results['obs_id'])
 unique_sbs = np.unique(results['schedblock_name'])
@@ -68,6 +68,14 @@ for new_sb in unique_sbs:
         downloaded = uuid in downloaded_uids
     else:
         downloaded = False
+
+    mous = matches['member_ous_uid'][0].replace(":","_").replace("/","_")
+    gous = matches['group_ous_uid'][0].replace(":","_").replace("/","_")
+    calibrated_dir = f'/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/calibrated'
+    if os.path.exists(calibrated_dir):
+        mses = glob.glob(f'{calibrated_dir}/*.ms')
+    pipeline_run = os.path.exists(calibrated_dir) and len(mses) > 0
+
     weblog_url = f'https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable/{new_sb}/html/'
     print(new_sb, downloaded, delivered, weblog_url, new_sb in weblog_names)
     sb_status[new_sb] = {'downloaded': downloaded,
@@ -82,6 +90,7 @@ for new_sb in unique_sbs:
 * [{'x' if delivered else ' '}] Delivered?
 * [{'x' if downloaded else ' '}] Downloaded? (specify where)
   * [{'x' if downloaded else ' '}] hipergator
+  * [{'x' if pipeline_run else ' '}] hipergator pipeline run
 * [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked
 * [ ] [Weblog]({weblog_url}) Quality Assessment?
 * [ ] Imaging: Continuum
@@ -130,7 +139,9 @@ for new_sb in unique_sbs:
             lines.insert(insert_weblog_at, f"* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked")
 
         if 'hipergator' not in lines[insert_hipergator_at]:
-            lines.insert(insert_hipergator_at, f"  * [{'x' if downloaded else ' '}] hipergator")
+            lines.insert(insert_hipergator_at, f"    * [{'x' if downloaded else ' '}] hipergator")
+        if 'hipergator pipeline run' not in lines[insert_hipergator_at+1]:
+            lines.insert(insert_hipergator_at+1, f"     * [{'x' if pipeline_run else ' '}] hipergator pipeline run")
 
         issuebody = "\n".join(lines)
 
