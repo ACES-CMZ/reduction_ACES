@@ -21,8 +21,9 @@ alma.archive_url = 'https://almascience.eso.org'
 alma.dataarchive_url = 'https://almascience.eso.org'
 
 alma.login(username)
+print(f"Logged in as {username}.  Performing query.", flush=True)
 
-results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=False, cache=False)
+results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
 
 existing_tarballs = glob.glob("2021.1.00172.L/weblog_tarballs/*weblog.tgz")
 mouses = results['obs_id']

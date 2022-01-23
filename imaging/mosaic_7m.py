@@ -1,4 +1,5 @@
 import reproject
+from astropy import units as u
 from astropy.io import fits
 from astropy import coordinates
 from astropy import wcs
@@ -40,12 +41,33 @@ fits.PrimaryHDU(data=array, header=target_wcs.to_header()).writeto(f'{basepath}/
 
 import pylab as pl
 from astropy import visualization
+pl.rc('axes', axisbelow=True)
 pl.matplotlib.use('agg')
+
+front = 10
+back = -10
+
 fig = pl.figure(figsize=(20,7))
 ax = fig.add_subplot(111, projection=target_wcs)
-im = ax.imshow(array, norm=visualization.simple_norm(array, stretch='asinh'))
+im = ax.imshow(array, norm=visualization.simple_norm(array, stretch='asinh'), zorder=front)
 pl.colorbar(mappable=im)
 ax.coords[0].set_axislabel('Galactic Longitude')
 ax.coords[1].set_axislabel('Galactic Latitude')
+ax.coords[0].set_major_formatter('d.dd')
+ax.coords[1].set_major_formatter('d.dd')
+ax.coords[0].set_ticks(spacing=0.1*u.deg)
+ax.coords[0].set_ticklabel(rotation=45, pad=20)
+
 
 fig.savefig(f'{basepath}/mosaics/7m_continuum_mosaic.png', bbox_inches='tight')
+
+ax.coords.grid(True, color='black', ls='--', zorder=back)
+
+overlay = ax.get_coords_overlay('icrs')
+overlay.grid(color='black', ls=':', zorder=back)
+overlay[0].set_axislabel('Right Ascension (ICRS)')
+overlay[1].set_axislabel('Declination (ICRS)')
+overlay[0].set_major_formatter('hh:mm')
+ax.set_axisbelow(True)
+ax.set_zorder(back)
+fig.savefig(f'{basepath}/mosaics/7m_continuum_mosaic_withgrid.png', bbox_inches='tight')
