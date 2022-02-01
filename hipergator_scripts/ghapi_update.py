@@ -4,6 +4,7 @@ import os
 from ghapi.all import GhApi
 import re
 import glob
+import json
 
 data_dir = '/orange/adamginsburg/ACES/rawdata'
 
@@ -73,13 +74,14 @@ for new_sb in unique_sbs:
     gous = matches['group_ous_uid'][0].replace(":","_").replace("/","_")
     calibrated_dir = f'/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/calibrated'
     if os.path.exists(calibrated_dir):
-        mses = glob.glob(f'{calibrated_dir}/*.ms')
+        mses = glob.glob(f'{calibrated_dir}/*.ms') + glob.glob(f'{calibrated_dir}/*.split.cal')
     pipeline_run = os.path.exists(calibrated_dir) and len(mses) > 0
 
     weblog_url = f'https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable/{new_sb}/html/'
     print(new_sb, downloaded, delivered, weblog_url, new_sb in weblog_names)
     sb_status[new_sb] = {'downloaded': downloaded,
                          'delivered': delivered,
+                         'pipelined': pipeline_run,
                          'weblog_url': weblog_url}
     if new_sb in new_sbs:
         issuebody = f"""
@@ -125,6 +127,8 @@ for new_sb in unique_sbs:
             elif 'Downloaded?' in line:
                 lines[ii] = f"* [{'x' if downloaded else ' '}] Downloaded? (specify where)"
                 insert_hipergator_at = ii+1
+            elif 'hipergator pipeline run' in line:
+                lines[ii] = f"     * [{'x' if pipeline_run else ' '}] hipergator pipeline run"
             elif 'Quality Assessment?' in line:
                 if 'unpacked' not in body:
                     insert_weblog_at = ii
@@ -154,6 +158,14 @@ for new_sb in unique_sbs:
             api.issues.update(issue_number=issue.number,
                               title=issue.title,
                               body=issuebody)
+
+with open('/orange/adamginsburg/ACES/hpglogs/sb_status.json', 'w') as fh:
+    json.dump(sb_status, fh)
+
+
+#
+# rearrange issues on project board
+# 
 
 issues = api('/repos/ACES-CMZ/reduction_ACES/issues')
 projects = api('/repos/ACES-CMZ/reduction_ACES/projects')

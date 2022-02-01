@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from astropy import units as u
 from spectral_cube import SpectralCube
 from astropy.table import Table
@@ -104,8 +105,74 @@ for cube, name in ((hcopcube, 'hcop'), (hncocube, 'hnco')):
     pl.savefig(f"peak_missed_{name}_regcontours.png", bbox_inches='tight')
 
 
-    fig2 = pl.figure(2)
-    pl.imshow(flagmap[:,250:])
+    fig2 = pl.figure(2, figsize=(20,7))
+    fig2.set_facecolor('w')
+    ax = fig2.add_subplot(111, projection=cube[:,:,250:].wcs.celestial)
+    ax.contour(flagmap[:,250:], cmap='prism', levels=np.arange(flagmap.max())+0.5)
+    fm = flagmap[:,250:]
+    for ii in np.unique(fm):
+        if ii > 0:
+            fsum = (fm==ii).sum()
+            cy,cx = ((np.arange(fm.shape[0])[:,None] * (fm==ii)).sum() / fsum,
+                     (np.arange(fm.shape[1])[None,:] * (fm==ii)).sum() / fsum)
+            #print(cx,cy)
+            pl.text(cx, cy, str(ii), multialignment='center', color='k',
+                    transform=ax.get_transform('pixel'), backgroundcolor='w')
+    ax.set_aspect(1)
+    ax.coords[0].set_axislabel('Galactic Longitude')
+    ax.coords[1].set_axislabel('Galactic Latitude')
+    ax.coords[0].set_major_formatter('d.dd')
+    ax.coords[1].set_major_formatter('d.dd')
+    ax.coords[0].set_ticks(spacing=0.1*u.deg)
+    ax.coords[0].set_ticklabel(rotation=45, pad=20)
+
+    if os.path.exists('../../mosaics'):
+        fig2.savefig('../../mosaics/mosaic_number_map.png', bbox_inches='tight')
+
+
+    fig2 = pl.figure(2, figsize=(20,7))
+    fig2.clf()
+    fig2.set_facecolor('w')
+    ax = fig2.add_subplot(111, projection=cube[:,:,250:].wcs.celestial)
+    ax.contour(flagmap[:,250:], cmap='prism', levels=np.arange(flagmap.max())+0.5)
+    fm = flagmap[:,250:]
+    for ii in np.unique(fm):
+        if ii > 0:
+            fsum = (fm==ii).sum()
+            cy,cx = ((np.arange(fm.shape[0])[:,None] * (fm==ii)).sum() / fsum,
+                     (np.arange(fm.shape[1])[None,:] * (fm==ii)).sum() / fsum)
+            #print(cx,cy)
+            pl.text(cx, cy, f"{ii}\n{tbl[ii-1]['Obs ID']}",
+                    horizontalalignment='left', verticalalignment='center',
+                    color='k', transform=ax.get_transform('pixel'),
+                    backgroundcolor='w')
+    ax.set_aspect(1)
+    ax.coords[0].set_axislabel('Galactic Longitude')
+    ax.coords[1].set_axislabel('Galactic Latitude')
+    ax.coords[0].set_major_formatter('d.dd')
+    ax.coords[1].set_major_formatter('d.dd')
+    ax.coords[0].set_ticks(spacing=0.1*u.deg)
+    ax.coords[0].set_ticklabel(rotation=45, pad=20)
+
+    if os.path.exists('../../mosaics'):
+        fig2.savefig('../../mosaics/mosaic_number_and_letter_map.png', bbox_inches='tight')
+
+    front = 10
+    back = -10
+    ax.coords.grid(True, color='black', ls='--', zorder=back)
+
+    overlay = ax.get_coords_overlay('icrs')
+    overlay.grid(color='black', ls=':', zorder=back)
+    overlay[0].set_axislabel('Right Ascension (ICRS)')
+    overlay[1].set_axislabel('Declination (ICRS)')
+    overlay[0].set_major_formatter('hh:mm')
+    ax.set_axisbelow(True)
+    ax.set_zorder(back)
+
+    if os.path.exists('../../mosaics'):
+        fig2.savefig('../../mosaics/mosaic_number_and_letter_map_withgrid.png', bbox_inches='tight')
+
+
 
     flagmapfits = fits.PrimaryHDU(data=flagmap[:,250:],
                                   header=cube.wcs.celestial[:,250:].to_header())
