@@ -1,4 +1,7 @@
-import reproject
+import numpy as np
+import regions
+from spectral_cube.spectral_cube import _regionlist_to_single_region
+from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
 from astropy import coordinates
@@ -71,3 +74,46 @@ overlay[0].set_major_formatter('hh:mm')
 ax.set_axisbelow(True)
 ax.set_zorder(back)
 fig.savefig(f'{basepath}/mosaics/12m_continuum_mosaic_withgrid.png', bbox_inches='tight')
+
+
+
+tbl = Table.read(f'{basepath}/reduction_ACES/SB_naming.tsv', format='ascii.csv', delimiter='\t')
+
+# create a list of composite regions for labeling purposes
+composites = []
+flagmap = np.zeros(array.shape, dtype='int')
+# loop over the SB_naming table
+for row in tbl:
+    indx = row['Proposal ID'][3:]
+
+    # load up regions
+    regs = regions.Regions.read(f'{basepath}/reduction_ACES/regions/final_cmz{indx}.reg')
+    pregs = [reg.to_pixel(target_wcs) for reg in regs]
+
+    composite = _regionlist_to_single_region(pregs)
+    composite.meta['label'] = indx
+    composites.append(composite)
+
+    for comp in composites:
+        cmsk = comp.to_mask()
+
+        slcs_big, slcs_small = cmsk.get_overlap_slices(array.shape)
+        try:
+            flagmap[slcs_big] += (cmsk.data[slcs_small] * int(comp.meta['label'])) * (flagmap[slcs_big] == 0)
+        except ValueError:
+            # expected to occur if no overlap
+            continue
+
+
+
+ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max())+0.5, zorder=fronter)
+
+for ii in np.unique(flagmap):
+    if ii > 0:
+        fsum = (flagmap==ii).sum()
+        cy,cx = ((np.arange(flagmap.shape[0])[:,None] * (flagmap==ii)).sum() / fsum,
+                 (np.arange(flagmap.shape[1])[None,:] * (flagmap==ii)).sum() / fsum)
+        pl.text(cx, cy, str(ii), multialignment='center', color='r',
+                transform=ax.get_transform('pixel'), zorder=fronter)
+
+fig.savefig(f'{basepath}/mosaics/12m_continuum_mosaic_withgridandlabels.png', bbox_inches='tight')
