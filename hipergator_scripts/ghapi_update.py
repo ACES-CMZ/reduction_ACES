@@ -60,6 +60,7 @@ weblog_names = [os.path.basename(x) for x in glob.glob('/orange/adamginsburg/web
 sb_status = {}
 
 for new_sb in unique_sbs:
+    need_update = False
     matches = results.loc[new_sb]
     new_uid = matches['obs_id'][0]
     delivered = '3000' not in matches['obs_release_date'][0]
@@ -109,12 +110,17 @@ for new_sb in unique_sbs:
 
         title=f"Execution Block ID {new_uid} {new_sb}"
 
+        labels = ['EB', array]
+        if delivered:
+            labels.append('Delivered')
+
         new_issue = api.issues.create(title=title,
                                       body=issuebody,
-                                      labels=['EB', array])
+                                      labels=labels)
     else:
         issue = sbs_to_issues[new_sb]
         body = issue.body
+        labels = [lb.name for lb in issue.labels]
 
         assert 'Quality Assessment?' in body
 
@@ -145,15 +151,25 @@ for new_sb in unique_sbs:
 
         issuebody = "\n".join(lines)
 
+        if delivered and 'Delivered' not in labels:
+            labels.append('Delivered')
+            need_update = True
+
         if re.sub('\s', '', issue.body) != re.sub('\s', '', issuebody):
+            need_update = True
+
+        if need_update:
             print(f"Updating issue for {new_sb}")
             if False:
                 print('\n'.join(difflib.ndiff(issuebody.split("\n"),
                                               issue.body.split("\n"))
                              ))
+
+
             api.issues.update(issue_number=issue.number,
                               title=issue.title,
-                              body=issuebody)
+                              body=issuebody,
+                              labels=labels)
 
 issues = api('/repos/ACES-CMZ/reduction_ACES/issues')
 projects = api('/repos/ACES-CMZ/reduction_ACES/projects')

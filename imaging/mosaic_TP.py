@@ -1,11 +1,13 @@
 import numpy as np
 import regions
 from spectral_cube.spectral_cube import _regionlist_to_single_region
+import reproject
 from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
 from astropy import coordinates
 from astropy import wcs
+from spectral_cube import SpectralCube
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 
@@ -23,14 +25,13 @@ basepath = '/orange/adamginsburg/ACES/'
 # header['NAXIS2'] = 4000
 
 import glob
-filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*16_18_20_22*cont.I.tt0.pbcor.fits')
+
+filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw17.cube.I.sd.fits')
 
 def read_as_2d(fn):
-    fh = fits.open(fn)
-    fh[0].data = fh[0].data.squeeze()
-    ww = wcs.WCS(fh[0].header).celestial
-    fh[0].header = ww.to_header()
-    return fh
+    cube = SpectralCube.read(fn)
+    mx = cube.max(axis=0)
+    return mx.hdu
 
 hdus = [read_as_2d(fn) for fn in filelist]
 
@@ -40,7 +41,7 @@ array, footprint = reproject_and_coadd(hdus,
                                        target_wcs, shape_out=shape_out,
                                        reproject_function=reproject_interp)
 
-fits.PrimaryHDU(data=array, header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/7m_continuum_mosaic.fits', overwrite=True)
+fits.PrimaryHDU(data=array, header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/TP_spw17mx_mosaic.fits', overwrite=True)
 
 import pylab as pl
 from astropy import visualization
@@ -49,12 +50,10 @@ pl.matplotlib.use('agg')
 
 front = 10
 back = -10
-fronter = 20
 
 fig = pl.figure(figsize=(20,7))
 ax = fig.add_subplot(111, projection=target_wcs)
-im = ax.imshow(array, norm=visualization.simple_norm(array, stretch='asinh',
-               max_cut=0.2, min_cut=-0.025), zorder=front, cmap='gray')
+im = ax.imshow(array, norm=visualization.simple_norm(array, stretch='asinh'), zorder=front)
 pl.colorbar(mappable=im)
 ax.coords[0].set_axislabel('Galactic Longitude')
 ax.coords[1].set_axislabel('Galactic Latitude')
@@ -64,7 +63,7 @@ ax.coords[0].set_ticks(spacing=0.1*u.deg)
 ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
 
-fig.savefig(f'{basepath}/mosaics/7m_continuum_mosaic.png', bbox_inches='tight')
+fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic.png', bbox_inches='tight')
 
 ax.coords.grid(True, color='black', ls='--', zorder=back)
 
@@ -75,7 +74,9 @@ overlay[1].set_axislabel('Declination (ICRS)')
 overlay[0].set_major_formatter('hh:mm')
 ax.set_axisbelow(True)
 ax.set_zorder(back)
-fig.savefig(f'{basepath}/mosaics/7m_continuum_mosaic_withgrid.png', bbox_inches='tight')
+fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic_withgrid.png', bbox_inches='tight')
+
+
 
 
 
@@ -100,7 +101,11 @@ for row in tbl:
         cmsk = comp.to_mask()
 
         slcs_big, slcs_small = cmsk.get_overlap_slices(array.shape)
-        flagmap[slcs_big] += (cmsk.data[slcs_small] * int(comp.meta['label'])) * (flagmap[slcs_big] == 0)
+        try:
+            flagmap[slcs_big] += (cmsk.data[slcs_small] * int(comp.meta['label'])) * (flagmap[slcs_big] == 0)
+        except ValueError:
+            # expected to occur if no overlap
+            continue
 
 
 
@@ -114,4 +119,4 @@ for ii in np.unique(flagmap):
         pl.text(cx, cy, str(ii), multialignment='center', color='r',
                 transform=ax.get_transform('pixel'), zorder=fronter)
 
-fig.savefig(f'{basepath}/mosaics/7m_continuum_mosaic_withgridandlabels.png', bbox_inches='tight')
+fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic_withgridandlabels.png', bbox_inches='tight')

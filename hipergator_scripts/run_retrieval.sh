@@ -37,3 +37,10 @@ echo "Update github"
 
 echo "Make 7m mosaic"
 /orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/imaging/mosaic_7m.py
+echo "Make 12m mosaic"
+/orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/imaging/mosaic_12m.py
+echo "Make TP mosaic"
+/orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/imaging/mosaic_TP.py
+
+# technically shouldn't need to be re-run, but as I add new mosaics, it will
+# ln -s /orange/adamginsburg/ACES/mosaics/*png /orange/adamginsburg/web/secure/ACES/mosaics/
