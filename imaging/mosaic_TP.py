@@ -50,10 +50,11 @@ pl.matplotlib.use('agg')
 
 front = 10
 back = -10
+fronter = 20
 
 fig = pl.figure(figsize=(20,7))
 ax = fig.add_subplot(111, projection=target_wcs)
-im = ax.imshow(array, norm=visualization.simple_norm(array, stretch='asinh'), zorder=front)
+im = ax.imshow(array, norm=visualization.simple_norm(array, stretch='asinh'), zorder=front, cmap='gray')
 pl.colorbar(mappable=im)
 ax.coords[0].set_axislabel('Galactic Longitude')
 ax.coords[1].set_axislabel('Galactic Latitude')
@@ -116,7 +117,9 @@ for ii in np.unique(flagmap):
         fsum = (flagmap==ii).sum()
         cy,cx = ((np.arange(flagmap.shape[0])[:,None] * (flagmap==ii)).sum() / fsum,
                  (np.arange(flagmap.shape[1])[None,:] * (flagmap==ii)).sum() / fsum)
-        pl.text(cx, cy, str(ii), multialignment='center', color='r',
-                transform=ax.get_transform('pixel'), zorder=fronter)
+        pl.text(cx, cy, f"{ii}\n{tbl[ii-1]['Obs ID']}",
+                horizontalalignment='left', verticalalignment='center',
+                color=(1,0.8,0.5), transform=ax.get_transform('pixel'),
+                zorder=fronter)
 
 fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic_withgridandlabels.png', bbox_inches='tight')
