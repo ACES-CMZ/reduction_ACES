@@ -54,6 +54,7 @@ results.add_index('schedblock_name')
 underscore_uid_re = re.compile("uid___A[0-9]*_X[a-z0-9]*_X[a-z0-9]*")
 downloaded_uids = [underscore_uid_re.search(x).group()
                    for x in glob.glob(f'{data_dir}/2021.1.00172.L_*_001_of_001.tar')]
+print(f"Downloaded uids = {downloaded_uids}")
 weblog_names = [os.path.basename(x) for x in glob.glob('/orange/adamginsburg/web/secure/ACES/weblogs/humanreadable/*')]
 
 
@@ -136,7 +137,9 @@ for new_sb in unique_sbs:
                     insert_weblog_at = ii
                 else:
                     insert_weblog_at = False
-                lines[ii] = f"* [ ] [Weblog]({weblog_url}) Quality Assessment?"
+                #don't overwrite!  this would un-check!
+                # (probably this was added earlier when some versions were missing the link URL, but it's not now)
+                # lines[ii] = f"* [ ] [Weblog]({weblog_url}) Quality Assessment?"
             elif 'unpacked' in line and '[Weblog]' in line:
                 lines[ii] = f"* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked"
 
