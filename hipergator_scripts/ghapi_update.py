@@ -1,7 +1,7 @@
 import numpy as np
 import difflib
 import os
-from ghapi.all import GhApi
+from ghapi.all import GhApi, paged
 import re
 import glob
 
@@ -9,7 +9,10 @@ data_dir = '/orange/adamginsburg/ACES/rawdata'
 
 api = GhApi(repo='reduction_ACES', owner='ACES-CMZ')
 
-issues = api('/repos/ACES-CMZ/reduction_ACES/issues')
+#paged_issues = paged(api('/repos/ACES-CMZ/reduction_ACES/issues', query={'state': 'all'}))
+paged_issues = paged(api.issues.list_for_repo, state='all')
+issues = [x for page in paged_issues for x in page]
+assert len(issues) > 30
 
 # uid://A001/X15a0/X17a
 uid_re = re.compile("uid://A[0-9]*/X[a-z0-9]*/X[a-z0-9]*")
@@ -19,20 +22,20 @@ sb_re = re.compile('Sgr_A_st_([a-z]*)_03_(7M|12M|TP|TM1|TM2)')
 
 
 sb_searches = [sb_re.search(issue.title) for issue in issues]
-sb_names = [search.group() for search in sb_searches if search]
+issue_sb_names = [search.group() for search in sb_searches if search]
 sb_arrays = {search.group(): search.groups()[1] for search in sb_searches if search}
 
 
 uid_searches = [uid_re.search(issue.title) for issue in issues]
 uid_names = [search.group() for search in uid_searches if search]
 
-uids_to_sbs = {uid: sb for uid, sb in zip(uid_names, sb_names)}
-sbs_to_uids = {sb: uid for uid, sb in zip(uid_names, sb_names)}
+uids_to_sbs = {uid: sb for uid, sb in zip(uid_names, issue_sb_names)}
+sbs_to_uids = {sb: uid for uid, sb in zip(uid_names, issue_sb_names)}
 sbs_to_issues = {sbsearch.group(): issue for issue, sbsearch
                  in zip(issues, sb_searches)
                  if sbsearch}
 
-assert set(sbs_to_issues.keys()) == set(sb_names)
+assert set(sbs_to_issues.keys()) == set(issue_sb_names)
 
 
 from astroquery.alma import Alma
@@ -47,7 +50,11 @@ unique_sbs = np.unique(results['schedblock_name'])
 assert unique_oids.size == unique_sbs.size
 
 new_oids = set(unique_oids) - set(uid_names)
-new_sbs = set(unique_sbs) - set(sb_names)
+new_sbs = set(unique_sbs) - set(issue_sb_names)
+
+# we know this one is already done, this is a sanity check to make sure we
+# don't get caught out by pagination again
+assert 'Sgr_A_st_aq_03_7M' not in new_sbs
 
 results.add_index('schedblock_name')
 
