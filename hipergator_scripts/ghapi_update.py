@@ -5,13 +5,18 @@ from ghapi.all import GhApi, paged
 import re
 import glob
 
+def all_flat(apicall, **kwargs):
+    paged_stuff = paged(apicall, **kwargs)
+    return [x for page in paged_stuff for x in page]
+
 data_dir = '/orange/adamginsburg/ACES/rawdata'
 
 api = GhApi(repo='reduction_ACES', owner='ACES-CMZ')
 
 #paged_issues = paged(api('/repos/ACES-CMZ/reduction_ACES/issues', query={'state': 'all'}))
-paged_issues = paged(api.issues.list_for_repo, state='all')
-issues = [x for page in paged_issues for x in page]
+#paged_issues = paged(api.issues.list_for_repo, state='all')
+#issues = [x for page in paged_issues for x in page]
+issues = all_flat(api.issues.list_for_repo, state='all')
 assert len(issues) > 30
 
 # uid://A001/X15a0/X17a
@@ -181,15 +186,25 @@ for new_sb in unique_sbs:
                               body=issuebody,
                               labels=labels)
 
-issues = api('/repos/ACES-CMZ/reduction_ACES/issues')
-projects = api('/repos/ACES-CMZ/reduction_ACES/projects')
-columns = api(projects[0].columns_url)
+paged_issues = paged(api.issues.list_for_repo, state='all')
+issues = [x for page in paged_issues for x in page]
+assert len(issues) > 30
+
+# should only ever be 1 project, so pagination not needed
+projects = api.projects.list_for_repo()
+
+columns = api.projects.list_columns(projects[0].id) #api(projects[0].columns_url)
 coldict = {column.name: column for column in columns}
-cards = [api(col.cards_url) for col in columns]
-issue_urls_in_cards = [card.content_url for ccard in cards for card in ccard]
+#cards = [api(col.cards_url) for col in columns]
+cards = [x for col in columns for x in all_flat(api.projects.list_cards, column_id=col.id)] 
+
+issue_urls_in_cards = [card.content_url for card in cards]
 issue_urls = [issue.url for issue in issues]
 
 for issue in issues:
+    if issue.state == 'closed':
+        # skip closed issues
+        continue
     if 'EB' in [label.name for label in issue.labels]:
         completed = '[x] Observations completed' in issue.body
         delivered = '[x] Delivered' in issue.body
