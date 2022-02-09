@@ -95,16 +95,20 @@ for new_sb in unique_sbs:
     sb_status[new_sb] = {'downloaded': downloaded,
                          'delivered': delivered,
                          'weblog_url': weblog_url}
+    array = sb_re.search(new_sb).groups()[1]
+
     if new_sb in new_sbs:
-        issuebody = f"""
+        issuebody = (f"""
 {new_sb}
 [{new_uid}](https://almascience.org/aq/?result_view=observation&mous={new_uid})
 
 * [x] Observations completed?
 * [{'x' if delivered else ' '}] Delivered?
 * [{'x' if downloaded else ' '}] Downloaded? (specify where)
-  * [{'x' if downloaded else ' '}] hipergator
+  * [{'x' if downloaded else ' '}] hipergator""" + ("" if array == 'TP' else f"""
   * [{'x' if pipeline_run else ' '}] hipergator pipeline run
+""") +
+f"""
 * [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked
 * [ ] [Weblog]({weblog_url}) Quality Assessment?
 * [ ] Imaging: Continuum
@@ -115,9 +119,8 @@ for new_sb in unique_sbs:
   * [ ] H13CO+/SiO
   * [ ] Cont 1
   * [ ] Cont 2
-        """.replace("\r","")
+        """.replace("\r",""))
 
-        array = sb_re.search(new_sb).groups()[1]
 
         print(f"Posting new issue for {new_sb}")
 
@@ -161,7 +164,7 @@ for new_sb in unique_sbs:
 
         if 'hipergator' not in lines[insert_hipergator_at]:
             lines.insert(insert_hipergator_at, f"    * [{'x' if downloaded else ' '}] hipergator")
-        if 'hipergator pipeline run' not in lines[insert_hipergator_at+1]:
+        if 'hipergator pipeline run' not in lines[insert_hipergator_at+1] and array != "TP":
             lines.insert(insert_hipergator_at+1, f"     * [{'x' if pipeline_run else ' '}] hipergator pipeline run")
 
         issuebody = "\n".join(lines)
