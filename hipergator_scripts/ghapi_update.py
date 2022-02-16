@@ -61,7 +61,7 @@ new_sbs = set(unique_sbs) - set(issue_sb_names)
 # don't get caught out by pagination again
 assert 'Sgr_A_st_aq_03_7M' not in new_sbs
 
-results.add_index('schedblock_name')
+results.add_index('obs_id')
 
 underscore_uid_re = re.compile("uid___A[0-9]*_X[a-z0-9]*_X[a-z0-9]*")
 downloaded_uids = [underscore_uid_re.search(x).group()
@@ -73,18 +73,16 @@ weblog_names = [os.path.basename(x) for x in glob.glob('/orange/adamginsburg/web
 sb_status = {}
 
 # loop through oids, not uids: the SB names are _not_ unique, but the UIDs are
-for new_oid in new_oids:
+for new_oid in unique_oids:
     new_sb = uids_to_sbs[new_oid]
 
     need_update = False
-    matches = results.loc[new_sb]
+    matches = results.loc[new_oid]
     new_uid = matches['obs_id'][0]
     delivered = '3000' not in matches['obs_release_date'][0]
-    if new_sb in sbs_to_uids:
-        uuid = sbs_to_uids[new_sb].replace("/","_").replace(":","_")
-        downloaded = uuid in downloaded_uids
-    else:
-        downloaded = False
+
+    uuid = new_oid.replace("/","_").replace(":","_")
+    downloaded = uuid in downloaded_uids
 
     mous = matches['member_ous_uid'][0].replace(":","_").replace("/","_")
     gous = matches['group_ous_uid'][0].replace(":","_").replace("/","_")
@@ -93,14 +91,23 @@ for new_oid in new_oids:
         mses = glob.glob(f'{calibrated_dir}/*.ms')
     pipeline_run = os.path.exists(calibrated_dir) and len(mses) > 0
 
-    weblog_url = f'https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable/{new_sb}/html/'
-    print(new_sb, downloaded, delivered, weblog_url, new_sb in weblog_names)
+    product_dir = f'/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/product'
+    product_filenames = (glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cube.I.pbcor.fits") +
+            glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.mfs.I.pbcor.fits") +
+            glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cont.I.*.fits"))
+
+    # https://g-76492b.55ba.08cc.data.globus.org/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X114/product/member.uid___A001_X15a0_X114.J1427-4206_bp.spw18.mfs.I.pbcor.fits
+    product_links = [f" - [{os.path.basename(fn)}](https://g-76492b.55ba.08cc.data.globus.org/{fn[25:]})" for fn in product_filenames]
+    product_link_text = "\n".join(product_links)
+
+    weblog_url = f'https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable/{new_sb.strip().replace(" ","_")}/html/'
+    print(new_sb, new_oid, downloaded, delivered, weblog_url, new_sb in weblog_names)
     sb_status[new_sb] = {'downloaded': downloaded,
                          'delivered': delivered,
                          'weblog_url': weblog_url}
     array = sb_re.search(new_sb).groups()[1]
 
-    if new_sb in new_sbs:
+    if new_oids in new_oids:
         issuebody = (f"""
 {new_sb}
 [{new_uid}](https://almascience.org/aq/?result_view=observation&mous={new_uid})
@@ -122,7 +129,11 @@ f"""
   * [ ] H13CO+/SiO
   * [ ] Cont 1
   * [ ] Cont 2
-        """.replace("\r",""))
+
+## Product Links: 
+
+{product_link_text}
+""".replace("\r",""))
 
 
         print(f"Posting new issue for {new_sb}")
@@ -166,9 +177,9 @@ f"""
             lines.insert(insert_weblog_at, f"* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked")
 
         if 'hipergator' not in lines[insert_hipergator_at]:
-            lines.insert(insert_hipergator_at, f"    * [{'x' if downloaded else ' '}] hipergator")
+            lines.insert(insert_hipergator_at, f"  * [{'x' if downloaded else ' '}] hipergator")
         if 'hipergator pipeline run' not in lines[insert_hipergator_at+1] and array != "TP":
-            lines.insert(insert_hipergator_at+1, f"     * [{'x' if pipeline_run else ' '}] hipergator pipeline run")
+            lines.insert(insert_hipergator_at+1, f"  * [{'x' if pipeline_run else ' '}] hipergator pipeline run")
 
         issuebody = "\n".join(lines)
 
@@ -178,6 +189,15 @@ f"""
 
         if re.sub('\s', '', issue.body) != re.sub('\s', '', issuebody):
             need_update = True
+
+        if 'Product Links:' not in issue.body:
+            need_update = True
+            issuebody += f"""
+
+## Product Links: 
+
+{product_link_text}
+""".replace("\r","")
 
         if need_update:
             print(f"Updating issue for {new_sb}")
@@ -191,6 +211,7 @@ f"""
                               title=issue.title,
                               body=issuebody,
                               labels=labels)
+
 
 paged_issues = paged(api.issues.list_for_repo, state='all')
 issues = [x for page in paged_issues for x in page]
