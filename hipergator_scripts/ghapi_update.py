@@ -23,7 +23,7 @@ assert len(issues) > 30
 uid_re = re.compile("uid://A[0-9]*/X[a-z0-9]*/X[a-z0-9]*")
 
 # Sgr_A_st_ak_03_7M
-sb_re = re.compile('Sgr_A_st_([a-z]*)_03_(7M|12M|TP|TM1|TM2)')
+sb_re = re.compile('Sgr_A_st_([a-z]*)_03_(7M|12M|TP|TM1|TM2).*')
 
 
 sb_searches = [sb_re.search(issue.title) for issue in issues]
@@ -72,7 +72,10 @@ weblog_names = [os.path.basename(x) for x in glob.glob('/orange/adamginsburg/web
 
 sb_status = {}
 
-for new_sb in unique_sbs:
+# loop through oids, not uids: the SB names are _not_ unique, but the UIDs are
+for new_oid in new_oids:
+    new_sb = uids_to_sbs[new_oid]
+
     need_update = False
     matches = results.loc[new_sb]
     new_uid = matches['obs_id'][0]
