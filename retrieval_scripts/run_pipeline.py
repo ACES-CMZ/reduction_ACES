@@ -68,6 +68,8 @@ runonce = bool(os.environ.get('RUNONCE'))
 SPACESAVING = 1
 DOSPLIT = True
 
+imaging_script = 'imaging_pipeline_rerun.py'
+
 # only walk the science goal directories
 science_goal_dirs = glob.glob("science_goal*")
 
@@ -89,8 +91,26 @@ for scigoal in science_goal_dirs:
             curdir = os.getcwd()
 
             if os.path.exists(os.path.join(dirpath, 'calibrated')):
-                logprint("Skipping script {0} in {1} because calibrated "
-                         "exists".format(scriptforpi, dirpath), origin='pipeline_runner')
+                if os.path.exists(os.path.join(dirpath, 'calibrated', imaging_script)):
+                    logprint("Skipping script {0} in {1} because calibrated "
+                             "exists".format(scriptforpi, dirpath), origin='pipeline_runner')
+                else:
+                    os.chdir(os.path.join(dirpath, 'script'))
+                    scriptpath = ("{rootdir}/pipeline_scripts/{imaging_script}"
+                                  .format(rootdir=rootdir, imaging_script=imaging_script))
+
+                    shutil.copy(scriptpath, '.')
+
+                    logprint("Running script {0} in {1}".format(imaging_script, dirpath),
+                             origin='pipeline_runner')
+
+                    result = runpy.run_path(imaging_script, init_globals=globals())
+
+                    logprint("Done running script {0} in {1}".format(imaging_script, dirpath),
+                             origin='pipeline_runner')
+
+                    os.chdir(curdir)
+                    
             elif os.path.exists(os.path.join(dirpath, 'calibration')):
                 os.chdir(os.path.join(dirpath, 'script'))
 
