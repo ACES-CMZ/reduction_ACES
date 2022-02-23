@@ -25,6 +25,11 @@ print(f"Logged in as {username}.  Performing query.", flush=True)
 
 results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
 
+release_dates = results['obs_release_date']
+# remove all 3000- dates
+ok_release_dates = np.array([int(x[0]) < 3 for x in release_dates])
+results = results[ok_release_dates]
+
 existing_tarballs = glob.glob("2021.1.00172.L/weblog_tarballs/*weblog.tgz")
 mouses = results['obs_id']
 mouses_filtered = [x for x in mouses

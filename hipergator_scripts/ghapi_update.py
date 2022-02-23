@@ -74,7 +74,8 @@ sb_status = {}
 
 # loop through oids, not uids: the SB names are _not_ unique, but the UIDs are
 for new_oid in unique_oids:
-    new_sb = uids_to_sbs[new_oid]
+    new_sb_issuename = uids_to_sbs[new_oid]
+    new_sb = new_sb_issuename.split(" ")[0]
 
     need_update = False
     matches = results.loc[new_oid]
@@ -136,9 +137,9 @@ f"""
 """.replace("\r",""))
 
 
-        print(f"Posting new issue for {new_sb}")
+        print(f"Posting new issue for {new_sb} -> {new_sb_issuename}")
 
-        title=f"Execution Block ID {new_uid} {new_sb}"
+        title=f"Execution Block ID {new_uid} {new_sb_issuename}"
 
         labels = ['EB', array]
         if delivered:
@@ -148,7 +149,7 @@ f"""
                                       body=issuebody,
                                       labels=labels)
     else:
-        issue = sbs_to_issues[new_sb]
+        issue = sbs_to_issues[new_sb_issuename]
         body = issue.body
         labels = [lb.name for lb in issue.labels]
 
@@ -200,7 +201,7 @@ f"""
 """.replace("\r","")
 
         if need_update:
-            print(f"Updating issue for {new_sb}")
+            print(f"Updating issue for {new_sb} -> {new_sb_issuename}")
             if False:
                 print('\n'.join(difflib.ndiff(issuebody.split("\n"),
                                               issue.body.split("\n"))

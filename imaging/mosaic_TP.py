@@ -29,7 +29,7 @@ import glob
 filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw17.cube.I.sd.fits')
 
 def read_as_2d(fn):
-    cube = SpectralCube.read(fn)
+    cube = SpectralCube.read(fn, use_dask=True)
     mx = cube.max(axis=0)
     return mx.hdu
 
