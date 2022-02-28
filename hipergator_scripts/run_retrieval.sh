@@ -2,8 +2,8 @@
 #SBATCH --mail-type=NONE          # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=adamginsburg@ufl.edu     # Where to send mail
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --ntasks=1
-#SBATCH --mem=4gb # Job memory request PER NODE
+#SBATCH --ntasks=3
+#SBATCH --mem=12gb # Job memory request PER NODE
 #SBATCH --nodes=1 # exactly 1 node
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
 #SBATCH --qos=adamginsburg-b

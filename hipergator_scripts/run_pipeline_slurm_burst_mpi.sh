@@ -16,7 +16,7 @@ echo "Memory=${MEM}"
 module load cuda/11.0.207 intel/2019.1.144 openmpi/4.0.4 libfuse/3.10.4
 
 LOG_DIR=/blue/adamginsburg/adamginsburg/ACES/logs
-export LOGFILENAME="${LOG_DIR}/casa_log_line_${jobname}_$(date +%Y-%m-%d_%H_%M_%S).log"
+export LOGFILENAME="${LOG_DIR}/casa_log_mpi_pipeline_${SLURM_JOB_ID}_$(date +%Y-%m-%d_%H_%M_%S).log"
 
 WORK_DIR='/orange/adamginsburg/ACES/rawdata/2021.1.00172.L'
 cd ${WORK_DIR}
