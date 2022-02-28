@@ -91,11 +91,11 @@ for scigoal in science_goal_dirs:
             curdir = os.getcwd()
 
             if os.path.exists(os.path.join(dirpath, 'calibrated')):
-                if os.path.exists(os.path.join(dirpath, 'calibrated', imaging_script)):
+                if os.path.exists(os.path.join(dirpath, 'calibrated/working', imaging_script)):
                     logprint("Skipping script {0} in {1} because calibrated "
                              "exists".format(scriptforpi, dirpath), origin='pipeline_runner')
                 else:
-                    os.chdir(os.path.join(dirpath, 'script'))
+                    os.chdir(os.path.join(dirpath, 'calibrated/working'))
                     scriptpath = ("{rootdir}/pipeline_scripts/{imaging_script}"
                                   .format(rootdir=rootdir, imaging_script=imaging_script))
 
