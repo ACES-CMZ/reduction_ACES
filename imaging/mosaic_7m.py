@@ -33,21 +33,25 @@ def read_as_2d(fn):
     return fh
 
 
-def get_peak(fn):
-    cube = SpectralCube.read(fn, use_dask=True)
+def get_peak(fn, slab_kwargs=None, rest_value=None):
+    cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    if slab_kwargs is not None:
+        cube = cube.spectral_slab(**slab_kwargs)
     mx = cube.max(axis=0).to(u.K)
     return mx
 
 
-def get_m0(fn):
-    cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.km/u.s, velocity_convention='radio')
+def get_m0(fn, slab_kwargs=None, rest_value=None):
+    cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    if slab_kwargs is not None:
+        cube = cube.spectral_slab(**slab_kwargs)
     moment0 = cube.moment0(axis=0)
     moment0 = (moment0 * u.s/u.km).to(u.K,
             equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km/u.s
     return moment0
 
 
-def make_mosaic(twod_hdus, name, norm_kwargs={}):
+def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None, rest_value=None):
 
     target_wcs, shape_out = find_optimal_celestial_wcs(twod_hdus, frame='galactic')
 
@@ -150,3 +154,11 @@ if __name__ == "__main__":
     make_mosaic(hdus, name='hnco_max')
     hdus = [get_m0(fn).hdu for fn in filelist]
     make_mosaic(hdus, name='hnco_m0')
+
+
+
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw24.cube.I.pbcor.fits')
+    hdus = [get_peak(fn, slab_kwargs=(-200*u.km/u.s, 200*u.km/u.s), rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    make_mosaic(hdus, name='h40a_max')
+    hdus = [get_m0(fn, slab_kwargs=(-200*u.km/u.s, 200*u.km/u.s), rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    make_mosaic(hdus, name='h40a_m0')
