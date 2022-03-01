@@ -163,4 +163,4 @@ if __name__ == "__main__":
     hdus = [get_peak(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
     make_mosaic(hdus, name='h40a_max', cb_unit='K', norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'))
     hdus = [get_m0(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
-    make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s', norm_kwargs={'max_cut': 75, 'min_cut':-5})
+    make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s', norm_kwargs={'max_cut': 20, 'min_cut':-1, 'stretch':'asinh'})
