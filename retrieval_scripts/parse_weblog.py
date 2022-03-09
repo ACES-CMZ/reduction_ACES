@@ -20,6 +20,7 @@ def get_mous_to_sb_mapping(project_code):
     mapping = {row['member_ous_uid']: row['schedblock_name'] for row in tbl if row['qa2_passed'] == 'T'}
     return mapping
 
+
 def get_human_readable_name(weblog, mapping=None):
     print("Reading weblog {0}".format(weblog))
     for directory, dirnames, filenames in os.walk(weblog):
@@ -36,73 +37,84 @@ def get_human_readable_name(weblog, mapping=None):
             #print("array_name = {0}".format(array_name))
             break
 
+    try:
+        with open(os.path.join(weblog, 'html/t1-1.html'), 'r') as fh:
+            soup = BeautifulSoup(fh.read(), 'html5lib')
 
-    if mapping is None:
-        for directory, dirnames, filenames in os.walk(weblog):
-            if 't2-2-3.html' in filenames:
-                with open(os.path.join(directory, 't2-2-3.html')) as fh:
-                    txt = fh.read()
-                array_table = table.Table.read(txt, format='ascii.html')
-                antenna_size, = map(int, set(array_table['Diameter']))
-                break
+        row = soup.find_all('b', text='Scheduling Block Name:')
+        sbname = row[0].parent.text.split('Scheduling Block Name:')[-1].strip()
+    except Exception as ex:
+        print(ex)
+        sbname = None
 
-        for directory, dirnames, filenames in os.walk(weblog):
-            if 't2-2-2.html' in filenames:
-                with open(os.path.join(directory, 't2-2-2.html')) as fh:
-                    txt = fh.read()
 
-                array_table = table.Table.read(txt, format='ascii.html')
-                band_string, = set(array_table['Band'])
-                band = int(band_string.split()[-1])
-                break
+    if sbname is None:
+        if mapping is None:
+            for directory, dirnames, filenames in os.walk(weblog):
+                if 't2-2-3.html' in filenames:
+                    with open(os.path.join(directory, 't2-2-3.html')) as fh:
+                        txt = fh.read()
+                    array_table = table.Table.read(txt, format='ascii.html')
+                    antenna_size, = map(int, set(array_table['Diameter']))
+                    break
 
-        for directory, dirnames, filenames in os.walk(weblog):
-            if 't2-2-1.html' in filenames:
-                with open(os.path.join(directory, 't2-2-1.html')) as fh:
-                    txt = fh.read()
+            for directory, dirnames, filenames in os.walk(weblog):
+                if 't2-2-2.html' in filenames:
+                    with open(os.path.join(directory, 't2-2-2.html')) as fh:
+                        txt = fh.read()
 
-                array_table = table.Table.read(txt, format='ascii.html')
-                mask = np.array(['TARGET' in intent for intent in array_table['Intent']], dtype='bool')
-                source_name, = set(array_table[mask]['Source Name'])
-                break
+                    array_table = table.Table.read(txt, format='ascii.html')
+                    band_string, = set(array_table['Band'])
+                    band = int(band_string.split()[-1])
+                    break
 
-        if array_name == '7MorTP':
-            if antenna_size == 7:
-                array_name = '7M'
-            elif antenna_size == 12:
-                array_name = 'TP'
-            else:
-                raise
+            for directory, dirnames, filenames in os.walk(weblog):
+                if 't2-2-1.html' in filenames:
+                    with open(os.path.join(directory, 't2-2-1.html')) as fh:
+                        txt = fh.read()
 
-        sbname = "{0}_a_{1:02d}_{2}".format(source_name, band, array_name, )
+                    array_table = table.Table.read(txt, format='ascii.html')
+                    mask = np.array(['TARGET' in intent for intent in array_table['Intent']], dtype='bool')
+                    source_name, = set(array_table[mask]['Source Name'])
+                    break
 
-        print(sbname, max_baseline)
+            if array_name == '7MorTP':
+                if antenna_size == 7:
+                    array_name = '7M'
+                elif antenna_size == 12:
+                    array_name = 'TP'
+                else:
+                    raise
 
-    else:
-        for directory, dirnames, filenames in os.walk(weblog):
-            if 't1-1.html' in filenames:
-                with open(os.path.join(directory, 't1-1.html')) as fh:
-                    txt = fh.read()
+            sbname = "{0}_a_{1:02d}_{2}".format(source_name, band, array_name, )
 
-                soup = BeautifulSoup(txt, 'html5lib')
-                overview_tbls = [xx for xx in soup.findAll('table')
-                                 if 'summary' in xx.attrs and
-                                 xx.attrs['summary'] == 'Data Details']
-                assert len(overview_tbls) == 1
-                overview_table = overview_tbls[0]
+            print(sbname, max_baseline)
 
-                for row in overview_table.findAll('tr'):
-                    if 'OUS Status Entity id' in row.text:
-                        for td in row.findAll('td'):
-                            if 'uid' in td.text:
-                                uid = td.text
+        else:
+            for directory, dirnames, filenames in os.walk(weblog):
+                if 't1-1.html' in filenames:
+                    with open(os.path.join(directory, 't1-1.html')) as fh:
+                        txt = fh.read()
 
-                sbname = mapping[uid]
-#                try:
-#                    sbname = mapping[uid]
-#                except:
-#                    sbname = 'fail'
-#                    print('fail = {0}'.format(directory))
+                    soup = BeautifulSoup(txt, 'html5lib')
+                    overview_tbls = [xx for xx in soup.findAll('table')
+                                     if 'summary' in xx.attrs and
+                                     xx.attrs['summary'] == 'Data Details']
+                    assert len(overview_tbls) == 1
+                    overview_table = overview_tbls[0]
+
+                    for row in overview_table.findAll('tr'):
+                        if 'OUS Status Entity id' in row.text:
+                            for td in row.findAll('td'):
+                                if 'uid' in td.text:
+                                    uid = td.text
+
+                    sbname = mapping[uid]
+    #                try:
+    #                    sbname = mapping[uid]
+    #                except:
+    #                    sbname = 'fail'
+    #                    print('fail = {0}'.format(directory))
 
     return sbname, max_baseline
 
