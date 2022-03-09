@@ -29,13 +29,16 @@ import runpy
 import glob
 
 try:
-    from taskinit import casalog
-except ImportError:
     from casatasks import casalog
+except (ModuleNotFoundError,ImportError):
+    from taskinit import casalog
+
+run = os.environ.get('RUNSCRIPTS') not in ('False', 'false')
 
 def logprint(string, origin='almaimf_metadata',
              priority='INFO'):
-    print(string)
+    if run:
+        print(string)
     casalog.post(string, origin=origin, priority=priority)
 
 if os.getenv('ACES_ROOTDIR') is None:
@@ -59,7 +62,8 @@ if os.getenv('LOGFILENAME'):
         casalog.setlogfile(os.getenv('LOGFILENAME'))
     else:
         casalog.setlogfile(os.path.join(os.getcwd(), os.getenv('LOGFILENAME')))
-print("CASA log file name is {0}".format(casalog.logfile()))
+if run:
+    print("CASA log file name is {0}".format(casalog.logfile()))
 
 
 runonce = bool(os.environ.get('RUNONCE'))
@@ -104,7 +108,11 @@ for scigoal in science_goal_dirs:
                     logprint("Running script {0} in {1}".format(imaging_script, dirpath),
                              origin='pipeline_runner')
 
-                    result = runpy.run_path(imaging_script, init_globals=globals())
+                    if run:
+                        result = runpy.run_path(imaging_script, init_globals=globals())
+                    else:
+                        print(imaging_script)
+
 
                     logprint("Done running script {0} in {1}".format(imaging_script, dirpath),
                              origin='pipeline_runner')
@@ -133,7 +141,11 @@ for scigoal in science_goal_dirs:
                 logprint("Running script {0} in {1}".format(local_scriptforPI, dirpath),
                          origin='pipeline_runner')
 
-                result = runpy.run_path(local_scriptforPI, init_globals=globals())
+                if run:
+                    result = runpy.run_path(local_scriptforPI, init_globals=globals())
+                else:
+                    print(scriptforpi)
+
                 # too verbose, includes a ton of junk
                 #logprint("result = {0}".format(result),
                 #         origin='pipeline_runner')
@@ -148,4 +160,5 @@ for scigoal in science_goal_dirs:
             else:
                 raise ValueError("Landed in the wrong directory.")
 
-logprint("Completed run_pipeline.py")
+if run:
+    logprint("Completed run_pipeline.py")
