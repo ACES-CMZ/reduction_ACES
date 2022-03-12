@@ -50,6 +50,6 @@ fi
 
 env
 
-echo ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('imaging_pipeline_rerun.py')"
+echo ${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('imaging_pipeline_rerun.py')"
 #srun --export=ALL --mpi=pmix_v3
-${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('imaging_pipeline_rerun.py')"
+${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('imaging_pipeline_rerun.py')"

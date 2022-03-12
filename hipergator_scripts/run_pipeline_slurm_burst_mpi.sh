@@ -17,7 +17,7 @@ echo "Memory=${MEM}"
 #module load cuda/11.0.207
 module load intel/2020.0.166
 module load openmpi/4.1.1 
-#module load libfuse/3.10.4
+module load libfuse/3.10.4
 
 LOG_DIR=/blue/adamginsburg/adamginsburg/ACES/logs
 export LOGFILENAME="${LOG_DIR}/casa_log_mpi_pipeline_${SLURM_JOB_ID}_$(date +%Y-%m-%d_%H_%M_%S).log"
@@ -76,16 +76,34 @@ for script in $(cat /tmp/scriptlist); do
     IFS='/' read -r -a array <<< "$script"
     mous=${array[2]}
     echo "MOUS is ${mous}, script is ${script}"
-    export LOGFILENAME="${LOG_DIR}/casa_log_mpi_pipeline_${mous}_${SLURM_JOB_ID}_$(date +%Y-%m-%d_%H_%M_%S).log"
+
+    if [ -z $mous ]; then
+        echo "MOUS '${mous}' was unspecified, which is a bug."
+        echo "script was '${script}'"
+        echo "Scriptlist was :"
+        cat /tmp/scriptlist
+        echo "pwd=$(pwd)"
+        echo "previous cwd=${cwd}"
+        exit 1
+    fi
+
+    if [[ $script == *imaging* ]]; then
+        imaging="imaging_"
+    else
+        imaging=""
+    fi
+
+    export LOGFILENAME="${LOG_DIR}/casa_log_mpi_pipeline_${imaging}${mous}_${SLURM_JOB_ID}_$(date +%Y-%m-%d_%H_%M_%S).log"
     cwd=$(pwd)
 
     cd $(dirname $script)
     pwd
-    echo $script
-    echo srun --export=ALL --mpi=pmix_v3 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('${script}')"
+    echo "script: " $script
+    echo
+    #echo srun --export=ALL --mpi=pmix_v3 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('${script}')"
     #srun --export=ALL --mpi=pmix_v3 
-    echo ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('$(basename ${script})')"
-    ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('$(basename ${script})')"
+    echo xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('$(basename ${script})')"
+    xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('$(basename ${script})')"
     cd $cwd
 done
 echo "Done"

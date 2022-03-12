@@ -111,14 +111,14 @@ for scigoal in science_goal_dirs:
                     if run:
                         result = runpy.run_path(imaging_script, init_globals=globals())
                     else:
-                        print(imaging_script)
+                        print(os.path.join(dirpath, 'calibrated/working', imaging_script))
 
 
                     logprint("Done running script {0} in {1}".format(imaging_script, dirpath),
                              origin='pipeline_runner')
 
                     os.chdir(curdir)
-                    
+
             elif os.path.exists(os.path.join(dirpath, 'calibration')):
                 os.chdir(os.path.join(dirpath, 'script'))
 
