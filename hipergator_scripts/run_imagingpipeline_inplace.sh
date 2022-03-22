@@ -42,6 +42,11 @@ export INTERACTIVE=0
 export LD_LIBRARY_PATH=${CASAPATH}/lib/:$LD_LIBRARY_PATH
 export OPAL_PREFIX="${CASAPATH}/lib/mpi"
 
+cp ~/.casa/config.py /tmp
+
+# this appears not to work, but it should
+export APPIMAGE_EXTRACT_AND_RUN=1
+
 if [ -z $SLURM_NTASKS ]; then
     echo "FAILURE: SLURM_NTASKS was not specified"
     exit 1
@@ -50,6 +55,6 @@ fi
 
 env
 
-echo ${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('imaging_pipeline_rerun.py')"
+echo ${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('imaging_pipeline_rerun.py')"
 #srun --export=ALL --mpi=pmix_v3
-${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('imaging_pipeline_rerun.py')"
+${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('imaging_pipeline_rerun.py')"

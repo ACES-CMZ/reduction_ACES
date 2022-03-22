@@ -43,7 +43,9 @@ export INTERACTIVE=0
 export LD_LIBRARY_PATH=${CASAPATH}/lib/:$LD_LIBRARY_PATH
 export OPAL_PREFIX="${CASAPATH}/lib/mpi"
 
-
+export IPYTHONDIR=/tmp
+export IPYTHON_DIR=$IPYTHONDIR
+cp ~/.casa/config.py /tmp
 
 if [ -z $SLURM_NTASKS ]; then
     echo "FAILURE: SLURM_NTASKS was not specified"
@@ -57,13 +59,13 @@ export RUNONCE=True
 #srun --export=ALL --mpi=pmix_v3 /orange/adamginsburg/test_mpi/a.out
 #
 #echo srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger -c 'print("TEST")'
-#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --ipython-dir=/tmp -c 'print("TEST")'
+#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=/tmp -c 'print("TEST")'
 #echo "Done"
 #
 #
-#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --ipython-dir=/tmp\
+#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=/tmp\
 #    -c 'from casampi.MPIEnvironment import MPIEnvironment; from casampi.MPICommandClient import MPICommandClient; print(f"MPI enabled: {MPIEnvironment.is_mpi_enabled}")'
-#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --ipython-dir=/tmp -c 'import os, pprint; print(pprint.pprint(dict(os.environ)))'
+#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=/tmp -c 'import os, pprint; print(pprint.pprint(dict(os.environ)))'
 
 
 RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 /orange/adamginsburg/ACES/reduction_ACES/retrieval_scripts/run_pipeline.py > /tmp/scriptlist
@@ -100,10 +102,10 @@ for script in $(cat /tmp/scriptlist); do
     pwd
     echo "script: " $script
     echo
-    #echo srun --export=ALL --mpi=pmix_v3 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('${script}')"
+    #echo srun --export=ALL --mpi=pmix_v3 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('${script}')"
     #srun --export=ALL --mpi=pmix_v3 
-    echo xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('$(basename ${script})')"
-    xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --ipython-dir=/tmp -c "execfile('$(basename ${script})')"
+    echo xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('$(basename ${script})')"
+    xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('$(basename ${script})')"
     cd $cwd
 done
 echo "Done"
