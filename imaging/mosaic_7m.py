@@ -33,21 +33,25 @@ def read_as_2d(fn):
     return fh
 
 
-def get_peak(fn):
-    cube = SpectralCube.read(fn, use_dask=True)
+def get_peak(fn, slab_kwargs=None, rest_value=None):
+    cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    if slab_kwargs is not None:
+        cube = cube.spectral_slab(**slab_kwargs)
     mx = cube.max(axis=0).to(u.K)
     return mx
 
 
-def get_m0(fn):
-    cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.km/u.s, velocity_convention='radio')
+def get_m0(fn, slab_kwargs=None, rest_value=None):
+    cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    if slab_kwargs is not None:
+        cube = cube.spectral_slab(**slab_kwargs)
     moment0 = cube.moment0(axis=0)
     moment0 = (moment0 * u.s/u.km).to(u.K,
             equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km/u.s
     return moment0
 
 
-def make_mosaic(twod_hdus, name, norm_kwargs={}):
+def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None, rest_value=None, cb_unit=None):
 
     target_wcs, shape_out = find_optimal_celestial_wcs(twod_hdus, frame='galactic')
 
@@ -69,7 +73,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}):
     fig = pl.figure(figsize=(20,7))
     ax = fig.add_subplot(111, projection=target_wcs)
     im = ax.imshow(array, norm=visualization.simple_norm(array, **norm_kwargs), zorder=front, cmap='gray')
-    pl.colorbar(mappable=im)
+    cb = pl.colorbar(mappable=im)
+    if cb_unit is not None:
+        cb.set_label(cb_unit)
     ax.coords[0].set_axislabel('Galactic Longitude')
     ax.coords[1].set_axislabel('Galactic Latitude')
     ax.coords[0].set_major_formatter('d.dd')
@@ -137,16 +143,24 @@ if __name__ == "__main__":
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*16_18_20_22*cont.I.tt0.pbcor.fits')
     hdus = [read_as_2d(fn) for fn in filelist]
     make_mosaic(hdus, name='continuum', norm_kwargs=dict(stretch='asinh',
-        max_cut=0.2, min_cut=-0.025))
+        max_cut=0.2, min_cut=-0.025), cb_unit='Jy/beam')
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw20.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hcop_max')
+    make_mosaic(hdus, name='hcop_max', cb_unit='K')
     hdus = [get_m0(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hcop_m0')
+    make_mosaic(hdus, name='hcop_m0', cb_unit='K km/s')
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw22.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
     make_mosaic(hdus, name='hnco_max')
     hdus = [get_m0(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hnco_m0')
+    make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s')
+
+
+
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw24.cube.I.pbcor.fits')
+    hdus = [get_peak(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    make_mosaic(hdus, name='h40a_max', cb_unit='K', norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'))
+    hdus = [get_m0(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s', norm_kwargs={'max_cut': 20, 'min_cut':-1, 'stretch':'asinh'})

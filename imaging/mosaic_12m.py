@@ -53,7 +53,7 @@ fronter = 20
 
 fig = pl.figure(figsize=(20,7))
 ax = fig.add_subplot(111, projection=target_wcs)
-im = ax.imshow(array, norm=visualization.simple_norm(array, stretch='asinh'), zorder=front, cmap='gray')
+im = ax.imshow(array, norm=visualization.simple_norm(array, stretch='asinh', max_cut=0.001, min_cut=-0.0001), zorder=front, cmap='gray')
 pl.colorbar(mappable=im)
 ax.coords[0].set_axislabel('Galactic Longitude')
 ax.coords[1].set_axislabel('Galactic Latitude')

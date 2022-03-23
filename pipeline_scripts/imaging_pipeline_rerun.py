@@ -22,11 +22,13 @@ mses = glob.glob("*.ms")
 if len(mses) == 0:
     raise ValueError("No MSes found")
 
+print(f"Starting imaging pipeline rerun for mses {mses} and for mouse {mous} in {cwd}")
+
 try:
     hifa_importdata(vis=mses, dbservice=False)
     hif_mstransform(pipelinemode="automatic")
-    hifa_flagtargets(pipelinemode="automatic")
-    hifa_imageprecheck(pipelinemode="automatic")    
+    #hifa_flagtargets(pipelinemode="automatic")
+    #hifa_imageprecheck(pipelinemode="automatic")
     hif_makeimlist(specmode='mfs')
     hif_findcont(pipelinemode="automatic")
     hif_uvcontfit(pipelinemode="automatic", fitorder=0)
