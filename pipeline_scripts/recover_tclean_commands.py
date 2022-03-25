@@ -47,8 +47,8 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
         print("Skipping TP")
         continue
 
-    cubepars = []
-    contpars = []
+    cubepars = {}
+    contpars = {}
 
     cuberun = False
     aggregatecontrun = False
@@ -73,9 +73,15 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
                         tcleanpars = line.split("tclean")[-1]
                         tcleanpars = eval(f'dict{tcleanpars}')
                         if tcleanpars['specmode'] == 'cube' and cuberun:
-                            cubepars.append(tcleanpars)
+                            spw = set(tcleanpars['spw'])
+                            if len(spw) != 1:
+                                raise ValueError("Cube found multiple spws")
+                            else:
+                                # get the string value out
+                                spw = next(iter(spw))
+                            cubepars[f'spw{spw}'] = tcleanpars
                         if tcleanpars['specmode'] == 'mfs':
-                            contpars.append(tcleanpars)
+                            contpars['aggregate'] = tcleanpars
             if cubepars and cuberun:
                 break
             if contpars and aggregatecontrun:
@@ -84,19 +90,19 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
     if not cubepars or not contpars:
         raise ValueError("No parameters found")
 
-    if not (any('iter1' in pars['imagename'] for pars in cubepars)):
+    if not (any('iter1' in pars['imagename'] for pars in cubepars.values())):
         raise ValueError("TEST")
 
     # only keep the 'iter1' examples *if* they exist
-    cubepars = [pars for pars in cubepars
-            if 'iter1' in pars['imagename']]
-    contpars = [pars for pars in contpars
-            if 'iter1' in pars['imagename']]
+    cubepars = {key:pars for key,pars in cubepars.items()
+            if 'iter1' in pars['imagename']}
+    contpars = {key:pars for key,pars in contpars.items()
+            if 'iter1' in pars['imagename']}
     
     # clean out paths from vis
-    for pars in cubepars:
+    for pars in cubepars.values():
         pars["vis"] = [os.path.basename(x) for x in pars["vis"]]
-    for pars in contpars:
+    for pars in contpars.values():
         pars["vis"] = [os.path.basename(x) for x in pars["vis"]]
 
     all_cubepars[sbname] = {

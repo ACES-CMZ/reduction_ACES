@@ -1,0 +1,13 @@
+{
+  "Sgr_A_st_c_03_7M": {
+    "tclean_cont_pars": {
+      "aggregate": {
+        "imagename": "uid___A001_X15a0_Xae.s36_0.Sgr_A_star_sci.spw16_18_20_22_24_26.cont.I.iter1.reclean",
+        "threshold": "0.0024Jy",
+        "noisethreshold": "3.0",
+        "lownoisethreshold": "1.75",
+        "growiterations": "150"
+      }
+    }
+  }
+}
