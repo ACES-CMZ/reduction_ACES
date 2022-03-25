@@ -44,6 +44,10 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
     mous = namedict['Observing Unit Set Status']
     sbname = namedict['Scheduling Block Name']
     pipeline_run = glob.glob(f"{pipeline_base}/html/stage*")
+
+    # need them to run in order
+    pipeline_run = sorted(pipeline_run, key=lambda x: int(x.split("stage")[-1]))
+
     print(f"{sbname} = {mous} from {pipeline_base}")
     if 'TP' in sbname:
         print("Skipping TP")
@@ -57,6 +61,7 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
     for stage in pipeline_run:
         logfile = os.path.join(stage, 'casapy.log')
         if os.path.exists(logfile):
+            # DEBUG print(f"{logfile} {aggregatecontrun} {cuberun}")
             with open(logfile, 'r') as fh:
                 for line in fh.readlines():
                     if "hif_makeimlist(specmode='cube')" in line:
@@ -64,7 +69,7 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
                         # skip to next: that will be cubes
                         break
                     if "hif_makeimlist(specmode='cont')" in line:
-                        aggrecatecontrun=True
+                        aggregatecontrun=True
                         # skip to next: that will be the aggregate continuum
                         # (individual continuum is 'mfs')
                         break
@@ -83,12 +88,12 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
                                     # get the string value out
                                     spw = next(iter(spw))
                                 cubepars[f'spw{spw}'] = tcleanpars
-                            if tcleanpars['specmode'] == 'mfs':
+                            if tcleanpars['specmode'] == 'mfs' and aggregatecontrun:
                                 contpars['aggregate'] = tcleanpars
             if cubepars and cuberun:
-                break
+                cuberun = False
             if contpars and aggregatecontrun:
-                break
+                aggregatecontrun = False
 
     if not cubepars or not contpars:
         raise ValueError("No parameters found")
