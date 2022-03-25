@@ -4,6 +4,8 @@ Environmental variables:
     ACES_ROOTDIR: the reduction_ACES directory
     ACES_DATADIR: the root data directory (e.g. /orange/adamginsburg/ACES/rawdata/)
     RUNONCE: boolean, if set, will only do one imaging run before quitting
+    DUMMYRUN: boolean, if set, will only print what it's going to do
+    TRYDROPTARGET: boolean.  If set, will try MSes w/o "_target" in them if it can't find them with
 
 Optional:
     PROJCODE:
@@ -11,10 +13,13 @@ Optional:
     GOUS
 """
 import os, sys, glob, json
-# from casatasks import tclean
-def tclean(**kwargs):
-    """fake"""
-    print(kwargs['imagename'], kwargs['parallel'])
+
+if os.getenv('DUMMYRUN'):
+    def tclean(**kwargs):
+        """fake"""
+        print(kwargs['imagename'], kwargs['parallel'])
+else:
+    from casatasks import tclean
 
 if os.getenv('ACES_ROOTDIR') is None:
     raise ValueError("Specify ACES_ROOTDIR environment variable ")
@@ -56,6 +61,8 @@ for sbname,allpars in commands.items():
                 if not any(exists.values()) and not any(exists_wild.values()):
                     os.chdir(workingpath)
                     print(f"{sbname} {partype} {spwsel}: ", end=" ")
+                    if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
+                        tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
                     tclean(**tcpars)
                     if runonce:
                         sys.exit(0)
