@@ -7,6 +7,7 @@ from astropy.utils.console import ProgressBar
 from astroquery.alma import Alma
 from bs4 import BeautifulSoup
 import re
+import itertools
 
 flux_scales = {'Jy': 1,
                'mJy': 1e-3,
@@ -20,6 +21,34 @@ def get_mous_to_sb_mapping(project_code):
     mapping = {row['member_ous_uid']: row['schedblock_name'] for row in tbl if row['qa2_passed'] == 'T'}
     return mapping
 
+def grouped(iterable, n):
+    "s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ..."
+    return zip(*[iter(iterable)]*n)
+
+def striptext(x):
+    if hasattr(x, 'text'):
+        return x.text.strip()
+    else:
+        return x.strip()
+
+def get_uid_and_name(t1fn):
+    """
+    Infer both UID and name from t1-1.html
+
+    Should return this:
+    {'Observing Unit Set Status:': 'uid://A001/X15a0/X192',
+     'Scheduling Block ID:': 'uid://A001/X15a0/X97',
+     'Scheduling Block Name:': 'Sgr_A_st_ao_03_7M'}
+
+    """
+    with open(t1fn, 'r') as fh:
+        text=fh.read()
+    soup = BeautifulSoup(text, 'lxml')
+
+    cc = soup.find('b', text=' Observing Unit Set Status: ').parent.children
+    dd = {striptext(k).strip(":"):striptext(v) for k,v in grouped(cc,2)}
+
+    return dd
 
 def get_human_readable_name(weblog, mapping=None):
     print("Reading weblog {0}".format(weblog))
