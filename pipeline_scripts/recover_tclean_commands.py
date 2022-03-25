@@ -26,6 +26,8 @@ from parse_weblog import (get_human_readable_name, get_uid_and_name)
 
 projcode = '2021.1.00172.L'
 
+source_name = 'Sgr_A_star'
+
 if 'weblog_dir' not in locals():
     weblog_dir = os.getenv('WEBLOG_DIR')
     if weblog_dir is None:
@@ -72,16 +74,17 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
                     if 'tclean( vis' in line:
                         tcleanpars = line.split("tclean")[-1]
                         tcleanpars = eval(f'dict{tcleanpars}')
-                        if tcleanpars['specmode'] == 'cube' and cuberun:
-                            spw = set(tcleanpars['spw'])
-                            if len(spw) != 1:
-                                raise ValueError("Cube found multiple spws")
-                            else:
-                                # get the string value out
-                                spw = next(iter(spw))
-                            cubepars[f'spw{spw}'] = tcleanpars
-                        if tcleanpars['specmode'] == 'mfs':
-                            contpars['aggregate'] = tcleanpars
+                        if tcleanpars['field'] == source_name:
+                            if tcleanpars['specmode'] == 'cube' and cuberun:
+                                spw = set(tcleanpars['spw'])
+                                if len(spw) != 1:
+                                    raise ValueError("Cube found multiple spws")
+                                else:
+                                    # get the string value out
+                                    spw = next(iter(spw))
+                                cubepars[f'spw{spw}'] = tcleanpars
+                            if tcleanpars['specmode'] == 'mfs':
+                                contpars['aggregate'] = tcleanpars
             if cubepars and cuberun:
                 break
             if contpars and aggregatecontrun:
