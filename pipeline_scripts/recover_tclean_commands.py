@@ -26,6 +26,8 @@ from parse_weblog import (get_human_readable_name, get_uid_and_name)
 
 projcode = '2021.1.00172.L'
 
+source_name = 'Sgr_A_star'
+
 if 'weblog_dir' not in locals():
     weblog_dir = os.getenv('WEBLOG_DIR')
     if weblog_dir is None:
@@ -42,19 +44,24 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
     mous = namedict['Observing Unit Set Status']
     sbname = namedict['Scheduling Block Name']
     pipeline_run = glob.glob(f"{pipeline_base}/html/stage*")
+
+    # need them to run in order
+    pipeline_run = sorted(pipeline_run, key=lambda x: int(x.split("stage")[-1]))
+
     print(f"{sbname} = {mous} from {pipeline_base}")
     if 'TP' in sbname:
         print("Skipping TP")
         continue
 
-    cubepars = []
-    contpars = []
+    cubepars = {}
+    contpars = {}
 
     cuberun = False
     aggregatecontrun = False
     for stage in pipeline_run:
         logfile = os.path.join(stage, 'casapy.log')
         if os.path.exists(logfile):
+            # DEBUG print(f"{logfile} {aggregatecontrun} {cuberun}")
             with open(logfile, 'r') as fh:
                 for line in fh.readlines():
                     if "hif_makeimlist(specmode='cube')" in line:
@@ -62,7 +69,7 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
                         # skip to next: that will be cubes
                         break
                     if "hif_makeimlist(specmode='cont')" in line:
-                        aggrecatecontrun=True
+                        aggregatecontrun=True
                         # skip to next: that will be the aggregate continuum
                         # (individual continuum is 'mfs')
                         break
@@ -72,31 +79,38 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
                     if 'tclean( vis' in line:
                         tcleanpars = line.split("tclean")[-1]
                         tcleanpars = eval(f'dict{tcleanpars}')
-                        if tcleanpars['specmode'] == 'cube' and cuberun:
-                            cubepars.append(tcleanpars)
-                        if tcleanpars['specmode'] == 'mfs':
-                            contpars.append(tcleanpars)
+                        if tcleanpars['field'] == source_name:
+                            if tcleanpars['specmode'] == 'cube' and cuberun:
+                                spw = set(tcleanpars['spw'])
+                                if len(spw) != 1:
+                                    raise ValueError("Cube found multiple spws")
+                                else:
+                                    # get the string value out
+                                    spw = next(iter(spw))
+                                cubepars[f'spw{spw}'] = tcleanpars
+                            if tcleanpars['specmode'] == 'mfs' and aggregatecontrun:
+                                contpars['aggregate'] = tcleanpars
             if cubepars and cuberun:
-                break
+                cuberun = False
             if contpars and aggregatecontrun:
-                break
+                aggregatecontrun = False
 
     if not cubepars or not contpars:
         raise ValueError("No parameters found")
 
-    if not (any('iter1' in pars['imagename'] for pars in cubepars)):
+    if not (any('iter1' in pars['imagename'] for pars in cubepars.values())):
         raise ValueError("TEST")
 
     # only keep the 'iter1' examples *if* they exist
-    cubepars = [pars for pars in cubepars
-            if 'iter1' in pars['imagename']]
-    contpars = [pars for pars in contpars
-            if 'iter1' in pars['imagename']]
+    cubepars = {key:pars for key,pars in cubepars.items()
+            if 'iter1' in pars['imagename']}
+    contpars = {key:pars for key,pars in contpars.items()
+            if 'iter1' in pars['imagename']}
     
     # clean out paths from vis
-    for pars in cubepars:
+    for pars in cubepars.values():
         pars["vis"] = [os.path.basename(x) for x in pars["vis"]]
-    for pars in contpars:
+    for pars in contpars.values():
         pars["vis"] = [os.path.basename(x) for x in pars["vis"]]
 
     all_cubepars[sbname] = {
