@@ -43,6 +43,9 @@ suffixes = {"tclean_cont_pars": ("image.tt0", "residual.tt0", "model.tt0", "psf.
             "tclean_cube_pars": ("image", "residual", "model", "psf"),
             }
 
+# these aren't really user-configurable
+tcpars_override = {'calcpsf': True, 'calcres': True,}
+
 for sbname,allpars in commands.items():
     mous_ = allpars['mous']
     mous = mous_[6:].replace("/", "_")
@@ -63,7 +66,19 @@ for sbname,allpars in commands.items():
                     print(f"{sbname} {partype} {spwsel}: ", end=" ")
                     if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
                         tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
+                    if not all(os.path.exists(x) for x in tcpars['vis']):
+                        print(f"ERROR: Files not found: {tcpars['vis']}")
+                        continue
+                    tcpars.update(tcpars_override)
+
+                    # try using full path?
+                    tcpars['vis'] = [os.path.realpath(x) for x in tcpars["vis"]]
+                    tcpars['imagename'] = os.path.realpath(tcpars['imagename'])
+
+                    print(f"Running {partype} tclean in {workingpath} for sb {sbname} with kwargs: \n{tcpars}")
+
                     tclean(**tcpars)
+
                     if runonce:
                         sys.exit(0)
                 elif all(exists_wild.values()):
