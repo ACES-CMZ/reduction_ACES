@@ -37,7 +37,7 @@ sous = os.getenv('SOUS') or 'A001_X1590_X30a8'
 gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
 runonce = bool(os.getenv('RUNONCE'))
 cleanup = bool(os.getenv('CLEANUP'))
-print(f"RUNONCE={runonce} CLEANUP={cleanup}")
+print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))}")
 
 from merge_tclean_commands import commands
 
