@@ -12,7 +12,7 @@ Optional:
     SOUS
     GOUS
 """
-import os, sys, glob, json
+import os, sys, glob, json, shutil
 
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
@@ -36,6 +36,8 @@ projcode = os.getenv('PROJCODE') or '2021.1.00172.L'
 sous = os.getenv('SOUS') or 'A001_X1590_X30a8'
 gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
 runonce = bool(os.getenv('RUNONCE'))
+cleanup = bool(os.getenv('CLEANUP'))
+print(f"RUNONCE={runonce} CLEANUP={cleanup}")
 
 from merge_tclean_commands import commands
 
@@ -81,14 +83,28 @@ for sbname,allpars in commands.items():
 
                     if runonce:
                         sys.exit(0)
-                elif all(exists_wild.values()):
-                    #print(f"Found all files exist for {mous} but from a different stage")
-                    pass # this is the "OK" state
                 elif all(exists.values()):
                     #print(f"Found all files exist for {mous}")
                     pass # this is the "OK" state
+                elif all(exists_wild.values()):
+                    #print(f"Found all files exist for {mous} but from a different stage")
+                    pass # this is the "OK" state
                 else:
-                    print(f"Found partially-completed run for {sbname} {partype}: {exists_wild}")
+                    if any(exists.values()):
+                        print(f"Found partially-completed run for {sbname} {partype} {spwsel}: {exists}")
+                    elif any(exists_wild.values()):
+                        print(f"Found partially-completed run for {sbname} {partype} {spwsel}: glob-based {exists_wild}")
+                    else:
+                        raise ValueError("Huh?  No.")
+                    if cleanup:
+                        for suffix in exists:
+                            if exists[suffix]:
+                                print(f"Removing existing file with suffix {suffix}: {imname}.{suffix}")
+                                shutil.rmtree(f'{imname}.{suffix}')
+                            elif exists_wild[suffix]:
+                                print(f"DRY: Removing existing files with suffix {suffix}: ", glob.glob(f"{imname_wild}.{suffix}"))
     else:
         print(f"Did not find mous {mous}")
 
+if runonce:
+    print("Completed re-imaging run with RUNONCE enabled, but didn't run at all.")
