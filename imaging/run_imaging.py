@@ -19,7 +19,8 @@ if os.getenv('DUMMYRUN'):
         """fake"""
         print(kwargs['imagename'], kwargs['parallel'])
 else:
-    from casatasks import tclean
+    pass
+    #from casatasks import tclean
 
 if os.getenv('ACES_ROOTDIR') is None:
     raise ValueError("Specify ACES_ROOTDIR environment variable ")
@@ -69,32 +70,36 @@ for sbname,allpars in commands.items():
                 exists = {suffix: os.path.exists(f"{imname}.{suffix}") for suffix in suffixes[partype]}
                 imname_wild = f"{workingpath}/{stage_wildcard_name}"
                 exists_wild = {suffix: len(glob.glob(f"{imname_wild}.{suffix}")) > 0 for suffix in suffixes[partype]}
-                if not any(exists.values()) and not any(exists_wild.values()):
-                    os.chdir(workingpath)
 
-                    print(f"{sbname} {partype} {spwsel}: ", end=" ")
-                    if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
-                        tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
-                    if not all(os.path.exists(x) for x in tcpars['vis']):
-                        print(f"ERROR: Files not found: {tcpars['vis']}")
-                        continue
-                    tcpars.update(tcpars_override)
+                # make the clean scripts
+                os.chdir(workingpath)
 
-                    # try using full path?
-                    tcpars['vis'] = [os.path.realpath(x) for x in tcpars["vis"]]
-                    tcpars['imagename'] = os.path.realpath(tcpars['imagename'])
+                print(f"{sbname} {partype} {spwsel}: ", end=" ")
+                if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
+                    tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
+                if not all(os.path.exists(x) for x in tcpars['vis']):
+                    print(f"ERROR: Files not found: {tcpars['vis']}")
+                    continue
+                tcpars.update(tcpars_override)
 
-                    print(f"Creating script for {partype} tclean in {workingpath} for sb {sbname} with kwargs: \n{tcpars}")
+                # try using full path?
+                tcpars['vis'] = [os.path.realpath(x) for x in tcpars["vis"]]
+                tcpars['imagename'] = os.path.realpath(tcpars['imagename'])
 
-                    with open(f"tclean_{partype}_{sbname}_{spwsel}.py", "w") as fh:
-                        fh.write(f"tclean(\n")
-                        for key, val in tcpars.items():
-                            fh.write(f"       {key}={repr(val)},\n")
-                        fh.write(")")
+                print(f"Creating script for {partype} tclean in {workingpath} for sb {sbname} ")
+                #with kwargs: \n{tcpars}")
 
-                    with open(scriptlist, 'a') as fh:
-                        fh.write(f'{workingpath}/tclean_{partype}_{sbname}_{spwsel}.py\n')
+                with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
+                    fh.write(f"tclean(\n")
+                    for key, val in tcpars.items():
+                        fh.write(f"       {key}={repr(val)},\n")
+                    fh.write(")")
 
+                with open(scriptlist, 'a') as fh:
+                    fh.write(f'{workingpath}/tclean_{partype}_{sbname}_{spwsel}.py\n')
+
+                if not all(exists.values()) and not all(exists_wild.values()):
+                    pass
                     #tclean(**tcpars)
 
                     #if runonce:

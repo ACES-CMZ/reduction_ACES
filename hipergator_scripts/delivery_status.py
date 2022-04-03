@@ -31,7 +31,9 @@ datatable = {}
 
 spwlist = {'12M': {33, 35, 25, 27, 29, 31},
            'TM1': {33, 35, 25, 27, 29, 31},
-           '7M': {16, 18, 20, 22, 24, 26}}
+           '7M': {16, 18, 20, 22, 24, 26},
+           'TP':  {16, 18, 20, 22, 24, 26},
+           }
 
 def wildexists(x):
     return len(glob.glob(x)) > 0
@@ -54,10 +56,11 @@ for fullpath in glob.glob(f"{basepath}/sci*/group*/member*/"):
             #globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
             #fn = glob.glob(f'{dataroot}/{globblob}')
 
-            for spw in spwlist[config]:
+            for spwn in spwlist[config] | {'aggregate'} if clean=='mfs' else set():
                 # /orange/adamginsburg/ACES/rawdata/2021.1.00172.L/
                 # science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_Xae/calibrated/working/uid___A001_X15a0_Xae.s9_0.Sgr_A_star_sci.spw26.mfs.I.iter1.image
-                bn = f'{mous}.s*_0.Sgr_A_star_sci.spw{spw}.{clean}.I'
+                spw = spw if isinstance(spw, str) else f'spw{spw}'
+                bn = f'{mous}.s*_0.Sgr_A_star_sci.{spw}.{clean}.I'
                 workingpath = f'{fullpath}/calibrated/working/'
 
                 imageglob = f'{workingpath}/{bn}.image'
@@ -72,13 +75,15 @@ for fullpath in glob.glob(f"{basepath}/sci*/group*/member*/"):
 
                 if field not in datatable:
                     datatable[field] = {}
-                if spw not in datatable[field]:
-                    datatable[field][spw] = {}
-                if clean not in datatable[field][spw]:
-                    datatable[field][spw][clean] = {}
+                if config not in datatable[field]:
+                    datatable[field][config] = {}
+                if spw not in datatable[field][config]:
+                    datatable[field][config][spw] = {}
+                if clean not in datatable[field][config][spw]:
+                    datatable[field][config][spw][clean] = {}
 
 
-                datatable[field][spw][clean] = {
+                datatable[field][config][spw][clean] = {
                         "image": wildexists(imageglob),
                         "pbcor": wildexists(pbcorglob),
                         "psf": wildexists(psfglob),

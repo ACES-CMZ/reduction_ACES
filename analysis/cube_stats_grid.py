@@ -201,26 +201,19 @@ if __name__ == "__main__":
                         print(f"Skipping {globblob} as complete: {tbl[row_matches]}", flush=True)
                         continue
 
-                if any(fn):
-                    print(f"Found some matches for fn {fn}, using {fn[0]}.", flush=True)
-                    fn = fn[0]
-                else:
-                    print(f"Found no matches for glob {globblob}", flush=True)
-                    continue
-
                 modfn = fn.replace(".image", ".model")
                 if os.path.exists(fn) and not os.path.exists(modfn):
                     log.error(f"File {fn} is missing its model {modfn}")
                     continue
                 psffn = fn.replace(".image", ".psf")
 
-                print(f"Beginning field {field} band {band} config {config} spw {spw} suffix {suffix}", flush=True)
+                print(f"Beginning field {field} config {config} spw {spw} suffix {suffix}", flush=True)
 
                 logtable = casaTable.read(f'{fn}/logtable')
                 hist = logtable['MESSAGE']
 
-                history = {x.split(":")[0]:x.split(": ")[1]
-                           for x in hist if ':' in x}
+                history = {x.split(":")[0]:":".join(x.split(": ")[1:])
+                           for x in hist if ':' in x and 'ICRS' not in x}
                 history.update({x.split("=")[0]:x.split("=")[1].lstrip()
                                 for x in hist if '=' in x})
 
@@ -266,10 +259,12 @@ if __name__ == "__main__":
                     assert lowsignal.sum() < lowsignal.size
 
 
-                    noiseregion = get_noise_region(field, f'B{band}')
-                    dt(f"Getting noise region {noiseregion}")
-                    assert noiseregion is not None
-                    noiseest_cube = cube.subcube_from_regions(regions.Regions.read(noiseregion))
+                    if False:
+                        noiseregion = get_noise_region(field)
+                        dt(f"Getting noise region {noiseregion}")
+                        assert noiseregion is not None
+                        noiseest_cube = cube.subcube_from_regions(regions.Regions.read(noiseregion))
+                    noiseest_cube = cube
 
 
                     dt(cube)
