@@ -4,9 +4,21 @@
       "aggregate": {
         "imagename": "uid___A001_X15a0_Xae.s36_0.Sgr_A_star_sci.spw16_18_20_22_24_26.cont.I.iter1.reclean",
         "threshold": "0.0024Jy",
-        "noisethreshold": "3.0",
-        "lownoisethreshold": "1.75",
-        "growiterations": "150"
+        "noisethreshold": 3.0,
+        "lownoisethreshold": 1.75,
+        "growiterations": 150
+      }
+    }
+  },
+  "Sgr_A_st_ar_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "imagename": "uid___A001_X15a0_X1a4.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1.reclean",
+        "cyclefactor": 2.0
+      },
+      "spw26": {
+        "imagename": "uid___A001_X15a0_X1a4.s38_0.Sgr_A_star_sci.spw26.cube.I.iter1.reclean",
+        "cyclefactor": 2.0
       }
     }
   }
