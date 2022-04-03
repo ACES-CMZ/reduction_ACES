@@ -37,7 +37,13 @@ sous = os.getenv('SOUS') or 'A001_X1590_X30a8'
 gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
 runonce = bool(os.getenv('RUNONCE'))
 cleanup = bool(os.getenv('CLEANUP'))
-print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))}")
+scriptlist = os.path.realpath(os.getenv('SCRIPTLIST') or './scriptlist.txt')
+print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))} SCRIPTLIST={scriptlist}")
+
+# touch scriptlist
+with open(scriptlist, 'w') as fh:
+    fh.write("")
+
 
 from merge_tclean_commands import commands
 
@@ -65,6 +71,7 @@ for sbname,allpars in commands.items():
                 exists_wild = {suffix: len(glob.glob(f"{imname_wild}.{suffix}")) > 0 for suffix in suffixes[partype]}
                 if not any(exists.values()) and not any(exists_wild.values()):
                     os.chdir(workingpath)
+
                     print(f"{sbname} {partype} {spwsel}: ", end=" ")
                     if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
                         tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
@@ -77,12 +84,21 @@ for sbname,allpars in commands.items():
                     tcpars['vis'] = [os.path.realpath(x) for x in tcpars["vis"]]
                     tcpars['imagename'] = os.path.realpath(tcpars['imagename'])
 
-                    print(f"Running {partype} tclean in {workingpath} for sb {sbname} with kwargs: \n{tcpars}")
+                    print(f"Creating script for {partype} tclean in {workingpath} for sb {sbname} with kwargs: \n{tcpars}")
 
-                    tclean(**tcpars)
+                    with open(f"tclean_{partype}_{sbname}_{spwsel}.py", "w") as fh:
+                        fh.write(f"tclean(\n")
+                        for key, val in tcpars.items():
+                            fh.write(f"       {key}={repr(val)},\n")
+                        fh.write(")")
 
-                    if runonce:
-                        sys.exit(0)
+                    with open(scriptlist, 'a') as fh:
+                        fh.write(f'{workingpath}/tclean_{partype}_{sbname}_{spwsel}.py\n')
+
+                    #tclean(**tcpars)
+
+                    #if runonce:
+                    #    sys.exit(0)
                 elif all(exists.values()):
                     #print(f"Found all files exist for {mous}")
                     pass # this is the "OK" state
