@@ -133,7 +133,7 @@ if __name__ == "__main__":
 
 
     cwd = os.getcwd()
-    basepath = '/orange/adamginsburg/ALMA_IMF/2017.1.01355.L/imaging_results'
+    basepath = dataroot
     os.chdir(basepath)
     print(f"Changed from {cwd} to {basepath}, now running cube stats assembly", flush=True)
 
@@ -176,7 +176,7 @@ if __name__ == "__main__":
     mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
 
     for fullpath in glob.glob(f"{basepath}/sci*/group*/member*/"):
-        mous = os.path.basepath(fullpath).split(".")[-1]
+        mous = os.path.basename(fullpath.strip('/')).split(".")[-1]
         sbname = mousmap_[mous]
         field = sbname.split("_")[3]
         config = sbname.split("_")[5]
@@ -187,177 +187,175 @@ if __name__ == "__main__":
 
         for suffix in (".image", ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
             globblob = f'{fullpath}/calibrated/working/*.iter1{suffix}'
-            fn = glob.glob(f'{dataroot}/{globblob}')
+            fns = glob.glob(globblob)
+            for fn in fns:
 
-            spw = int([x.lstrip('spw') for x in fn.split(".") if 'spw' in x][0])
+                spw = int([x.lstrip('spw') for x in fn.split(".") if 'spw' in x][0])
 
-            if tbl is not None:
-                row_matches = ((tbl['Field'] == field) &
-                               (tbl['Config'] == config) &
-                               (tbl['spw'] == spw) &
-                               (tbl['suffix'] == suffix))
-                if any(row_matches):
-                    print(f"Skipping {globblob} as complete: {tbl[row_matches]}", flush=True)
+                if tbl is not None:
+                    row_matches = ((tbl['Field'] == field) &
+                                   (tbl['Config'] == config) &
+                                   (tbl['spw'] == spw) &
+                                   (tbl['suffix'] == suffix))
+                    if any(row_matches):
+                        print(f"Skipping {globblob} as complete: {tbl[row_matches]}", flush=True)
+                        continue
+
+                if any(fn):
+                    print(f"Found some matches for fn {fn}, using {fn[0]}.", flush=True)
+                    fn = fn[0]
+                else:
+                    print(f"Found no matches for glob {globblob}", flush=True)
                     continue
 
-            if any(fn):
-                print(f"Found some matches for fn {fn}, using {fn[0]}.", flush=True)
-                fn = fn[0]
-            else:
-                print(f"Found no matches for glob {globblob}", flush=True)
-                continue
+                modfn = fn.replace(".image", ".model")
+                if os.path.exists(fn) and not os.path.exists(modfn):
+                    log.error(f"File {fn} is missing its model {modfn}")
+                    continue
+                psffn = fn.replace(".image", ".psf")
 
-            modfn = fn.replace(".image", ".model")
-            if os.path.exists(fn) and not os.path.exists(modfn):
-                log.error(f"File {fn} is missing its model {modfn}")
-                continue
-            psffn = fn.replace(".image", ".psf")
+                print(f"Beginning field {field} band {band} config {config} spw {spw} suffix {suffix}", flush=True)
 
-            if line in default_lines:
-                spw = int(fn.split('spw')[1][0])
+                logtable = casaTable.read(f'{fn}/logtable')
+                hist = logtable['MESSAGE']
 
-            print(f"Beginning field {field} band {band} config {config} line {line} spw {spw} suffix {suffix}", flush=True)
+                history = {x.split(":")[0]:x.split(": ")[1]
+                           for x in hist if ':' in x}
+                history.update({x.split("=")[0]:x.split("=")[1].lstrip()
+                                for x in hist if '=' in x})
 
-            logtable = casaTable.read(f'{fn}/logtable')
-            hist = logtable['MESSAGE']
+                jvmimage = fn.replace(".image", ".JvM.image")
+                if os.path.exists(jvmimage):
+                    fn = jvmimage
+                elif os.path.exists(jvmimage+".fits"):
+                    fn = jvmimage+".fits"
+                elif os.path.exists(fn):
+                    pass
+                elif os.path.exists(fn+".fits"):
+                    fn = fn+".fits"
 
-            history = {x.split(":")[0]:x.split(": ")[1]
-                       for x in hist if ':' in x}
-            history.update({x.split("=")[0]:x.split("=")[1].lstrip()
-                            for x in hist if '=' in x})
+                if 'fits' in fn:
+                    cube = SpectralCube.read(fn, format='fits', use_dask=True)
+                else:
+                    cube = SpectralCube.read(fn, format='casa_image', target_chunksize=target_chunksize)
 
-            jvmimage = fn.replace(".image", ".JvM.image")
-            if os.path.exists(jvmimage):
-                fn = jvmimage
-            elif os.path.exists(jvmimage+".fits"):
-                fn = jvmimage+".fits"
-            elif os.path.exists(fn):
-                pass
-            elif os.path.exists(fn+".fits"):
-                fn = fn+".fits"
+                sched = cube.use_dask_scheduler(scheduler=scheduler, num_workers=num_workers)
+                # print(f"Rechunking {cube} to tmp dir", flush=True)
+                # cube = cube.rechunk(save_to_tmp_dir=True)
+                # cube.use_dask_scheduler(scheduler)
 
-            if 'fits' in fn:
-                cube = SpectralCube.read(fn, format='fits', use_dask=True)
-            else:
-                cube = SpectralCube.read(fn, format='casa_image', target_chunksize=target_chunksize)
+                if hasattr(cube, 'beam'):
+                    beam = cube.beam
+                else:
+                    beams = cube.beams
+                    # use the middle-ish beam
+                    beam = beams[len(beams)//2]
 
-            sched = cube.use_dask_scheduler(scheduler=scheduler, num_workers=num_workers)
-            # print(f"Rechunking {cube} to tmp dir", flush=True)
-            # cube = cube.rechunk(save_to_tmp_dir=True)
-            # cube.use_dask_scheduler(scheduler)
-
-            if hasattr(cube, 'beam'):
-                beam = cube.beam
-            else:
-                beams = cube.beams
-                # use the middle-ish beam
-                beam = beams[len(beams)//2]
-
-            print(f"Beam: {beam}, {beam.major}, {beam.minor}", flush=True)
+                print(f"Beam: {beam}, {beam.major}, {beam.minor}", flush=True)
 
 
-            with sched:
-                # mask to select the channels with little/less emission
-                meanspec = cube.mean(axis=(1,2))
-                lowsignal = meanspec < np.nanpercentile(meanspec, 25)
+                with sched:
+                    # mask to select the channels with little/less emission
+                    meanspec = cube.mean(axis=(1,2))
+                    lowsignal = meanspec < np.nanpercentile(meanspec, 25)
 
-                print(f"Low-signal region selected {lowsignal.sum()} channels out of {lowsignal.size}."
-                      f" ({lowsignal.sum() / lowsignal.size * 100:0.2f}) %")
+                    print(f"Low-signal region selected {lowsignal.sum()} channels out of {lowsignal.size}."
+                          f" ({lowsignal.sum() / lowsignal.size * 100:0.2f}) %")
 
-                assert lowsignal.sum() > 0
-                assert lowsignal.sum() < lowsignal.size
-
-
-                noiseregion = get_noise_region(field, f'B{band}')
-                dt(f"Getting noise region {noiseregion}")
-                assert noiseregion is not None
-                noiseest_cube = cube.subcube_from_regions(regions.Regions.read(noiseregion))
+                    assert lowsignal.sum() > 0
+                    assert lowsignal.sum() < lowsignal.size
 
 
-                dt(cube)
-                dt(noiseest_cube)
+                    noiseregion = get_noise_region(field, f'B{band}')
+                    dt(f"Getting noise region {noiseregion}")
+                    assert noiseregion is not None
+                    noiseest_cube = cube.subcube_from_regions(regions.Regions.read(noiseregion))
 
-                minfreq = cube.spectral_axis.min()
-                maxfreq = cube.spectral_axis.max()
-                restfreq = cube.wcs.wcs.restfrq
 
-                # print("getting filled data")
-                # data = cube._get_filled_data(fill=np.nan)
-                # print("finished getting filled data")
-                # del data
+                    dt(cube)
+                    dt(noiseest_cube)
 
-                # try this as an experiment?  Maybe it's statistics that causes problems?
-                #print(f"Computing cube mean with scheduler {scheduler} and sched args {cube._scheduler_kwargs}")
+                    minfreq = cube.spectral_axis.min()
+                    maxfreq = cube.spectral_axis.max()
+                    restfreq = cube.wcs.wcs.restfrq
+
+                    # print("getting filled data")
+                    # data = cube._get_filled_data(fill=np.nan)
+                    # print("finished getting filled data")
+                    # del data
+
+                    # try this as an experiment?  Maybe it's statistics that causes problems?
+                    #print(f"Computing cube mean with scheduler {scheduler} and sched args {cube._scheduler_kwargs}")
+                    #mean = cube.mean()
+                    dt(f"Computing cube statistics with scheduler {scheduler} and sched args {cube._scheduler_kwargs}")
+                    stats = cube.statistics()
+                    dt("finished cube stats")
+                    min = stats['min']
+                    max = stats['max']
+                    std = stats['sigma']
+                    sum = stats['sum']
+                    mean = stats['mean']
+
+                    faintstats = noiseest_cube.with_mask(lowsignal[:,None,None]).statistics()
+                    dt("finished low-signal cube stats")
+                    lowmin = stats['min']
+                    lowmax = stats['max']
+                    lowstd = stats['sigma']
+                    lowsum = stats['sum']
+                    lowmean = stats['mean']
+                    dt("Doing low-signal cube mad-std")
+                    flatdata = noiseest_cube.with_mask(lowsignal[:,None,None]).flattened()
+                    dt("Loaded flatdata")
+                    lowmadstd = mad_std(flatdata)
+                    dt("Done low-signal cube mad-std")
+
+
+                #min = cube.min()
+                #max = cube.max()
+                ##mad = cube.mad_std()
+                #std = cube.std()
+                #sum = cube.sum()
                 #mean = cube.mean()
-                dt(f"Computing cube statistics with scheduler {scheduler} and sched args {cube._scheduler_kwargs}")
-                stats = cube.statistics()
-                dt("finished cube stats")
-                min = stats['min']
-                max = stats['max']
-                std = stats['sigma']
-                sum = stats['sum']
-                mean = stats['mean']
 
-                faintstats = noiseest_cube.with_mask(lowsignal[:,None,None]).statistics()
-                dt("finished low-signal cube stats")
-                lowmin = stats['min']
-                lowmax = stats['max']
-                lowstd = stats['sigma']
-                lowsum = stats['sum']
-                lowmean = stats['mean']
-                dt("Doing low-signal cube mad-std")
-                flatdata = noiseest_cube.with_mask(lowsignal[:,None,None]).flattened()
-                dt("Loaded flatdata")
-                lowmadstd = mad_std(flatdata)
-                dt("Done low-signal cube mad-std")
+                del stats
+                del faintstats
 
+                if os.path.exists(modfn):
+                    modcube = SpectralCube.read(modfn, format='casa_image', target_chunksize=target_chunksize)
+                elif os.path.exists(modfn+".fits"):
+                    modcube = SpectralCube.read(modfn+".fits", format='fits', use_dask=True)
+                modsched = modcube.use_dask_scheduler(scheduler=scheduler, num_workers=num_workers)
 
-            #min = cube.min()
-            #max = cube.max()
-            ##mad = cube.mad_std()
-            #std = cube.std()
-            #sum = cube.sum()
-            #mean = cube.mean()
+                dt(modcube)
+                dt(f"Computing model cube statistics with scheduler {scheduler} and sched args {modcube._scheduler_kwargs}")
+                with modsched:
+                    modstats = modcube.statistics()
+                dt(f"Done with model stats")
+                modmin = modstats['min']
+                modmax = modstats['max']
+                modstd = modstats['sigma']
+                modsum = modstats['sum']
+                modmean = modstats['mean']
 
-            del stats
-            del faintstats
+                del modcube
+                del modstats
 
-            if os.path.exists(modfn):
-                modcube = SpectralCube.read(modfn, format='casa_image', target_chunksize=target_chunksize)
-            elif os.path.exists(modfn+".fits"):
-                modcube = SpectralCube.read(modfn+".fits", format='fits', use_dask=True)
-            modsched = modcube.use_dask_scheduler(scheduler=scheduler, num_workers=num_workers)
+                if os.path.exists(psffn):
+                    (residual_peak, peakloc_as, frac, epsilon, firstnull, r_sidelobe, _) = get_psf_secondpeak(psffn, specslice=slice(cube.shape[0]//2, cube.shape[0]//2+1))
 
-            dt(modcube)
-            dt(f"Computing model cube statistics with scheduler {scheduler} and sched args {modcube._scheduler_kwargs}")
-            with modsched:
-                modstats = modcube.statistics()
-            dt(f"Done with model stats")
-            modmin = modstats['min']
-            modmax = modstats['max']
-            modstd = modstats['sigma']
-            modsum = modstats['sum']
-            modmean = modstats['mean']
+                del cube
 
-            del modcube
-            del modstats
+                row = ([field, config, spw, suffix, fn, beam.major.to(u.arcsec).value, beam.minor.to(u.arcsec).value, beam.pa.value, restfreq, minfreq, maxfreq] +
+                    [history[key] if key in history else '' for key in colnames_fromheader] +
+                    [min, max, std, sum, mean] +
+                    [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean] +
+                    [modmin, modmax, modstd, modsum, modmean, epsilon])
+                assert len(row) == len(colnames)
+                rows.append(row)
 
-            if os.path.exists(psffn):
-                (residual_peak, peakloc_as, frac, epsilon, firstnull, r_sidelobe, _) = get_psf_secondpeak(psffn, specslice=slice(cube.shape[0]//2, cube.shape[0]//2+1))
-
-            del cube
-
-            row = ([field, config, spw, suffix, fn, beam.major.to(u.arcsec).value, beam.minor.to(u.arcsec).value, beam.pa.value, restfreq, minfreq, maxfreq] +
-                [history[key] if key in history else '' for key in colnames_fromheader] +
-                [min, max, std, sum, mean] +
-                [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean] +
-                [modmin, modmax, modstd, modsum, modmean, epsilon])
-            assert len(row) == len(colnames)
-            rows.append(row)
-
-            cache_stats_file.write(" ".join(map(str, row)) + "\n")
-            cache_stats_file.flush()
-            tbl = save_tbl(rows, colnames)
+                cache_stats_file.write(" ".join(map(str, row)) + "\n")
+                cache_stats_file.flush()
+                tbl = save_tbl(rows, colnames)
 
     cache_stats_file.close()
 
