@@ -66,11 +66,16 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
     center = np.unravel_index(np.argmax(psfim), psfim.shape)
     cy, cx = center
 
+    # can't extract a sub-region bigger than the cube
+    for dim in psfim.shape:
+        if max_npix_peak >= dim // 2:
+            max_npix_peak = dim // 2 - 1
+
     npix = max_npix_peak
 
     # cannot cut out if the image is too small
-    assert cx - npix > 0
-    assert cy - npix > 0
+    assert cx - npix >= 0
+    assert cy - npix >= 0
 
     cutout = psfim[cy-npix:cy+npix+1, cx-npix:cx+npix+1]
     psfim_cutout = cutout
@@ -81,13 +86,13 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
         # assume we've appropriately sliced to get a single beam above
         beam = cube.beams[0]
 
-    fullbeam = beam.as_kernel(pixscale, x_size=npix*2+1, y_size=npix*2+1,)
-
     shape = cutout.shape
     sy, sx = shape
 
-    Y, X = np.mgrid[0:sy, 0:sx]
+    fullbeam = beam.as_kernel(pixscale, x_size=npix*2+1, y_size=npix*2+1,)
+    # will break things below fullbeam = beam.as_kernel(pixscale, x_size=sx, y_size=sy)
 
+    Y, X = np.mgrid[0:sy, 0:sx]
 
     center = np.unravel_index(np.argmax(cutout), cutout.shape)
     cy, cx = center
@@ -821,35 +826,3 @@ def savestats(basepath="/orange/adamginsburg/web/secure/ALMA-IMF/October31Releas
               format='jsviewer')
 
     return tbl
-
-if __name__ == "__main__":
-    import socket
-    cwd = os.getcwd()
-    if 'ufhpc' in socket.gethostname():
-        for basepath,formid in (
-                #("/orange/adamginsburg/web/secure/ALMA-IMF/October2020Release/",
-                ("/orange/adamginsburg/ALMA_IMF/2017.1.01355.L/June2021Release/",
-                 "1FAIpQLSc3QnQWNDl97B8XeTFRNMWRqU5rlxNPqIC2i1jMr5nAjcHDug"),
-                #("/orange/adamginsburg/ALMA_IMF/2017.1.01355.L/May2021Release/",
-                # "1FAIpQLSc3QnQWNDl97B8XeTFRNMWRqU5rlxNPqIC2i1jMr5nAjcHDug"),
-                #("/orange/adamginsburg/ALMA_IMF/2017.1.01355.L/February2021Release/",
-                # "1FAIpQLSc3QnQWNDl97B8XeTFRNMWRqU5rlxNPqIC2i1jMr5nAjcHDug"),
-                ("/orange/adamginsburg/ALMA_IMF/2017.1.01355.L/RestructuredImagingResults/",
-                 "null"),
-                #("/orange/adamginsburg/ALMA_IMF/2017.1.01355.L/October2020Release/",
-                # "1FAIpQLSc3QnQWNDl97B8XeTFRNMWRqU5rlxNPqIC2i1jMr5nAjcHDug"),
-                ##("/orange/adamginsburg/ALMA_IMF/2017.1.01355.L/July2020Release/",
-                ##"1FAIpQLSc3QnQWNDl97B8XeTFRNMWRqU5rlxNPqIC2i1jMr5nAjcHDug"),
-                #("/orange/adamginsburg/web/secure/ALMA-IMF/May2020/",
-                # "1FAIpQLSc3QnQWNDl97B8XeTFRNMWRqU5rlxNPqIC2i1jMr5nAjcHDug"),
-                #("/orange/adamginsburg/web/secure/ALMA-IMF/Feb2020/",
-                # "1FAIpQLSc3QnQWNDl97B8XeTFRNMWRqU5rlxNPqIC2i1jMr5nAjcHDug"),
-               #("/orange/adamginsburg/web/secure/ALMA-IMF/October31Release/", "1FAIpQLSczsBdB3Am4znOio2Ky5GZqAnRYDrYTD704gspNu7fAMm2-NQ")
-               ):
-
-            os.chdir(basepath)
-            modtbl = savestats(basepath=basepath, suffix='model.tt0', filetype="")
-            tbl = savestats(basepath=basepath)
-            base_form_url=f"https://docs.google.com/forms/d/e/{formid}/viewform?embedded=true"
-            flist = make_analysis_forms(basepath=basepath, base_form_url=base_form_url, dontskip_noresid='June2021' in basepath)
-    os.chdir(cwd)

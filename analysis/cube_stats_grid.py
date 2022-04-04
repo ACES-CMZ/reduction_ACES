@@ -18,6 +18,7 @@ import radio_beam
 import glob
 from spectral_cube import SpectralCube,DaskSpectralCube
 from spectral_cube.lower_dimensional_structures import Projection
+from spectral_cube.utils import NoBeamError
 
 from casa_formats_io import Table as casaTable
 #obsoleted by casaformatsio
@@ -188,7 +189,12 @@ if __name__ == "__main__":
         for suffix in (".image", ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
             globblob = f'{fullpath}/calibrated/working/*.iter1{suffix}'
             fns = glob.glob(globblob)
+            globblob2 = f'{fullpath}/reclean/*.iter1{suffix}'
+            fns += glob.glob(globblob2)
+
             for fn in fns:
+                if 'mfs' in fn:
+                    continue
 
                 spw = int([x.lstrip('spw') for x in fn.split(".") if 'spw' in x][0])
 
@@ -237,14 +243,28 @@ if __name__ == "__main__":
                 # cube = cube.rechunk(save_to_tmp_dir=True)
                 # cube.use_dask_scheduler(scheduler)
 
-                if hasattr(cube, 'beam'):
-                    beam = cube.beam
-                else:
+                try:
+                    if hasattr(cube, 'beam'):
+                        beam = cube.beam
+                except NoBeamError as ex:
+                    print("Beam not found: {ex}")
+                    continue
+
+                if hasattr(cube, 'beams'):
                     beams = cube.beams
                     # use the middle-ish beam
                     beam = beams[len(beams)//2]
 
                 print(f"Beam: {beam}, {beam.major}, {beam.minor}", flush=True)
+
+                if 'imsize' not in history:
+                    history['imsize'] = str(cube.shape[1:])
+                if 'cell' not in history:
+                    history['cell'] = str([x.to(u.arcsec) for x in cube.wcs.celestial.proj_plane_pixel_scales()])
+                if 'restfreq' not in history:
+                    history['restfreq'] = float(cube.wcs.wcs.restfrq)
+                if 'nchan' not in history:
+                    history['nchan'] = int(cube.shape[0])
 
 
                 with sched:
@@ -339,6 +359,7 @@ if __name__ == "__main__":
                     (residual_peak, peakloc_as, frac, epsilon, firstnull, r_sidelobe, _) = get_psf_secondpeak(psffn, specslice=slice(cube.shape[0]//2, cube.shape[0]//2+1))
 
                 del cube
+
 
                 row = ([field, config, spw, suffix, fn, beam.major.to(u.arcsec).value, beam.minor.to(u.arcsec).value, beam.pa.value, restfreq, minfreq, maxfreq] +
                     [history[key] if key in history else '' for key in colnames_fromheader] +
