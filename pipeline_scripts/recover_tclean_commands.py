@@ -106,7 +106,7 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
             if 'iter1' in pars['imagename']}
     contpars = {key:pars for key,pars in contpars.items()
             if 'iter1' in pars['imagename']}
-    
+
     # clean out paths from vis
     for pars in cubepars.values():
         pars["vis"] = [os.path.basename(x) for x in pars["vis"]]
