@@ -1,4 +1,5 @@
 import glob
+import sys
 from astropy.io import fits
 from astropy import visualization
 import pylab as pl
@@ -27,17 +28,14 @@ from casa_formats_io import Table as casaTable
 
 from imstats import get_psf_secondpeak, get_noise_region
 
-
 from pathlib import Path
 
+try:
+    from mous_map import get_mous_to_sb_mapping
+except ImportError:
+    sys.path.append('/orange/adamginsburg/ACES/reduction_ACES/hipergator_scripts/')
+    from mous_map import get_mous_to_sb_mapping
 
-def get_mous_to_sb_mapping(project_code):
-    from astroquery.alma import Alma
-
-    tbl = Alma.query(payload={'project_code': project_code}, cache=False,
-                     public=False)['member_ous_uid','schedblock_name', 'qa2_passed']
-    mapping = {row['member_ous_uid']: row['schedblock_name'] for row in tbl if row['qa2_passed'] == 'T'}
-    return mapping
 
 
 tbldir = Path('/orange/adamginsburg/web/secure/ACES/tables')
@@ -260,7 +258,7 @@ if __name__ == "__main__":
                 if 'imsize' not in history:
                     history['imsize'] = str(cube.shape[1:])
                 if 'cell' not in history:
-                    history['cell'] = str([x.to(u.arcsec).value for x in cube.wcs.celestial.proj_plane_pixel_scales()])
+                    history['cell'] = str([x.to(u.arcsec) for x in cube.wcs.celestial.proj_plane_pixel_scales()])
                 if 'restfreq' not in history:
                     history['restfreq'] = float(cube.wcs.wcs.restfrq)
                 if 'nchan' not in history:
@@ -361,7 +359,7 @@ if __name__ == "__main__":
                 del cube
 
 
-                row = ([field, config, spw, suffix, fn, beam.major.to(u.arcsec).value, beam.minor.to(u.arcsec).value, beam.pa.value, restfreq, minfreq, maxfreq] +
+                row = ([field, config, spw, suffix, os.path.basename(fn), beam.major.to(u.arcsec).value, beam.minor.to(u.arcsec).value, beam.pa.value, restfreq, minfreq, maxfreq] +
                     [history[key] if key in history else '' for key in colnames_fromheader] +
                     [min, max, std, sum, mean] +
                     [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean] +

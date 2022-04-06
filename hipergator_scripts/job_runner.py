@@ -16,7 +16,7 @@ mouses = [os.path.basename(x)
 mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
 mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
 
-parameters = {'member.uid___A001_X15a0_Xea': 
+parameters = {'member.uid___A001_X15a0_Xea':
         {'mem': 128, 'ntasks': 32, 'mpi': True,  } }
 newpars = parameters.copy()
 
@@ -69,9 +69,32 @@ if __name__ == "__main__":
         contsub_suffix = '.contsub' if do_contsub else ''
 
         for config in imaging_status[field]:
+            if config == 'TP':
+                # we don't do TP
+                continue
             for spw in imaging_status[field][config]:
                 for imtype in imaging_status[field][config][spw]:
                     imstatus = imaging_status[field][config][spw][imtype]
+
+                    calwork = f'{grouppath}/{mous}/calibrated/working'
+                    cleantype = {'cube': 'cube', 'mfs': 'cont'}[imtype]
+                    try:
+                        spwname = f'spw{int(spw)}'
+                    except Exception:
+                        spwname = spw
+                    scriptname = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}_03_{config}_{spwname}.py'
+                    if (imtype == 'mfs' and spw == 'aggregate') or imtype == 'cube':
+                        if not os.path.exists(scriptname):
+                            print(f"ERROR: script {scriptname} does not exist!  This may indicate that `write_tclean_scripts` has not been run or the pipeline hasn't finished.")
+                            continue
+                        else:
+                            # all is good
+                            pass
+                    else:
+                        # skip MFS individual spws
+                        continue
+                    os.environ['SCRIPTNAME'] = scriptname
+
                     if imstatus['image'] and imstatus['pbcor']:
                         # Done
                         continue
@@ -85,7 +108,7 @@ if __name__ == "__main__":
                             print(f"field {field} {spw} {imtype} has not begun: imstatus={imstatus}")
 
                     if verbose:
-                        print(f"spw={spw}, spwpars={spwpars}")
+                        print(f"spw={spw}, imtype={imtype}, spwpars={spwpars}, imstatus={imstatus}")
 
 
                     workdir = '/blue/adamginsburg/adamginsburg/ACES/workdir'
@@ -135,19 +158,6 @@ if __name__ == "__main__":
                     #group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X130/calibrated/working/
                     #tclean_cube_pars_Sgr_A_st_y_03_TM1_spw27.py
 
-                    calwork = f'{grouppath}/{mous}/calibrated/working'
-                    cleantype = {'cube': 'cube', 'mfs': 'cont'}[imtype]
-                    try:
-                        spwname = f'spw{int(spw)}'
-                    except Exception:
-                        spwname = spw
-                    scriptname = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}_03_{config}_{spwname}.py'
-                    if (imtype == 'mfs' and spw == 'aggregate') or imtype == 'cube':
-                        assert os.path.exists(scriptname)
-                    else:
-                        # skip MFS individual spws
-                        continue
-                    os.environ['SCRIPTNAME'] = scriptname
 
                     basename = f'{field}_{spw}_{imtype}{contsub_suffix}'
                     # basename = "{0}_{1}_spw{2}_{3}".format(field, band, spw, arrayname)
@@ -165,7 +175,7 @@ if __name__ == "__main__":
                                 for ff in failed_files:
                                     print(f"Removing {ff}")
                                     shutil.rmtree(ff)
-                        
+
                         tempdir_name = f'{field}_{spw}_{imtype}_{contsub_suffix}'
                         print(f"Removing files matching '{workdir}/{tempdir_name}/IMAGING_WEIGHT.*'")
                         old_tempfiles = (glob.glob(f'{workdir}/{tempdir_name}/IMAGING_WEIGHT*') +
