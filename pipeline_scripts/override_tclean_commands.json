@@ -10,6 +10,15 @@
       }
     }
   },
+  "Sgr_A_st_ak_03_TM1": {
+    "tclean_cube_pars": {
+      "spw35": {
+        "imagename": "uid___A001_X15a0_X178.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1.reclean",
+        "threshold": '1mJy',
+      }
+    }
+  },
+  }
   "Sgr_A_st_ar_03_7M": {
     "tclean_cube_pars": {
       "spw24": {
