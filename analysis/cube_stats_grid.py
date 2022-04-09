@@ -258,7 +258,7 @@ if __name__ == "__main__":
                 if 'imsize' not in history:
                     history['imsize'] = str(cube.shape[1:])
                 if 'cell' not in history:
-                    history['cell'] = str([x.to(u.arcsec) for x in cube.wcs.celestial.proj_plane_pixel_scales()])
+                    history['cell'] = str([x.to(u.arcsec).to_string() for x in cube.wcs.celestial.proj_plane_pixel_scales()])
                 if 'restfreq' not in history:
                     history['restfreq'] = float(cube.wcs.wcs.restfrq)
                 if 'nchan' not in history:
