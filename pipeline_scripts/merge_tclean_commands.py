@@ -25,5 +25,3 @@ for sbname,allpars in override_commands.items():
                     orig = commands[sbname][partype][spwsel][key]
                     print(f"{sbname} {partype} {spwsel}: {key}: {orig} -> {val}")
                 commands[sbname][partype][spwsel][key] = val
-            
-

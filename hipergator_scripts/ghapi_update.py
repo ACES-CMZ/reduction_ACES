@@ -108,6 +108,22 @@ for new_oid in unique_oids:
                          'weblog_url': weblog_url}
     array = sb_re.search(new_sb).groups()[1]
 
+    spw_lines = """
+  * [ ] SPW16 H13CN
+  * [ ] SPW18 H13CO+/SiO
+  * [ ] SPW20 HCO+
+  * [ ] SPW22 HNCO
+  * [ ] SPW24 Cont 1
+  * [ ] SPW26 Cont 2
+""" if array in ('7M', 'TP') else """
+  * [ ] SPW25 H13CN
+  * [ ] SPW27 H13CO+/SiO
+  * [ ] SPW29 HCO+
+  * [ ] SPW31 HNCO
+  * [ ] SPW33 Cont 1
+  * [ ] SPW35 Cont 2
+""" 
+
     if new_oids in new_oids:
         issuebody = (f"""
 {new_sb}
@@ -124,12 +140,7 @@ f"""
 * [ ] [Weblog]({weblog_url}) Quality Assessment?
 * [ ] Imaging: Continuum
 * [ ] Imaging: Lines
-  * [ ] HCO+
-  * [ ] HNCO
-  * [ ] H13CN
-  * [ ] H13CO+/SiO
-  * [ ] Cont 1
-  * [ ] Cont 2
+{spw_lines}
 
 ## Product Links: 
 
