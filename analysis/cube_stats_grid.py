@@ -278,6 +278,7 @@ if __name__ == "__main__":
 
 
                     if False:
+                        # this is an open to-do item: we need to create noise estimation regions
                         noiseregion = get_noise_region(field)
                         dt(f"Getting noise region {noiseregion}")
                         assert noiseregion is not None
