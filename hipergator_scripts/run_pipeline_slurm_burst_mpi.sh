@@ -70,7 +70,20 @@ export RUNONCE=True
 #srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=/tmp -c 'import os, pprint; print(pprint.pprint(dict(os.environ)))'
 
 
-RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 /orange/adamginsburg/ACES/reduction_ACES/retrieval_scripts/run_pipeline.py > /tmp/scriptlist
+# Extract casaplotms
+mkdir /tmp/casaplotms
+cd /tmp/casaplotms
+/orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/__bin__/casaplotms-x86_64.AppImage --appimage-extract
+export PLOTMSPATH=/tmp/casaplotms/squashfs-root/AppRun
+cd -
+
+echo "Hacking plotms"
+python3 ${ACES_ROOTDIR}/hipergator_scripts/hack_plotms.py  /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py
+echo "Hacked plotms"
+
+
+
+RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 ${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py > /tmp/scriptlist
 
 echo "Script List"
 cat /tmp/scriptlist
@@ -108,6 +121,7 @@ for script in $(cat /tmp/scriptlist); do
     #srun --export=ALL --mpi=pmix_v3 
     echo xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('$(basename ${script})')"
     xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('$(basename ${script})')"
+    echo "Completed MPICASA run"
     cd $cwd
 done
 echo "Done"
