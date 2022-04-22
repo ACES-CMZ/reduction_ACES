@@ -68,9 +68,13 @@ if __name__ == "__main__":
         do_contsub = bool(spwpars.get('do_contsub'))
         contsub_suffix = '.contsub' if do_contsub else ''
 
-        for config in imaging_status[field]:
-            if config == 'TP':
+        for config_ in imaging_status[field]:
+            if config_ == 'TP':
                 # we don't do TP
+                continue
+            if config_ != config:
+                # imaging_status doesn't know which config is being asked for
+                # skip if the config is not the right one for the mous
                 continue
             for spw in imaging_status[field][config]:
                 for imtype in imaging_status[field][config][spw]:
