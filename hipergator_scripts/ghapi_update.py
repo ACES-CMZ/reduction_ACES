@@ -19,10 +19,10 @@ api = GhApi(repo='reduction_ACES', owner='ACES-CMZ')
 issues = all_flat(api.issues.list_for_repo, state='all')
 assert len(issues) > 30
 
-# uid://A001/X15a0/X17a
+# example: uid://A001/X15a0/X17a
 uid_re = re.compile("uid://A[0-9]*/X[a-z0-9]*/X[a-z0-9]*")
 
-# Sgr_A_st_ak_03_7M
+# example: Sgr_A_st_ak_03_7M
 sb_re = re.compile('Sgr_A_st_([a-z]*)_03_(7M|12M|TP|TM1|TM2).*')
 
 
@@ -33,6 +33,8 @@ sb_arrays = {search.group(): search.groups()[1] for search in sb_searches if sea
 
 uid_searches = [uid_re.search(issue.title) for issue in issues]
 uid_names = [search.group() for search in uid_searches if search]
+
+assert len(uid_names) == len(issue_sb_names)
 
 uids_to_sbs = {uid: sb for uid, sb in zip(uid_names, issue_sb_names)}
 sbs_to_uids = {sb: uid for uid, sb in zip(uid_names, issue_sb_names)}
@@ -48,20 +50,38 @@ alma = Alma()
 alma.archive_url = 'https://almascience.eso.org'
 alma.dataarchive_url = 'https://almascience.eso.org'
 results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
+results.add_index('obs_id')
 
-unique_oids = np.unique(results['obs_id'])
+# .data required b/c making it an index breaks normal usage?
+unique_oids = np.unique(results['obs_id'].data)
 unique_sbs = np.unique(results['schedblock_name'])
+# remember that .unique sorts the data so you can't zip these together!
+
 
 assert unique_oids.size == unique_sbs.size
 
 new_oids = set(unique_oids) - set(uid_names)
 new_sbs = set(unique_sbs) - set(issue_sb_names)
 
+assert len(unique_oids) == len(unique_sbs)
+
+def get_sb_name_from_oid(oid):
+    sbnames = np.unique(results.loc[oid]['schedblock_name'])
+    assert len(sbnames) == 1
+    return sbnames[0]
+
+
+# add mapping for new (not already in issues) SBs
+# explicitly avoid overwriting any existing entries b/c we want the issue names
+# to override the archive names
+# (order matters since we're updating uids_to_sbs below)
+sbs_to_uids.update({get_sb_name_from_oid(uid): uid for uid in unique_oids if uid not in uids_to_sbs})
+uids_to_sbs.update({uid: get_sb_name_from_oid(uid) for uid in unique_oids if uid not in uids_to_sbs})
+
 # we know this one is already done, this is a sanity check to make sure we
 # don't get caught out by pagination again
 assert 'Sgr_A_st_aq_03_7M' not in new_sbs
 
-results.add_index('obs_id')
 
 underscore_uid_re = re.compile("uid___A[0-9]*_X[a-z0-9]*_X[a-z0-9]*")
 downloaded_uids = [underscore_uid_re.search(x).group()
@@ -122,9 +142,9 @@ for new_oid in unique_oids:
   * [ ] SPW31 HNCO
   * [ ] SPW33 Cont 1
   * [ ] SPW35 Cont 2
-""" 
+"""
 
-    if new_oids in new_oids:
+    if new_oid in new_oids:
         issuebody = (f"""
 {new_sb}
 [{new_uid}](https://almascience.org/aq/?result_view=observation&mous={new_uid})
@@ -142,7 +162,7 @@ f"""
 * [ ] Imaging: Lines
 {spw_lines}
 
-## Product Links: 
+## Product Links:
 
 {product_link_text}
 """.replace("\r",""))
@@ -160,6 +180,7 @@ f"""
                                       body=issuebody,
                                       labels=labels)
     else:
+        #print(f"Issue exists: Possibly updating existing issue {new_sb_issuename}")
         issue = sbs_to_issues[new_sb_issuename]
         body = issue.body
         labels = [lb.name for lb in issue.labels]
@@ -206,7 +227,7 @@ f"""
             need_update = True
             issuebody += f"""
 
-## Product Links: 
+## Product Links:
 
 {product_link_text}
 """.replace("\r","")
@@ -235,7 +256,7 @@ projects = api.projects.list_for_repo()
 columns = api.projects.list_columns(projects[0].id) #api(projects[0].columns_url)
 coldict = {column.name: column for column in columns}
 #cards = [api(col.cards_url) for col in columns]
-cards = [x for col in columns for x in all_flat(api.projects.list_cards, column_id=col.id)] 
+cards = [x for col in columns for x in all_flat(api.projects.list_cards, column_id=col.id)]
 
 issue_urls_in_cards = [card.content_url for card in cards]
 issue_urls = [issue.url for issue in issues]
@@ -267,7 +288,7 @@ for issue in issues:
                   )
         else:
             # check if issue is categorized right
-            
+
             completed_not_delivered = api(coldict['Completed but not delivered/downloaded'].cards_url)
             completed_and_delivered = api(coldict['Delivered Execution Blocks'].cards_url)
             other = [api(coldict[key].cards_url) for key in coldict if key not in ['Completed but not delivered/downloaded', 'Delivered Execution Blocks']]

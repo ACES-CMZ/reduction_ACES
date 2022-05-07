@@ -96,7 +96,7 @@ for sbname,allpars in commands.items():
                     fh.write(")")
 
                 with open(scriptlist, 'a') as fh:
-                    fh.write(f'{workingpath}/tclean_{partype}_{sbname}_{spwsel}.py\n')
+                    fh.write(f'{workingpath}/{partype}_{sbname}_{spwsel}.py\n')
 
                 if not all(exists.values()) and not all(exists_wild.values()):
                     pass
