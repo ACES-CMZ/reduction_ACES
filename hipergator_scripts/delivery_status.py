@@ -64,6 +64,10 @@ for fullpath in looplist:
                 # /orange/adamginsburg/ACES/rawdata/2021.1.00172.L/
                 # science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_Xae/calibrated/working/uid___A001_X15a0_Xae.s9_0.Sgr_A_star_sci.spw26.mfs.I.iter1.image
                 spw = spwn if isinstance(spwn, str) else f'spw{spwn}'
+
+                # aggregate continuum is named with the full list of spws
+                spw = 'spw_*.cont' if spw == 'aggregate' else spw
+
                 bn = f'{mous}.s*_0.Sgr_A_star_sci.{spw}.{clean}.I'
                 workingpath = f'{fullpath}/calibrated/working/'
 
