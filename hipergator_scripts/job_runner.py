@@ -202,7 +202,8 @@ if __name__ == "__main__":
                     runcmd = f'{scriptpath}/run_simple_script.sh'
 
                     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
-                    os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
+                    #os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
+                    os.environ['jobname'] = jobname
 
 
                     cmd = f'sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} --mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} --qos={qos} --export=ALL  {runcmd}'
