@@ -25,7 +25,7 @@
   "Sgr_A_st_ao_03_TM1": {
     "tclean_cube_pars": {
       "spw35": {
-        "imagename": "uid___A001_X15a0_X190.s38_0.Sgr_A_star_sci.spw35.cube.I.iter0.reclean",
+        "imagename": "uid___A001_X15a0_X190.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1.reclean",
         "threshold": "0.01Jy",
         "noisethreshold": 3.25,
         "lownoisethreshold": 1.5,
