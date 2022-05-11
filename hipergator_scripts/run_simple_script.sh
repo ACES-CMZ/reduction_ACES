@@ -1,8 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-type=NONE          # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=adamginsburg@ufl.edu     # Where to send mail
-#SBATCH --ntasks=32                     # 
-#SBATCH --mem=128gb                     # Job memory request
 #SBATCH --nodes=1
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
 #SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/run_simple_%j.log   # Standard output and error log
@@ -49,8 +47,19 @@ if [ -z $SLURM_NTASKS ]; then
     exit 1
 fi
 
+# try reducing the number of threads by 1 assuming that the 'master' thread can't handle it
+mpi_ntasks=$(echo "${SLURM_NTASKS} - 1" | bc -l)
+
 echo ""
-echo "env just befor running the command:"
+echo "env just before running the command:"
 env
 
-${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
+${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
+
+# the following should not be necessary (it's actually totally redundant) but
+# mpicasa has been very severely failing yet reporting COMPLETED instead of
+# FAILED
+ppid="$!"
+wait $ppid
+exitcode=$?
+exit $exitcode
