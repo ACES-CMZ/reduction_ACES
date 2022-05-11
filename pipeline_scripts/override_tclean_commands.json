@@ -4,7 +4,7 @@
       "aggregate": {
         "imagename": "uid___A001_X15a0_Xae.s36_0.Sgr_A_star_sci.spw16_18_20_22_24_26.cont.I.iter1.reclean",
         "threshold": "0.0024Jy",
-        "noisethreshold": 3.0,
+        "noisethreshold": 3,
         "lownoisethreshold": 1.75,
         "growiterations": 150
       }
@@ -14,11 +14,43 @@
     "tclean_cube_pars": {
       "spw24": {
         "imagename": "uid___A001_X15a0_X1a4.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1.reclean",
-        "cyclefactor": 2.0
+        "cyclefactor": 2
       },
       "spw26": {
         "imagename": "uid___A001_X15a0_X1a4.s38_0.Sgr_A_star_sci.spw26.cube.I.iter1.reclean",
-        "cyclefactor": 2.0
+        "cyclefactor": 2
+      }
+    }
+  },
+  "Sgr_A_st_ao_03_TM1": {
+    "tclean_cube_pars": {
+      "spw35": {
+        "imagename": "uid___A001_X15a0_X190.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1.reclean",
+        "threshold": "0.01Jy",
+        "noisethreshold": 3.25,
+        "lownoisethreshold": 1.5,
+        "growiterations": 75,
+        "sidelobethreshold": 2,
+        "negativethreshold": 10,
+        "smoothfactor": 1,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01
+      }
+    }
+  },
+  "Sgr_A_st_t_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "imagename": "uid___A001_X15a0_X114.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1.reclean",
+        "threshold": "0.06Jy",
+        "noisethreshold": 5,
+        "lownoisethreshold": 2,
+        "growiterations": 75,
+        "sidelobethreshold": 1.25,
+        "negativethreshold": 0,
+        "smoothfactor": 0.5,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01
       }
     }
   },
