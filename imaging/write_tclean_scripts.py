@@ -41,6 +41,11 @@ cleanup = bool(os.getenv('CLEANUP'))
 scriptlist = os.path.realpath(os.getenv('SCRIPTLIST') or './scriptlist.txt')
 print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))} SCRIPTLIST={scriptlist}")
 
+if os.getenv('TEMPORARY_WORKING_DIRECTORY'):
+    temp_workdir = os.getenv('TEMPORARY_WORKING_DIRECTORY')
+else:
+    temp_workdir = False
+
 # touch scriptlist
 with open(scriptlist, 'w') as fh:
     fh.write("")
@@ -86,14 +91,36 @@ for sbname,allpars in commands.items():
                 tcpars['vis'] = [os.path.realpath(x) for x in tcpars["vis"]]
                 tcpars['imagename'] = os.path.realpath(tcpars['imagename'])
 
+                if temp_workdir:
+                    # copy & move files around first
+                    copycmds = "\n".join(["import shutil"] +
+                            [f"shutil.copytree('{x}', '{temp_workdir}/{os.path.basename(x)}')"
+                                for x in tcpars['vis']])
+                    cleanupcmds = "\n".join(
+                                    ["import glob",
+                                     f"flist = glob.glob('{temp_workdir}/{os.path.basename(tcpars['imagename'])}.*')",
+                                     "for fn in flist:",
+                                     f"    shutil.move(fn, '{os.path.dirname(tcpars['imagename'])}/')",
+                                     ] + 
+                                     [f"shutil.rmtree('{temp_workdir}/{os.path.basename(x)}')" for x in tcpars['vis']]
+                                    )
+                    tcpars['vis'] = [os.path.join(temp_workdir, os.path.basename(x)) for x in tcpars["vis"]]
+                    tcpars['imagename'] = os.path.join(temp_workdir, os.path.basename(tcpars['imagename']))
+
+
                 print(f"Creating script for {partype} tclean in {workingpath} for sb {sbname} ")
                 #with kwargs: \n{tcpars}")
 
                 with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
+                    if temp_workdir:
+                        fh.write(copycmds)
+                        fh.write("\n\n")
                     fh.write(f"tclean(\n")
                     for key, val in tcpars.items():
                         fh.write(f"       {key}={repr(val)},\n")
-                    fh.write(")")
+                    fh.write(")\n\n\n")
+                    if temp_workdir:
+                        fh.write(cleanupcmds)
 
                 with open(scriptlist, 'a') as fh:
                     fh.write(f'{workingpath}/{partype}_{sbname}_{spwsel}.py\n')

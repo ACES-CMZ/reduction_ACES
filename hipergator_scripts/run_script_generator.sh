@@ -46,6 +46,8 @@ export jobname=$JOBNAME
 #export DASK_THREADS=8
 export DASK_THREADS=$SLURM_NTASKS
 
+export TEMPORARY_WORKING_DIRECTORY="/blue/adamginsburg/adamginsburg/ACES/workdir"
+
 env
 
 ${IPYTHON} ${ACES_ROOTDIR}/pipeline_scripts/recover_tclean_commands.py
