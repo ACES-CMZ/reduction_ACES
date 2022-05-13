@@ -58,7 +58,7 @@ tcpars_override = {'calcpsf': True, 'calcres': True,}
 for sbname,allpars in commands.items():
     mous_ = allpars['mous']
     mous = mous_[6:].replace("/", "_")
-    assert len(mous) in (14, 15)
+    assert len(mous) in (14, 15, 16)
     workingpath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mous}/calibrated/working'
     if os.path.exists(workingpath):
         for partype in suffixes.keys():

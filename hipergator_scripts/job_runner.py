@@ -173,7 +173,8 @@ if __name__ == "__main__":
                             #print(f"Removing files matching '{workdir}/{basename}.*'")
                             failed_files = glob.glob(f'{workdir}/{basename}.*')
                             if any('.image' in x for x in failed_files):
-                                print(f"Found a .image in the failed file list: {failed_files}.  Continuing.")
+                                print(f"Found a .image in the failed file list: {failed_files}.  "
+                                      "Continuing without deleting 'failed files'.")
                                 #raise ValueError(f"Found a .image in the failed file list: {failed_files}")
                             else:
                                 for ff in failed_files:
@@ -202,7 +203,8 @@ if __name__ == "__main__":
                     runcmd = f'{scriptpath}/run_simple_script.sh'
 
                     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
-                    os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
+                    #os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
+                    os.environ['jobname'] = jobname
 
 
                     cmd = f'sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} --mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} --qos={qos} --export=ALL  {runcmd}'
