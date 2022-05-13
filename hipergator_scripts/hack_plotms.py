@@ -1,8 +1,10 @@
 import sys
 import os
+import tempfile
+tmpdir = tempfile.gettempdir()
 
 apppath_string = '            app_path = __os.path.join( __os.path.abspath( __os.path.join(__os.path.dirname(__file__),"..") ), \'__bin__/casaplotms-x86_64.AppImage\')\n'
-new_apppath_string = '            app_path = "/tmp/casaplotms/squashfs-root/AppRun"\n'
+new_apppath_string = '            app_path = "'+tmpdir+'/casaplotms/squashfs-root/AppRun"\n'
 
 assert 'plotmstool.py' in sys.argv[1]
 plotmstool = sys.argv[1]
@@ -11,11 +13,11 @@ with open(plotmstool, 'r') as fh:
     lines = fh.readlines()
 
 newstr = """
-            app_path = "/tmp/casaplotms/squashfs-root/AppRun"
+            app_path = "{0}/casaplotms/squashfs-root/AppRun"
             if not __os.path.exists(app_path):
                 print(f"Did not find extracted path {app_path}")
                 app_path = __os.path.join( __os.path.abspath( __os.path.join(__os.path.dirname(__file__),"..") ), '__bin__/casaplotms-x86_64.AppImage')
-"""
+""".format(tmpdir)
 
 if apppath_string in lines:
     linenum = lines.index(apppath_string)

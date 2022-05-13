@@ -45,9 +45,9 @@ export INTERACTIVE=0
 export LD_LIBRARY_PATH=${CASAPATH}/lib/:$LD_LIBRARY_PATH
 export OPAL_PREFIX="${CASAPATH}/lib/mpi"
 
-export IPYTHONDIR=/tmp
+export IPYTHONDIR=$SLURM_TMPDIR
 export IPYTHON_DIR=$IPYTHONDIR
-cp ~/.casa/config.py /tmp
+cp ~/.casa/config.py $SLURM_TMPDIR
 
 if [ -z $SLURM_NTASKS ]; then
     echo "FAILURE: SLURM_NTASKS was not specified"
@@ -61,20 +61,20 @@ export RUNONCE=True
 #srun --export=ALL --mpi=pmix_v3 /orange/adamginsburg/test_mpi/a.out
 #
 #echo srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger -c 'print("TEST")'
-#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=/tmp -c 'print("TEST")'
+#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=$SLURM_TMPDIR -c 'print("TEST")'
 #echo "Done"
 #
 #
-#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=/tmp\
+#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=$SLURM_TMPDIR\
 #    -c 'from casampi.MPIEnvironment import MPIEnvironment; from casampi.MPICommandClient import MPICommandClient; print(f"MPI enabled: {MPIEnvironment.is_mpi_enabled}")'
-#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=/tmp -c 'import os, pprint; print(pprint.pprint(dict(os.environ)))'
+#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=$SLURM_TMPDIR -c 'import os, pprint; print(pprint.pprint(dict(os.environ)))'
 
 
 # Extract casaplotms
-mkdir /tmp/casaplotms
-cd /tmp/casaplotms
+mkdir $SLURM_TMPDIR/casaplotms
+cd $SLURM_TMPDIR/casaplotms
 /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/__bin__/casaplotms-x86_64.AppImage --appimage-extract
-export PLOTMSPATH=/tmp/casaplotms/squashfs-root/AppRun
+export PLOTMSPATH=$SLURM_TMPDIR/casaplotms/squashfs-root/AppRun
 cd -
 
 echo "Hacking plotms"
@@ -83,13 +83,13 @@ echo "Hacked plotms"
 
 
 
-RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 ${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py > /tmp/scriptlist
+RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 ${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py > $SLURM_TMPDIR/scriptlist
 
 echo "Script List"
-cat /tmp/scriptlist
+cat $SLURM_TMPDIR/scriptlist
 echo "***********"
 
-for script in $(cat /tmp/scriptlist); do 
+for script in $(cat $SLURM_TMPDIR/scriptlist); do 
     IFS='/' read -r -a array <<< "$script"
     mous=${array[2]}
     echo "MOUS is ${mous}, script is ${script}"
@@ -98,7 +98,7 @@ for script in $(cat /tmp/scriptlist); do
         echo "MOUS '${mous}' was unspecified, which is a bug."
         echo "script was '${script}'"
         echo "Scriptlist was :"
-        cat /tmp/scriptlist
+        cat $SLURM_TMPDIR/scriptlist
         echo "pwd=$(pwd)"
         echo "previous cwd=${cwd}"
         exit 1
@@ -117,10 +117,10 @@ for script in $(cat /tmp/scriptlist); do
     pwd
     echo "script: " $script
     echo
-    #echo srun --export=ALL --mpi=pmix_v3 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('${script}')"
+    #echo srun --export=ALL --mpi=pmix_v3 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('${script}')"
     #srun --export=ALL --mpi=pmix_v3 
-    echo xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('$(basename ${script})')"
-    xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('$(basename ${script})')"
+    echo xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$(basename ${script})')"
+    xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$(basename ${script})')"
     echo "Completed MPICASA run"
     cd $cwd
 done

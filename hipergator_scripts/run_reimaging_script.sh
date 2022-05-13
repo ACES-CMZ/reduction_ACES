@@ -46,7 +46,7 @@ export INTERACTIVE=0
 export LD_LIBRARY_PATH=${CASAPATH}/lib/:$LD_LIBRARY_PATH
 export OPAL_PREFIX="${CASAPATH}/lib/mpi"
 
-cp ~/.casa/config.py /tmp
+cp ~/.casa/config.py ${TMPDIR}
 
 # this appears not to work, but it should
 export APPIMAGE_EXTRACT_AND_RUN=1
@@ -64,7 +64,7 @@ REIMAGING=/orange/adamginsburg/ACES/reduction_ACES/imaging/write_tclean_scripts.
 env
 
 # "dummy" run to print what we'll do
-DUMMYRUN=True RUNONCE=False ${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=/tmp -c "execfile('${REIMAGING}')"
+DUMMYRUN=True RUNONCE=False ${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=${TMPDIR} -c "execfile('${REIMAGING}')"
 
 echo "Completed dummy run"
 
@@ -91,5 +91,5 @@ jn=${jn/tclean_cube_pars_Sgr_A_st_/}
 #scontrol update jobname=reimaging_${jn}
 #echo "Job renamed to reimaging_${jn}"
 
-echo ${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=/tmp -c "execfile('$firstscript')"
-${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=/tmp -c "execfile('$firstscript')"
+echo ${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=${TMPDIR} -c "execfile('$firstscript')"
+${MPICASA} -n $SLURM_NTASKS xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=${TMPDIR} -c "execfile('$firstscript')"
