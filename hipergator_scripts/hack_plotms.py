@@ -4,11 +4,11 @@ import tempfile
 tmpdir = tempfile.gettempdir()
 
 print(f"Using casaplotms from directory {tmpdir}")
-plotmspath = tmpdir+'/casaplotms/squashfs-root/AppRun'
+plotmspath = '/home/adamginsburg/bin/plotmsAppRun'
 print(f"Does the path {plotmspath} exist?: {os.path.exists(plotmspath)}")
 
 apppath_string = '            app_path = __os.path.join( __os.path.abspath( __os.path.join(__os.path.dirname(__file__),"..") ), \'__bin__/casaplotms-x86_64.AppImage\')\n'
-new_apppath_string = '            app_path = "'+tmpdir+'/casaplotms/squashfs-root/AppRun"\n'
+new_apppath_string = f'            app_path = {plotmspath}"\n'
 
 assert 'plotmstool.py' in sys.argv[1]
 plotmstool = sys.argv[1]

@@ -43,6 +43,10 @@ export INTERACTIVE=0
 export LD_LIBRARY_PATH=${CASAPATH}/lib/:$LD_LIBRARY_PATH
 export OPAL_PREFIX="${CASAPATH}/lib/mpi"
 
+# use /red because it will put the hacked CASA stuff into the same place... in theory...
+# (or, more sensible, create a symlink....)
+export TMPDIR=/red/adamginsburg
+export SLURM_TMPDIR=/red/adamginsburg
 export IPYTHONDIR=$SLURM_TMPDIR
 export IPYTHON_DIR=$IPYTHONDIR
 cp ~/.casa/config.py $SLURM_TMPDIR
@@ -72,7 +76,8 @@ export RUNONCE=True
 mkdir $SLURM_TMPDIR/casaplotms
 cd $SLURM_TMPDIR/casaplotms
 /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/__bin__/casaplotms-x86_64.AppImage --appimage-extract
-export PLOTMSPATH=$SLURM_TMPDIR/casaplotms/squashfs-root/AppRun
+ln -s $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /home/adamginsburg/bin/plotmsAppRun
+export PLOTMSPATH=/home/adamginsburg/bin/plotmsAppRun
 cd -
 
 echo "Hacking plotms"
