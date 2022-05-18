@@ -162,9 +162,6 @@ for sbname,allpars in commands.items():
                                 print(f"DRY: Removing existing files with suffix {suffix}: ", glob.glob(f"{imname_wild}.{suffix}"))
     else:
         print(f"Did not find mous {mous}")
-    if 'Xba' in mous:
-        print(mous)
-        break
 
 if runonce:
     print("Completed re-imaging run with RUNONCE enabled, but didn't run at all.")

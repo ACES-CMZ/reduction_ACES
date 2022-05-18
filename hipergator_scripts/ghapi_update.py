@@ -112,13 +112,18 @@ for new_oid in unique_oids:
     gous = matches['group_ous_uid'][0].replace(":","_").replace("/","_")
     calibrated_dir = f'/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/calibrated'
     if os.path.exists(calibrated_dir):
-        mses = glob.glob(f'{calibrated_dir}/*.ms')
+        mses = (glob.glob(f'{calibrated_dir}/*.ms')
+                + glob.glob(f'{calibrated_dir}/*.ms.split.cal'))
     pipeline_run = os.path.exists(calibrated_dir) and len(mses) > 0
+    pipeline_links = [x.replace("/orange/adamginsburg/web/secure/", "https://data.rc.ufl.edu/secure/adamginsburg/")
+            for x in glob.glob(f"/orange/adamginsburg/web/secure/ACES/weblogs-reimaging/member.{mous}/pipeline*/html/t1-4.html")]
 
     product_dir = f'/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/product'
     product_filenames = (glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cube.I.pbcor.fits") +
             glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.mfs.I.pbcor.fits") +
-            glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cont.I.*.fits"))
+            glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cont.I.*.fits") +
+            glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cube.I.sd.fits")
+            )
 
     reproc_product_dir = f'/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/calibrated/working/'
     reproc_product_filenames = (glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.cont.I.iter1.image.tt0.pbcor.fits") +
@@ -133,7 +138,7 @@ for new_oid in unique_oids:
     reproc_product_link_text = "\n".join(reproc_product_links)
 
     weblog_url = f'https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable/{new_sb.strip().replace(" ","_")}/html/'
-    print(f"Operating on sb={new_sb}, oid={new_oid}, dl={downloaded}, delivered={delivered}, url={weblog_url}, weblognames={new_sb in weblog_names}")
+    print(f"Operating on sb={new_sb}, oid={new_oid}, dl={downloaded}, delivered={delivered}, url={weblog_url}, weblognames={new_sb in weblog_names}.  pipeline_run={pipeline_run}")
     sb_status[new_sb] = {'downloaded': downloaded,
                          'delivered': delivered,
                          'weblog_url': weblog_url}
@@ -225,9 +230,30 @@ f"""
             lines.insert(insert_weblog_at, f"* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked")
 
         if 'hipergator' not in lines[insert_hipergator_at]:
+            need_update.append("Downloaded")
             lines.insert(insert_hipergator_at, f"  * [{'x' if downloaded else ' '}] hipergator")
-        if 'hipergator pipeline run' not in lines[insert_hipergator_at+1] and array != "TP":
-            lines.insert(insert_hipergator_at+1, f"  * [{'x' if pipeline_run else ' '}] hipergator pipeline run")
+
+        pipeline_linenumber = insert_hipergator_at+1
+        pipeline_line_text = f"  * [{'x' if pipeline_run else ' '}] hipergator pipeline run"
+        if 'hipergator pipeline run' not in lines[pipeline_linenumber] and array != "TP":
+            need_update.append("Pipelined")
+            lines.insert(pipeline_linenumber, pipeline_line_text)
+        elif 'hipergator pipeline run' in lines[pipeline_linenumber] and array != "TP" and lines[pipeline_linenumber] != pipeline_line_text:
+            need_update.append("Pipelined")
+            lines[pipeline_linenumber] = pipeline_line_text
+
+        pipeline_links_linenumber = pipeline_linenumber+1
+        # check if the link is included at all
+        pipeline_links_done = [link in body for link in pipeline_links]
+        if len(pipeline_links) > sum(pipeline_links_done):
+            need_update.append("New pipeline run links")
+            for link,done in zip(pipeline_links, pipeline_links_done):
+                if not done:
+                    assert 'https' in link
+                    pipenumber = link.split("/")[-3].split("-")[1]
+                    plink_text = f"    * [Pipeline Run {pipenumber}]({link})"
+                    lines.insert(pipeline_links_linenumber, plink_text)
+
 
         issuebody = "\n".join(lines)
 
@@ -242,27 +268,29 @@ f"""
         if product_link_text:
             productlinks = f"""
 
-    ## Product Links:
+## Product Links:
 
-    {product_link_text}
-    """.replace("\r","")
+{product_link_text}
+""".replace("\r","")
 
             if '## Product Links:' not in issue.body:
-                need_update.append("New product links")
+                need_update.append("New product links - none were present")
                 issebody += productlinks
+            elif issue.body.strip().endswith("## Product Links:"):
+                need_update.append("New product links - end was blank")
+                issuebody = issuebody.strip().split("## Product Links:")[0] + productlinks
             elif "## Product Links:\n\n\n\n\n##" in issue.body:
                 need_update.append("Update product links")
                 issuebody = issuebody.replace("## Product Links:\n\n\n\n\n", productlinks)
-                print("Replace blank product")
 
 
         if reproc_product_link_text:
             reproductlinks = f"""
 
-    ## Reprocessed Product Links:
+## Reprocessed Product Links:
 
-    {reproc_product_link_text}
-    """.replace("\r","")
+{reproc_product_link_text}
+""".replace("\r","")
 
             if '## Reprocessed Product Links:' not in issue.body:
                 need_update.append("New reproduct links")
@@ -270,7 +298,6 @@ f"""
             elif "## Reprocessed Product Links:\n\n\n" in issue.body:
                 need_update.append("Update reproduct links")
                 issuebody = issuebody.replace("## Reprocessed Product Links:\n\n\n", reproductlinks)
-                print("Replace blank reproduct")
 
         if need_update:
             print(f"Updating issue for {new_sb} -> {new_sb_issuename}.  need_update={need_update}")
@@ -285,6 +312,8 @@ f"""
                                   title=issue.title,
                                   body=issuebody,
                                   labels=labels)
+
+            # use this to break raise Exception("Completed a run; check it")
 
 
 paged_issues = paged(api.issues.list_for_repo, state='all')
