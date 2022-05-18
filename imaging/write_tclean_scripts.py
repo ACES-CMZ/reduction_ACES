@@ -93,9 +93,14 @@ for sbname,allpars in commands.items():
 
                 if temp_workdir:
                     # copy & move files around first
-                    copycmds = "\n".join(["import shutil"] +
-                            [f"shutil.copytree('{x}', '{temp_workdir}/{os.path.basename(x)}')"
-                                for x in tcpars['vis']])
+                    copycmds = "\n".join(
+                            ["import shutil",
+                             "try:"] +
+                            [f"    shutil.copytree('{x}', '{temp_workdir}/{os.path.basename(x)}')"
+                                for x in tcpars['vis']] +
+                            ["except FileExistsError as ex:",
+                             "    print(f'MS file already copied: {ex}.  Proceeding.')"]
+                            )
                     cleanupcmds = "\n".join(
                                     ["import glob",
                                      f"flist = glob.glob('{temp_workdir}/{os.path.basename(tcpars['imagename'])}.*')",
