@@ -119,6 +119,10 @@ for sbname,allpars in commands.items():
                     for key, val in tcpars.items():
                         fh.write(f"       {key}={repr(val)},\n")
                     fh.write(")\n\n\n")
+                    if tcpars['specmode'] == 'cube':
+                        fh.write("exportfits('{tcpars['imagename']}.image.pbcor', '{tcpars['imagename']}.image.pbcor.fits')\n\n\n")
+                    elif tcpars['specmode'] == 'mfs':
+                        fh.write("exportfits('{tcpars['imagename']}.image.tt0.pbcor', '{tcpars['imagename']}.image.tt0.pbcor.fits')\n\n\n")
                     if temp_workdir:
                         fh.write(cleanupcmds)
 

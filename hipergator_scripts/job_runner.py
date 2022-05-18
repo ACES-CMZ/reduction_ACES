@@ -11,7 +11,7 @@ grouppath = f"{basepath}/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/grou
 
 mouses = [os.path.basename(x)
         for x in
-        glob.glob(f'{grouppath}/member.uid___A001_X15a0_X*')]
+        glob.glob(f'{grouppath}/member.uid___A001_X*_X*')]
 
 mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
 mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
@@ -173,8 +173,7 @@ if __name__ == "__main__":
                             #print(f"Removing files matching '{workdir}/{basename}.*'")
                             failed_files = glob.glob(f'{workdir}/{basename}.*')
                             if any('.image' in x for x in failed_files):
-                                print(f"Found a .image in the failed file list: {failed_files}.  "
-                                      "Continuing without deleting 'failed files'.")
+                                print(f"Found a .image in the failed file list: {failed_files}.  Continuing.")
                                 #raise ValueError(f"Found a .image in the failed file list: {failed_files}")
                             else:
                                 for ff in failed_files:
@@ -203,8 +202,7 @@ if __name__ == "__main__":
                     runcmd = f'{scriptpath}/run_simple_script.sh'
 
                     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
-                    #os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
-                    os.environ['jobname'] = jobname
+                    os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
 
 
                     cmd = f'sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} --mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} --qos={qos} --export=ALL  {runcmd}'

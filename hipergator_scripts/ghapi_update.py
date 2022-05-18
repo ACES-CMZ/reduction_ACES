@@ -5,6 +5,9 @@ from ghapi.all import GhApi, paged
 import re
 import glob
 
+dryrun = os.getenv("DRYRUN") or (dryrun if "dryrun" in locals() else False)
+print(f"Dryrun={dryrun}")
+
 def all_flat(apicall, **kwargs):
     paged_stuff = paged(apicall, **kwargs)
     return [x for page in paged_stuff for x in page]
@@ -97,7 +100,7 @@ for new_oid in unique_oids:
     new_sb_issuename = uids_to_sbs[new_oid]
     new_sb = new_sb_issuename.split(" ")[0]
 
-    need_update = False
+    need_update = [] # empty list = False
     matches = results.loc[new_oid]
     new_uid = matches['obs_id'][0]
     delivered = '3000' not in matches['obs_release_date'][0]
@@ -117,12 +120,20 @@ for new_oid in unique_oids:
             glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.mfs.I.pbcor.fits") +
             glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cont.I.*.fits"))
 
+    reproc_product_dir = f'/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/calibrated/working/'
+    reproc_product_filenames = (glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.cont.I.iter1.image.tt0.pbcor.fits") +
+            glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.mfs.I.iter1.image.pbcor.fits") +
+            glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.cube.I.iter1.image.pbcor.fits"))
+
     # https://g-76492b.55ba.08cc.data.globus.org/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X114/product/member.uid___A001_X15a0_X114.J1427-4206_bp.spw18.mfs.I.pbcor.fits
     product_links = [f" - [{os.path.basename(fn)}](https://g-76492b.55ba.08cc.data.globus.org/{fn[25:]})" for fn in product_filenames]
     product_link_text = "\n".join(product_links)
 
+    reproc_product_links = [f" - [{os.path.basename(fn)}](https://g-76492b.55ba.08cc.data.globus.org/{fn[25:]})" for fn in reproc_product_filenames]
+    reproc_product_link_text = "\n".join(reproc_product_links)
+
     weblog_url = f'https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable/{new_sb.strip().replace(" ","_")}/html/'
-    print(new_sb, new_oid, downloaded, delivered, weblog_url, new_sb in weblog_names)
+    print(f"Operating on sb={new_sb}, oid={new_oid}, dl={downloaded}, delivered={delivered}, url={weblog_url}, weblognames={new_sb in weblog_names}")
     sb_status[new_sb] = {'downloaded': downloaded,
                          'delivered': delivered,
                          'weblog_url': weblog_url}
@@ -165,6 +176,10 @@ f"""
 ## Product Links:
 
 {product_link_text}
+
+## Reprocessed Product Links:
+
+{reproc_product_link_text}
 """.replace("\r",""))
 
 
@@ -218,32 +233,58 @@ f"""
 
         if delivered and 'Delivered' not in labels:
             labels.append('Delivered')
-            need_update = True
+            need_update.append('Delivered')
 
         if re.sub('\s', '', issue.body) != re.sub('\s', '', issuebody):
-            need_update = True
+            need_update.append("Generic: something changed")
 
-        if 'Product Links:' not in issue.body:
-            need_update = True
-            issuebody += f"""
 
-## Product Links:
+        if product_link_text:
+            productlinks = f"""
 
-{product_link_text}
-""".replace("\r","")
+    ## Product Links:
+
+    {product_link_text}
+    """.replace("\r","")
+
+            if '## Product Links:' not in issue.body:
+                need_update.append("New product links")
+                issebody += productlinks
+            elif "## Product Links:\n\n\n\n\n##" in issue.body:
+                need_update.append("Update product links")
+                issuebody = issuebody.replace("## Product Links:\n\n\n\n\n", productlinks)
+                print("Replace blank product")
+
+
+        if reproc_product_link_text:
+            reproductlinks = f"""
+
+    ## Reprocessed Product Links:
+
+    {reproc_product_link_text}
+    """.replace("\r","")
+
+            if '## Reprocessed Product Links:' not in issue.body:
+                need_update.append("New reproduct links")
+                issuebody += reproductlinks
+            elif "## Reprocessed Product Links:\n\n\n" in issue.body:
+                need_update.append("Update reproduct links")
+                issuebody = issuebody.replace("## Reprocessed Product Links:\n\n\n", reproductlinks)
+                print("Replace blank reproduct")
 
         if need_update:
-            print(f"Updating issue for {new_sb} -> {new_sb_issuename}")
+            print(f"Updating issue for {new_sb} -> {new_sb_issuename}.  need_update={need_update}")
             if False:
                 print('\n'.join(difflib.ndiff(issuebody.split("\n"),
                                               issue.body.split("\n"))
                              ))
 
 
-            api.issues.update(issue_number=issue.number,
-                              title=issue.title,
-                              body=issuebody,
-                              labels=labels)
+            if not dryrun:
+                api.issues.update(issue_number=issue.number,
+                                  title=issue.title,
+                                  body=issuebody,
+                                  labels=labels)
 
 
 paged_issues = paged(api.issues.list_for_repo, state='all')
@@ -265,6 +306,8 @@ for issue in issues:
     if issue.state == 'closed':
         # skip closed issues
         continue
+
+    print(".", end="")
     if 'EB' in [label.name for label in issue.labels]:
         completed = '[x] Observations completed' in issue.body
         delivered = '[x] Delivered' in issue.body
@@ -279,13 +322,14 @@ for issue in issues:
                 continue
 
             print(f"Adding issue {issue.title} to the {'Completed' if completed else ''}{'Delivered' if delivered else ''} column")
-            api(path=f'/projects/columns/{col.id}/cards', verb='POST',
-                data={'content_id': issue.id,
-                      'column_id': col.id,
-                      'content_type': 'Issue'
-                     },
-                     headers={"Accept": "application/vnd.github.v3+json"}
-                  )
+            if not dryrun:
+                api(path=f'/projects/columns/{col.id}/cards', verb='POST',
+                    data={'content_id': issue.id,
+                          'column_id': col.id,
+                          'content_type': 'Issue'
+                         },
+                         headers={"Accept": "application/vnd.github.v3+json"}
+                      )
         else:
             # check if issue is categorized right
 
@@ -299,18 +343,19 @@ for issue in issues:
                     current_card = [card for card in completed_not_delivered if card.content_url == issue.url][0]
                     print(f"MOVING issue {issue.title}")
 
-                    # remove it from current location
-                    api(path=f'/projects/columns/cards/{current_card.id}',
-                        verb='DELETE', headers={"Accept":
-                                                "application/vnd.github.v3+json"})
+                    if not dryrun:
+                        # remove it from current location
+                        api(path=f'/projects/columns/cards/{current_card.id}',
+                            verb='DELETE', headers={"Accept":
+                                                    "application/vnd.github.v3+json"})
 
-                    # add it to new location
-                    CADid = coldict['Delivered Execution Blocks'].id
-                    api(path=f'/projects/columns/{CADid}/cards', verb='POST',
-                        data={'content_id': issue.id,
-                              'column_id': CADid,
-                              'content_type': 'Issue'
-                             },
-                             headers={"Accept": "application/vnd.github.v3+json"}
-                          )
+                        # add it to new location
+                        CADid = coldict['Delivered Execution Blocks'].id
+                        api(path=f'/projects/columns/{CADid}/cards', verb='POST',
+                            data={'content_id': issue.id,
+                                  'column_id': CADid,
+                                  'content_type': 'Issue'
+                                 },
+                                 headers={"Accept": "application/vnd.github.v3+json"}
+                              )
 
