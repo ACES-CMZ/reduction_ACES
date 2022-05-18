@@ -53,4 +53,5 @@ env
 ${IPYTHON} ${ACES_ROOTDIR}/pipeline_scripts/recover_tclean_commands.py
 ${IPYTHON} ${ACES_ROOTDIR}/imaging/write_tclean_scripts.py
 ${IPYTHON} ${ACES_ROOTDIR}/hipergator_scripts/job_runner.py --verbose=True
+${IPYTHON} ${ACES_ROOTDIR}/hipergator_scripts/link_repipeline_weblogs.py
 
