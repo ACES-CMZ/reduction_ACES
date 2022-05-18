@@ -15,9 +15,7 @@ pwd; hostname; date
 echo "Memory=${MEM}"
 
 #module load cuda/11.0.207
-module load intel/2020.0.166
-module load openmpi/4.1.1 
-module load libfuse/3.10.4
+module load intel/2020.0.166 openmpi/4.1.1 libfuse/3.10.4
 
 LOG_DIR=/blue/adamginsburg/adamginsburg/ACES/logs
 export LOGFILENAME="${LOG_DIR}/casa_log_mpi_pipeline_${SLURM_JOB_ID}_$(date +%Y-%m-%d_%H_%M_%S).log"
@@ -79,6 +77,11 @@ cd -
 
 echo "Hacking plotms"
 python3 ${ACES_ROOTDIR}/hipergator_scripts/hack_plotms.py  /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py
+hacksuccess=$?
+if [ $hacksuccess -eq 99 ]; then
+    echo "plotms file was corrupted"
+    exit $hacksuccess
+fi
 echo "Hacked plotms"
 
 
