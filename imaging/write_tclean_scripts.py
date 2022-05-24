@@ -12,7 +12,7 @@ Optional:
     SOUS
     GOUS
 """
-import os, sys, glob, json, shutil
+import os, sys, glob, json, shutil, textwrap
 
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
@@ -93,14 +93,40 @@ for sbname,allpars in commands.items():
 
                 if temp_workdir:
                     # copy & move files around first
-                    copycmds = "\n".join(
-                            ["import shutil",
-                             "try:"] +
-                            [f"    shutil.copytree('{x}', '{temp_workdir}/{os.path.basename(x)}')"
-                                for x in tcpars['vis']] +
-                            ["except FileExistsError as ex:",
-                             "    print(f'MS file already copied: {ex}.  Proceeding.')"]
-                            )
+                    #obsolete
+                    # copycmds = "\n".join(
+                    #         ["import shutil",
+                    #          "try:"] +
+                    #         [f"    shutil.copytree('{x}', '{temp_workdir}/{os.path.basename(x)}')"
+                    #             for x in tcpars['vis']] +
+                    #         ["except FileExistsError as ex:",
+                    #          "    print(f'MS file already copied: {ex}.  Proceeding.')"]
+                    #         )
+
+                    if spwsel == 'aggregate':
+                        splitcmd = [textwrap.dedent(
+                                f"""
+                                outputvis='{temp_workdir}/{os.path.basename(vis).replace('.ms', '_aggregate.ms')}'
+                                if not os.path.exists(outputvis):
+                                    split(vis='{vis}',
+                                    outputvis=outputvis,
+                                    field='Sgr_A_star',
+                                    width=8)""") for vis in tcpars['vis']]
+                    else:
+                        spw = int(spwsel.lstrip('spw'))
+                        def rename(x):
+                            return os.path.join(temp_workdir,
+                                    os.path.basename(x).replace('.ms', f'_spw{spw}.ms'))
+                        splitcmd = [textwrap.dedent(
+                                f"""
+                                outputvis='{rename(vis)}'
+                                if not os.path.exists(outputvis):
+                                    split(vis='{vis}',
+                                    outputvis=outputvis,
+                                    field='Sgr_A_star',
+                                    spw={spw})""") for vis in tcpars['vis']]
+                        tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
+
                     cleanupcmds = "\n".join(
                                     ["import glob",
                                      f"flist = glob.glob('{temp_workdir}/{os.path.basename(tcpars['imagename'])}.*')",
@@ -109,7 +135,6 @@ for sbname,allpars in commands.items():
                                      ] + 
                                      [f"shutil.rmtree('{temp_workdir}/{os.path.basename(x)}')" for x in tcpars['vis']]
                                     )
-                    tcpars['vis'] = [os.path.join(temp_workdir, os.path.basename(x)) for x in tcpars["vis"]]
                     tcpars['imagename'] = os.path.join(temp_workdir, os.path.basename(tcpars['imagename']))
 
 
@@ -118,16 +143,16 @@ for sbname,allpars in commands.items():
 
                 with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
                     if temp_workdir:
-                        fh.write(copycmds)
+                        fh.write("".join(splitcmd))
                         fh.write("\n\n")
                     fh.write(f"tclean(\n")
                     for key, val in tcpars.items():
                         fh.write(f"       {key}={repr(val)},\n")
                     fh.write(")\n\n\n")
                     if tcpars['specmode'] == 'cube':
-                        fh.write("exportfits('{tcpars['imagename']}.image.pbcor', '{tcpars['imagename']}.image.pbcor.fits')\n\n\n")
+                        fh.write(f"exportfits('{tcpars['imagename']}.image.pbcor', '{tcpars['imagename']}.image.pbcor.fits')\n\n\n")
                     elif tcpars['specmode'] == 'mfs':
-                        fh.write("exportfits('{tcpars['imagename']}.image.tt0.pbcor', '{tcpars['imagename']}.image.tt0.pbcor.fits')\n\n\n")
+                        fh.write(f"exportfits('{tcpars['imagename']}.image.tt0.pbcor', '{tcpars['imagename']}.image.tt0.pbcor.fits')\n\n\n")
                     if temp_workdir:
                         fh.write(cleanupcmds)
 
