@@ -137,11 +137,15 @@ for sbname,allpars in commands.items():
                                     )
                     tcpars['imagename'] = os.path.join(temp_workdir, os.path.basename(tcpars['imagename']))
 
+                    # the spw selection should now be 'everything in the MS'
+                    tcpars['spw'] = ''
+
 
                 print(f"Creating script for {partype} tclean in {workingpath} for sb {sbname} ")
                 #with kwargs: \n{tcpars}")
 
                 with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
+                    fh.write("import os, shutil, glob\n")
                     if temp_workdir:
                         fh.write("".join(splitcmd))
                         fh.write("\n\n")
