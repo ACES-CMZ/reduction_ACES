@@ -73,17 +73,17 @@ export RUNONCE=True
 
 
 # Extract casaplotms
-mkdir $SLURM_TMPDIR/casaplotms
-cd $SLURM_TMPDIR/casaplotms
+mkdir /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
+cd /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
 /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/__bin__/casaplotms-x86_64.AppImage --appimage-extract
 ln -sf $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /home/adamginsburg/bin/plotmsAppRun
-mkdir /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
-cp -r $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
-export PLOTMSPATH=/home/adamginsburg/bin/plotmsAppRun
-export PLOTMSPATH=/orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms/AppRun
+#cp -r $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
+#export PLOTMSPATH=/home/adamginsburg/bin/plotmsAppRun
+export PLOTMSPATH=/orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms/squashfs-root/AppRun
 cd -
 
 echo "Hacking plotms"
+echo "plotms = /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py"
 python3 ${ACES_ROOTDIR}/hipergator_scripts/hack_plotms.py  /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py
 hacksuccess=$?
 if [ $hacksuccess -eq 99 ]; then
@@ -92,6 +92,8 @@ if [ $hacksuccess -eq 99 ]; then
 fi
 echo "Hacked plotms"
 
+# how did the path end up as this?
+#/blue/adamginsburg/adamginsburg/casa/casa-6.4.3-2-pipeline-2021.3.0.17/hacked-plotms/usr/bin/casaplotms
 
 echo "CASA version is $CASAVERSION"
 

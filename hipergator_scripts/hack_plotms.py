@@ -25,6 +25,7 @@ newstr = f"""
             if not __os.path.exists(app_path):
                 print(f"Did not find extracted path {{app_path}}")
                 app_path = __os.path.join( __os.path.abspath( __os.path.join(__os.path.dirname(__file__),"..") ), '__bin__/casaplotms-x86_64.AppImage')
+            print(f"plotms app_path is {app_path}")
 """
 
 if apppath_string in lines:
