@@ -45,8 +45,8 @@ export OPAL_PREFIX="${CASAPATH}/lib/mpi"
 
 # use /red because it will put the hacked CASA stuff into the same place... in theory...
 # (or, more sensible, create a symlink....)
-export TMPDIR=/red/adamginsburg/
-export SLURM_TMPDIR=/red/adamginsburg/
+#export TMPDIR=/red/adamginsburg/
+#export SLURM_TMPDIR=/red/adamginsburg/
 export IPYTHONDIR=$SLURM_TMPDIR
 export IPYTHON_DIR=$IPYTHONDIR
 cp ~/.casa/config.py $SLURM_TMPDIR
@@ -76,8 +76,11 @@ export RUNONCE=True
 mkdir $SLURM_TMPDIR/casaplotms
 cd $SLURM_TMPDIR/casaplotms
 /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/__bin__/casaplotms-x86_64.AppImage --appimage-extract
-ln -s $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /home/adamginsburg/bin/plotmsAppRun
+ln -sf $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /home/adamginsburg/bin/plotmsAppRun
+mkdir /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
+cp -r $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
 export PLOTMSPATH=/home/adamginsburg/bin/plotmsAppRun
+export PLOTMSPATH=/orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms/AppRun
 cd -
 
 echo "Hacking plotms"
@@ -89,6 +92,8 @@ if [ $hacksuccess -eq 99 ]; then
 fi
 echo "Hacked plotms"
 
+
+echo "CASA version is $CASAVERSION"
 
 
 RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 ${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py > $SLURM_TMPDIR/scriptlist

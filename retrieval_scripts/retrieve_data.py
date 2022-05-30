@@ -11,7 +11,7 @@ if len(sys.argv) > 1:
 else:
     username = six.moves.input("Username: ")
 
-for server_url in ('https://almascience.eso.org', 'https://almascience.nrao.edu', 'https://almascience.nao.ac.jp'):
+for server_url in ('https://almascience.nrao.edu', 'https://almascience.eso.org',  'https://almascience.nao.ac.jp'):
     print(f"Logging in to ALMA at server {server_url}", flush=True)
     try:
         alma = Alma()
