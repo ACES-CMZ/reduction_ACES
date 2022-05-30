@@ -1,8 +1,14 @@
 import sys
 import os
+import tempfile
+tmpdir = tempfile.gettempdir()
+
+print(f"Using casaplotms from directory {tmpdir}")
+plotmspath = os.getenv('PLOTMSPATH') or '/home/adamginsburg/bin/plotmsAppRun'
+print(f"Does the path {plotmspath} exist?: {os.path.exists(plotmspath)}")
 
 apppath_string = '            app_path = __os.path.join( __os.path.abspath( __os.path.join(__os.path.dirname(__file__),"..") ), \'__bin__/casaplotms-x86_64.AppImage\')\n'
-new_apppath_string = '            app_path = "/tmp/casaplotms/squashfs-root/AppRun"\n'
+new_apppath_string = f'            app_path = "{plotmspath}"\n'
 
 assert 'plotmstool.py' in sys.argv[1]
 plotmstool = sys.argv[1]
@@ -10,11 +16,16 @@ plotmstool = sys.argv[1]
 with open(plotmstool, 'r') as fh:
     lines = fh.readlines()
 
-newstr = """
-            app_path = "/tmp/casaplotms/squashfs-root/AppRun"
+if len(lines) < 900:
+    print("plotms is corrupted!  re-load it!")
+    sys.exit(99)
+
+newstr = f"""
+            {new_apppath_string}
             if not __os.path.exists(app_path):
-                print(f"Did not find extracted path {app_path}")
+                print(f"Did not find extracted path {{app_path}}")
                 app_path = __os.path.join( __os.path.abspath( __os.path.join(__os.path.dirname(__file__),"..") ), '__bin__/casaplotms-x86_64.AppImage')
+            print(f"plotms app_path is {app_path}")
 """
 
 if apppath_string in lines:
@@ -27,9 +38,29 @@ if apppath_string in lines:
         for line in lines[linenum+1:]:
             fh.write(line)
     print(f"Hacked line {linenum} of {plotmstool}")
+elif new_apppath_string not in lines:
+
+    # find the index of the outdated app_path
+    for ind, line in enumerate(lines):
+        if 'app_path = "' in line:
+            print("app_path was previously set to:")
+            print(line)
+            break
+
+    linenum = ind
+
+    with open(plotmstool, 'w') as fh:
+        for line in lines[:linenum]:
+            fh.write(line)
+        fh.write(new_apppath_string)
+        for line in lines[linenum+1:]:
+            fh.write(line)
+    print(f"Hacked line {linenum} of {plotmstool}")
+
 else:
     print("Already modified.")
-    ind = lines.index(new_apppath_string)
-    print(f"Lines {ind}-{ind+4}: ")
-    print(lines[ind:ind+4])
+    linenum = lines.index(new_apppath_string)
+
+print(f"Lines {linenum}-{linenum+4}: ")
+print("".join(lines[linenum:linenum+4]))
 

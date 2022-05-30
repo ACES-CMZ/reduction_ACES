@@ -8,6 +8,7 @@ from astropy import coordinates
 from astropy import wcs
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
+from make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
 
 basepath = '/orange/adamginsburg/ACES/'
 
@@ -23,100 +24,40 @@ basepath = '/orange/adamginsburg/ACES/'
 # header['NAXIS2'] = 4000
 
 import glob
-filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.tt0.pbcor.fits')
 
-def read_as_2d(fn):
-    fh = fits.open(fn)
-    fh[0].data = fh[0].data.squeeze()
-    ww = wcs.WCS(fh[0].header).celestial
-    fh[0].header = ww.to_header()
-    return fh
+if __name__ == "__main__":
 
-hdus = [read_as_2d(fn) for fn in filelist]
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.tt0.pbcor.fits')
+    hdus = [read_as_2d(fn) for fn in filelist]
+    make_mosaic(hdus, name='continuum', norm_kwargs=dict(stretch='asinh',
+        max_cut=0.2, min_cut=-0.025), cb_unit='Jy/beam', array='12m', basepath=basepath)
 
-target_wcs, shape_out = find_optimal_celestial_wcs(hdus, frame='galactic')
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw29.cube.I.pbcor.fits')
+    hdus = [get_peak(fn).hdu for fn in filelist]
+    make_mosaic(hdus, name='hcop_max', cb_unit='K', array='12m', basepath=basepath,
+                norm_kwargs={'max_cut': 50, 'min_cut':-5, 'stretch': 'asinh'})
+    hdus = [get_m0(fn).hdu for fn in filelist]
+    make_mosaic(hdus, name='hcop_m0', cb_unit='K km/s', array='12m', basepath=basepath,
+                norm_kwargs={'max_cut': 250, 'min_cut':-30, 'stretch': 'asinh'})
 
-array, footprint = reproject_and_coadd(hdus,
-                                       target_wcs, shape_out=shape_out,
-                                       reproject_function=reproject_interp)
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw31.cube.I.pbcor.fits')
+    hdus = [get_peak(fn).hdu for fn in filelist]
+    make_mosaic(hdus, name='hnco_max', basepath=basepath,
+                array='12m',
+                norm_kwargs={'max_cut': 50, 'min_cut':-5, 'stretch': 'asinh'})
+    hdus = [get_m0(fn).hdu for fn in filelist]
+    make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='12m', basepath=basepath,
+                norm_kwargs={'max_cut': 250, 'min_cut':-30, 'stretch': 'asinh'})
 
-fits.PrimaryHDU(data=array, header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/12m_continuum_mosaic.fits', overwrite=True)
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
+    hdus = [get_peak(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    make_mosaic(hdus, name='h40a_max', cb_unit='K',
+                norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'),
+                array='12m', basepath=basepath)
+    hdus = [get_m0(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s', norm_kwargs={'max_cut':
+                                                                     20,
+                                                                     'min_cut':-1,
+                                                                     'stretch':'asinh'},
+                array='12m', basepath=basepath)
 
-import pylab as pl
-from astropy import visualization
-pl.rc('axes', axisbelow=True)
-pl.matplotlib.use('agg')
-
-front = 10
-back = -10
-fronter = 20
-
-fig = pl.figure(figsize=(20,7))
-ax = fig.add_subplot(111, projection=target_wcs)
-im = ax.imshow(array, norm=visualization.simple_norm(array, stretch='asinh', max_cut=0.001, min_cut=-0.0001), zorder=front, cmap='gray')
-pl.colorbar(mappable=im)
-ax.coords[0].set_axislabel('Galactic Longitude')
-ax.coords[1].set_axislabel('Galactic Latitude')
-ax.coords[0].set_major_formatter('d.dd')
-ax.coords[1].set_major_formatter('d.dd')
-ax.coords[0].set_ticks(spacing=0.1*u.deg)
-ax.coords[0].set_ticklabel(rotation=45, pad=20)
-
-
-fig.savefig(f'{basepath}/mosaics/12m_continuum_mosaic.png', bbox_inches='tight')
-
-ax.coords.grid(True, color='black', ls='--', zorder=back)
-
-overlay = ax.get_coords_overlay('icrs')
-overlay.grid(color='black', ls=':', zorder=back)
-overlay[0].set_axislabel('Right Ascension (ICRS)')
-overlay[1].set_axislabel('Declination (ICRS)')
-overlay[0].set_major_formatter('hh:mm')
-ax.set_axisbelow(True)
-ax.set_zorder(back)
-fig.savefig(f'{basepath}/mosaics/12m_continuum_mosaic_withgrid.png', bbox_inches='tight')
-
-
-
-tbl = Table.read(f'{basepath}/reduction_ACES/SB_naming.tsv', format='ascii.csv', delimiter='\t')
-
-# create a list of composite regions for labeling purposes
-composites = []
-flagmap = np.zeros(array.shape, dtype='int')
-# loop over the SB_naming table
-for row in tbl:
-    indx = row['Proposal ID'][3:]
-
-    # load up regions
-    regs = regions.Regions.read(f'{basepath}/reduction_ACES/regions/final_cmz{indx}.reg')
-    pregs = [reg.to_pixel(target_wcs) for reg in regs]
-
-    composite = _regionlist_to_single_region(pregs)
-    composite.meta['label'] = indx
-    composites.append(composite)
-
-    for comp in composites:
-        cmsk = comp.to_mask()
-
-        slcs_big, slcs_small = cmsk.get_overlap_slices(array.shape)
-        try:
-            flagmap[slcs_big] += (cmsk.data[slcs_small] * int(comp.meta['label'])) * (flagmap[slcs_big] == 0)
-        except ValueError:
-            # expected to occur if no overlap
-            continue
-
-
-
-ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max())+0.5, zorder=fronter)
-
-for ii in np.unique(flagmap):
-    if ii > 0:
-        fsum = (flagmap==ii).sum()
-        cy,cx = ((np.arange(flagmap.shape[0])[:,None] * (flagmap==ii)).sum() / fsum,
-                 (np.arange(flagmap.shape[1])[None,:] * (flagmap==ii)).sum() / fsum)
-        pl.text(cx, cy, f"{ii}\n{tbl[ii-1]['Obs ID']}",
-                horizontalalignment='left', verticalalignment='center',
-                color=(1,0.8,0.5), transform=ax.get_transform('pixel'),
-                zorder=fronter)
-
-fig.savefig(f'{basepath}/mosaics/12m_continuum_mosaic_withgridandlabels.png', bbox_inches='tight')

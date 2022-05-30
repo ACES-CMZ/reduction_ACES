@@ -15,9 +15,7 @@ pwd; hostname; date
 echo "Memory=${MEM}"
 
 #module load cuda/11.0.207
-module load intel/2020.0.166
-module load openmpi/4.1.1 
-module load libfuse/3.10.4
+module load intel/2020.0.166 openmpi/4.1.1 libfuse/3.10.4
 
 LOG_DIR=/blue/adamginsburg/adamginsburg/ACES/logs
 export LOGFILENAME="${LOG_DIR}/casa_log_mpi_pipeline_${SLURM_JOB_ID}_$(date +%Y-%m-%d_%H_%M_%S).log"
@@ -45,9 +43,13 @@ export INTERACTIVE=0
 export LD_LIBRARY_PATH=${CASAPATH}/lib/:$LD_LIBRARY_PATH
 export OPAL_PREFIX="${CASAPATH}/lib/mpi"
 
-export IPYTHONDIR=/tmp
+# use /red because it will put the hacked CASA stuff into the same place... in theory...
+# (or, more sensible, create a symlink....)
+#export TMPDIR=/red/adamginsburg/
+#export SLURM_TMPDIR=/red/adamginsburg/
+export IPYTHONDIR=$SLURM_TMPDIR
 export IPYTHON_DIR=$IPYTHONDIR
-cp ~/.casa/config.py /tmp
+cp ~/.casa/config.py $SLURM_TMPDIR
 
 if [ -z $SLURM_NTASKS ]; then
     echo "FAILURE: SLURM_NTASKS was not specified"
@@ -61,35 +63,48 @@ export RUNONCE=True
 #srun --export=ALL --mpi=pmix_v3 /orange/adamginsburg/test_mpi/a.out
 #
 #echo srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger -c 'print("TEST")'
-#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=/tmp -c 'print("TEST")'
+#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=$SLURM_TMPDIR -c 'print("TEST")'
 #echo "Done"
 #
 #
-#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=/tmp\
+#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=$SLURM_TMPDIR\
 #    -c 'from casampi.MPIEnvironment import MPIEnvironment; from casampi.MPICommandClient import MPICommandClient; print(f"MPI enabled: {MPIEnvironment.is_mpi_enabled}")'
-#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=/tmp -c 'import os, pprint; print(pprint.pprint(dict(os.environ)))'
+#srun --export=ALL --mpi=pmix_v3 xvfb-run -d ${CASA} --nogui --nologger --rcdir=$SLURM_TMPDIR -c 'import os, pprint; print(pprint.pprint(dict(os.environ)))'
 
 
 # Extract casaplotms
-mkdir /tmp/casaplotms
-cd /tmp/casaplotms
+mkdir /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
+cd /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
 /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/__bin__/casaplotms-x86_64.AppImage --appimage-extract
-export PLOTMSPATH=/tmp/casaplotms/squashfs-root/AppRun
+ln -sf $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /home/adamginsburg/bin/plotmsAppRun
+#cp -r $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
+#export PLOTMSPATH=/home/adamginsburg/bin/plotmsAppRun
+export PLOTMSPATH=/orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms/squashfs-root/AppRun
 cd -
 
 echo "Hacking plotms"
+echo "plotms = /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py"
 python3 ${ACES_ROOTDIR}/hipergator_scripts/hack_plotms.py  /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py
+hacksuccess=$?
+if [ $hacksuccess -eq 99 ]; then
+    echo "plotms file was corrupted"
+    exit $hacksuccess
+fi
 echo "Hacked plotms"
 
+# how did the path end up as this?
+#/blue/adamginsburg/adamginsburg/casa/casa-6.4.3-2-pipeline-2021.3.0.17/hacked-plotms/usr/bin/casaplotms
+
+echo "CASA version is $CASAVERSION"
 
 
-RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 ${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py > /tmp/scriptlist
+RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 ${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py > $SLURM_TMPDIR/scriptlist
 
 echo "Script List"
-cat /tmp/scriptlist
+cat $SLURM_TMPDIR/scriptlist
 echo "***********"
 
-for script in $(cat /tmp/scriptlist); do 
+for script in $(cat $SLURM_TMPDIR/scriptlist); do 
     IFS='/' read -r -a array <<< "$script"
     mous=${array[2]}
     echo "MOUS is ${mous}, script is ${script}"
@@ -98,7 +113,7 @@ for script in $(cat /tmp/scriptlist); do
         echo "MOUS '${mous}' was unspecified, which is a bug."
         echo "script was '${script}'"
         echo "Scriptlist was :"
-        cat /tmp/scriptlist
+        cat $SLURM_TMPDIR/scriptlist
         echo "pwd=$(pwd)"
         echo "previous cwd=${cwd}"
         exit 1
@@ -117,10 +132,10 @@ for script in $(cat /tmp/scriptlist); do
     pwd
     echo "script: " $script
     echo
-    #echo srun --export=ALL --mpi=pmix_v3 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('${script}')"
+    #echo srun --export=ALL --mpi=pmix_v3 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('${script}')"
     #srun --export=ALL --mpi=pmix_v3 
-    echo xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('$(basename ${script})')"
-    xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=/tmp -c "execfile('$(basename ${script})')"
+    echo xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$(basename ${script})')"
+    xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$(basename ${script})')"
     echo "Completed MPICASA run"
     cd $cwd
 done
