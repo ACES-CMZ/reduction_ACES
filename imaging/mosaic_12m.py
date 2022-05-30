@@ -35,7 +35,7 @@ if __name__ == "__main__":
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw29.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
     make_mosaic(hdus, name='hcop_max', cb_unit='K', array='12m', basepath=basepath,
-                norm_kwargs={'max_cut': 50, 'min_cut':-5, 'stretch': 'asinh'})
+                norm_kwargs={'max_cut': 25, 'min_cut':-1, 'stretch': 'asinh'})
     hdus = [get_m0(fn).hdu for fn in filelist]
     make_mosaic(hdus, name='hcop_m0', cb_unit='K km/s', array='12m', basepath=basepath,
                 norm_kwargs={'max_cut': 250, 'min_cut':-30, 'stretch': 'asinh'})
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     hdus = [get_peak(fn).hdu for fn in filelist]
     make_mosaic(hdus, name='hnco_max', basepath=basepath,
                 array='12m',
-                norm_kwargs={'max_cut': 50, 'min_cut':-5, 'stretch': 'asinh'})
+                norm_kwargs={'max_cut': 25, 'min_cut':-1, 'stretch': 'asinh'})
     hdus = [get_m0(fn).hdu for fn in filelist]
     make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='12m', basepath=basepath,
                 norm_kwargs={'max_cut': 250, 'min_cut':-30, 'stretch': 'asinh'})
