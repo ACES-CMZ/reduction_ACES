@@ -113,6 +113,8 @@ for sbname,allpars in commands.items():
                                             outputvis=outputvis,
                                             field='Sgr_A_star',
                                             width=8)
+                                        if not os.path.exists(outputvis):
+                                            raise ValueError("Did not split")
                                     except Exception as ex:
                                         print(ex)
                                         split(vis='{vis}',
@@ -135,6 +137,8 @@ for sbname,allpars in commands.items():
                                             outputvis=outputvis,
                                             field='Sgr_A_star',
                                             spw={spw})
+                                        if not os.path.exists(outputvis):
+                                            raise ValueError("Did not split")
                                     except Exception as ex:
                                         print(ex)
                                         split(vis='{vis}',
