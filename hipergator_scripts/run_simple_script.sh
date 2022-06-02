@@ -48,7 +48,8 @@ if [ -z $SLURM_NTASKS ]; then
 fi
 
 # try reducing the number of threads by 1 assuming that the 'master' thread can't handle it
-mpi_ntasks=$(echo "${SLURM_NTASKS} - 1" | bc -l)
+# June 1, 2022: try to reduce to ntasks/2 + 1 because this is what pipelines appear to use
+mpi_ntasks=$(python -c "print(int(${SLURM_NTASKS} / 2 + 1))")
 
 echo ""
 echo "env just before running the command:"

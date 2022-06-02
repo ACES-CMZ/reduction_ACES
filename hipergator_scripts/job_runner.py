@@ -11,7 +11,7 @@ grouppath = f"{basepath}/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/grou
 
 mouses = [os.path.basename(x)
         for x in
-        glob.glob(f'{grouppath}/member.uid___A001_X*_X*')]
+        glob.glob(f'{grouppath}/member.uid___A001_X15a0_X*')]
 
 mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
 mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
@@ -20,8 +20,10 @@ parameters = {'member.uid___A001_X15a0_Xea':
         {'mem': 128, 'ntasks': 32, 'mpi': True,  } }
 newpars = parameters.copy()
 
+# June 1, 2022: try using fewer tasks to see if it reduces likelihood of race condition
+# Idea based on CASA log: try using nprocs/2 + 1 MPI services
 default_parameters = {f'{os.path.basename(mous.strip("/"))}':
-                      {'mem': 128, 'ntasks': 32, 'mpi': True, }
+                      {'mem': 128, 'ntasks': 8, 'mpi': True, }
     for mous in mouses}
 
 for key in newpars:

@@ -108,10 +108,19 @@ for sbname,allpars in commands.items():
                                 f"""
                                 outputvis='{temp_workdir}/{os.path.basename(vis).replace('.ms', '_aggregate.ms')}'
                                 if not os.path.exists(outputvis):
-                                    split(vis='{vis}',
-                                    outputvis=outputvis,
-                                    field='Sgr_A_star',
-                                    width=8)""") for vis in tcpars['vis']]
+                                    try:
+                                        split(vis='{vis}',
+                                            outputvis=outputvis,
+                                            field='Sgr_A_star',
+                                            width=8)
+                                    except Exception as ex:
+                                        print(ex)
+                                        split(vis='{vis}',
+                                            outputvis=outputvis,
+                                            field='Sgr_A_star',
+                                            datacolumn='data',
+                                            width=8)
+                                    """) for vis in tcpars['vis']]
                     else:
                         spw = int(spwsel.lstrip('spw'))
                         def rename(x):
@@ -121,10 +130,19 @@ for sbname,allpars in commands.items():
                                 f"""
                                 outputvis='{rename(vis)}'
                                 if not os.path.exists(outputvis):
-                                    split(vis='{vis}',
-                                    outputvis=outputvis,
-                                    field='Sgr_A_star',
-                                    spw={spw})""") for vis in tcpars['vis']]
+                                    try:
+                                        split(vis='{vis}',
+                                            outputvis=outputvis,
+                                            field='Sgr_A_star',
+                                            spw={spw})
+                                    except Exception as ex:
+                                        print(ex)
+                                        split(vis='{vis}',
+                                            outputvis=outputvis,
+                                            field='Sgr_A_star',
+                                            datacolumn='data',
+                                            spw={spw})
+                                            """) for vis in tcpars['vis']]
                         tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
 
                     cleanupcmds = "\n".join(
