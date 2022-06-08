@@ -366,8 +366,8 @@ for issue in issues:
         else:
             # check if issue is categorized right
 
-            completed_not_delivered = carddict['Completed but not delivered/downloaded']]
-            completed_and_delivered = carddict['Delivered Execution Blocks']]
+            completed_not_delivered = carddict['Completed but not delivered/downloaded']
+            completed_and_delivered = carddict['Delivered Execution Blocks']
             other = [carddict[key] for key in coldict if key not in ['Completed but not delivered/downloaded', 'Delivered Execution Blocks']]
 
             if completed and delivered and issue.url not in [card.content_url for ccard in other for card in ccard]:
