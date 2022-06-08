@@ -62,16 +62,17 @@ if __name__ == "__main__":
 
 
     for mous,spwpars in parameters.items():
-        mous = mous.split('.')[1]
+        mousname = mous.split('.')[1]
 
-        sbname = mousmap_[mous]
+        sbname = mousmap_[mousname]
         field = sbname.split("_")[3]
         config = sbname.split("_")[5]
 
         do_contsub = bool(spwpars.get('do_contsub'))
         contsub_suffix = '.contsub' if do_contsub else ''
 
-        for config_ in imaging_status[mous]:
+
+        for config_ in imaging_status[mousname]:
             if config_ == 'TP':
                 # we don't do TP
                 continue
@@ -79,9 +80,12 @@ if __name__ == "__main__":
                 # imaging_status doesn't know which config is being asked for
                 # skip if the config is not the right one for the mous
                 continue
-            for spw in imaging_status[mous][config]:
-                for imtype in imaging_status[mous][config][spw]:
-                    imstatus = imaging_status[mous][config][spw][imtype]
+            if not os.path.exists(f'{grouppath}/{mous}'):
+                print(f"MOUS {mousname} is not downloaded/extracted (path={grouppath}/{mous}).")
+                continue
+            for spw in imaging_status[mousname][config]:
+                for imtype in imaging_status[mousname][config][spw]:
+                    imstatus = imaging_status[mousname][config][spw][imtype]
 
                     calwork = f'{grouppath}/{mous}/calibrated/working'
                     cleantype = {'cube': 'cube', 'mfs': 'cont'}[imtype]
