@@ -26,7 +26,7 @@ assert len(issues) > 30
 uid_re = re.compile("uid://A[0-9]*/X[a-z0-9]*/X[a-z0-9]*")
 
 # example: Sgr_A_st_ak_03_7M
-sb_re = re.compile('Sgr_A_st_([a-z]*)_03_(7M|12M|TP|TM1|TM2).*')
+sb_re = re.compile('Sgr_A_st_([a-z]*)(_[a-z]*)?_03_(7M|12M|TP|TM1|TM2).*')
 
 
 sb_searches = [sb_re.search(issue.title) for issue in issues]
@@ -142,7 +142,9 @@ for new_oid in unique_oids:
     sb_status[new_sb] = {'downloaded': downloaded,
                          'delivered': delivered,
                          'weblog_url': weblog_url}
-    array = sb_re.search(new_sb).groups()[1]
+    array = sb_re.search(new_sb).groups()[2]
+    # not used; may be 'updated'
+    # extraname = sb_re.search(new_sb).groups()[1]
 
     spw_lines = """
   * [ ] SPW16 H13CN
@@ -327,6 +329,8 @@ columns = api.projects.list_columns(projects[0].id) #api(projects[0].columns_url
 coldict = {column.name: column for column in columns}
 #cards = [api(col.cards_url) for col in columns]
 cards = [x for col in columns for x in all_flat(api.projects.list_cards, column_id=col.id)]
+# need flattened API for this
+carddict = {col.name: [x for x in all_flat(api.projects.list_cards, column_id=col.id)] for col in columns}
 
 issue_urls_in_cards = [card.content_url for card in cards]
 issue_urls = [issue.url for issue in issues]
@@ -362,9 +366,9 @@ for issue in issues:
         else:
             # check if issue is categorized right
 
-            completed_not_delivered = api(coldict['Completed but not delivered/downloaded'].cards_url)
-            completed_and_delivered = api(coldict['Delivered Execution Blocks'].cards_url)
-            other = [api(coldict[key].cards_url) for key in coldict if key not in ['Completed but not delivered/downloaded', 'Delivered Execution Blocks']]
+            completed_not_delivered = carddict['Completed but not delivered/downloaded']
+            completed_and_delivered = carddict['Delivered Execution Blocks']
+            other = [carddict[key] for key in coldict if key not in ['Completed but not delivered/downloaded', 'Delivered Execution Blocks']]
 
             if completed and delivered and issue.url not in [card.content_url for ccard in other for card in ccard]:
                 if issue.url not in [card.content_url for card in completed_and_delivered]:

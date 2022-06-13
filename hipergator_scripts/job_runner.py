@@ -11,7 +11,7 @@ grouppath = f"{basepath}/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/grou
 
 mouses = [os.path.basename(x)
         for x in
-        glob.glob(f'{grouppath}/member.uid___A001_X*_X*')]
+        glob.glob(f'{grouppath}/member.uid___A001_X15a0_X*')]
 
 mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
 mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
@@ -20,8 +20,10 @@ parameters = {'member.uid___A001_X15a0_Xea':
         {'mem': 128, 'ntasks': 32, 'mpi': True,  } }
 newpars = parameters.copy()
 
+# June 1, 2022: try using fewer tasks to see if it reduces likelihood of race condition
+# Idea based on CASA log: try using nprocs/2 + 1 MPI services
 default_parameters = {f'{os.path.basename(mous.strip("/"))}':
-                      {'mem': 128, 'ntasks': 32, 'mpi': True, }
+                      {'mem': 128, 'ntasks': 8, 'mpi': True, }
     for mous in mouses}
 
 for key in newpars:
@@ -60,15 +62,17 @@ if __name__ == "__main__":
 
 
     for mous,spwpars in parameters.items():
+        mousname = mous.split('.')[1]
 
-        sbname = mousmap_[mous.split('.')[1]]
+        sbname = mousmap_[mousname]
         field = sbname.split("_")[3]
         config = sbname.split("_")[5]
 
         do_contsub = bool(spwpars.get('do_contsub'))
         contsub_suffix = '.contsub' if do_contsub else ''
 
-        for config_ in imaging_status[field]:
+
+        for config_ in imaging_status[mousname]:
             if config_ == 'TP':
                 # we don't do TP
                 continue
@@ -76,9 +80,12 @@ if __name__ == "__main__":
                 # imaging_status doesn't know which config is being asked for
                 # skip if the config is not the right one for the mous
                 continue
-            for spw in imaging_status[field][config]:
-                for imtype in imaging_status[field][config][spw]:
-                    imstatus = imaging_status[field][config][spw][imtype]
+            if not os.path.exists(f'{grouppath}/{mous}'):
+                print(f"MOUS {mousname} is not downloaded/extracted (path={grouppath}/{mous}).")
+                continue
+            for spw in imaging_status[mousname][config]:
+                for imtype in imaging_status[mousname][config][spw]:
+                    imstatus = imaging_status[mousname][config][spw][imtype]
 
                     calwork = f'{grouppath}/{mous}/calibrated/working'
                     cleantype = {'cube': 'cube', 'mfs': 'cont'}[imtype]

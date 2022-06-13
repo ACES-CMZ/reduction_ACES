@@ -30,25 +30,27 @@ import glob
 
 if __name__ == "__main__":
 
+    print("7m Continuum")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*16_18_20_22*cont.I.tt0.pbcor.fits')
     hdus = [read_as_2d(fn) for fn in filelist]
     make_mosaic(hdus, name='continuum', norm_kwargs=dict(stretch='asinh',
         max_cut=0.2, min_cut=-0.025), cb_unit='Jy/beam', array='7m', basepath=basepath)
 
+    print("7m HCO+")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw20.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hcop_max', cb_unit='K', array='7m', basepath=basepath)
+    make_mosaic(hdus, name='hcop_max', cb_unit='K', array='7m', basepath=basepath, norm_kwargs=dict(max_cut=5, min_cut=-0.1))
     hdus = [get_m0(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hcop_m0', cb_unit='K km/s', array='7m', basepath=basepath)
+    make_mosaic(hdus, name='hcop_m0', cb_unit='K km/s', array='7m', basepath=basepath, norm_kwargs=dict(min_cut=-25, max_cut=150))
 
+    print("7m HNCO")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw22.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hnco_max', basepath=basepath)
+    make_mosaic(hdus, name='hnco_max', basepath=basepath, norm_kwargs=dict(max_cut=5, min_cut=-0.1))
     hdus = [get_m0(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='7m', basepath=basepath)
+    make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='7m', basepath=basepath, norm_kwargs=dict(min_cut=-25, max_cut=150))
 
-
-
+    print("7m H40a")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw24.cube.I.pbcor.fits')
     hdus = [get_peak(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
     make_mosaic(hdus, name='h40a_max', cb_unit='K', norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'), array='7m', basepath=basepath)

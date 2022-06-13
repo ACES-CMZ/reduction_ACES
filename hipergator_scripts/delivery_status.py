@@ -55,6 +55,11 @@ for fullpath in looplist:
         config = config.split(" ")[0]
     rerun = 'original' in sbname
 
+    if 'updated' in sbname:
+        field = field+"_updated"
+    if 'original' in sbname:
+        field = field+"_original"
+
     for clean in ('mfs', 'cube'):
         for suffix in (".image", ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
             #globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
@@ -81,17 +86,18 @@ for fullpath in looplist:
                               else False))
 
 
-                if field not in datatable:
-                    datatable[field] = {}
-                if config not in datatable[field]:
-                    datatable[field][config] = {}
-                if spw not in datatable[field][config]:
-                    datatable[field][config][spw] = {}
-                if clean not in datatable[field][config][spw]:
-                    datatable[field][config][spw][clean] = {}
+                if mous not in datatable:
+                    datatable[mous] = {}
+                if config not in datatable[mous]:
+                    datatable[mous][config] = {}
+                if spw not in datatable[mous][config]:
+                    datatable[mous][config][spw] = {}
+                if clean not in datatable[mous][config][spw]:
+                    datatable[mous][config][spw][clean] = {}
 
 
-                datatable[field][config][spw][clean] = {
+                datatable[mous][config][spw][clean] = {
+                        "field": field,
                         "image": wildexists(imageglob),
                         "pbcor": wildexists(pbcorglob),
                         "psf": wildexists(psfglob),
@@ -108,9 +114,9 @@ with open('/orange/adamginsburg/web/secure/ACES/tables/imaging_completeness_grid
 # make a table
 from astropy.table import Table
 tables = {}
-for field,xx in datatable.items():
+for sbname,xx in datatable.items():
     cols = {}
-    tables[field] = cols
+    tables[sbname] = cols
     for config, yy in xx.items():
         rows = []
         for spw, zz in yy.items():
@@ -119,11 +125,11 @@ for field,xx in datatable.items():
                 #cols[f'{config}.{spw}'].append(','.join([argtype for argtype, status in ww.items() if status is True]))
             cols[f'{config}.{spw}'] = rows
     rows = [[cn,] + list(v.values()) for cn,v in cols.items()]
-    tables[field] = Table(rows=rows, names=['config.spw'] + list(ww.keys()))
+    tables[sbname] = Table(rows=rows, names=['config.spw'] + list(ww.keys()))
 
 with open('/orange/adamginsburg/web/secure/ACES/tables/imaging_completeness_grid.txt', 'w') as fh:
     for key,tb in tables.items():
-        fh.write(f'Field {key}:\n')
+        fh.write(f'SB {key}:\n')
         fh.write("\n".join(tb.pformat()))
         fh.write("\n\n")
 

@@ -4,8 +4,10 @@ import tempfile
 tmpdir = tempfile.gettempdir()
 
 print(f"Using casaplotms from directory {tmpdir}")
-plotmspath = os.getenv('PLOTMSPATH') or '/home/adamginsburg/bin/plotmsAppRun'
+plotmspath = os.getenv('PLOTMSPATH')
 print(f"Does the path {plotmspath} exist?: {os.path.exists(plotmspath)}")
+print(f"Does the path {plotmspath}/usr/bin/casaplotms exist?: "
+      f"{os.path.exists(os.path.join(os.path.dirname(plotmspath),'/usr/bin/casaplotms'))}")
 
 apppath_string = '            app_path = __os.path.join( __os.path.abspath( __os.path.join(__os.path.dirname(__file__),"..") ), \'__bin__/casaplotms-x86_64.AppImage\')\n'
 new_apppath_string = f'            app_path = "{plotmspath}"\n'
@@ -25,7 +27,7 @@ newstr = f"""
             if not __os.path.exists(app_path):
                 print(f"Did not find extracted path {{app_path}}")
                 app_path = __os.path.join( __os.path.abspath( __os.path.join(__os.path.dirname(__file__),"..") ), '__bin__/casaplotms-x86_64.AppImage')
-            print(f"plotms app_path is {app_path}")
+            print(f"plotms app_path is {{app_path}}")
 """
 
 if apppath_string in lines:
@@ -61,6 +63,6 @@ else:
     print("Already modified.")
     linenum = lines.index(new_apppath_string)
 
-print(f"Lines {linenum}-{linenum+4}: ")
-print("".join(lines[linenum:linenum+4]))
+print(f"Lines {linenum}-{linenum+5}: ")
+print("".join(lines[linenum:linenum+5]))
 
