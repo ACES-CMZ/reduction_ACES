@@ -7,6 +7,7 @@ from astropy import units as u
 from astropy.io import fits
 from astropy import coordinates
 from astropy import wcs
+from astropy import log
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 
@@ -39,14 +40,18 @@ def get_m0(fn, slab_kwargs=None, rest_value=None):
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 rest_value=None, cb_unit=None, array='7m', basepath='./'):
 
+    log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
     target_wcs, shape_out = find_optimal_celestial_wcs(twod_hdus, frame='galactic')
 
+    log.info(f"Reprojecting and coadding.")
     prjarr, footprint = reproject_and_coadd(twod_hdus,
                                            target_wcs, shape_out=shape_out,
                                            reproject_function=reproject_interp)
 
+    log.info(f"Writing reprojected data to disk")
     fits.PrimaryHDU(data=prjarr, header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/{array}_{name}_mosaic.fits', overwrite=True)
 
+    log.info(f"Creating plots")
     import pylab as pl
     from astropy import visualization
     pl.rc('axes', axisbelow=True)
@@ -87,6 +92,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
     tbl = Table.read(f'{basepath}/reduction_ACES/SB_naming.tsv', format='ascii.csv', delimiter='\t')
 
+    log.info("Computing overlap regions")
     # create a list of composite regions for labeling purposes
     composites = []
     flagmap = np.zeros(prjarr.shape, dtype='int')
