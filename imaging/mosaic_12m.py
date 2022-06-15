@@ -6,6 +6,7 @@ from astropy import units as u
 from astropy.io import fits
 from astropy import coordinates
 from astropy import wcs
+from astropy import log
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 from make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
@@ -27,27 +28,31 @@ import glob
 
 if __name__ == "__main__":
 
-    print("12m continuum")
+    log.info("12m continuum")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.tt0.pbcor.fits')
     hdus = [read_as_2d(fn) for fn in filelist]
     make_mosaic(hdus, name='continuum', norm_kwargs=dict(stretch='asinh',
         max_cut=0.01, min_cut=-0.001), cb_unit='Jy/beam', array='12m', basepath=basepath)
 
-    print("12m HCO+")
+    log.info("12m HCO+")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw29.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hcop_max', cb_unit='K', array='12m', basepath=basepath)
+    make_mosaic(hdus, name='hcop_max', cb_unit='K', array='12m', basepath=basepath,
+                norm_kwargs=dict(max_cut=20, min_cut=-0.5, ),
+               )
     hdus = [get_m0(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hcop_m0', cb_unit='K km/s', array='12m', basepath=basepath)
+    make_mosaic(hdus,  name='hcop_m0', cb_unit='K km/s', array='12m', basepath=basepath,
+                norm_kwargs=dict(max_cut=100, min_cut=-10,))
 
-    print("12m HNCO")
+    log.info("12m HNCO")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw31.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hnco_max', basepath=basepath)
+    make_mosaic(hdus, name='hnco_max', basepath=basepath, norm_kwargs=dict(max_cut=25, min_cut=-0.5, ))
     hdus = [get_m0(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='12m', basepath=basepath)
+    make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='12m', basepath=basepath,
+               norm_kwargs=dict(max_cut=100, min_cut=-10, ))
 
-    print("12m H40a")
+    log.info("12m H40a")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
     hdus = [get_peak(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
     make_mosaic(hdus, name='h40a_max', cb_unit='K', norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'), array='12m', basepath=basepath)
