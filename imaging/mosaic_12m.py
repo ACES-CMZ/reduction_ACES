@@ -47,7 +47,7 @@ if __name__ == "__main__":
     log.info("12m HNCO")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw31.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hnco_max', basepath=basepath, norm_kwargs=dict(max_cut=25, min_cut=-0.5, ))
+    make_mosaic(hdus, name='hnco_max', basepath=basepath, array='12m', norm_kwargs=dict(max_cut=25, min_cut=-0.5, ))
     hdus = [get_m0(fn).hdu for fn in filelist]
     make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='12m', basepath=basepath,
                norm_kwargs=dict(max_cut=100, min_cut=-10, ))
