@@ -30,4 +30,5 @@ for sbname,allpars in override_commands.items():
             else:
                 # but if a spw was totally skipped, we replace it
                 # with the override version
+                print(f"SPW {spwsel} was skipped in {sbname} and is being replaced")
                 commands[sbname][partype][spwsel] = tcpars
