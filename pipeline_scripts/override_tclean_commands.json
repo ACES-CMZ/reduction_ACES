@@ -179,8 +179,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -195,7 +195,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_Xd6.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_Xd6.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1620,
           1600
@@ -302,8 +302,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -318,7 +318,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X16c.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X16c.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1728,
           1458
@@ -415,8 +415,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -431,7 +431,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X154.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X154.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1458,
           1440
@@ -528,8 +528,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -544,7 +544,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_Xe2.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_Xe2.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1728,
           2500
@@ -642,9 +642,9 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35",
-          "35"
+          "33",
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -661,7 +661,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X196.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X196.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1458,
           1440
@@ -758,8 +758,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -774,7 +774,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X136.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X136.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1500,
           1458
@@ -872,9 +872,9 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35",
-          "35"
+          "33",
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -891,7 +891,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X100.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X100.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1458,
           1440
@@ -988,8 +988,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -1004,7 +1004,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_Xca.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_Xca.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           2250,
           2160
@@ -1101,8 +1101,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -1117,7 +1117,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X18a.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X18a.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1458,
           1440
@@ -1214,8 +1214,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -1230,7 +1230,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X124.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X124.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1536,
           1600
@@ -1327,8 +1327,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -1343,7 +1343,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15b4_X41.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15b4_X41.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1500,
           1458
@@ -1440,8 +1440,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -1456,7 +1456,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15b4_X3d.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15b4_X3d.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1620,
           1600
@@ -1553,8 +1553,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -1569,7 +1569,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X1a8.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X1a8.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           2250,
           2160
@@ -1676,8 +1676,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -1692,7 +1692,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X142.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X142.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1440,
           1600
@@ -1789,8 +1789,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -1805,7 +1805,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X112.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X112.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1440,
           1440
@@ -1902,8 +1902,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
-          "35",
-          "35"
+          "33",
+          "33"
         ],
         "timerange": "",
         "uvrange": "",
@@ -1918,7 +1918,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X1a2.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X1a2.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
         "imsize": [
           1536,
           1458
