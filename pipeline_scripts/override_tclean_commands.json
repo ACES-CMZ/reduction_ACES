@@ -139,16 +139,6 @@
       }
     }
   },
-  "Sgr_A_st_m_03_TM1": {
-    "tclean_cube_pars": {
-      "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
-        "threshold": "0.01Jy"
-      }
-    }
-  },
   "Sgr_A_st_ao_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
