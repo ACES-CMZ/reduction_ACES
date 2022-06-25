@@ -10,9 +10,14 @@ from astropy import wcs
 from astropy import log
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
+import warnings
+from spectral_cube.utils import SpectralCubeWarning
+warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
+                        append=True)
 
 
 def read_as_2d(fn):
+    print(".", end='', flush=True)
     fh = fits.open(fn)
     fh[0].data = fh[0].data.squeeze()
     ww = wcs.WCS(fh[0].header).celestial
@@ -21,32 +26,45 @@ def read_as_2d(fn):
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None):
-    cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    print(".", end='', flush=True)
+    ft = 'fits' if fn.endswith(".fits") else "casa_image"
+    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
     if slab_kwargs is not None:
         cube = cube.spectral_slab(**slab_kwargs)
-    mx = cube.max(axis=0).to(u.K)
+    with cube.use_dask_scheduler('threads'):
+        mx = cube.max(axis=0).to(u.K)
     return mx
 
 
 def get_m0(fn, slab_kwargs=None, rest_value=None):
-    cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    print(".", end='', flush=True)
+    ft = 'fits' if fn.endswith(".fits") else "casa_image"
+    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
     if slab_kwargs is not None:
         cube = cube.spectral_slab(**slab_kwargs)
-    moment0 = cube.moment0(axis=0)
+    with cube.use_dask_scheduler('threads'):
+        moment0 = cube.moment0(axis=0)
     moment0 = (moment0 * u.s/u.km).to(u.K,
             equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km/u.s
     return moment0
 
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
+                weights=None,
                 rest_value=None, cb_unit=None, array='7m', basepath='./'):
 
     log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
     target_wcs, shape_out = find_optimal_celestial_wcs(twod_hdus, frame='galactic')
 
+    def repr_function(*args, **kwargs):
+        print(".", end="", flush=True)
+        return reproject_interp(*args, **kwargs)
+
     log.info(f"Reprojecting and coadding.")
     prjarr, footprint = reproject_and_coadd(twod_hdus,
-                                           target_wcs, shape_out=shape_out,
-                                           reproject_function=reproject_interp)
+                                            target_wcs,
+                                            input_weights=weights,
+                                            shape_out=shape_out,
+                                            reproject_function=repr_function)
 
     log.info(f"Writing reprojected data to disk")
     fits.PrimaryHDU(data=prjarr, header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/{array}_{name}_mosaic.fits', overwrite=True)
