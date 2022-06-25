@@ -68,7 +68,7 @@
         "reffreq": "",
         "nchan": 3835,
         "start": "97.6672350480GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -144,7 +144,7 @@
       "spw33": {
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "threshold": "0.01Jy"
       }
     }
@@ -154,7 +154,7 @@
       "spw33": {
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "threshold": "0.01Jy"
       }
     }
@@ -201,7 +201,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -277,7 +277,7 @@
       "spw33": {
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "threshold": "0.01Jy"
       }
     }
@@ -324,7 +324,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -437,7 +437,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -550,7 +550,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -667,7 +667,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -780,7 +780,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -897,7 +897,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1010,7 +1010,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1123,7 +1123,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1236,7 +1236,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1349,7 +1349,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1462,7 +1462,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1575,7 +1575,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1651,7 +1651,7 @@
       "spw33": {
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "threshold": "0.01Jy"
       }
     }
@@ -1698,7 +1698,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1811,7 +1811,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1924,7 +1924,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "0.4882381MHz",
+        "width": "488244Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
