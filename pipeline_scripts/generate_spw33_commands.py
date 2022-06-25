@@ -31,9 +31,9 @@ for key in commands:
             spw33pars['width'] = "0.4882381MHz"
             spw33pars['threshold'] = '0.01Jy'
             if key in override_commands:
-                override_commands[key]['tclean_cube_pars'] = spw33pars
+                override_commands[key]['tclean_cube_pars']['spw33'] = spw33pars
             else:
-                override_commands[key] = {'tclean_cube_pars': spw33pars}
+                override_commands[key] = {'tclean_cube_pars': {'spw33': spw33pars}}
         elif commands[key]['tclean_cube_pars']['spw33']['nchan'] < 3800:
             print(f"Modifying {key}")
             spw33pars = {}
@@ -42,11 +42,11 @@ for key in commands:
             spw33pars['width'] = "0.4882381MHz"
             spw33pars['threshold'] = '0.01Jy'
             if key in override_commands:
-                override_commands[key]['tclean_cube_pars'] = spw33pars
+                override_commands[key]['tclean_cube_pars']['spw33'] = spw33pars
             else:
-                override_commands[key] = {'tclean_cube_pars': spw33pars}
+                override_commands[key] = {'tclean_cube_pars': {'spw33': spw33pars}}
 
 assert len(override_commands) >= ncmds
 
 with open(f"{rootdir}/pipeline_scripts/override_tclean_commands.json", "w") as fh:
-    json.dump(override_commands, fh)
+    json.dump(override_commands, fh, indent=2)
