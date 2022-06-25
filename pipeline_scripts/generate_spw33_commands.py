@@ -26,10 +26,12 @@ for key in commands:
         if 'spw33' not in commands[key]['tclean_cube_pars']:
             print(f"Adding {key}")
             spw33pars = commands[key]['tclean_cube_pars']['spw35']
+            spw33pars['imagename'] = spw33pars['imagename'].replace('35', '33')
             spw33pars['nchan'] = 3836
             spw33pars['start'] = "97.6660537907GHz"
             spw33pars['width'] = "0.4882381MHz"
             spw33pars['threshold'] = '0.01Jy'
+            spw33pars['spw'] = [x.replace('35','33') for x in spw33pars['spw']]
             if key in override_commands:
                 override_commands[key]['tclean_cube_pars']['spw33'] = spw33pars
             else:
