@@ -18,7 +18,8 @@ mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.ite
 
 parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': True,  },
               'member.uid___A001_X15a0_X142': {'mem': 128, 'ntasks': 1, 'mpi': False,  }, # the usual MPI crash error is occurring
-              'member.uid___A001_X15a0_Xca': {'mem': 128, 'ntasks': 1, 'mpi': False,  }, # the usual MPI crash error is occurring
+              'member.uid___A001_X15a0_Xca': {'mem': 128, 'ntasks': 1, 'mpi': False,  }, # ditto
+              'member.uid___A001_X15a0_X160': {'mem': 128, 'ntasks': 1, 'mpi': False,  }, # field ag: MPI crash
              }
 newpars = parameters.copy()
 
