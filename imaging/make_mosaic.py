@@ -8,6 +8,7 @@ from astropy.io import fits
 from astropy import coordinates
 from astropy import wcs
 from astropy import log
+from astropy.utils.console import ProgressBar
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 import warnings
@@ -16,13 +17,22 @@ warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
                         append=True)
 
 
-def read_as_2d(fn):
+def read_as_2d(fn, minval=None):
     print(".", end='', flush=True)
     fh = fits.open(fn)
-    fh[0].data = fh[0].data.squeeze()
     ww = wcs.WCS(fh[0].header).celestial
-    fh[0].header = ww.to_header()
-    return fh
+    if minval is None:
+        hdu2d = fits.PrimaryHDU(data=fh[0].data.squeeze(),
+                                header=ww.to_header())
+    else:
+        data = fh[0].data.squeeze()
+        # meant for weights; we're setting weights to zero
+        data[data < minval] = 0
+        # sanity check
+        assert np.nanmax(data) == 1
+        hdu2d = fits.PrimaryHDU(data=data,
+                                header=ww.to_header())
+    return fits.HDUList([hdu2d])
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None):
@@ -55,11 +65,12 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
     target_wcs, shape_out = find_optimal_celestial_wcs(twod_hdus, frame='galactic')
 
+    pb = ProgressBar(len(twod_hdus))
     def repr_function(*args, **kwargs):
-        print(".", end="", flush=True)
+        pb.update()
         return reproject_interp(*args, **kwargs)
 
-    log.info(f"Reprojecting and coadding.")
+    log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.")
     prjarr, footprint = reproject_and_coadd(twod_hdus,
                                             target_wcs,
                                             input_weights=weights,
@@ -94,6 +105,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic.png', bbox_inches='tight')
+    fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
 
     ax.coords.grid(True, color='black', ls='--', zorder=back)
 
@@ -115,7 +127,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     composites = []
     flagmap = np.zeros(prjarr.shape, dtype='int')
     # loop over the SB_naming table
-    for row in tbl:
+    for row in ProgressBar(tbl):
         indx = row['Proposal ID'][3:]
 
         # load up regions

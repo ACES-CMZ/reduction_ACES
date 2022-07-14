@@ -34,7 +34,7 @@ if __name__ == "__main__":
     print(flush=True)
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*I.pb.tt0.fits')
     assert len(weightfiles) == len(filelist)
-    wthdus = [read_as_2d(fn) for fn in filelist]
+    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='continuum', weights=wthdus,
             cb_unit='Jy/beam', array='12m', basepath=basepath,
@@ -45,12 +45,17 @@ if __name__ == "__main__":
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw29.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
     print(flush=True)
+    weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw29.mfs.I.pb.fits.gz')
+    wthdus = [read_as_2d(fn, minval=0.3) for fn in weightfiles]
+    print(flush=True)
     make_mosaic(hdus, name='hcop_max', cb_unit='K', array='12m', basepath=basepath,
+                weights=wthdus,
                 norm_kwargs=dict(max_cut=20, min_cut=-0.5, ),
                )
     hdus = [get_m0(fn).hdu for fn in filelist]
     print(flush=True)
     make_mosaic(hdus,  name='hcop_m0', cb_unit='K km/s', array='12m', basepath=basepath,
+                weights=wthdus,
                 norm_kwargs=dict(max_cut=100, min_cut=-10,))
 
     log.info("12m HNCO")

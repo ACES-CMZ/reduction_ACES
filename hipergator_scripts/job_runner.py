@@ -25,8 +25,9 @@ newpars = parameters.copy()
 
 # June 1, 2022: try using fewer tasks to see if it reduces likelihood of race condition
 # Idea based on CASA log: try using nprocs/2 + 1 MPI services
+# July 14, 2022: the failure rate is ~1, so let's just say 'f it'
 default_parameters = {f'{os.path.basename(mous.strip("/"))}':
-                      {'mem': 128, 'ntasks': 8, 'mpi': True, }
+                      {'mem': 128, 'ntasks': 1, 'mpi': False, }
     for mous in mouses}
 
 for key in newpars:
