@@ -62,18 +62,25 @@ if __name__ == "__main__":
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw31.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
     print(flush=True)
+    weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw31.mfs.I.pb.fits.gz')
+    wthdus = [read_as_2d(fn, minval=0.3) for fn in weightfiles]
+    print(flush=True)
     make_mosaic(hdus, name='hnco_max', basepath=basepath, array='12m',
-            norm_kwargs=dict(max_cut=10, min_cut=-0.5, ))
+                weights=wthdus,
+                norm_kwargs=dict(max_cut=10, min_cut=-0.5, ))
     hdus = [get_m0(fn).hdu for fn in filelist]
     print(flush=True)
     make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='12m', basepath=basepath,
-               norm_kwargs=dict(max_cut=100, min_cut=-10, ))
+                weights=wthdus,
+                norm_kwargs=dict(max_cut=100, min_cut=-10, ))
 
     log.info("12m H40a")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
     hdus = [get_peak(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
-    make_mosaic(hdus, name='h40a_max', cb_unit='K', norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'), array='12m', basepath=basepath)
+    weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')
+    wthdus = [get_peak(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in weightfiles]
+    make_mosaic(hdus, name='h40a_max', cb_unit='K', norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'), array='12m', basepath=basepath, weights=wthdus)
     hdus = [get_m0(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
-    make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s', norm_kwargs={'max_cut': 20, 'min_cut':-1, 'stretch':'asinh'}, array='12m', basepath=basepath)
+    make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s', norm_kwargs={'max_cut': 20, 'min_cut':-1, 'stretch':'asinh'}, array='12m', basepath=basepath, weights=wthdus)
 
