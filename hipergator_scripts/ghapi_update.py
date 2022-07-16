@@ -234,7 +234,8 @@ f"""
         if 'hipergator' not in lines[insert_hipergator_at]:
             need_update.append("Downloaded")
             lines.insert(insert_hipergator_at, f"  * [{'x' if downloaded else ' '}] hipergator")
-        else:
+        elif lines[insert_hipergator_at] != f"  * [{'x' if downloaded else ' '}] hipergator":
+            # check is so that we only append to need_update if a change was made
             need_update.append("Downloaded to hipergator")
             lines[insert_hipergator_at] = f"  * [{'x' if downloaded else ' '}] hipergator"
 
