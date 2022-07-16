@@ -281,7 +281,7 @@ f"""
 
             if '## Product Links:' not in issue.body:
                 need_update.append("New product links - none were present")
-                issebody += productlinks
+                issuebody += productlinks
             elif issue.body.strip().endswith("## Product Links:"):
                 need_update.append("New product links - end was blank")
                 issuebody = issuebody.strip().split("## Product Links:")[0] + productlinks
