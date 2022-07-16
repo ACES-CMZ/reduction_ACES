@@ -234,6 +234,9 @@ f"""
         if 'hipergator' not in lines[insert_hipergator_at]:
             need_update.append("Downloaded")
             lines.insert(insert_hipergator_at, f"  * [{'x' if downloaded else ' '}] hipergator")
+        else:
+            need_update.append("Downloaded to hipergator")
+            lines[insert_hipergator_at] = f"  * [{'x' if downloaded else ' '}] hipergator"
 
         pipeline_linenumber = insert_hipergator_at+1
         pipeline_line_text = f"  * [{'x' if pipeline_run else ' '}] hipergator pipeline run"
