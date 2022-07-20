@@ -4,6 +4,7 @@ Environmental variables:
     ACES_ROOTDIR: the reduction_ACES directory
     ACES_DATADIR: the root data directory (e.g. /orange/adamginsburg/ACES/rawdata/)
     RUNONCE: boolean, if set, will only do one imaging run before quitting
+     (deprecated - not used any more)
     DUMMYRUN: boolean, if set, will only print what it's going to do
     TRYDROPTARGET: boolean.  If set, will try MSes w/o "_target" in them if it can't find them with
 

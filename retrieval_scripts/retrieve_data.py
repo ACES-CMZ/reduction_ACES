@@ -42,7 +42,7 @@ for server_url in ('https://almascience.eso.org', 'https://almascience.nrao.edu'
         # with 'break' in place, we just try each server, then give up if we succeed
         # with 'break' skipped, we try all three even if successful - which in principle should
         # verify the data.
-        # break
+        break
     except requests.exceptions.ReadTimeout as ex:
         # try again w/a different sserver
         print(ex)
@@ -55,8 +55,10 @@ for server_url in ('https://almascience.eso.org', 'https://almascience.nrao.edu'
 # Optional: %run retrieve_data <username> True will extract files
 if len(sys.argv) > 2:
     extract = bool(sys.argv[2])
+    print("Extracting tarballs")
 else:
     extract = False
+    print("Not extracting tarballs")
 
 if extract:
     import tarfile

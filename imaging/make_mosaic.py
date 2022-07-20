@@ -7,46 +7,83 @@ from astropy import units as u
 from astropy.io import fits
 from astropy import coordinates
 from astropy import wcs
+from astropy import log
+from astropy.utils.console import ProgressBar
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
+import warnings
+from spectral_cube.utils import SpectralCubeWarning
+warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
+                        append=True)
 
 
-def read_as_2d(fn):
+def read_as_2d(fn, minval=None):
+    print(".", end='', flush=True)
     fh = fits.open(fn)
-    fh[0].data = fh[0].data.squeeze()
     ww = wcs.WCS(fh[0].header).celestial
-    fh[0].header = ww.to_header()
-    return fh
+    if minval is None:
+        hdu2d = fits.PrimaryHDU(data=fh[0].data.squeeze(),
+                                header=ww.to_header())
+    else:
+        data = fh[0].data.squeeze()
+        # meant for weights; we're setting weights to zero
+        data[data < minval] = 0
+        # sanity check
+        assert np.nanmax(data) == 1
+        hdu2d = fits.PrimaryHDU(data=data,
+                                header=ww.to_header())
+    return fits.HDUList([hdu2d])
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None):
-    cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    print(".", end='', flush=True)
+    ft = 'fits' if fn.endswith(".fits") else "casa_image"
+    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
     if slab_kwargs is not None:
         cube = cube.spectral_slab(**slab_kwargs)
-    mx = cube.max(axis=0).to(u.K)
+    with cube.use_dask_scheduler('threads'):
+        if cube.unit == u.dimensionless_unscaled:
+            mx = cube.max(axis=0)
+        else:
+            mx = cube.max(axis=0).to(u.K)
     return mx
 
 
 def get_m0(fn, slab_kwargs=None, rest_value=None):
-    cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    print(".", end='', flush=True)
+    ft = 'fits' if fn.endswith(".fits") else "casa_image"
+    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
     if slab_kwargs is not None:
         cube = cube.spectral_slab(**slab_kwargs)
-    moment0 = cube.moment0(axis=0)
+    with cube.use_dask_scheduler('threads'):
+        moment0 = cube.moment0(axis=0)
     moment0 = (moment0 * u.s/u.km).to(u.K,
             equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km/u.s
     return moment0
 
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
+                weights=None,
                 rest_value=None, cb_unit=None, array='7m', basepath='./'):
 
+    log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
     target_wcs, shape_out = find_optimal_celestial_wcs(twod_hdus, frame='galactic')
 
-    prjarr, footprint = reproject_and_coadd(twod_hdus,
-                                           target_wcs, shape_out=shape_out,
-                                           reproject_function=reproject_interp)
+    pb = ProgressBar(len(twod_hdus))
+    def repr_function(*args, **kwargs):
+        pb.update()
+        return reproject_interp(*args, **kwargs)
 
+    log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.")
+    prjarr, footprint = reproject_and_coadd(twod_hdus,
+                                            target_wcs,
+                                            input_weights=weights,
+                                            shape_out=shape_out,
+                                            reproject_function=repr_function)
+
+    log.info(f"Writing reprojected data to disk")
     fits.PrimaryHDU(data=prjarr, header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/{array}_{name}_mosaic.fits', overwrite=True)
 
+    log.info(f"Creating plots")
     import pylab as pl
     from astropy import visualization
     pl.rc('axes', axisbelow=True)
@@ -71,6 +108,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic.png', bbox_inches='tight')
+    fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
 
     ax.coords.grid(True, color='black', ls='--', zorder=back)
 
@@ -87,11 +125,12 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
     tbl = Table.read(f'{basepath}/reduction_ACES/SB_naming.tsv', format='ascii.csv', delimiter='\t')
 
+    log.info("Computing overlap regions")
     # create a list of composite regions for labeling purposes
     composites = []
     flagmap = np.zeros(prjarr.shape, dtype='int')
     # loop over the SB_naming table
-    for row in tbl:
+    for row in ProgressBar(tbl):
         indx = row['Proposal ID'][3:]
 
         # load up regions

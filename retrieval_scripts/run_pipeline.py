@@ -27,6 +27,7 @@ import os
 import sys
 import runpy
 import glob
+from datetime import datetime
 
 try:
     from casatasks import casalog
@@ -106,12 +107,14 @@ for scigoal in science_goal_dirs:
 
                     shutil.copy(scriptpath, '.')
 
-                    logprint("Running script {0} in {1}".format(imaging_script, dirpath),
-                             origin='pipeline_runner')
 
                     if run:
+                        logprint("Running script {0} in {1}.  cwd={2}".format(imaging_script, dirpath, os.getcwd()),
+                                 origin='pipeline_runner')
                         result = runpy.run_path(imaging_script, init_globals=globals())
                     else:
+                        logprint("Dry-running script {0} in {1}.  cwd={2}".format(imaging_script, dirpath, os.getcwd()),
+                                 origin='pipeline_runner')
                         print(os.path.join(dirpath, 'calibrated/working', imaging_script))
 
 
@@ -139,12 +142,16 @@ for scigoal in science_goal_dirs:
                 if local_scriptforPI is None:
                     local_scriptforPI = os.path.basename(scriptforpi)
 
-                logprint("Running script {0} in {1}".format(local_scriptforPI, dirpath),
-                         origin='pipeline_runner')
-
                 if run:
+                    logprint("Running scriptForPI {0} in {1}.  cwd={2}".format(local_scriptforPI, dirpath, os.getcwd()),
+                             origin='pipeline_runner')
                     result = runpy.run_path(local_scriptforPI, init_globals=globals())
+                    with open(f"scriptForPI_result_{datetime.today().strftime('%Y-%m-%d')}", 'w') as fh:
+                        fh.write(str(result))
                 else:
+                    logprint("Dry running scriptForPI {0} in {1}.  cwd={2}".format(local_scriptforPI, dirpath, os.getcwd()),
+                             origin='pipeline_runner')
+                    
                     print(scriptforpi)
 
                 # too verbose, includes a ton of junk

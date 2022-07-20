@@ -16,14 +16,18 @@ mouses = [os.path.basename(x)
 mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
 mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
 
-parameters = {'member.uid___A001_X15a0_Xea':
-        {'mem': 128, 'ntasks': 32, 'mpi': True,  } }
+parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': True,  },
+              'member.uid___A001_X15a0_X142': {'mem': 128, 'ntasks': 1, 'mpi': False,  }, # the usual MPI crash error is occurring
+              'member.uid___A001_X15a0_Xca': {'mem': 128, 'ntasks': 1, 'mpi': False,  }, # ditto
+              'member.uid___A001_X15a0_X160': {'mem': 128, 'ntasks': 1, 'mpi': False,  }, # field ag: MPI crash
+             }
 newpars = parameters.copy()
 
 # June 1, 2022: try using fewer tasks to see if it reduces likelihood of race condition
 # Idea based on CASA log: try using nprocs/2 + 1 MPI services
+# July 14, 2022: the failure rate is ~1, so let's just say 'f it'
 default_parameters = {f'{os.path.basename(mous.strip("/"))}':
-                      {'mem': 128, 'ntasks': 8, 'mpi': True, }
+                      {'mem': 128, 'ntasks': 1, 'mpi': False, }
     for mous in mouses}
 
 for key in newpars:

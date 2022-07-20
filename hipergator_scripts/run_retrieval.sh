@@ -2,8 +2,8 @@
 #SBATCH --mail-type=NONE          # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=adamginsburg@ufl.edu     # Where to send mail
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --ntasks=6
-#SBATCH --mem=24gb # Job memory request PER NODE
+#SBATCH --ntasks=8
+#SBATCH --mem=32gb # Job memory request PER NODE
 #SBATCH --nodes=1 # exactly 1 node
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
 #SBATCH --qos=adamginsburg-b
@@ -23,7 +23,7 @@ cd /orange/adamginsburg/ACES/rawdata
 echo "test import"
 /orange/adamginsburg/miniconda3/envs/python39/bin/python -c "import zipfile"
 echo "Retrieve data"
-/orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/retrieval_scripts/retrieve_data.py keflavich True
+/orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/retrieval_scripts/retrieve_data.py keflavich True True
 echo "Retrieve weblogs"
 /orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/retrieval_scripts/retrieve_weblogs.py keflavich
 

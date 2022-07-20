@@ -23,11 +23,13 @@ for sbname,allpars in override_commands.items():
             if spwsel in commands[sbname][partype]:
                 # we're replacing/overriding arguments here
                 for key, val in tcpars.items():
+                    orig = commands[sbname][partype][spwsel][key]
                     if verbose:
-                        orig = commands[sbname][partype][spwsel][key]
                         print(f"{sbname} {partype} {spwsel}: {key}: {orig} -> {val}")
-                        commands[sbname][partype][spwsel][key] = val
+                    commands[sbname][partype][spwsel][key] = val
             else:
                 # but if a spw was totally skipped, we replace it
                 # with the override version
+                if verbose:
+                    print(f"SPW {spwsel} was skipped in {sbname} and is being replaced")
                 commands[sbname][partype][spwsel] = tcpars
