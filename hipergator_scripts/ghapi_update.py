@@ -96,6 +96,7 @@ weblog_names = [os.path.basename(x) for x in glob.glob('/orange/adamginsburg/web
 sb_status = {}
 
 # loop through oids, not uids: the SB names are _not_ unique, but the UIDs are
+#unique_oids = ['uid://A001/X15a0/Xfa'] # DEBUG
 for new_oid in unique_oids:
     new_sb_issuename = uids_to_sbs[new_oid]
     new_sb = new_sb_issuename.split(" ")[0]
@@ -272,6 +273,7 @@ f"""
 
 
         if product_link_text:
+            #print("product_link_text is something")
             productlinks = f"""
 
 ## Product Links:
@@ -286,9 +288,16 @@ f"""
                 need_update.append("New product links - end was blank")
                 issuebody = issuebody.strip().split("## Product Links:")[0] + productlinks
             elif "## Product Links:\n\n\n\n\n##" in issue.body:
-                need_update.append("Update product links")
+                need_update.append("Update product links [5 newlines]")
                 issuebody = issuebody.replace("## Product Links:\n\n\n\n\n", productlinks)
-
+            elif "## Product Links:\n\n\n\n##" in issue.body:
+                # apparently it's sometimes (always?) 4 newlines
+                need_update.append("Update product links [4 newlines]")
+                issuebody = issuebody.replace("## Product Links:\n\n\n\n", productlinks)
+            else:
+                pass
+                #print("Product link text was found in issue body.")
+                #print(issue.body.split("## Product Links:")[-1])
 
         if reproc_product_link_text:
             reproductlinks = f"""
@@ -319,7 +328,8 @@ f"""
                                   body=issuebody,
                                   labels=labels)
 
-            # use this to break raise Exception("Completed a run; check it")
+        # use this to break 
+        # raise Exception("Completed a run; check it")
 
 
 paged_issues = paged(api.issues.list_for_repo, state='all')

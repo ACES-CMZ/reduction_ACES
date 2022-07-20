@@ -42,7 +42,10 @@ def get_peak(fn, slab_kwargs=None, rest_value=None):
     if slab_kwargs is not None:
         cube = cube.spectral_slab(**slab_kwargs)
     with cube.use_dask_scheduler('threads'):
-        mx = cube.max(axis=0).to(u.K)
+        if cube.unit == u.dimensionless_unscaled:
+            mx = cube.max(axis=0)
+        else:
+            mx = cube.max(axis=0).to(u.K)
     return mx
 
 
