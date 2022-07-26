@@ -5,6 +5,7 @@ Two environmental variables must be set:
     WEBLOG_DIR: the path containing the pipeline* weblogs
 """
 import os, sys, glob, json
+from astropy import log
 
 if os.getenv('ACES_ROOTDIR') is None:
     try:
@@ -61,14 +62,17 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
     for stage in pipeline_run:
         logfile = os.path.join(stage, 'casapy.log')
         if os.path.exists(logfile):
-            # DEBUG print(f"{logfile} {aggregatecontrun} {cuberun}")
             with open(logfile, 'r') as fh:
                 for line in fh.readlines():
-                    if "hif_makeimlist(specmode='cube')" in line:
+                    if "hif_makeimlist(specmode='cube'" in line:
+                        # can be
+                        # hif_makeimlist(specmode='cube')
+                        # or
+                        # hif_makeimlist(specmode='cont', robust=1.0)
                         cuberun=True
                         # skip to next: that will be cubes
                         break
-                    if "hif_makeimlist(specmode='cont')" in line:
+                    if "hif_makeimlist(specmode='cont'" in line:
                         aggregatecontrun=True
                         # skip to next: that will be the aggregate continuum
                         # (individual continuum is 'mfs')
@@ -77,6 +81,7 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
                         # findcont runs tclean but we don't want findcont params
                         break
                     if 'tclean( vis' in line:
+                        log.debug(f"{logfile} found tclean command")
                         tcleanpars = line.split("tclean")[-1]
                         tcleanpars = eval(f'dict{tcleanpars}')
                         if tcleanpars['field'] == source_name:
@@ -90,6 +95,7 @@ for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
                                 cubepars[f'spw{spw}'] = tcleanpars
                             if tcleanpars['specmode'] == 'mfs' and aggregatecontrun:
                                 contpars['aggregate'] = tcleanpars
+            log.debug(f"{logfile} {aggregatecontrun} {cuberun}")
             if cubepars and cuberun:
                 cuberun = False
             if contpars and aggregatecontrun:

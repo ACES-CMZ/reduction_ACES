@@ -151,6 +151,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 print("Error - the composite mask has no overlap with the flag map.  "
                       "I don't know why this occurs but it definitely is not expected.")
 
+    fits.PrimaryHDU(data=flagmap,
+                    header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/{array}_{name}_field_number_map.fits', overwrite=True)
 
 
     ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max())+0.5, zorder=fronter)

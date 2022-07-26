@@ -82,9 +82,14 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
 
     try:
         beam = cube.beam
-    except AttributeError:
-        # assume we've appropriately sliced to get a single beam above
-        beam = cube.beams[0]
+    except (AttributeError,NoBeamError):
+        try:
+            # assume we've appropriately sliced to get a single beam above
+            beam = cube.beams[0]
+        except (AttributeError,NoBeamError):
+            log.error(f"File {fn} is not a valid PSF cube")
+            return (np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan)
+
 
     shape = cutout.shape
     sy, sx = shape
