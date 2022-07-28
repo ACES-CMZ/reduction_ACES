@@ -63,10 +63,15 @@ def get_m0(fn, slab_kwargs=None, rest_value=None):
 
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 weights=None,
+                target_header=None,
                 rest_value=None, cb_unit=None, array='7m', basepath='./'):
 
-    log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
-    target_wcs, shape_out = find_optimal_celestial_wcs(twod_hdus, frame='galactic')
+    if target_header is None:
+        log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
+        target_wcs, shape_out = find_optimal_celestial_wcs(twod_hdus, frame='galactic')
+    else:
+        target_wcs = wcs.WCS(target_header)
+        shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
     pb = ProgressBar(len(twod_hdus))
     def repr_function(*args, **kwargs):

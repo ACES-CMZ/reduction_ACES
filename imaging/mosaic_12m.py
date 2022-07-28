@@ -28,6 +28,8 @@ import glob
 
 if __name__ == "__main__":
 
+    header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/imaging/header_12m.hdr')
+
     log.info("12m continuum")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.tt0.pbcor.fits')
     hdus = [read_as_2d(fn) for fn in filelist]
