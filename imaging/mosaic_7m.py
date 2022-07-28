@@ -36,8 +36,8 @@ if __name__ == "__main__":
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*16_18_20_22*cont.I.tt0.pbcor.fits')
     hdus = [read_as_2d(fn) for fn in filelist]
     make_mosaic(hdus, name='continuum', norm_kwargs=dict(stretch='asinh',
-                target_header=header,
                 max_cut=0.2, min_cut=-0.025), cb_unit='Jy/beam', array='7m',
+                target_header=header,
                 basepath=basepath)
 
     print("7m HCO+")
