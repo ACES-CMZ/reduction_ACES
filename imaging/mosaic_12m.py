@@ -41,7 +41,7 @@ if __name__ == "__main__":
     make_mosaic(hdus, name='continuum', weights=wthdus,
                 cb_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
-                header=header,
+                target_header=header,
                 )
 
     log.info("12m HCO+")
@@ -54,13 +54,13 @@ if __name__ == "__main__":
     make_mosaic(hdus, name='hcop_max', cb_unit='K', array='12m', basepath=basepath,
                 weights=wthdus,
                 norm_kwargs=dict(max_cut=20, min_cut=-0.5, ),
-                header=header,
+                target_header=header,
                )
     hdus = [get_m0(fn).hdu for fn in filelist]
     print(flush=True)
     make_mosaic(hdus,  name='hcop_m0', cb_unit='K km/s', array='12m', basepath=basepath,
                 weights=wthdus,
-                header=header,
+                target_header=header,
                 norm_kwargs=dict(max_cut=100, min_cut=-10,))
 
     log.info("12m HNCO")
@@ -71,13 +71,13 @@ if __name__ == "__main__":
     wthdus = [read_as_2d(fn, minval=0.3) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='hnco_max', basepath=basepath, array='12m',
-                header=header,
+                target_header=header,
                 weights=wthdus,
                 norm_kwargs=dict(max_cut=10, min_cut=-0.5, ))
     hdus = [get_m0(fn).hdu for fn in filelist]
     print(flush=True)
     make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='12m',
-                basepath=basepath, weights=wthdus, header=header,
+                basepath=basepath, weights=wthdus, target_header=header,
                 norm_kwargs=dict(max_cut=100, min_cut=-10, ))
 
     log.info("12m H40a")
@@ -88,9 +88,9 @@ if __name__ == "__main__":
     wthdus = [get_peak(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in weightfiles]
     make_mosaic(hdus, name='h40a_max', cb_unit='K',
                 norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'),
-                array='12m', basepath=basepath, weights=wthdus, header=header)
+                array='12m', basepath=basepath, weights=wthdus, target_header=header)
     hdus = [get_m0(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
     make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s',
                 norm_kwargs={'max_cut': 20, 'min_cut':-1, 'stretch':'asinh'},
-                array='12m', basepath=basepath, weights=wthdus, header=header)
+                array='12m', basepath=basepath, weights=wthdus, target_header=header)
 
