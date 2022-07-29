@@ -131,6 +131,7 @@ for new_oid in unique_oids:
     reproc_product_filenames = (glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.cont.I.iter1.image.tt0.pbcor.fits") +
             glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.mfs.I.iter1.image.pbcor.fits") +
             glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.cube.I.iter1.image.pbcor.fits") +
+            glob.glob(f"{reclean_dir}/*Sgr_A_star_sci.spw*.mfs.I.iter1.image.pbcor.fits") +
             glob.glob(f"{reclean_dir}/*Sgr_A_star_sci.spw*.cube.I.iter1.image.pbcor.fits")
                                )
 
@@ -323,12 +324,26 @@ f"""
                 reproc_lines_split = existing_reproc.split("\n")
                 new_items = [row for row in reproc_product_link_text.split("\n")
                              if row not in reproc_lines_split]
-                if len(new_items) > 0:
-                    need_update.append(f"Update reproduct links: found {len(new_items)} new ones")
+
+                # one-time-only?  Redundancy check/fix
+                # skip blank lines
+                redundant = 0
+                for item in reproc_lines_split[2:]:
+                    if reproc_lines_split.count(item) > 1:
+                        print(f"Removed a redundant item {item}")
+                        reproc_lines_split.remove(item)
+                        redundant += 1
+
+
+                if len(new_items) > 0 or redundant > 0:
+                    need_update.append(f"Update reproduct links: found {len(new_items)} new ones and {redundant} redundant ones")
 
                     for item in new_items:
+                        if item in reproc_lines_split:
+                            raise ValueError("Duplicate Line")
                         # put these as #2 in the list each time
                         reproc_lines_split.insert(2, item)
+                        assert reproc_lines_split.count(item) == 1
 
                     issuebody = "\n".join([before, "## Reprocessed Product Links:"] +reproc_lines_split)
 
