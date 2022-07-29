@@ -96,7 +96,7 @@ weblog_names = [os.path.basename(x) for x in glob.glob('/orange/adamginsburg/web
 sb_status = {}
 
 # loop through oids, not uids: the SB names are _not_ unique, but the UIDs are
-#unique_oids = ['uid://A001/X15a0/Xfa'] # DEBUG
+#unique_oids = ['uid://A001/X15a0/X196'] # DEBUG
 for new_oid in unique_oids:
     new_sb_issuename = uids_to_sbs[new_oid]
     new_sb = new_sb_issuename.split(" ")[0]
@@ -203,7 +203,7 @@ f"""
                                       body=issuebody,
                                       labels=labels)
     else:
-        #print(f"Issue exists: Possibly updating existing issue {new_sb_issuename}")
+        # DEBUG print(f"Issue exists: Possibly updating existing issue {new_sb_issuename}")
         issue = sbs_to_issues[new_sb_issuename]
         body = issue.body
         labels = [lb.name for lb in issue.labels]
@@ -313,6 +313,19 @@ f"""
             elif "## Reprocessed Product Links:\n\n\n" in issue.body:
                 need_update.append("Update reproduct links")
                 issuebody = issuebody.replace("## Reprocessed Product Links:\n\n\n", reproductlinks)
+            elif "## Reprocessed Product Links:\n\n" in issue.body:
+                # check if any need updating
+                # (This assumes that 'Reprocessed Product Links' is all that's left in the document!)
+                before, existing_reproc = issuebody.split("## Reprocessed Product Links:")
+                reproc_lines_split = existing_reproc.split("\n")
+                new_items = [row for row in reproc_product_link_text.split("\n")
+                             if row not in reproc_lines_split]
+                for item in new_items:
+                    # put these as #2 in the list each time
+                    reproc_lines_split.insert(2, item)
+
+                need_update.append(f"Update reproduct links: found {len(new_items)} new ones")
+                issuebody = "\n".join([before, "## Reprocessed Product Links:"] +reproc_lines_split)
 
         if need_update:
             print(f"Updating issue for {new_sb} -> {new_sb_issuename}.  need_update={need_update}")
@@ -329,7 +342,7 @@ f"""
                                   labels=labels)
 
         # use this to break 
-        # raise Exception("Completed a run; check it")
+        # DEBUG raise Exception("Completed a run; check it")
 
 
 paged_issues = paged(api.issues.list_for_repo, state='all')
