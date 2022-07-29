@@ -49,7 +49,19 @@ for fullpath in looplist:
         mousmap_ = get_mousmap_(refresh=True)
         sbname = mousmap_[mous]
     field = sbname.split("_")[3]
-    config = sbname.split("_")[5]
+
+    # we have a few cases:
+    # 'Sgr_A_st_j_03_TM1_updated'
+    # 'Sgr_A_st_b_updated_03_7M'
+    if sbname.split("_")[4] == 'updated' or sbname.split("_")[5] == 'updated':
+        config = sbname.split("_")[6]
+    else:
+        config = sbname.split("_")[5]
+
+    # sanity check
+    if config in ('updated', 'original', '03'):
+        raise ValueError(f"sbname={sbname} is not being handled correctly by delivery_status.py")
+
     if ' ' in config:
         # handle this case: 'Sgr_A_st_aj_03_7M Sgr_A_st_aj_03_7M_original'
         config = config.split(" ")[0]

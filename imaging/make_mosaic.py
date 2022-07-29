@@ -63,10 +63,15 @@ def get_m0(fn, slab_kwargs=None, rest_value=None):
 
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 weights=None,
+                target_header=None,
                 rest_value=None, cb_unit=None, array='7m', basepath='./'):
 
-    log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
-    target_wcs, shape_out = find_optimal_celestial_wcs(twod_hdus, frame='galactic')
+    if target_header is None:
+        log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
+        target_wcs, shape_out = find_optimal_celestial_wcs(twod_hdus, frame='galactic')
+    else:
+        target_wcs = wcs.WCS(target_header)
+        shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
     pb = ProgressBar(len(twod_hdus))
     def repr_function(*args, **kwargs):
@@ -151,6 +156,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 print("Error - the composite mask has no overlap with the flag map.  "
                       "I don't know why this occurs but it definitely is not expected.")
 
+    fits.PrimaryHDU(data=flagmap,
+                    header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/{array}_{name}_field_number_map.fits', overwrite=True)
 
 
     ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max())+0.5, zorder=fronter)

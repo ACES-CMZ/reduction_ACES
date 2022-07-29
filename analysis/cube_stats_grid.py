@@ -212,6 +212,7 @@ if __name__ == "__main__":
                 psffn = fn.replace(".image", ".psf")
 
                 print(f"Beginning field {field} config {config} spw {spw} suffix {suffix}", flush=True)
+                print(f"File: '{fn}'", flush=True)
 
                 logtable = casaTable.read(f'{fn}/logtable')
                 hist = logtable['MESSAGE']
