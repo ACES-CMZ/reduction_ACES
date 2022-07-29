@@ -1,5 +1,8 @@
 """
 Run this with some care; it will require manual pushing
+
+Example call:
+ACES_ROOTDIR=/orange/adamginsburg/ACES/reduction_ACES/ python ${ACES_ROOTDIR}/pipeline_scripts/generate_spw33_commands.py
 """
 
 import json, os, sys
