@@ -323,12 +323,14 @@ f"""
                 reproc_lines_split = existing_reproc.split("\n")
                 new_items = [row for row in reproc_product_link_text.split("\n")
                              if row not in reproc_lines_split]
-                for item in new_items:
-                    # put these as #2 in the list each time
-                    reproc_lines_split.insert(2, item)
+                if len(new_items) > 0:
+                    need_update.append(f"Update reproduct links: found {len(new_items)} new ones")
 
-                need_update.append(f"Update reproduct links: found {len(new_items)} new ones")
-                issuebody = "\n".join([before, "## Reprocessed Product Links:"] +reproc_lines_split)
+                    for item in new_items:
+                        # put these as #2 in the list each time
+                        reproc_lines_split.insert(2, item)
+
+                    issuebody = "\n".join([before, "## Reprocessed Product Links:"] +reproc_lines_split)
 
         if need_update:
             print(f"Updating issue for {new_sb} -> {new_sb_issuename}.  need_update={need_update}")
