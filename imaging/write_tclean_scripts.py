@@ -169,6 +169,7 @@ for sbname,allpars in commands.items():
 
                 with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
                     fh.write("import os, shutil, glob\n")
+                    fh.write("print(f'Started CASA in {os.getcwd()}')\n")
                     if temp_workdir:
                         fh.write("".join(splitcmd))
                         fh.write("\n\n")
@@ -177,9 +178,9 @@ for sbname,allpars in commands.items():
                         fh.write(f"       {key}={repr(val)},\n")
                     fh.write(")\n\n\n")
                     if tcpars['specmode'] == 'cube':
-                        fh.write(f"exportfits('{tcpars['imagename']}.image.pbcor', '{tcpars['imagename']}.image.pbcor.fits')\n\n\n")
+                        fh.write(f"exportfits('{tcpars['imagename']}.image.pbcor', '{tcpars['imagename']}.image.pbcor.fits', overwrite=True)\n\n\n")
                     elif tcpars['specmode'] == 'mfs':
-                        fh.write(f"exportfits('{tcpars['imagename']}.image.tt0.pbcor', '{tcpars['imagename']}.image.tt0.pbcor.fits')\n\n\n")
+                        fh.write(f"exportfits('{tcpars['imagename']}.image.tt0.pbcor', '{tcpars['imagename']}.image.tt0.pbcor.fits', overwrite=True)\n\n\n")
                     if temp_workdir:
                         fh.write(cleanupcmds)
 
