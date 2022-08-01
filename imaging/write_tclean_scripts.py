@@ -117,7 +117,7 @@ for sbname,allpars in commands.items():
                                         if not os.path.exists(outputvis):
                                             raise ValueError("Did not split")
                                     except Exception as ex:
-                                        print(ex)
+                                        logprint(ex)
                                         split(vis='{vis}',
                                             outputvis=outputvis,
                                             field='Sgr_A_star',
@@ -141,7 +141,7 @@ for sbname,allpars in commands.items():
                                         if not os.path.exists(outputvis):
                                             raise ValueError("Did not split")
                                     except Exception as ex:
-                                        print(ex)
+                                        logprint(ex)
                                         split(vis='{vis}',
                                             outputvis=outputvis,
                                             field='Sgr_A_star',
@@ -169,7 +169,18 @@ for sbname,allpars in commands.items():
 
                 with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
                     fh.write("import os, shutil, glob\n")
-                    fh.write("print(f'Started CASA in {os.getcwd()}')\n")
+                    fh.write("""
+                             try:
+                                 from taskinit import casalog
+                             except ImportError:
+                                 from casatasks import casalog
+
+                             def logprint(string):
+                                 casalog.post(string, origin='tclean_script')
+                                 print(string)
+
+                             """
+                    fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
                     if temp_workdir:
                         fh.write("".join(splitcmd))
                         fh.write("\n\n")

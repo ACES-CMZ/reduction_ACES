@@ -56,7 +56,7 @@ echo "env just before running the command:"
 env
 pwd
 
-if [ ${mpi_ntasks} -gt 1]; then
+if [ ${mpi_ntasks} -gt 1 ]; then
     ${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
 else 
     xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
