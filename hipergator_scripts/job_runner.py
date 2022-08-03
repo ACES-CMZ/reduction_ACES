@@ -211,7 +211,7 @@ if __name__ == "__main__":
                                     print(f"Removing {ff}")
                                     shutil.rmtree(ff)
 
-                        tempdir_name = f'{field}_{spw}_{imtype}_{contsub_suffix}'
+                        tempdir_name = f'{field}_{spw}_{imtype}{contsub_suffix}'
                         print(f"Removing files matching '{workdir}/{tempdir_name}/IMAGING_WEIGHT.*'")
                         old_tempfiles = (glob.glob(f'{workdir}/{tempdir_name}/IMAGING_WEIGHT*') +
                                          glob.glob(f'{workdir}/{tempdir_name}/TempLattice*'))
