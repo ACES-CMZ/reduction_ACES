@@ -18,7 +18,7 @@ if not os.path.isdir(region+'_12m_7m_SPW3_concat.ms'):
 
 hnco_pars   = tclean_commands[region+'_TM1']['tclean_cube_pars']['spw31']
 
-if os.path.isdir(pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_SPW3.clean.image')==False and os.path.isdir(pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_TP.SPW3')==False:
+if not os.path.isdir(pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_SPW3.clean.image') and not os.path.isdir(pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_TP.SPW3'):
     tclean(vis                     = pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_SPW3_concat.ms',
            field                   = 'Sgr_A_star',
            datacolumn              = 'corrected',
