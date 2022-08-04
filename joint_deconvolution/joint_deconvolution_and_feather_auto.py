@@ -59,7 +59,7 @@ if not os.path.isdir(pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_SPW3.clean.
 
 tp_data = glob.glob(pth+'/'+region+'/total_power/'+'*.spw23.cube.I.sd.fits')[0]
 
-if os.path.isdir(pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_SPW3.clean.image')==True:
+if os.path.isdir(pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_SPW3.clean.image'):
     tp_freq       = imhead(tp_data,mode='get',hdkey='restfreq')
     high_res_freq = imhead(pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_SPW3.clean.image',mode='get',hdkey='restfreq')
 
