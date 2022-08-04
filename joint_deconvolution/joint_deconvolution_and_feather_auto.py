@@ -11,7 +11,7 @@ if not os.path.exists('clean_12m_7m'):
     os.mkdir('clean_12m_7m')
 os.chdir(pth+'/'+region+'/clean_12m_7m/')
 
-vis_all     = glob.glob(pth+'/'+region+'/twelve_m/spws/*.spw3') + glob.glob(pth+'/'+region+'/seven_m/spws/*.spw3')
+vis_all     = glob.glob(os.path.join(pth, region, '/twelve_m/spws/*.spw3')) + glob.glob(os.path.join(region, '/seven_m/spws/*.spw3'))
 if os.path.isdir(region+'_12m_7m_SPW3_concat.ms')==False:
     concat(vis       = vis_all,
            concatvis = region+'_12m_7m_SPW3_concat.ms')
