@@ -68,7 +68,7 @@ if os.path.isdir(pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_SPW3.clean.imag
                   restfreq  = high_res_freq['value']+' Hz',
                   output    = tp_data+'.reframe')
 
-    if os.path.isdir(tp_data+'.reframe')==True:
+    if os.path.isdir(tp_data+'.reframe'):
         imregrid(imagename  = tp_data+'.reframe',
                  template   = pth+'/'+region+'/clean_12m_7m/'+region+'_12m_7m_SPW3.clean.image',
                  output     = tp_data+'.regrid')
