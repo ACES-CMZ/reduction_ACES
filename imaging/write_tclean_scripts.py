@@ -183,7 +183,7 @@ for sbname,allpars in commands.items():
 
                 with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
                     fh.write("import os, shutil, glob\n")
-                    fh.write("""
+                    fh.write(textwrap.dedent("""
                              try:
                                  from taskinit import casalog
                              except ImportError:
@@ -193,7 +193,7 @@ for sbname,allpars in commands.items():
                                  casalog.post(string, origin='tclean_script')
                                  print(string)
 
-                             """)
+                             """))
                     fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
                     if temp_workdir:
                         fh.write("".join(splitcmd))
