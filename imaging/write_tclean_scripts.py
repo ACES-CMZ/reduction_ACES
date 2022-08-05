@@ -43,13 +43,13 @@ gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
 runonce = bool(os.getenv('RUNONCE'))
 cleanup = bool(os.getenv('CLEANUP'))
 scriptlist = os.path.realpath(os.getenv('SCRIPTLIST') or './scriptlist.txt')
-print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))} SCRIPTLIST={scriptlist}")
 
 if os.getenv('TEMPORARY_WORKING_DIRECTORY'):
     temp_workdir = os.getenv('TEMPORARY_WORKING_DIRECTORY')
 else:
     temp_workdir = False
 
+print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))} SCRIPTLIST={scriptlist} TEMP_WORKDIR={temp_workdir}")
 
 mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
 mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
@@ -104,7 +104,7 @@ for sbname,allpars in commands.items():
                 if temp_workdir:
 
                     imtype = tcpars['specmode']
-                    tempdir_name = f'{temp_workdir}/{field}_{spw}_{imtype}'
+                    tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}'
                     if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
                         os.mkdir(tempdir_name)
                     # copy & move files around first

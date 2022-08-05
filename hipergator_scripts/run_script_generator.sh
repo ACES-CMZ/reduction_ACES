@@ -46,6 +46,7 @@ export jobname=$JOBNAME
 #export DASK_THREADS=8
 export DASK_THREADS=$SLURM_NTASKS
 
+export TRYDROPTARGET=True
 export TEMPORARY_WORKING_DIRECTORY="/blue/adamginsburg/adamginsburg/ACES/workdir"
 
 env
