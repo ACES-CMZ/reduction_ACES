@@ -15,8 +15,6 @@ Optional:
 """
 import os, sys, glob, json, shutil, textwrap
 
-from mous_map import get_mous_to_sb_mapping
-
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
         """fake"""
@@ -31,6 +29,9 @@ else:
     rootdir = os.environ['ACES_ROOTDIR']
     sys.path.append(rootdir)
     sys.path.append(f'{rootdir}/pipeline_scripts')
+    sys.path.append(f'{rootdir}/hipergator_scripts')
+
+from mous_map import get_mous_to_sb_mapping
 
 # if this isn't in the env pars, we get an intentional crash:
 # you have to specify that.
@@ -192,7 +193,7 @@ for sbname,allpars in commands.items():
                                  casalog.post(string, origin='tclean_script')
                                  print(string)
 
-                             """
+                             """)
                     fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
                     if temp_workdir:
                         fh.write("".join(splitcmd))
