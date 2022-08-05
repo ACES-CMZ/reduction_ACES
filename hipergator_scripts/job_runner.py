@@ -77,9 +77,6 @@ if __name__ == "__main__":
         do_contsub = bool(spwpars.get('do_contsub'))
         contsub_suffix = '.contsub' if do_contsub else ''
 
-        if mousname in 'member.uid___A001_X15b4_X3d':
-            log.info("We're in X3d = j_updated")
-            log.info(f"field={field}, config={config}, sbname={sbname}, mous={mousname}")
         log.debug(f"mous={mous} field={field} sbname={sbname} config={config}")
 
         for config_ in imaging_status[mousname]:
@@ -248,8 +245,3 @@ if __name__ == "__main__":
                         sbatch = subprocess.check_output(cmd.split())
 
                         print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
-
-        if mousname in 'member.uid___A001_X15b4_X3d':
-            log.info("We're in X3d = j_updated")
-            log.info(f"field={field}, config={config}, sbname={sbname}, mous={mousname}")
-            break
