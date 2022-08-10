@@ -4,34 +4,35 @@ import glob
 import os
 import json
 
-if 'weblog_dir' not in locals():
-    weblog_dir = os.getenv('WEBLOG_DIR')
-    if weblog_dir is None:
-        raise ValueError("Set an environmental variable 'WEBLOG_DIR' or a local variable `weblog_dir` to specify where to extract the weblogs.")
+if __name__ == "__main__":
+    if 'weblog_dir' not in locals():
+        weblog_dir = os.getenv('WEBLOG_DIR')
+        if weblog_dir is None:
+            raise ValueError("Set an environmental variable 'WEBLOG_DIR' or a local variable `weblog_dir` to specify where to extract the weblogs.")
 
-os.chdir(weblog_dir)
+    os.chdir(weblog_dir)
 
-print("Getting MOUS->SOUS mapping")
-mapping = get_mous_to_sb_mapping('2021.1.00172.L')
+    print("Getting MOUS->SOUS mapping")
+    mapping = get_mous_to_sb_mapping('2021.1.00172.L')
 
-if not os.path.exists('humanreadable'):
-    os.mkdir('humanreadable')
-weblogs = glob.glob("pipeline*")
+    if not os.path.exists('humanreadable'):
+        os.mkdir('humanreadable')
+    weblogs = glob.glob("pipeline*")
 
-print("Inferring weblog name mappings")
-weblog_maps = weblog_names(weblogs, mapping)
+    print("Inferring weblog name mappings")
+    weblog_maps = weblog_names(weblogs, mapping)
 
-print("Making links")
-make_links(weblog_maps)
+    print("Making links")
+    make_links(weblog_maps)
 
-print("Extracting calibrator fluxes from weblogs")
-fluxes = get_all_fluxes(weblogs)
+    print("Extracting calibrator fluxes from weblogs")
+    fluxes = get_all_fluxes(weblogs)
 
-print("Dumping fluxes to fluxes.json and fluxes.ipac")
-with open('fluxes.json', 'w') as fh:
-    json.dump(fluxes, fh)
+    print("Dumping fluxes to fluxes.json and fluxes.ipac")
+    with open('fluxes.json', 'w') as fh:
+        json.dump(fluxes, fh)
 
-fluxtbl = fluxes_to_table(fluxes)
-for colname in fluxtbl.colnames:
-    fluxtbl.rename_column(colname, colname.replace(" ","_"))
-fluxtbl.write('fluxes.ipac', format='ascii.ipac', overwrite=True)
+    fluxtbl = fluxes_to_table(fluxes)
+    for colname in fluxtbl.colnames:
+        fluxtbl.rename_column(colname, colname.replace(" ","_"))
+    fluxtbl.write('fluxes.ipac', format='ascii.ipac', overwrite=True)

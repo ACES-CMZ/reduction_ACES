@@ -14,7 +14,7 @@ Environmental Variables read by this script:
     ACES_ROOTDIR : the directory containing any scripts that need to be imported.
     This script allows scriptForPIs to be overridden by putting scriptForCalibration
     files in directories following the naming schemem:
-        {rootdir}/pipeline_scripts/{sdm}.ms.scriptForCalibration.py
+        {rootdir}/reduction_ACES/aces/pipeline_scripts/{sdm}.ms.scriptForCalibration.py
     LOGFILENAME : A CASA log filename to use instead of the default
 
     RUNONCE: A flag to set - if this is set, it will only run at most
@@ -44,7 +44,9 @@ def logprint(string, origin='almaimf_metadata',
 
 if os.getenv('ACES_ROOTDIR') is None:
     try:
-        os.environ['ACES_ROOTDIR'] = os.path.split(metadata_tools.__file__)[0]
+        from .. import conf
+        os.environ['ACES_ROOTDIR'] = conf.basepath
+        #os.path.split(metadata_tools.__file__)[0]
     except ImportError:
         raise ValueError("metadata_tools not found on path; make sure to "
                          "specify ACES_ROOTDIR environment variable "
@@ -102,7 +104,7 @@ for scigoal in science_goal_dirs:
                              .format(scriptforpi, dirpath), origin='pipeline_runner')
                 else:
                     os.chdir(os.path.join(dirpath, 'calibrated/working'))
-                    scriptpath = ("{rootdir}/pipeline_scripts/{imaging_script}"
+                    scriptpath = ("{rootdir}/reduction_ACES/aces/pipeline_scripts/{imaging_script}"
                                   .format(rootdir=rootdir, imaging_script=imaging_script))
 
                     shutil.copy(scriptpath, '.')
@@ -133,7 +135,7 @@ for scigoal in science_goal_dirs:
                 for sdmfn in sdms:
                     sdm = os.path.split(sdmfn)[-1].split(".")[0]
                     # custom version has to follow this precise name scheme
-                    scriptpath = ("{rootdir}/pipeline_scripts/{sdm}.ms.scriptForCalibration.py"
+                    scriptpath = ("{rootdir}/reduction_ACES/aces/pipeline_scripts/{sdm}.ms.scriptForCalibration.py"
                                   .format(rootdir=rootdir, sdm=sdm))
                     if os.path.exists(scriptpath):
                         shutil.copy(scriptpath, '.')
