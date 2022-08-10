@@ -1,6 +1,7 @@
 import numpy as np
 import difflib
 import os
+from astropy import log
 from ghapi.all import GhApi, paged
 import re
 import glob
@@ -96,7 +97,7 @@ weblog_names = [os.path.basename(x) for x in glob.glob('/orange/adamginsburg/web
 sb_status = {}
 
 # loop through oids, not uids: the SB names are _not_ unique, but the UIDs are
-#unique_oids = ['uid://A001/X15a0/X196'] # DEBUG
+# unique_oids = ['uid://A001/X15a0/Xd2'] # DEBUG
 for new_oid in unique_oids:
     new_sb_issuename = uids_to_sbs[new_oid]
     new_sb = new_sb_issuename.split(" ")[0]
@@ -207,7 +208,7 @@ f"""
                                       body=issuebody,
                                       labels=labels)
     else:
-        # DEBUG print(f"Issue exists: Possibly updating existing issue {new_sb_issuename}")
+        log.debug(f"Issue exists: Possibly updating existing issue {new_sb_issuename}")
         issue = sbs_to_issues[new_sb_issuename]
         body = issue.body
         labels = [lb.name for lb in issue.labels]
@@ -277,7 +278,7 @@ f"""
 
 
         if product_link_text:
-            #print("product_link_text is something")
+            log.debug(f"product_link_text is something: {product_link_text}")
             productlinks = f"""
 
 ## Product Links:
@@ -304,6 +305,7 @@ f"""
                 #print(issue.body.split("## Product Links:")[-1])
 
         if reproc_product_link_text:
+            log.debug(f"reproc_product_link_text is something: {reproc_product_link_text}")
             reproductlinks = f"""
 
 ## Reprocessed Product Links:
@@ -329,7 +331,8 @@ f"""
                 # skip blank lines
                 redundant = 0
                 for item in reproc_lines_split[2:]:
-                    if reproc_lines_split.count(item) > 1:
+                    # 'and item' checks that it's not empty (blank lines are OK)
+                    if reproc_lines_split.count(item) > 1 and item:
                         print(f"Removed a redundant item {item}")
                         reproc_lines_split.remove(item)
                         redundant += 1
@@ -361,6 +364,7 @@ f"""
                                   body=issuebody,
                                   labels=labels)
 
+        log.debug(f"Done with issue {new_sb} = {issue.number}")
         # use this to break 
         # DEBUG raise Exception("Completed a run; check it")
 

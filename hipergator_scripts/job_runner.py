@@ -4,6 +4,7 @@ import json
 import glob
 import shutil
 import copy
+from astropy import log
 from mous_map import get_mous_to_sb_mapping
 
 basepath = "/orange/adamginsburg/ACES/rawdata"
@@ -11,7 +12,7 @@ grouppath = f"{basepath}/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/grou
 
 mouses = [os.path.basename(x)
         for x in
-        glob.glob(f'{grouppath}/member.uid___A001_X15a0_X*')]
+        glob.glob(f'{grouppath}/member.uid___A001_X15*_X*')]
 
 mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
 mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
@@ -44,6 +45,7 @@ if __name__ == "__main__":
     import sys
 
     verbose = '--verbose' in sys.argv
+    debug = '--debug' in sys.argv
 
     with open('/orange/adamginsburg/web/secure/ACES/tables/imaging_completeness_grid.json', 'r') as fh:
         imaging_status = json.load(fh)
@@ -75,20 +77,26 @@ if __name__ == "__main__":
         do_contsub = bool(spwpars.get('do_contsub'))
         contsub_suffix = '.contsub' if do_contsub else ''
 
+        log.debug(f"mous={mous} field={field} sbname={sbname} config={config}")
 
         for config_ in imaging_status[mousname]:
+            log.debug(f"mous={mous} field={field} sbname={sbname} config={config} config_={config_}")
+
             if config_ == 'TP':
                 # we don't do TP
+                log.debug(f"TOTAL POWER, SKIPPING: field={field}, config={config}, sbname={sbname}, mous={mousname}")
                 continue
             if config_ != config:
                 # imaging_status doesn't know which config is being asked for
                 # skip if the config is not the right one for the mous
+                log.debug(f"Loop iteration config {config_} is not the requested config {config}, SKIPPING")
                 continue
             if not os.path.exists(f'{grouppath}/{mous}'):
                 print(f"MOUS {mousname} is not downloaded/extracted (path={grouppath}/{mous}).")
                 continue
             for spw in imaging_status[mousname][config]:
                 for imtype in imaging_status[mousname][config][spw]:
+                    log.debug(f"spw={spw} imtype={imtype}")
                     imstatus = imaging_status[mousname][config][spw][imtype]
 
                     calwork = f'{grouppath}/{mous}/calibrated/working'
@@ -98,25 +106,34 @@ if __name__ == "__main__":
                     except Exception:
                         spwname = spw
                     scriptname = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}_03_{config}_{spwname}.py'
+                    scriptname_glob = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}_03_{config}*_{spwname}.py'
                     if (imtype == 'mfs' and spw == 'aggregate') or imtype == 'cube':
                         if not os.path.exists(scriptname):
-                            print(f"ERROR: script {scriptname} does not exist!  This may indicate that `write_tclean_scripts` has not been run or the pipeline hasn't finished.")
-                            continue
+                            if any(glob.glob(scriptname_glob)):
+                                scriptname = glob.glob(scriptname_glob)[0]
+                            else:
+                                print(f"ERROR: script {scriptname} does not exist!  This may indicate that `write_tclean_scripts` has not been run or the pipeline hasn't finished.")
+                                if mousname in 'member.uid___A001_X15b4_X3d':
+                                    raise ValueError("The script definited _does_ exist.")
+                                continue
                         else:
                             # all is good
                             pass
                     else:
                         # skip MFS individual spws
+                        log.debug(f"imtype is {imtype} and spw is {spw}.  SKIPPING")
                         continue
                     os.environ['SCRIPTNAME'] = scriptname
 
                     if imstatus['image'] and imstatus['pbcor']:
                         # Done
+                        log.debug(f"imtype={imtype} spw={spw}: Image status is done! (image & pbcor).  SKIPPING")
                         continue
                     elif imstatus['WIP']:
                         if '--redo-wip' in sys.argv:
                             print(f"field {field} {spw} {imtype} is in progress: imstatus={imstatus['WIP']}; trying anyway (if it is not in the 'PENDING' or 'RUNNING' queue)")
                         else:
+                            log.debug(f"Image status is WIP:{imstatus['WIP']}.  --redo-wip was not specified.   SKIPPING")
                             continue
                     else:
                         if verbose:
@@ -134,8 +151,8 @@ if __name__ == "__main__":
                         states = np.unique(tbl['State'][match])
                         if 'RUNNING' in states:
                             jobid = tbl['JobID'][match & (tbl['State'] == 'RUNNING')]
+                            log.debug(f"Skipped job {jobname} because it's RUNNING as {set(jobid)}")
                             continue
-                            print(f"Skipped job {jobname} because it's RUNNING as {set(jobid)}")
                         elif 'PENDING' in states:
                             jobid = tbl['JobID'][match & (tbl['State'] == 'PENDING')]
                             print(f"Skipped job {jobname} because it's PENDING as {set(jobid)}")
@@ -191,7 +208,7 @@ if __name__ == "__main__":
                                     print(f"Removing {ff}")
                                     shutil.rmtree(ff)
 
-                        tempdir_name = f'{field}_{spw}_{imtype}_{contsub_suffix}'
+                        tempdir_name = f'{field}_{spw}_{imtype}{contsub_suffix}'
                         print(f"Removing files matching '{workdir}/{tempdir_name}/IMAGING_WEIGHT.*'")
                         old_tempfiles = (glob.glob(f'{workdir}/{tempdir_name}/IMAGING_WEIGHT*') +
                                          glob.glob(f'{workdir}/{tempdir_name}/TempLattice*'))

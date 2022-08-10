@@ -29,6 +29,9 @@ else:
     rootdir = os.environ['ACES_ROOTDIR']
     sys.path.append(rootdir)
     sys.path.append(f'{rootdir}/pipeline_scripts')
+    sys.path.append(f'{rootdir}/hipergator_scripts')
+
+from mous_map import get_mous_to_sb_mapping
 
 # if this isn't in the env pars, we get an intentional crash:
 # you have to specify that.
@@ -40,12 +43,16 @@ gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
 runonce = bool(os.getenv('RUNONCE'))
 cleanup = bool(os.getenv('CLEANUP'))
 scriptlist = os.path.realpath(os.getenv('SCRIPTLIST') or './scriptlist.txt')
-print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))} SCRIPTLIST={scriptlist}")
 
 if os.getenv('TEMPORARY_WORKING_DIRECTORY'):
     temp_workdir = os.getenv('TEMPORARY_WORKING_DIRECTORY')
 else:
     temp_workdir = False
+
+print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))} SCRIPTLIST={scriptlist} TEMP_WORKDIR={temp_workdir}")
+
+mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
+mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
 
 # touch scriptlist
 with open(scriptlist, 'w') as fh:
@@ -80,7 +87,9 @@ for sbname,allpars in commands.items():
                 # make the clean scripts
                 os.chdir(workingpath)
 
-                print(f"{sbname} {partype} {spwsel}: ", end=" ")
+                field = sbname.split("_")[3]
+                config = sbname.split("_")[5]
+                print(f"{sbname} {partype} {spwsel} {field}: ", end=" ")
                 if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
                     tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
                 if not all(os.path.exists(x) for x in tcpars['vis']):
@@ -93,6 +102,11 @@ for sbname,allpars in commands.items():
                 tcpars['imagename'] = os.path.realpath(tcpars['imagename'])
 
                 if temp_workdir:
+
+                    imtype = tcpars['specmode']
+                    tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}'
+                    if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
+                        os.mkdir(tempdir_name)
                     # copy & move files around first
                     #obsolete
                     # copycmds = "\n".join(
@@ -107,7 +121,7 @@ for sbname,allpars in commands.items():
                     if spwsel == 'aggregate':
                         splitcmd = [textwrap.dedent(
                                 f"""
-                                outputvis='{temp_workdir}/{os.path.basename(vis).replace('.ms', '_aggregate.ms')}'
+                                outputvis='{tempdir_name}/{os.path.basename(vis).replace('.ms', '_aggregate.ms')}'
                                 if not os.path.exists(outputvis):
                                     try:
                                         split(vis='{vis}',
@@ -117,7 +131,7 @@ for sbname,allpars in commands.items():
                                         if not os.path.exists(outputvis):
                                             raise ValueError("Did not split")
                                     except Exception as ex:
-                                        print(ex)
+                                        logprint(ex)
                                         split(vis='{vis}',
                                             outputvis=outputvis,
                                             field='Sgr_A_star',
@@ -127,7 +141,7 @@ for sbname,allpars in commands.items():
                     else:
                         spw = int(spwsel.lstrip('spw'))
                         def rename(x):
-                            return os.path.join(temp_workdir,
+                            return os.path.join(tempdir_name,
                                     os.path.basename(x).replace('.ms', f'_spw{spw}.ms'))
                         splitcmd = [textwrap.dedent(
                                 f"""
@@ -141,7 +155,7 @@ for sbname,allpars in commands.items():
                                         if not os.path.exists(outputvis):
                                             raise ValueError("Did not split")
                                     except Exception as ex:
-                                        print(ex)
+                                        logprint(ex)
                                         split(vis='{vis}',
                                             outputvis=outputvis,
                                             field='Sgr_A_star',
@@ -152,13 +166,13 @@ for sbname,allpars in commands.items():
 
                     cleanupcmds = "\n".join(
                                     ["import glob",
-                                     f"flist = glob.glob('{temp_workdir}/{os.path.basename(tcpars['imagename'])}.*')",
+                                     f"flist = glob.glob('{tempdir_name}/{os.path.basename(tcpars['imagename'])}.*')",
                                      "for fn in flist:",
                                      f"    shutil.move(fn, '{os.path.dirname(tcpars['imagename'])}/')",
                                      ] + 
-                                     [f"shutil.rmtree('{temp_workdir}/{os.path.basename(x)}')" for x in tcpars['vis']]
+                                     [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]
                                     )
-                    tcpars['imagename'] = os.path.join(temp_workdir, os.path.basename(tcpars['imagename']))
+                    tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
 
                     # the spw selection should now be 'everything in the MS'
                     tcpars['spw'] = ''
@@ -169,6 +183,18 @@ for sbname,allpars in commands.items():
 
                 with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
                     fh.write("import os, shutil, glob\n")
+                    fh.write(textwrap.dedent("""
+                             try:
+                                 from taskinit import casalog
+                             except ImportError:
+                                 from casatasks import casalog
+
+                             def logprint(string):
+                                 casalog.post(string, origin='tclean_script')
+                                 print(string)
+
+                             """))
+                    fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
                     if temp_workdir:
                         fh.write("".join(splitcmd))
                         fh.write("\n\n")
@@ -177,9 +203,9 @@ for sbname,allpars in commands.items():
                         fh.write(f"       {key}={repr(val)},\n")
                     fh.write(")\n\n\n")
                     if tcpars['specmode'] == 'cube':
-                        fh.write(f"exportfits('{tcpars['imagename']}.image.pbcor', '{tcpars['imagename']}.image.pbcor.fits')\n\n\n")
+                        fh.write(f"exportfits('{tcpars['imagename']}.image.pbcor', '{tcpars['imagename']}.image.pbcor.fits', overwrite=True)\n\n\n")
                     elif tcpars['specmode'] == 'mfs':
-                        fh.write(f"exportfits('{tcpars['imagename']}.image.tt0.pbcor', '{tcpars['imagename']}.image.tt0.pbcor.fits')\n\n\n")
+                        fh.write(f"exportfits('{tcpars['imagename']}.image.tt0.pbcor', '{tcpars['imagename']}.image.tt0.pbcor.fits', overwrite=True)\n\n\n")
                     if temp_workdir:
                         fh.write(cleanupcmds)
 

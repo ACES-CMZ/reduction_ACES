@@ -54,8 +54,13 @@ mpi_ntasks=$(python -c "print(int(${SLURM_NTASKS} / 2 + 1))")
 echo ""
 echo "env just before running the command:"
 env
+pwd
 
-${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
+if [ ${mpi_ntasks} -gt 1 ]; then
+    ${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
+else 
+    xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
+fi
 
 # the following should not be necessary (it's actually totally redundant) but
 # mpicasa has been very severely failing yet reporting COMPLETED instead of
