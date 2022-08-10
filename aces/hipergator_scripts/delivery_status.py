@@ -36,7 +36,7 @@ spwlist = {'12M': {25, 27, 29, 31, 33, 35, },
 def wildexists(x):
     return len(glob.glob(x)) > 0
 
-if __name__ == "__main__":
+def main():
     datapath = dataroot = '{basepath}/data/2021.1.00172.L'
     #workpath = '/blue/adamginsburg/adamginsburg/ACES/workdir/'
 
