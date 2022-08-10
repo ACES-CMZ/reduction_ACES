@@ -36,7 +36,7 @@ def get_requested_sens():
     # use this file's path
     requested_fn = os.path.join(os.path.dirname(__file__), 'requested.txt')
     if not os.path.exists(requested_fn):
-        requested_fn = f'{basepath}/reduction/analysis/requested.txt'
+        requested_fn = f'{basepath}/reduction_ACES/aces/analysis/data/requested.txt'
     from astropy.io import ascii
     tbl = ascii.read(requested_fn, data_start=2)
     return tbl
@@ -62,7 +62,8 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
     psfim = cube[specslice][0]
 
     # this is a PSF: it _must_ have a peak of 1
-    assert psfim.max() == 1.
+    if psfim.max().value != 1.:
+        raise ValueError(f"PSF has a peak of {psfim.max().value}")
 
     pixscale = wcs.utils.proj_plane_pixel_scales(cube.wcs.celestial)[0] * u.deg
 
@@ -327,6 +328,9 @@ def imstats(fn, reg=None):
             psf_secondpeak, psf_secondpeak_loc, psf_sidelobe1_fraction, epsilon, firstmin, r_sidelobe, _ = get_psf_secondpeak(psf_fn)
         except IndexError:
             psf_secondpeak, psf_secondpeak_loc, psf_sidelobe1_fraction, epsilon, firstmin, r_sidelobe, _ = get_psf_secondpeak(psf_fn, max_npix_peak=200)
+        except ValueError as ex:
+            log.error(f"PSF {psf_fn} had exception {ex}")
+            psf_secondpeak, psf_secondpeak_loc, psf_sidelobe1_fraction, epsilon, firstmin, r_sidelobe, _ = (np.nan,)*7
         meta['psf_secondpeak'] = psf_secondpeak
         meta['psf_epsilon'] = epsilon
         meta['psf_secondpeak_radius'] = psf_secondpeak_loc
@@ -372,11 +376,9 @@ def parse_fn(fn):
     return {'region': region,
             'band': 'B3',
             'muid': muid,
-            'array': '12Monly' if '12M' in split else '7M12M' if '7M12M' in split else '7M' if '7M' in split else '????',
+            'array': '12M' if any('TM1' in x for x in sbname.split("_")) else '7M' if any('7M' in x for x in sbname.split("_")) else '????',
             'robust': 'r'+str(robust),
             'suffix': split[-1],
-            'bsens': 'bsens' in fn.lower(),
-            'nobright': ('noco' in fn.lower()) or ('non2hp' in fn.lower()),
             'pbcor': 'pbcor' in fn.lower(),
            }
 
@@ -392,12 +394,15 @@ def assemble_stats(globstr, ditch_suffix=None):
         if fn.count('.fits') > 1:
             # these are diff images, or something like that
             continue
-        if ditch_suffix is not None:
-            meta = parse_fn(fn.split(ditch_suffix)[0])
-            # don't do this on the suffix-ditched version
-            meta['pbcor'] = 'pbcor' in fn.lower()
-        else:
-            meta = parse_fn(fn)
+        try:
+            if ditch_suffix is not None:
+                meta = parse_fn(fn.split(ditch_suffix)[0])
+                # don't do this on the suffix-ditched version
+                meta['pbcor'] = 'pbcor' in fn.lower()
+            else:
+                meta = parse_fn(fn)
+        except Exception as ex:
+            log.error(f"Failed to parse file {fn}: {ex}")
         meta['filename'] = fn
         stats = imstats(fn, reg=get_noise_region(meta['region'], meta['band']))
         allstats.append({'meta': meta, 'stats': stats})
@@ -484,7 +489,7 @@ def savestats(basepath=basepath,
     requested = get_requested_sens()
 
     meta_keys = ['region', 'band', 'array', 'robust', 'suffix',
-                 'bsens', 'pbcor', 'nobright', 'filename']
+                 'pbcor', 'filename']
     stats_keys = ['bmaj', 'bmin', 'bpa', 'peak', 'sum', 'fluxsum', 'sumgt3sig',
                   'sumgt5sig', 'mad', 'mad_sample', 'std_sample', 'peak/mad',
                   'psf_secondpeak', 'psf_secondpeak_radius',
@@ -517,7 +522,7 @@ def savestats(basepath=basepath,
               format='ascii.html', overwrite=True)
     tbl.write(f'{basepath}/tables/metadata_{suffix.strip("*")}.tex', overwrite=True)
     tbl.write(f'{basepath}/tables/metadata_{suffix.strip("*")}.js.html',
-              format='jsviewer')
+              format='jsviewer', overwrite=True)
 
     return tbl
 
