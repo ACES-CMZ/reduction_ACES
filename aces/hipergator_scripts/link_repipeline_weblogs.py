@@ -1,5 +1,6 @@
 import os
 import glob
+from astropy import log
 
 from .. import conf
 basepath = conf.basepath
@@ -16,3 +17,4 @@ def main():
             outpath = os.path.join(webpath, os.path.basename(pipeline))
             if os.path.isdir(pipeline) and not os.path.exists(outpath):
                 os.symlink(pipeline, outpath)
+            log.info(f'Linked {pipeline} to {outpath}')
