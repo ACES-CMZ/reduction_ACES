@@ -25,7 +25,11 @@ class Conf(_config.ConfigNamespace):
 conf = Conf()
 
 import retrieval_scripts
+import pipeline_scripts
+import imaging
 
 __all__ = ['retrieval_scripts',
+           'pipeline_scripts',
+           'imaging',
            'Conf', 'conf',
            ]

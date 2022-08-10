@@ -11,7 +11,9 @@ from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 from make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
 
-basepath = '/orange/adamginsburg/ACES/'
+from .. import conf
+
+basepath = conf.basepath
 
 # target_wcs = wcs.WCS(naxis=2)
 # target_wcs.wcs.ctype = ['GLON-CAR', 'GLAT-CAR']
@@ -28,7 +30,7 @@ import glob
 
 if __name__ == "__main__":
 
-    header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/imaging/header_12m.hdr')
+    header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
 
     log.info("12m continuum")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.tt0.pbcor.fits')
