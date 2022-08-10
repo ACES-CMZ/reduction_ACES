@@ -11,7 +11,7 @@ from astropy.stats import mad_std
 from astropy import log
 import pylab as pl
 import subprocess
-from mous_map import get_mous_to_sb_mapping
+from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from .. import conf
 
 def get_mousmap_(**kwargs):

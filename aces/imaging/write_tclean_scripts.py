@@ -14,6 +14,9 @@ Optional:
     GOUS
 """
 import os, sys, glob, json, shutil, textwrap
+from .. import conf
+from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
+from ..pipeline_scripts.merge_tclean_commands import commands
 
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
@@ -23,19 +26,10 @@ else:
     pass
     #from casatasks import tclean
 
-if os.getenv('ACES_ROOTDIR') is None:
-    raise ValueError("Specify ACES_ROOTDIR environment variable ")
-else:
-    rootdir = os.environ['ACES_ROOTDIR']
-    sys.path.append(rootdir)
-    sys.path.append(f'{rootdir}/pipeline_scripts')
-    sys.path.append(f'{rootdir}/hipergator_scripts')
-
-from mous_map import get_mous_to_sb_mapping
 
 # if this isn't in the env pars, we get an intentional crash:
 # you have to specify that.
-datadir = os.environ['ACES_DATADIR']
+datadir = f'{conf.basepath}/data/' #os.environ['ACES_DATADIR']
 
 projcode = os.getenv('PROJCODE') or '2021.1.00172.L'
 sous = os.getenv('SOUS') or 'A001_X1590_X30a8'
@@ -59,7 +53,6 @@ with open(scriptlist, 'w') as fh:
     fh.write("")
 
 
-from merge_tclean_commands import commands
 
 suffixes = {"tclean_cont_pars": ("image.tt0", "residual.tt0", "model.tt0", "psf.tt0"),
             "tclean_cube_pars": ("image", "residual", "model", "psf"),

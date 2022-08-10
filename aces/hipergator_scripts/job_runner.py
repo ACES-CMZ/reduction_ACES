@@ -5,7 +5,7 @@ import glob
 import shutil
 import copy
 from astropy import log
-from mous_map import get_mous_to_sb_mapping
+from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from .. import conf
 
 basepath = conf.basepath
