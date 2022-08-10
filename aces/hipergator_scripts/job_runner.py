@@ -6,9 +6,11 @@ import shutil
 import copy
 from astropy import log
 from mous_map import get_mous_to_sb_mapping
+from .. import conf
 
-basepath = "/orange/adamginsburg/ACES/rawdata"
-grouppath = f"{basepath}/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9"
+basepath = conf.basepath
+datapath = f"{basepath}/data"
+grouppath = f"{datapath}/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9"
 
 mouses = [os.path.basename(x)
         for x in
@@ -47,14 +49,14 @@ if __name__ == "__main__":
     verbose = '--verbose' in sys.argv
     debug = '--debug' in sys.argv
 
-    with open('/orange/adamginsburg/web/secure/ACES/tables/imaging_completeness_grid.json', 'r') as fh:
+    with open('{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.json', 'r') as fh:
         imaging_status = json.load(fh)
 
     sacct = subprocess.check_output(['sacct',
                                    '--format=JobID,JobName%45,Account%15,QOS%17,State,Priority%8,ReqMem%8,CPUTime%15,Elapsed%15,Timelimit%15,NodeList%20'])
     tbl = ascii.read(sacct.decode().split("\n"))
 
-    scriptpath = '/orange/adamginsburg/ACES/reduction_ACES/hipergator_scripts/'
+    scriptpath = f'{basepath}/reduction_ACES/aces/hipergator_scripts/'
 
     qos = os.getenv('QOS')
     if qos:
@@ -64,7 +66,7 @@ if __name__ == "__main__":
     else:
         account = 'astronomy-dept'
         qos = 'astronomy-dept-b'
-    logpath = os.environ['LOGPATH']='/blue/adamginsburg/adamginsburg/ACES/logs/'
+    logpath = os.environ['LOGPATH'] = conf.logpath
 
 
     for mous,spwpars in parameters.items():
@@ -143,7 +145,7 @@ if __name__ == "__main__":
                         print(f"spw={spw}, imtype={imtype}, spwpars={spwpars}, imstatus={imstatus}")
 
 
-                    workdir = '/blue/adamginsburg/adamginsburg/ACES/workdir'
+                    workdir = conf.workpath
                     jobname = f"{field}_{config}_{spw}_{imtype}"
 
                     match = tbl['JobName'] == jobname
