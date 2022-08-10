@@ -367,10 +367,12 @@ def parse_fn(fn):
     sbname = mousmap_[muid]
     region = field = sbname.split("_")[3]
 
+    robust = commands[sbname]['tclean_cont_pars']['aggregate']['robust']
+
     return {'region': region,
             'band': 'B3',
             'muid': muid,
-            'array': '12Monly' if '12M' in split else '7M12M' if '7M12M' in split else '????',
+            'array': '12Monly' if '12M' in split else '7M12M' if '7M12M' in split else '7M' if '7M' in split else '????',
             'robust': 'r'+str(robust),
             'suffix': split[-1],
             'bsens': 'bsens' in fn.lower(),
