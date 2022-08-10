@@ -514,3 +514,6 @@ def savestats(basepath=basepath,
               format='jsviewer')
 
     return tbl
+
+def main():
+    savestats()

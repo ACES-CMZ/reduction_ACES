@@ -130,5 +130,5 @@ def main():
                 'pipeline_run': pipeline_base,
                 }
 
-    with open(f'{rootdir}/pipeline_scripts/default_tclean_commands.json', 'w') as tcfh:
+    with open(f'{rootdir}/reduction_ACES/aces/pipeline_scripts/default_tclean_commands.json', 'w') as tcfh:
         json.dump(all_cubepars, tcfh, indent=2)
