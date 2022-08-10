@@ -18,22 +18,22 @@ class Conf(_config.ConfigNamespace):
     """
 
     basepath = _config.ConfigItem(
-        '/orange/adamginsburg/ACES/'
+        '/orange/adamginsburg/ACES/',
         'Base path in which data/ exists')
     logpath = _config.ConfigItem(
-        '/blue/adamginsburg/adamginsburg/ACES/logs/'
+        '/blue/adamginsburg/adamginsburg/ACES/logs/',
         'High-performance system where logs can be written')
     workpath = _config.ConfigItem(
-        '/blue/adamginsburg/adamginsburg/ACES/workdir'
+        '/blue/adamginsburg/adamginsburg/ACES/workdir',
         'High-performance system where intermediate data products can go')
 
 
 
 conf = Conf()
 
-import retrieval_scripts
-import pipeline_scripts
-import imaging
+from . import retrieval_scripts
+from . import pipeline_scripts
+from . import imaging
 
 __all__ = ['retrieval_scripts',
            'pipeline_scripts',
