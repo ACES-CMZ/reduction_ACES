@@ -4,7 +4,7 @@ import glob
 import os
 import json
 
-if __name__ == "__main__":
+def main():
     if 'weblog_dir' not in locals():
         weblog_dir = os.getenv('WEBLOG_DIR')
         if weblog_dir is None:

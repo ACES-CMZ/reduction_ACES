@@ -30,7 +30,7 @@ import glob
 
 
 
-if __name__ == "__main__":
+def main():
 
     header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/imaging/data/header_7m.hdr')
 

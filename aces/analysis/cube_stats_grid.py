@@ -67,7 +67,7 @@ def dt(message=""):
 num_workers = None
 dt(f"PID = {os.getpid()}")
 
-if __name__ == "__main__":
+def main():
     if threads:
         # try dask.distrib again
         from dask.distributed import Client, LocalCluster

@@ -1,4 +1,5 @@
 echo "Use job_runner instead"
+exit
 #!/bin/bash
 #SBATCH --job-name=run_reimage_mpi      # Job name
 #SBATCH --mail-type=NONE          # Mail events (NONE, BEGIN, END, FAIL, ALL)

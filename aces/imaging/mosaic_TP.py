@@ -1,5 +1,6 @@
 import numpy as np
 import regions
+import glob
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 import reproject
 from astropy.table import Table
@@ -26,8 +27,7 @@ basepath = conf.basepath
 # header['NAXIS1'] = 4000
 # header['NAXIS2'] = 4000
 
-if __name__ == '__main__':
-    import glob
+def main():
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw17.cube.I.sd.fits')
 

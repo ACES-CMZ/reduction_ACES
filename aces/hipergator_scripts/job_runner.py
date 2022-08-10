@@ -4,6 +4,12 @@ import json
 import glob
 import shutil
 import copy
+import subprocess
+import datetime
+import os
+import json
+from astropy.io import ascii
+import sys
 from astropy import log
 from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from .. import conf
@@ -38,13 +44,7 @@ for key in newpars:
 
 parameters = default_parameters
 
-if __name__ == "__main__":
-    import subprocess
-    import datetime
-    import os
-    import json
-    from astropy.io import ascii
-    import sys
+def main():
 
     verbose = '--verbose' in sys.argv
     debug = '--debug' in sys.argv

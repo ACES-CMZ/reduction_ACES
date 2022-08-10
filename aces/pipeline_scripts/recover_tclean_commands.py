@@ -27,7 +27,7 @@ rootdir = conf.basepath
 
 from ..retrieval_scripts.parse_weblog import (get_human_readable_name, get_uid_and_name)
 
-if __name__ == "__main__":
+def main():
 
     projcode = '2021.1.00172.L'
 

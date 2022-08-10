@@ -84,7 +84,7 @@ cd -
 
 echo "Hacking plotms"
 echo "plotms = /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py"
-python3 ${ACES_ROOTDIR}/hipergator_scripts/hack_plotms.py  /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py
+python3 ${ACES_ROOTDIR}/aces/hipergator_scripts/hack_plotms.py  /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py
 hacksuccess=$?
 if [ $hacksuccess -eq 99 ]; then
     echo "plotms file was corrupted"
@@ -98,7 +98,7 @@ echo "Hacked plotms"
 echo "CASA version is $CASAVERSION"
 
 
-RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 ${ACES_ROOTDIR}/retrieval_scripts/run_pipeline.py > $SLURM_TMPDIR/scriptlist
+RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 ${ACES_ROOTDIR}/aces/retrieval_scripts/run_pipeline.py > $SLURM_TMPDIR/scriptlist
 
 echo "Script List"
 cat $SLURM_TMPDIR/scriptlist

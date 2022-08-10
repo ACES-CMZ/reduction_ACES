@@ -5,7 +5,7 @@ import six
 import os
 import sys
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) > 1:
         username = sys.argv[1]
         print(f"Using username {username}")

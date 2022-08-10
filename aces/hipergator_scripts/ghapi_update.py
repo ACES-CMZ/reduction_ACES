@@ -3,13 +3,14 @@ import difflib
 import os
 from astropy import log
 from ghapi.all import GhApi, paged
+from astroquery.alma import Alma
 import re
 import glob
 
 from .. import conf
 basepath = conf.basepath
 
-if __name__ == "__main__":
+def main():
     dryrun = os.getenv("DRYRUN") or (dryrun if "dryrun" in locals() else False)
     print(f"Dryrun={dryrun}")
 
@@ -53,7 +54,6 @@ if __name__ == "__main__":
     assert set(sbs_to_issues.keys()) == set(issue_sb_names)
 
 
-    from astroquery.alma import Alma
     alma = Alma()
     alma.archive_url = 'https://almascience.eso.org'
     alma.dataarchive_url = 'https://almascience.eso.org'
@@ -157,47 +157,47 @@ if __name__ == "__main__":
         # extraname = sb_re.search(new_sb).groups()[1]
 
         spw_lines = """
-      * [ ] SPW16 H13CN
-      * [ ] SPW18 H13CO+/SiO
-      * [ ] SPW20 HCO+
-      * [ ] SPW22 HNCO
-      * [ ] SPW24 Cont 1
-      * [ ] SPW26 Cont 2
-    """ if array in ('7M', 'TP') else """
-      * [ ] SPW25 H13CN
-      * [ ] SPW27 H13CO+/SiO
-      * [ ] SPW29 HCO+
-      * [ ] SPW31 HNCO
-      * [ ] SPW33 Cont 1
-      * [ ] SPW35 Cont 2
-    """
+  * [ ] SPW16 H13CN
+  * [ ] SPW18 H13CO+/SiO
+  * [ ] SPW20 HCO+
+  * [ ] SPW22 HNCO
+  * [ ] SPW24 Cont 1
+  * [ ] SPW26 Cont 2
+""" if array in ('7M', 'TP') else """
+  * [ ] SPW25 H13CN
+  * [ ] SPW27 H13CO+/SiO
+  * [ ] SPW29 HCO+
+  * [ ] SPW31 HNCO
+  * [ ] SPW33 Cont 1
+  * [ ] SPW35 Cont 2
+"""
 
         if new_oid in new_oids:
             issuebody = (f"""
-    {new_sb}
-    [{new_uid}](https://almascience.org/aq/?result_view=observation&mous={new_uid})
+{new_sb}
+[{new_uid}](https://almascience.org/aq/?result_view=observation&mous={new_uid})
 
-    * [x] Observations completed?
-    * [{'x' if delivered else ' '}] Delivered?
-    * [{'x' if downloaded else ' '}] Downloaded? (specify where)
-      * [{'x' if downloaded else ' '}] hipergator""" + ("" if array == 'TP' else f"""
-      * [{'x' if pipeline_run else ' '}] hipergator pipeline run
-    """) +
-    f"""
-    * [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked
-    * [ ] [Weblog]({weblog_url}) Quality Assessment?
-    * [ ] Imaging: Continuum
-    * [ ] Imaging: Lines
-    {spw_lines}
+* [x] Observations completed?
+* [{'x' if delivered else ' '}] Delivered?
+* [{'x' if downloaded else ' '}] Downloaded? (specify where)
+  * [{'x' if downloaded else ' '}] hipergator""" + ("" if array == 'TP' else f"""
+  * [{'x' if pipeline_run else ' '}] hipergator pipeline run
+""") +
+f"""
+* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked
+* [ ] [Weblog]({weblog_url}) Quality Assessment?
+* [ ] Imaging: Continuum
+* [ ] Imaging: Lines
+{spw_lines}
 
-    ## Product Links:
+## Product Links:
 
-    {product_link_text}
+{product_link_text}
 
-    ## Reprocessed Product Links:
+## Reprocessed Product Links:
 
-    {reproc_product_link_text}
-    """.replace("\r",""))
+{reproc_product_link_text}
+""".replace("\r",""))
 
 
             print(f"Posting new issue for {new_sb} -> {new_sb_issuename}")
@@ -285,10 +285,10 @@ if __name__ == "__main__":
                 log.debug(f"product_link_text is something: {product_link_text}")
                 productlinks = f"""
 
-    ## Product Links:
+## Product Links:
 
-    {product_link_text}
-    """.replace("\r","")
+{product_link_text}
+""".replace("\r","")
 
                 if '## Product Links:' not in issue.body:
                     need_update.append("New product links - none were present")
@@ -312,10 +312,10 @@ if __name__ == "__main__":
                 log.debug(f"reproc_product_link_text is something: {reproc_product_link_text}")
                 reproductlinks = f"""
 
-    ## Reprocessed Product Links:
+## Reprocessed Product Links:
 
-    {reproc_product_link_text}
-    """.replace("\r","")
+{reproc_product_link_text}
+""".replace("\r","")
 
                 if '## Reprocessed Product Links:' not in issue.body:
                     need_update.append("New reproduct links")

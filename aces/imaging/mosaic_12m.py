@@ -28,7 +28,7 @@ basepath = conf.basepath
 
 import glob
 
-if __name__ == "__main__":
+def main():
 
     header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
 
