@@ -52,13 +52,12 @@ export TEMPORARY_WORKING_DIRECTORY="/blue/adamginsburg/adamginsburg/ACES/workdir
 
 env
 
-# || exit 1 should quit if any task fails
-
 ${PYPATH}/aces_recover_tclean_commands || exit 1
 ${PYPATH}/aces_write_tclean_scripts || exit 1
 ${PYPATH}/aces_job_runner --verbose=True || exit 1
 ${PYPATH}/aces_link_repipeline_weblogs || exit 1
 
+# || exit 1 should quit if any task fails
 #${IPYTHON} ${ACES_ROOTDIR}/pipeline_scripts/recover_tclean_commands.py || exit 1
 #${IPYTHON} ${ACES_ROOTDIR}/imaging/write_tclean_scripts.py || exit 1
 #${IPYTHON} ${ACES_ROOTDIR}/hipergator_scripts/job_runner.py --verbose=True || exit 1
