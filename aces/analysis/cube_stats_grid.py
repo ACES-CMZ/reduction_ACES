@@ -30,27 +30,19 @@ from imstats import get_psf_secondpeak, get_noise_region
 
 from pathlib import Path
 
-try:
-    from mous_map import get_mous_to_sb_mapping
-except ImportError:
-    sys.path.append('/orange/adamginsburg/ACES/reduction_ACES/hipergator_scripts/')
-    from mous_map import get_mous_to_sb_mapping
+from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
+from .. import conf
+basepath = conf.basepath
 
+tbldir = Path(f'{basepath}/reduction_ACES/aces/data/tables')
 
-
-tbldir = Path('/orange/adamginsburg/web/secure/ACES/tables')
-
-dataroot = '/orange/adamginsburg/ACES/data/2021.1.00172.L'
+dataroot = f'{basepath}/data/2021.1.00172.L'
 
 if os.getenv('NO_PROGRESSBAR') is None and not (os.getenv('ENVIRON') == 'BATCH'):
     from dask.diagnostics import ProgressBar
     pbar = ProgressBar()
     pbar.register()
 
-if os.environ.get('SLURM_TMPDIR'):
-    os.environ['TMPDIR'] = os.environ.get("SLURM_TMPDIR")
-elif not os.environ.get("TMPDIR"):
-    os.environ['TMPDIR'] ='/blue/adamginsburg/adamginsburg/tmp/'
 print(f"TMPDIR = {os.environ.get('TMPDIR')}")
 
 # Dask writes some log stuff; let's make sure it gets written on local scratch

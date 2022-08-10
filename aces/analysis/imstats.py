@@ -22,6 +22,9 @@ import operator
 import re
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+from .. import conf
+basepath = conf.basepath
+
 warnings.filterwarnings('ignore', category=wcs.FITSFixedWarning, append=True)
 warnings.filterwarnings('ignore', category=BeamWarning, append=True)
 warnings.filterwarnings('ignore', category=StokesWarning, append=True)
@@ -31,7 +34,7 @@ def get_requested_sens():
     # use this file's path
     requested_fn = os.path.join(os.path.dirname(__file__), 'requested.txt')
     if not os.path.exists(requested_fn):
-        requested_fn = '/orange/adamginsburg/ACES/reduction/analysis/requested.txt'
+        requested_fn = f'{basepath}/reduction/analysis/requested.txt'
     from astropy.io import ascii
     tbl = ascii.read(requested_fn, data_start=2)
     return tbl
@@ -405,7 +408,7 @@ def get_noise_region(field, band):
         noisepath = os.path.join(basepath, 'noise_estimation_regions')
         assert os.path.exists(noisepath)
     except AssertionError:
-        noisepath = '/orange/adamginsburg/ACES/reduction_ACES/regions/noise_estimation_regions/'
+        noisepath = f'{basepath}/reduction_ACES/aces/data/regions/noise_estimation_regions/'
 
 
     regfn = f"{noisepath}/{field}_noise_sampling.reg"
@@ -465,7 +468,7 @@ class MyEncoder(json.JSONEncoder):
             return super(MyEncoder, self).default(obj)
 
 
-def savestats(basepath="/orange/adamginsburg/ACES/",
+def savestats(basepath=basepath,
               suffix='image.tt0*', filetype=".fits"):
     
     stats = assemble_stats(f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}", ditch_suffix=f".{suffix[:-1]}")
