@@ -22,6 +22,8 @@ import operator
 import re
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+from ..pipeline_scripts.merge_tclean_commands import commands
+from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from .. import conf
 basepath = conf.basepath
 
@@ -360,13 +362,15 @@ def parse_fn(fn):
     split = basename.split(".")
 
     muid = split[0]
-    region = uid_mapping[muid]
+    mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
+    mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
+    sbname = mousmap_[muid]
+    region = field = sbname.split("_")[3]
 
     return {'region': region,
             'band': 'B3',
             'muid': muid,
             'array': '12Monly' if '12M' in split else '7M12M' if '7M12M' in split else '????',
-            'selfcaliter': 'sc'+str(selfcaliter),
             'robust': 'r'+str(robust),
             'suffix': split[-1],
             'bsens': 'bsens' in fn.lower(),
@@ -477,7 +481,7 @@ def savestats(basepath=basepath,
 
     requested = get_requested_sens()
 
-    meta_keys = ['region', 'band', 'array', 'selfcaliter', 'robust', 'suffix',
+    meta_keys = ['region', 'band', 'array', 'robust', 'suffix',
                  'bsens', 'pbcor', 'nobright', 'filename']
     stats_keys = ['bmaj', 'bmin', 'bpa', 'peak', 'sum', 'fluxsum', 'sumgt3sig',
                   'sumgt5sig', 'mad', 'mad_sample', 'std_sample', 'peak/mad',
