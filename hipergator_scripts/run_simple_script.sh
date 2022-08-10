@@ -68,5 +68,4 @@ fi
 ppid="$!"
 wait $ppid
 exitcode=$?
-echo "pid=$ppid exitcode=$exitcode"
 exit $exitcode
