@@ -27,13 +27,11 @@ warnings.filterwarnings('ignore', category=BeamWarning, append=True)
 warnings.filterwarnings('ignore', category=StokesWarning, append=True)
 np.seterr(all='ignore')
 
-
-
 def get_requested_sens():
     # use this file's path
     requested_fn = os.path.join(os.path.dirname(__file__), 'requested.txt')
     if not os.path.exists(requested_fn):
-        requested_fn = '/orange/adamginsburg/ALMA_IMF/reduction/analysis/requested.txt'
+        requested_fn = '/orange/adamginsburg/ACES/reduction/analysis/requested.txt'
     from astropy.io import ascii
     tbl = ascii.read(requested_fn, data_start=2)
     return tbl
@@ -41,7 +39,7 @@ def get_requested_sens():
 def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
                        max_radial_extent=5*u.arcsec, max_npix_peak=100,
                        specslice=slice(0,1)):
-    """ REDUNDANT with get_psf_secondpeak, but this one is better
+    """ REDUNDANT with get_psf_secondpeak_old, but this one is better
 
     Process:
         1. Find the first minimum of the PSF by taking the radial profile within 50 pixels
@@ -225,6 +223,17 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
 
 
 def imstats(fn, reg=None):
+    """
+    Compute a bunch of interesting image statistics and return them as a dictionary.
+
+    Does more things if fn.replace('.image.tt0', '.psf.tt0') exists.
+
+    Parameters
+    ----------
+    reg : regions.Region
+        A region in which to calculate the noise (probably avoiding bright signal)
+
+    """
     try:
         fh = fits.open(fn)
         data = fh[0].data
@@ -336,38 +345,22 @@ R2 is the dirty map.  It can be calculated as R1 + model convolved with dirty be
 epsion = C1 / D1
 """
 
+
 def parse_fn(fn):
+    """
+    /orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15b4_X4f/calibrated/working/
+    uid___A001_X15b4_X4f.s10_0.Sgr_A_star_sci.spw16_18_20_22_24_26.cont.I.iter1.image.tt0
+    """    
 
     basename = os.path.basename(fn)
 
-    split = basename.split("_")
+    split = basename.split(".")
 
-    selfcal_entry = 'selfcal0'
-    for entry in split:
-        if 'selfcal' in entry and 'pre' not in entry:
-            #selfcal_entry = entry
-            selfcal_entry = re.compile(".(image|residual|model).tt0(.pbcor)?(.fits)?").sub("", entry)
+    muid = split[0]
+    region = uid_mapping[muid]
 
-    robust_entry = 'robust999'
-    for entry in split:
-        if 'robust' in entry:
-            robust_entry = entry
-
-
-    if selfcal_entry == 'postselfcal':
-        selfcaliter = 'Last'
-    else:
-        selfcaliter = int(selfcal_entry.split('selfcal')[-1])
-    robust = float(robust_entry.split('robust')[-1])
-
-    # sanity check: I was getting a lot of sc0's
-    if 'finaliter' in fn:
-        assert selfcaliter != 0
-
-    muid = "_".join(split[2:3]+split[5:7])
-
-    return {'region': split[0],
-            'band': split[1],
+    return {'region': region,
+            'band': 'B3',
             'muid': muid,
             'array': '12Monly' if '12M' in split else '7M12M' if '7M12M' in split else '????',
             'selfcaliter': 'sc'+str(selfcaliter),
@@ -404,16 +397,18 @@ def assemble_stats(globstr, ditch_suffix=None):
 
 
 def get_noise_region(field, band):
-    # one directory up is "reduction"
+    """
+    Noise estimation regions should be in regions/noise_estimation_regions/{field}_noise_sampling.reg
+    """
     try:
-        basepath = os.path.dirname(__file__) + "/../reduction/"
+        basepath = os.path.dirname(__file__) + "/../"
         noisepath = os.path.join(basepath, 'noise_estimation_regions')
         assert os.path.exists(noisepath)
     except AssertionError:
-        noisepath = '/orange/adamginsburg/ALMA_IMF/reduction/reduction/noise_estimation_regions'
+        noisepath = '/orange/adamginsburg/ACES/reduction_ACES/regions/noise_estimation_regions/'
 
 
-    regfn = f"{noisepath}/{field}_{band}_noise_sampling.reg"
+    regfn = f"{noisepath}/{field}_noise_sampling.reg"
 
     if os.path.exists(regfn):
         return regfn
@@ -457,8 +452,6 @@ def get_psf_secondpeak_old(fn, neighborhood_size=5, threshold=0.01):
         return np.nan
 
 
-
-
 class MyEncoder(json.JSONEncoder):
     "https://stackoverflow.com/a/27050186/814354"
     def default(self, obj):
@@ -471,324 +464,11 @@ class MyEncoder(json.JSONEncoder):
         else:
             return super(MyEncoder, self).default(obj)
 
-def make_quicklook_analysis_form(filename, metadata, savepath, prev, next_,
-                                 base_form_url="https://docs.google.com/forms/d/e/1FAIpQLSczsBdB3Am4znOio2Ky5GZqAnRYDrYTD704gspNu7fAMm2-NQ/viewform?embedded=true"):
 
-    if '1FAIpQLSc3QnQWNDl97B8XeTFRNMWRqU5rlxNPqIC2i1jMr5nAjcHDug' in base_form_url:
-        #entry.868884739: reviwername
-        #entry.1301985958: comment
-        #entry.457220938.other_option_response: goodenoughforrelease
-        #entry.457220938: __other_option__
-        #entry.639517087: field
-        #entry.400258516: 3
-        #entry.841871158: selfcaliter
-        #entry.312922422: 12M
-        #entry.678487127: -2
-        #fvv: 1
-        #draftResponse: [null,null,"6280405489446951000"]
-        #pageHistory: 0
-        #fbzx: 6280405489446951000
-        form_url_dict = {#"868884739":"{reviewer}",
-                         "639517087": "{field}",
-                         "400258516": "{band}",
-                         "841871158": "{selfcal}" if isinstance(metadata['selfcal'], int) else "preselfcal",
-                         "312922422": "{array}",
-                         "678487127": "{robust}",
-                         #"1301985958": "{comment}",
-                        }
-    elif '1FAIpQLSczsBdB3Am4znOio2Ky5GZqAnRYDrYTD704gspNu7fAMm2' in base_form_url:
-        form_url_dict = {#"868884739":"{reviewer}",
-                         "639517087": "{field}",
-                         "400258516": "{band}",
-                         "841871158": "{selfcal}" if isinstance(metadata['selfcal'], int) else "preselfcal",
-                         "312922422": "{array}",
-                         "678487127": "{robust}",
-                         #"1301985958": "{comment}",
-                        }
-    form_url = base_form_url + "".join(f'&entry.{key}={value}' for key,value in form_url_dict.items())
-
-    template = """
-    <html>
-    <body onbeforeunload="document.write('unloading...')" beforeunload=null>
-    <center>
-        <div> {filename} </div>
-        <img src="{filename}" style="width: 100%;" border=0>
-    </center>
-    <iframe id=frame name=frame sandbox="allow-scripts allow-forms
-        allow-pointer-lock allow-same-origin" src="{form_url}" width="1200"
-        height="1326" frameborder="0" marginheight="0"
-        marginwidth="0">Loading…</iframe>
-    </body>
-    <script type="text/javascript">
-    window.onbeforeunload="document.write('unloading...')";
-    window.beforeunload=null;
-    </script>
-    Previous: <a href="{prev}">{prev}</a> |
-    Next: <a href="{next_}">{next_}</a>
-    <script type="text/javascript">
-    let params = new URLSearchParams(location.search);
-    var name = params.get('name');
-    if (name) {{{{document.getElementById('frame').src = document.getElementById('frame').src + "&entry.868884739=" + name;}}}}
-    </script>
-    </html>
-    """
-
-    with open(f'{savepath}/{filename}.html', 'w') as fh:
-        fh.write(template
-                 .format(form_url=form_url, filename=filename+".png",
-                         prev=prev, next_=next_)
-                 .format(**metadata)
-                )
-
-
-def get_selfcal_number(fn):
-    numberstring = fn.split("selfcal")[1][0]
-    try:
-        return int(numberstring)
-    except:
-        return 0
-
-def make_analysis_forms(basepath="/orange/adamginsburg/web/secure/ALMA-IMF/October31Release/",
-                        base_form_url="https://docs.google.com/forms/d/e/1FAIpQLSczsBdB3Am4znOio2Ky5GZqAnRYDrYTD704gspNu7fAMm2-NQ/viewform?embedded=true",
-                        dontskip_noresid=False
-                       ):
-    import glob
-    from diagnostic_images import load_images, show as show_images
-    from astropy import visualization
-    import pylab as pl
-
-    savepath = f'{basepath}/quicklooks'
-
-    try:
-        os.mkdir(savepath)
-    except:
-        pass
-
-
-
-    filedict = {(field, band, config, robust, selfcal):
-        glob.glob(f"{field}/B{band}/{imtype}{field}*_B{band}_*_{config}_robust{robust}*selfcal{selfcal}*.image.tt0*.fits")
-                for field in "G008.67 G337.92 W43-MM3 G328.25 G351.77 G012.80 G327.29 W43-MM1 G010.62 W51-IRS2 W43-MM2 G333.60 G338.93 W51-E G353.41".split()
-                for band in (3,6)
-                #for config in ('7M12M', '12M')
-                for config in ('12M',)
-                #for robust in (-2, 0, 2)
-                for robust in (0,)
-                for selfcal in ("",) + tuple(range(0,9))
-                for imtype in (('',) if 'October31' in basepath else ('cleanest/', 'bsens/'))
-               }
-    badfiledict = {key: val for key, val in filedict.items() if len(val) == 1}
-    print(f"Bad files: {badfiledict}")
-    filedict = {key: val for key, val in filedict.items() if len(val) > 1}
-    filelist = [key + (fn,) for key, val in filedict.items() for fn in val]
-
-    prev = 'index.html'
-
-    flist = []
-
-    #for field in "G008.67 G337.92 W43-MM3 G328.25 G351.77 G012.80 G327.29 W43-MM1 G010.62 W51-IRS2 W43-MM2 G333.60 G338.93 W51-E G353.41".split():
-    ##for field in ("G333.60",):
-    #    for band in (3,6):
-    #        for config in ('7M12M', '12M'):
-    #            for robust in (-2, 0, 2):
-
-    #                # for not all-in-the-same-place stuff
-    #                fns = [x for x in glob.glob(f"{field}/B{band}/{field}*_B{band}_*_{config}_robust{robust}*selfcal[0-9]*.image.tt0*.fits") ]
-
-    #                for fn in fns:
-    for ii,(field, band, config, robust, selfcal, fn) in enumerate(filelist):
-
-        image = fn
-        basename,suffix = image.split(".image.tt0")
-        if 'diff' in suffix or 'bsens-cleanest' in suffix:
-            continue
-        outname = basename.split("/")[-1]
-
-        if prev == outname+".html":
-            print(f"{ii}: {(field, band, config, robust, fn)} yielded the same prev "
-                  f"{prev} as last time, skipping.")
-            continue
-
-
-        jj = 1
-        while jj < len(filelist):
-            if ii+jj < len(filelist):
-                next_ = filelist[ii+jj][5].split(".image.tt0")[0].split("/")[-1]+".html"
-            else:
-                next_ = "index.html"
-
-            if next_ == outname+".html":
-                jj = jj + 1
-            else:
-                break
-
-        assert next_ != outname+".html"
-
-        try:
-            with warnings.catch_warnings():
-                warnings.filterwarnings('ignore')
-                print(f"{ii}: {(field, band, config, robust, fn, selfcal)}"
-                      f" basename='{basename}', suffix='{suffix}'")
-                imgs, cubes = load_images(basename, suffix=suffix)
-        except KeyError as ex:
-            print(ex)
-            raise
-        except Exception as ex:
-            print(f"EXCEPTION: {type(ex)}: {str(ex)}")
-            raise
-            continue
-        norm = visualization.ImageNormalize(stretch=visualization.AsinhStretch(),
-                                            interval=visualization.PercentileInterval(99.95))
-        # set the scaling based on one of these...
-        # (this call inplace-modifies logn, according to the docs)
-        if 'residual' in imgs:
-            norm(imgs['residual'][imgs['residual'] == imgs['residual']])
-            imnames_toplot = ('mask', 'model', 'image', 'residual')
-        elif 'image' in imgs and dontskip_noresid:
-            imnames_toplot = ('image', 'mask',)
-            norm(imgs['image'][imgs['image'] == imgs['image']])
-        else:
-            print(f"Skipped {fn} because no image OR residual was found.  imgs.keys={imgs.keys()}")
-            continue
-        pl.close(1)
-        pl.figure(1, figsize=(14,6))
-        show_images(imgs, norm=norm, imnames_toplot=imnames_toplot)
-
-        pl.savefig(f"{savepath}/{outname}.png",
-                   dpi=150,
-                   bbox_inches='tight')
-
-        metadata = {'field': field,
-                    'band': band,
-                    'selfcal': selfcal, #get_selfcal_number(basename),
-                    'array': config,
-                    'robust': robust,
-                    'finaliter': 'finaliter' in fn,
-                   }
-        make_quicklook_analysis_form(filename=outname,
-                                     metadata=metadata,
-                                     savepath=savepath,
-                                     prev=prev,
-                                     next_=next_,
-                                     base_form_url=base_form_url
-                                    )
-        metadata['outname'] = outname
-        metadata['suffix'] = suffix
-        if robust == 0:
-            # only keep robust=0 for simplicity
-            flist.append(metadata)
-        prev = outname+".html"
-
-
-    #make_rand_html(savepath)
-    make_index(savepath, flist)
-
-    return flist
-
-def make_index(savepath, flist):
-    css = """
-    .right {
-    width: 80%;
-    float: right;
-}
-
-.left {
-    float: left;
-    /* the next props are meant to keep this block independent from the other floated one */
-    width: auto;
-    overflow: hidden;
-}
-"""
-    js = """
-      <script>
-
-      let params = new URLSearchParams(location.search);
-      var name = params.get('name');
-
-      function changeSrc(loc) {
-          if (name) {
-              document.getElementById('iframe').src = loc + "?name=" + name;
-          } else {
-              document.getElementById('iframe').src = loc;
-          }
-      }
-      </script>"""
-    with open(f"{savepath}/index.html", "w") as fh:
-        fh.write("<html>\n")
-        fh.write(f'<style type="text/css">{css}</style>\n')
-        fh.write(f"{js}\n")
-        fh.write("<div class='left' style='max-width:20%'>\n")
-        fh.write("<ul>\n")
-        for metadata in flist:
-            filename = metadata['outname']+".html"
-            meta_str = (f"{metadata['field']}_{metadata['band']}" +
-                        f"_selfcal{metadata['selfcal']}"
-                        # no preselfcal in quicklooks now... not sure what this is going to do
-                         #if isinstance(metadata['selfcal'], int) else
-                         #"_preselfcal") +
-                        f"_{metadata['array']}_robust{metadata['robust']} "
-                        f"{' finaliter' if metadata['finaliter'] else ''}"
-                        f"{metadata['suffix']}")
-            #fh.write(f'<li><a href="{filename}">{meta_str}</a></li>\n')
-            fh.write(f"<li><button onclick=\"changeSrc('{filename}')\">{meta_str}</a></li>\n")
-        fh.write("</ul>\n")
-        fh.write("</div>\n")
-        fh.write("<div class='right' style='width:80%'>\n")
-        fh.write("<iframe name=iframe id=iframe src='' width='100%' height='100%'></iframe>\n")
-        fh.write("</div>\n")
-        fh.write("</html>\n")
-
-def make_rand_html(savepath):
-    randform_template = """
-<html>
-<script src="//code.jquery.com/jquery-1.10.2.js"></script>
-
-<script type="text/javascript">
-function random_form(){{
-    var myimages=new Array()
-    {randarr_defs}
-    var ry=Math.floor(Math.random()*myimages.length);
-    while (myimages[ry] == undefined) {{
-        var ry=Math.floor(Math.random()*myimages.length);
-    }}
-
-}}
-
-var loadNewContent = function {
-  $.ajax(random_form(), {
-    success: function(response) {
-
-        $("#content2").html(response);
-
-
-    }
-  }); };
-
-var reader = new FileReader();
-var newdocument = reader.readAsText(random_form(), "UTF-16");
-
-document.write(newdocument)
-
-</script>
-</html>
-"""
-    forms = glob.glob(f"{savepath}/*html")
-
-    randarr_defs = "\n".join([f"myimages[{ii}]='{fn}'" for ii, fn in
-                              enumerate(forms)])
-
-    with open(f"{savepath}/index.html", "w") as fh:
-        fh.write(randform_template.format(randarr_defs=randarr_defs,))
-
-
-
-def savestats(basepath="/orange/adamginsburg/web/secure/ALMA-IMF/October31Release",
+def savestats(basepath="/orange/adamginsburg/ACES/",
               suffix='image.tt0*', filetype=".fits"):
-    if 'October31' in basepath:
-        stats = assemble_stats(f"{basepath}/*/*/*_12M_*.{suffix}{filetype}", ditch_suffix=f".{suffix[:-1]}")
-    else:
-        # extra layer: bsens, cleanest, etc
-        stats = assemble_stats(f"{basepath}/*/*/*/*_12M_*.{suffix}{filetype}", ditch_suffix=f".{suffix[:-1]}")
+    
+    stats = assemble_stats(f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}", ditch_suffix=f".{suffix[:-1]}")
     with open(f'{basepath}/tables/metadata_{suffix}.json', 'w') as fh:
         json.dump(stats, fh, cls=MyEncoder)
 
@@ -801,7 +481,7 @@ def savestats(basepath="/orange/adamginsburg/web/secure/ALMA-IMF/October31Releas
                   'psf_secondpeak', 'psf_secondpeak_radius',
                   'psf_secondpeak_sidelobefraction', 'cellsize',
                  ]
-    req_keys = ['B3_res', 'B3_sens', 'B6_res', 'B6_sens']
+    req_keys = ['B3_res', 'B3_sens', ]
     req_keys_head = ['Req_Res', 'Req_Sens']
 
     rows = []

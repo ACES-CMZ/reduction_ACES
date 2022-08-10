@@ -1,7 +1,11 @@
 import numpy as np
 import regions
+import radio_beam
+import spectral_cube
+from spectral_cube import Projection
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 from spectral_cube import SpectralCube
+from spectral_cube.wcs_utils import strip_wcs_from_header
 from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
@@ -21,9 +25,14 @@ def read_as_2d(fn, minval=None):
     print(".", end='', flush=True)
     fh = fits.open(fn)
     ww = wcs.WCS(fh[0].header).celestial
+
+    # strip the WCS
+    header = strip_wcs_from_header(fh[0].header)
+    header.update(ww.to_header())
+
     if minval is None:
         hdu2d = fits.PrimaryHDU(data=fh[0].data.squeeze(),
-                                header=ww.to_header())
+                                header=header)
     else:
         data = fh[0].data.squeeze()
         # meant for weights; we're setting weights to zero
@@ -31,7 +40,7 @@ def read_as_2d(fn, minval=None):
         # sanity check
         assert np.nanmax(data) == 1
         hdu2d = fits.PrimaryHDU(data=data,
-                                header=ww.to_header())
+                                header=header)
     return fits.HDUList([hdu2d])
 
 
@@ -61,9 +70,11 @@ def get_m0(fn, slab_kwargs=None, rest_value=None):
             equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km/u.s
     return moment0
 
+
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 weights=None,
                 target_header=None,
+                commonbeam=False,
                 rest_value=None, cb_unit=None, array='7m', basepath='./'):
 
     if target_header is None:
@@ -73,12 +84,27 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         target_wcs = wcs.WCS(target_header)
         shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
-    pb = ProgressBar(len(twod_hdus))
+
+    if commonbeam:
+        beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
+            for hdul in twod_hdus])
+        cb = beams.common_beam()
+        if commonbeam == 'circular':
+            circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
+            cb = circbeam
+        
+        log.info(f"Convolving HDUs to common beam {cb}\n")
+        twod_hdus = [spectral_cube.Projection.from_hdu(hdul).convolve_to(cb).hdu
+                for hdul in ProgressBar(twod_hdus)]
+
+    log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
+    # number of items to count in progress bar
+    npb = len(twod_hdus)
+    pb = ProgressBar(npb)
     def repr_function(*args, **kwargs):
         pb.update()
         return reproject_interp(*args, **kwargs)
 
-    log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.")
     prjarr, footprint = reproject_and_coadd(twod_hdus,
                                             target_wcs,
                                             input_weights=weights,

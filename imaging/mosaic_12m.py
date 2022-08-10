@@ -38,6 +38,14 @@ if __name__ == "__main__":
     assert len(weightfiles) == len(filelist)
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
+    make_mosaic(hdus, name='continuum_commonbeam_circular',
+                commonbeam='circular',
+                weights=wthdus,
+                cb_unit='Jy/beam', array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                target_header=header,
+                )
+    print(flush=True)
     make_mosaic(hdus, name='continuum', weights=wthdus,
                 cb_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
