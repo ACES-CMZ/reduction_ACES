@@ -19,7 +19,6 @@ def get_mousmap_(**kwargs):
     mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
     return mousmap_
 
-mousmap_ = get_mousmap_()
 
 cwd = os.getcwd()
 basepath = conf.basepath
@@ -37,13 +36,20 @@ def wildexists(x):
     return len(glob.glob(x)) > 0
 
 def main():
-    datapath = dataroot = '{basepath}/data/2021.1.00172.L'
+    datapath = dataroot = f'{basepath}/data/2021.1.00172.L'
     #workpath = '/blue/adamginsburg/adamginsburg/ACES/workdir/'
 
     looplist = glob.glob(f"{datapath}/sci*/group*/member*/")
+    assert len(looplist) > 0
+
     looplist = sorted(looplist, key=lambda x: os.path.basename(x))
 
+    mousmap_ = get_mousmap_()
+
+    assert len(mousmap_) > 0
+
     for fullpath in looplist:
+        log.info(f'Working on {fullpath}')
         mous = os.path.basename(fullpath.strip('/')).split(".")[-1]
         try:
             sbname = mousmap_[mous]

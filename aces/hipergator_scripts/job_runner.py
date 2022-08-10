@@ -49,7 +49,7 @@ def main():
     verbose = '--verbose' in sys.argv
     debug = '--debug' in sys.argv
 
-    with open('{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.json', 'r') as fh:
+    with open(f'{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.json', 'r') as fh:
         imaging_status = json.load(fh)
 
     sacct = subprocess.check_output(['sacct',
