@@ -1,10 +1,11 @@
 import os
 from astroquery.alma import Alma
 import json
+from .. import conf
 
-basepath = '/orange/adamginsburg/ACES/rawdata/'
+datapath = f'{conf.basepath}/data/'
 
-def get_mous_to_sb_mapping(project_code, refresh=False, mousmapfile=f'{basepath}/mous_mapping.json'):
+def get_mous_to_sb_mapping(project_code, refresh=False, mousmapfile=f'{datapath}/mous_mapping.json'):
     if refresh or not os.path.exists(mousmapfile):
         print("Downloading MOUS map from ALMA archive")
         tbl = Alma.query(payload={'project_code': project_code}, cache=False,
