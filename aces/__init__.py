@@ -19,7 +19,7 @@ class Conf(_config.ConfigNamespace):
 
     basepath = _config.ConfigItem(
         '/orange/adamginsburg/ACES/'
-        'Maximum number of rows returned (set to -1 for unlimited).')
+        'Base path in which data/ exists')
 
 
 conf = Conf()
