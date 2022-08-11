@@ -24,14 +24,15 @@ def main():
             alma.login(username)
             print(f"Logged in as {username}", flush=True)
 
-            results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
+            results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None)
 
             release_dates = results['obs_release_date']
             # remove all 3000- dates
             ok_release_dates = np.array([int(x[0]) < 3 for x in release_dates])
             results = results[ok_release_dates]
 
-            obsids = np.unique(results['obs_id'])
+            # obs_id column acquired a bad format starting on 2022-08-10
+            obsids = np.unique(results['member_ous_uid'])
 
             # these obs IDs are broken - ALMA will index their data but they are not hosted
             bad_obsids = [f'uid://A001/X15a0/{x}' for x in ('X174', 'X17c', 'Xea', 'X1a4', 'X134', 'X17c', 'X138', 'X17a')]
