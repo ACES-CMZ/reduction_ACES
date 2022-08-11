@@ -9,7 +9,7 @@ from astropy import coordinates
 from astropy import wcs
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
-from make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
+from .make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
 
 from .. import conf
 
