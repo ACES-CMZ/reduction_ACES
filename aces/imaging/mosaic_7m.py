@@ -32,7 +32,7 @@ import glob
 
 def main():
 
-    header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/imaging/data/header_7m.hdr')
+    header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_7m.hdr')
 
     print("7m Continuum")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*16_18_20_22*cont.I.tt0.pbcor.fits')
