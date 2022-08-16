@@ -45,4 +45,5 @@ echo "Make TP mosaic"
 /orange/adamginsburg/miniconda3/envs/python39/bin/aces_mosaic_TP
 
 # technically shouldn't need to be re-run, but as I add new mosaics, it will
-ln -s /orange/adamginsburg/ACES/mosaics/*png /orange/adamginsburg/web/secure/ACES/mosaics/
+# (but this causes a 'failed' error)
+#ln -s /orange/adamginsburg/ACES/mosaics/*png /orange/adamginsburg/web/secure/ACES/mosaics/

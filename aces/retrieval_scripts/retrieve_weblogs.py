@@ -24,7 +24,7 @@ def main():
     alma.login(username)
     print(f"Logged in as {username}.  Performing query.", flush=True)
 
-    results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
+    results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None)
 
     release_dates = results['obs_release_date']
     # remove all 3000- dates
