@@ -11,8 +11,8 @@ from astropy.stats import mad_std
 from astropy import log
 import pylab as pl
 import subprocess
-from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
-from .. import conf
+from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
+from aces import conf
 
 def get_mousmap_(**kwargs):
     mousmap = get_mous_to_sb_mapping('2021.1.00172.L', **kwargs)
@@ -81,7 +81,9 @@ def main():
             field = field+"_original"
 
         for clean in ('mfs', 'cube'):
-            for suffix in (".image", ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
+            for suffix in (".image", ".image.tt0" ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
+
+                tts = '.tt0' if 'tt0' in suffix else ''
                 #globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
                 #fn = glob.glob(f'{dataroot}/{globblob}')
 
@@ -90,15 +92,19 @@ def main():
                     # science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_Xae/calibrated/working/uid___A001_X15a0_Xae.s9_0.Sgr_A_star_sci.spw26.mfs.I.iter1.image
                     spw = spwn if isinstance(spwn, str) else f'spw{spwn}'
 
+                    # we use 'spwkey' because the glob search string is different from the adopted name
+                    # (we search for spw_*.cont, but the name is 'aggregate)
+                    spwkey = spw
+
                     # aggregate continuum is named with the full list of spws
                     spw = 'spw_*.cont' if spw == 'aggregate' else spw
 
                     bn = f'{mous}.s*_0.Sgr_A_star_sci.{spw}.{clean}.I'
                     workingpath = f'{fullpath}/calibrated/working/'
 
-                    imageglob = f'{workingpath}/{bn}.iter1.image'
-                    pbcorglob = f'{workingpath}/{bn}.iter1.image.pbcor'
-                    psfglob = f'{workingpath}/{bn}.iter1.psf'
+                    imageglob = f'{workingpath}/{bn}.iter1.image{tts}'
+                    pbcorglob = f'{workingpath}/{bn}.iter1.image{tts}.pbcor'
+                    psfglob = f'{workingpath}/{bn}.iter1.psf{tts}'
 
                     exists = (wildexists(pbcorglob)
                               or ("WIPim" if wildexists(imageglob)
@@ -110,13 +116,13 @@ def main():
                         datatable[mous] = {}
                     if config not in datatable[mous]:
                         datatable[mous][config] = {}
-                    if spw not in datatable[mous][config]:
-                        datatable[mous][config][spw] = {}
-                    if clean not in datatable[mous][config][spw]:
-                        datatable[mous][config][spw][clean] = {}
+                    if spwkey not in datatable[mous][config]:
+                        datatable[mous][config][spwkey] = {}
+                    if clean not in datatable[mous][config][spwkey]:
+                        datatable[mous][config][spwkey][clean] = {}
 
 
-                    datatable[mous][config][spw][clean] = {
+                    datatable[mous][config][spwkey][clean] = {
                             "field": field,
                             "image": wildexists(imageglob),
                             "pbcor": wildexists(pbcorglob),
@@ -155,3 +161,7 @@ def main():
 
 
     os.chdir(cwd)
+
+    # Hack for debugging
+    globals().update(locals())
+    return locals()

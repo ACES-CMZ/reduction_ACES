@@ -49,6 +49,9 @@ def main():
     verbose = '--verbose' in sys.argv
     debug = '--debug' in sys.argv
 
+    if debug:
+        log.setLevel('DEBUG')
+
     with open(f'{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.json', 'r') as fh:
         imaging_status = json.load(fh)
 
@@ -98,7 +101,7 @@ def main():
                 continue
             for spw in imaging_status[mousname][config]:
                 for imtype in imaging_status[mousname][config][spw]:
-                    log.debug(f"spw={spw} imtype={imtype}")
+                    log.debug(f"spw={spw} imtype={imtype}{'**************AGGREGATE**********' if 'aggregate' in imtype else ''}")
                     imstatus = imaging_status[mousname][config][spw][imtype]
 
                     calwork = f'{grouppath}/{mous}/calibrated/working'
@@ -123,7 +126,7 @@ def main():
                             pass
                     else:
                         # skip MFS individual spws
-                        log.debug(f"imtype is {imtype} and spw is {spw}.  SKIPPING")
+                        log.debug(f"imtype is {imtype} and spw is {spw}.  SKIPPING because it's an MFS single-window")
                         continue
                     os.environ['SCRIPTNAME'] = scriptname
 
