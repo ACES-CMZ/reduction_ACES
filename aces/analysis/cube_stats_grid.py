@@ -26,7 +26,7 @@ from casa_formats_io import Table as casaTable
 # from casatools import image
 # ia = image()
 
-from imstats import get_psf_secondpeak, get_noise_region
+from .imstats import get_psf_secondpeak, get_noise_region
 
 from pathlib import Path
 
