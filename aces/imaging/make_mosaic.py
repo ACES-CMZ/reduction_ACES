@@ -20,9 +20,6 @@ from spectral_cube.utils import SpectralCubeWarning
 warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
                         append=True)
 
-from .. import conf
-basepath = conf.basepath
-
 
 def read_as_2d(fn, minval=None):
     print(".", end='', flush=True)
@@ -78,7 +75,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 weights=None,
                 target_header=None,
                 commonbeam=False,
-                rest_value=None, cb_unit=None, array='7m', basepath=basepath):
+                rest_value=None, cb_unit=None, array='7m', basepath='./'):
 
     if target_header is None:
         log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
@@ -113,9 +110,12 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                                             input_weights=weights,
                                             shape_out=shape_out,
                                             reproject_function=repr_function)
+    header = target_wcs.to_header()
+    if commonbeam:
+        header.update(cb.to_header_keywords())
 
     log.info(f"Writing reprojected data to disk")
-    fits.PrimaryHDU(data=prjarr, header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/{array}_{name}_mosaic.fits', overwrite=True)
+    fits.PrimaryHDU(data=prjarr, header=header).writeto(f'{basepath}/mosaics/{array}_{name}_mosaic.fits', overwrite=True)
 
     log.info(f"Creating plots")
     import pylab as pl
@@ -168,7 +168,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         indx = row['Proposal ID'][3:]
 
         # load up regions
-        regs = regions.Regions.read(f'{basepath}/reduction_ACES/aces/data/regions/final_cmz{indx}.reg')
+        regs = regions.Regions.read(f'{basepath}/reduction_ACES/regions/final_cmz{indx}.reg')
         pregs = [reg.to_pixel(target_wcs) for reg in regs]
 
         composite = _regionlist_to_single_region(pregs)
