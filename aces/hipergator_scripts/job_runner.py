@@ -11,8 +11,8 @@ import json
 from astropy.io import ascii
 import sys
 from astropy import log
-from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
-from .. import conf
+from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
+from aces import conf
 
 basepath = conf.basepath
 datapath = f"{basepath}/data"
@@ -243,10 +243,12 @@ def main():
                     if '--dry-run' in sys.argv:
                         if verbose:
                             print(cmd)
-                        print()
+                            print()
                         #print(subprocess.check_output('env').decode())
                         #raise
                     else:
                         sbatch = subprocess.check_output(cmd.split())
 
                         print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
+
+    globals().update(locals())

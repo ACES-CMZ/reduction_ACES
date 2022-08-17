@@ -81,9 +81,8 @@ def main():
             field = field+"_original"
 
         for clean in ('mfs', 'cube'):
-            for suffix in (".image", ".image.tt0" ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
+            for suffix in (".image",  ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
 
-                tts = '.tt0' if 'tt0' in suffix else ''
                 #globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
                 #fn = glob.glob(f'{dataroot}/{globblob}')
 
@@ -101,6 +100,9 @@ def main():
 
                     bn = f'{mous}.s*_0.Sgr_A_star_sci.{spw}.{clean}.I'
                     workingpath = f'{fullpath}/calibrated/working/'
+
+
+                    tts = '.tt0' if spwkey == 'aggregate' else ''
 
                     imageglob = f'{workingpath}/{bn}.iter1.image{tts}'
                     pbcorglob = f'{workingpath}/{bn}.iter1.image{tts}.pbcor'
