@@ -359,7 +359,7 @@ def parse_fn(fn):
     """
     /orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15b4_X4f/calibrated/working/
     uid___A001_X15b4_X4f.s10_0.Sgr_A_star_sci.spw16_18_20_22_24_26.cont.I.iter1.image.tt0
-    """    
+    """
 
     basename = os.path.basename(fn)
 
@@ -481,7 +481,7 @@ class MyEncoder(json.JSONEncoder):
 
 def savestats(basepath=basepath,
               suffix='image.tt0*', filetype=".fits"):
-    
+
     stats = assemble_stats(f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}", ditch_suffix=f".{suffix[:-1]}")
     with open(f'{basepath}/tables/metadata_{suffix}.json', 'w') as fh:
         json.dump(stats, fh, cls=MyEncoder)

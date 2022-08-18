@@ -113,9 +113,13 @@ def main():
                         #         )
 
                         if spwsel == 'aggregate':
+                            def rename(x):
+                                return os.path.join(tempdir_name,
+                                                    os.path.basename(x).replace('.ms',
+                                                                                '_aggregate.ms'))
                             splitcmd = [textwrap.dedent(
                                     f"""
-                                    outputvis='{tempdir_name}/{os.path.basename(vis).replace('.ms', '_aggregate.ms')}'
+                                    outputvis=rename(vis)
                                     if not os.path.exists(outputvis):
                                         try:
                                             split(vis='{vis}',
@@ -156,7 +160,9 @@ def main():
                                                 datacolumn='data',
                                                 spw={spw})
                                                 """) for vis in tcpars['vis']]
-                            tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
+
+                        # both cube and aggregate need new names
+                        tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
 
                         cleanupcmds = "\n".join(
                                         ["import glob",
