@@ -12,7 +12,7 @@ from spectral_cube import SpectralCube
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 
-from .. import conf
+from aces import conf
 
 basepath = conf.basepath
 

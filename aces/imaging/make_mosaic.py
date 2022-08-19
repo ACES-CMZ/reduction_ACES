@@ -168,7 +168,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         indx = row['Proposal ID'][3:]
 
         # load up regions
-        regs = regions.Regions.read(f'{basepath}/reduction_ACES/regions/final_cmz{indx}.reg')
+        regs = regions.Regions.read(f'{basepath}/reduction_ACES/aces/data/regions/final_cmz{indx}.reg')
         pregs = [reg.to_pixel(target_wcs) for reg in regs]
 
         composite = _regionlist_to_single_region(pregs)

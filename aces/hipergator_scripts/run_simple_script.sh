@@ -5,6 +5,9 @@
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
 #SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/run_simple_%j.log   # Standard output and error log
 
+# https://stackoverflow.com/a/2853811/814354
+set -o xtrace
+
 env
 pwd; hostname; date
 echo "Memory=${MEM}"
@@ -54,11 +57,14 @@ mpi_ntasks=$(python -c "print(int(${SLURM_NTASKS} / 2 + 1))")
 echo ""
 echo "env just before running the command:"
 env
+echo "mpi_ntasks=${mpi_ntasks}"
 pwd
 
 if [ ${mpi_ntasks} -gt 1 ]; then
+    echo ${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
     ${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
 else 
+    echo xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
     xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
 fi
 
