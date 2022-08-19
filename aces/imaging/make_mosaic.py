@@ -23,25 +23,29 @@ warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
 
 def read_as_2d(fn, minval=None):
     print(".", end='', flush=True)
-    fh = fits.open(fn)
-    ww = wcs.WCS(fh[0].header).celestial
+    if fn.endswith('fits'):
+        fh = fits.open(fn)
+        ww = wcs.WCS(fh[0].header).celestial
 
-    # strip the WCS
-    header = strip_wcs_from_header(fh[0].header)
-    header.update(ww.to_header())
+        # strip the WCS
+        header = strip_wcs_from_header(fh[0].header)
+        header.update(ww.to_header())
 
-    if minval is None:
-        hdu2d = fits.PrimaryHDU(data=fh[0].data.squeeze(),
-                                header=header)
+        if minval is None:
+            hdu2d = fits.PrimaryHDU(data=fh[0].data.squeeze(),
+                                    header=header)
+        else:
+            data = fh[0].data.squeeze()
+            # meant for weights; we're setting weights to zero
+            data[data < minval] = 0
+            # sanity check
+            assert np.nanmax(data) == 1
+            hdu2d = fits.PrimaryHDU(data=data,
+                                    header=header)
+        return fits.HDUList([hdu2d])
     else:
-        data = fh[0].data.squeeze()
-        # meant for weights; we're setting weights to zero
-        data[data < minval] = 0
-        # sanity check
-        assert np.nanmax(data) == 1
-        hdu2d = fits.PrimaryHDU(data=data,
-                                header=header)
-    return fits.HDUList([hdu2d])
+        cube = SpectralCube.read(fn, format='casa_image')
+        return fits.HDUList([cube[0].hdu])
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None):
