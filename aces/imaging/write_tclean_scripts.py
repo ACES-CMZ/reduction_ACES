@@ -119,7 +119,7 @@ def main():
                                                                                 '_aggregate.ms'))
                             splitcmd = [textwrap.dedent(
                                     f"""
-                                    outputvis=rename(vis)
+                                    outputvis='{rename(vis)}'
                                     if not os.path.exists(outputvis):
                                         try:
                                             split(vis='{vis}',
@@ -136,6 +136,9 @@ def main():
                                                 datacolumn='data',
                                                 width=8)
                                         """) for vis in tcpars['vis']]
+
+                            # hard code that parallel = False for non-MPI runs
+                            tcpars['parallel'] = False
                         else:
                             spw = int(spwsel.lstrip('spw'))
                             def rename(x):
@@ -193,6 +196,12 @@ def main():
                                      casalog.post(string, origin='tclean_script')
                                      print(string)
 
+                                 mpi_ntasks = os.getenv('mpi_ntasks')
+                                 if mpi_ntasks is not None:
+                                     parallel = int(mpi_ntasks) > 1
+                                 else:
+                                     parallel = False
+
                                  """))
                         fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
                         if temp_workdir:
@@ -200,7 +209,10 @@ def main():
                             fh.write("\n\n")
                         fh.write(f"tclean(\n")
                         for key, val in tcpars.items():
-                            fh.write(f"       {key}={repr(val)},\n")
+                            if key == 'parallel':
+                                fh.write(f"       {key}=parallel,\n")
+                            else:
+                                fh.write(f"       {key}={repr(val)},\n")
                         fh.write(")\n\n\n")
                         if tcpars['specmode'] == 'cube':
                             fh.write(f"exportfits('{tcpars['imagename']}.image.pbcor', '{tcpars['imagename']}.image.pbcor.fits', overwrite=True)\n\n\n")

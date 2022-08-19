@@ -9,7 +9,7 @@ from astropy import wcs
 from astropy import log
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
-from .make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
+from make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
 
 from .. import conf
 
@@ -53,6 +53,52 @@ def main():
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
                 )
+
+    log.info("12m continuum regimaged")
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I.iter1.image.tt0.pbcor')
+    hdus = [read_as_2d(fn) for fn in filelist]
+    print(flush=True)
+    weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*I.iter1.pb.tt0')
+    assert len(weightfiles) == len(filelist)
+    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+    print(flush=True)
+    make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
+                commonbeam='circular',
+                weights=wthdus,
+                cb_unit='Jy/beam', array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                target_header=header,
+                )
+    print(flush=True)
+    make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
+                cb_unit='Jy/beam', array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                target_header=header,
+                )
+
+
+    log.info("12m continuum residuals")
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I.iter1.residual.tt0')
+    hdus = [read_as_2d(fn) for fn in filelist]
+    print(flush=True)
+    weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*I.iter1.pb.tt0')
+    assert len(weightfiles) == len(filelist)
+    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+    print(flush=True)
+    make_mosaic(hdus, name='continuum_residual_commonbeam_circular_reimaged',
+                commonbeam='circular',
+                weights=wthdus,
+                cb_unit='Jy/beam', array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                target_header=header,
+                )
+    print(flush=True)
+    make_mosaic(hdus, name='continuum_residual_reimaged', weights=wthdus,
+                cb_unit='Jy/beam', array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                target_header=header,
+                )
+
 
     log.info("12m HCO+")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw29.cube.I.pbcor.fits')
