@@ -74,7 +74,7 @@ def contchannels_to_linechannels(contsel, freqslist, return_fractions=False):
             # if the first index is 'True', then we start with selected
             chans = [0] + chans
         if invselected[-1]:
-            chans = chans + [len(freq)-1]
+            chans = chans + [len(freq) - 1]
 
         if len(chans) % 2 > 0:
             raise ValueError("Found an odd number of channel endpoints in "

@@ -14,16 +14,13 @@ from spectral_cube import SpectralCube
 from spectral_cube.utils import NoBeamError
 
 from casa_formats_io import Table as casaTable
-# obsoleted by casaformatsio
-# from casatools import image
-# ia = image()
 
 from .imstats import get_psf_secondpeak, get_noise_region
 
 from pathlib import Path
 
-from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
-from .. import conf
+from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
+from aces import conf
 basepath = conf.basepath
 
 tbldir = Path(f'{basepath}/reduction_ACES/aces/data/tables')
@@ -362,4 +359,4 @@ def main():
     os.chdir(cwd)
 
     if threads and nthreads > 1 and 'client' in locals():
-        client.close()
+        client.close()  # noqa

@@ -3,6 +3,9 @@
 # Packages may add whatever they like to this file, but
 # should keep this content at the top.
 # ----------------------------------------------------------------------------
+from . import retrieval_scripts
+from . import pipeline_scripts
+from . import imaging
 from ._astropy_init import *   # noqa
 # ----------------------------------------------------------------------------
 
@@ -30,9 +33,6 @@ class Conf(_config.ConfigNamespace):
 
 conf = Conf()
 
-from . import imaging
-from . import pipeline_scripts
-from . import retrieval_scripts
 
 __all__ = ['retrieval_scripts',
            'pipeline_scripts',

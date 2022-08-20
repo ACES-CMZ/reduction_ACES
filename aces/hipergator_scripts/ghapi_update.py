@@ -12,7 +12,7 @@ basepath = conf.basepath
 
 
 def main():
-    dryrun = os.getenv("DRYRUN") or (dryrun if "dryrun" in locals() else False)
+    dryrun = os.getenv("DRYRUN") or (dryrun if "dryrun" in locals() else False)  # noqa
     print(f"Dryrun={dryrun}")
 
     def all_flat(apicall, **kwargs):
@@ -23,9 +23,9 @@ def main():
 
     api = GhApi(repo='reduction_ACES', owner='ACES-CMZ')
 
-    #paged_issues = paged(api('/repos/ACES-CMZ/reduction_ACES/issues', query={'state': 'all'}))
-    #paged_issues = paged(api.issues.list_for_repo, state='all')
-    #issues = [x for page in paged_issues for x in page]
+    # paged_issues = paged(api('/repos/ACES-CMZ/reduction_ACES/issues', query={'state': 'all'}))
+    # paged_issues = paged(api.issues.list_for_repo, state='all')
+    # issues = [x for page in paged_issues for x in page]
     issues = all_flat(api.issues.list_for_repo, state='all')
     assert len(issues) > 30
 
