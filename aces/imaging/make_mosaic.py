@@ -71,7 +71,7 @@ def get_m0(fn, slab_kwargs=None, rest_value=None):
     with cube.use_dask_scheduler('threads'):
         moment0 = cube.moment0(axis=0)
     moment0 = (moment0 * u.s/u.km).to(u.K,
-            equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km/u.s
+                                      equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km/u.s
     return moment0
 
 
@@ -88,23 +88,23 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         target_wcs = wcs.WCS(target_header)
         shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
-
     if commonbeam:
         beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
-            for hdul in twod_hdus])
+                                        for hdul in twod_hdus])
         cb = beams.common_beam()
         if commonbeam == 'circular':
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
             cb = circbeam
-        
+
         log.info(f"Convolving HDUs to common beam {cb}\n")
         twod_hdus = [spectral_cube.Projection.from_hdu(hdul).convolve_to(cb).hdu
-                for hdul in ProgressBar(twod_hdus)]
+                     for hdul in ProgressBar(twod_hdus)]
 
     log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
     # number of items to count in progress bar
     npb = len(twod_hdus)
     pb = ProgressBar(npb)
+
     def repr_function(*args, **kwargs):
         pb.update()
         return reproject_interp(*args, **kwargs)
@@ -131,7 +131,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     back = -10
     fronter = 20
 
-    fig = pl.figure(figsize=(20,7))
+    fig = pl.figure(figsize=(20, 7))
     ax = fig.add_subplot(111, projection=target_wcs)
     im = ax.imshow(prjarr, norm=visualization.simple_norm(prjarr, **norm_kwargs), zorder=front, cmap='gray')
     cb = pl.colorbar(mappable=im)
@@ -143,7 +143,6 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.coords[1].set_major_formatter('d.dd')
     ax.coords[0].set_ticks(spacing=0.1*u.deg)
     ax.coords[0].set_ticklabel(rotation=45, pad=20)
-
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic.png', bbox_inches='tight')
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
@@ -158,8 +157,6 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.set_axisbelow(True)
     ax.set_zorder(back)
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgrid.png', bbox_inches='tight')
-
-
 
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.tsv', format='ascii.csv', delimiter='\t')
 
@@ -192,17 +189,16 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     fits.PrimaryHDU(data=flagmap,
                     header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/{array}_{name}_field_number_map.fits', overwrite=True)
 
-
     ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max())+0.5, zorder=fronter)
 
     for ii in np.unique(flagmap):
         if ii > 0:
-            fsum = (flagmap==ii).sum()
-            cy,cx = ((np.arange(flagmap.shape[0])[:,None] * (flagmap==ii)).sum() / fsum,
-                     (np.arange(flagmap.shape[1])[None,:] * (flagmap==ii)).sum() / fsum)
+            fsum = (flagmap == ii).sum()
+            cy, cx = ((np.arange(flagmap.shape[0])[:, None] * (flagmap == ii)).sum() / fsum,
+                      (np.arange(flagmap.shape[1])[None, :] * (flagmap == ii)).sum() / fsum)
             pl.text(cx, cy, f"{ii}\n{tbl[ii-1]['Obs ID']}",
                     horizontalalignment='left', verticalalignment='center',
-                    color=(1,0.8,0.5), transform=ax.get_transform('pixel'),
+                    color=(1, 0.8, 0.5), transform=ax.get_transform('pixel'),
                     zorder=fronter)
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')

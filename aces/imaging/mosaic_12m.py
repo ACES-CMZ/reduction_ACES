@@ -1,3 +1,4 @@
+import glob
 import numpy as np
 import regions
 from spectral_cube.spectral_cube import _regionlist_to_single_region
@@ -21,12 +22,11 @@ basepath = conf.basepath
 # target_wcs.wcs.cunit = ['deg', 'deg']
 # target_wcs.wcs.cdelt = [-6.38888888888888e-4, 6.388888888888888e-4]
 # target_wcs.wcs.crpix = [2000, 2000]
-# 
+#
 # header = target_wcs.to_header()
 # header['NAXIS1'] = 4000
-    # header['NAXIS2'] = 4000
+# header['NAXIS2'] = 4000
 
-import glob
 
 def main():
 
@@ -76,7 +76,6 @@ def main():
                 target_header=header,
                 )
 
-
     log.info("12m continuum residuals")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I.iter1.residual.tt0')
     hdus = [read_as_2d(fn) for fn in filelist]
@@ -99,7 +98,6 @@ def main():
                 target_header=header,
                 )
 
-
     log.info("12m HCO+")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw29.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
@@ -111,7 +109,7 @@ def main():
                 weights=wthdus,
                 norm_kwargs=dict(max_cut=20, min_cut=-0.5, ),
                 target_header=header,
-               )
+                )
     hdus = [get_m0(fn).hdu for fn in filelist]
     print(flush=True)
     make_mosaic(hdus,  name='hcop_m0', cb_unit='K km/s', array='12m', basepath=basepath,
@@ -139,14 +137,13 @@ def main():
     log.info("12m H40a")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
-    hdus = [get_peak(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    hdus = [get_peak(fn, slab_kwargs={'lo': -200*u.km/u.s, 'hi': 200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')
-    wthdus = [get_peak(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in weightfiles]
+    wthdus = [get_peak(fn, slab_kwargs={'lo': -200*u.km/u.s, 'hi': 200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in weightfiles]
     make_mosaic(hdus, name='h40a_max', cb_unit='K',
                 norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'),
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
-    hdus = [get_m0(fn, slab_kwargs={'lo':-200*u.km/u.s, 'hi':200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    hdus = [get_m0(fn, slab_kwargs={'lo': -200*u.km/u.s, 'hi': 200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
     make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s',
-                norm_kwargs={'max_cut': 20, 'min_cut':-1, 'stretch':'asinh'},
+                norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
-
