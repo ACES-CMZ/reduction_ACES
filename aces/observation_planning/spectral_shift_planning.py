@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
             insidespecslice = (cube.spectral_axis > vmin) & (cube.spectral_axis < vmax)
             outsidespecslice = (cube.spectral_axis < vmin) & (cube.spectral_axis > vmax)
-            #print(f"Specslice includes {insidespecslice.sum()} and excludes {outsidespecslice.sum()} out of {cube.shape[0]}")
+            # print(f"Specslice includes {insidespecslice.sum()} and excludes {outsidespecslice.sum()} out of {cube.shape[0]}")
 
             # loop over all of the individual circle regions in the region file
             for preg in pregs:
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
                 # logic: we're adding by "or" any region that is observed
                 bmask[insidespecslice, slcs_big[0], slcs_big[1]] |= msk.data.astype('bool')[slcs_small]
-                #print(f"total included: {bmask.sum()}")
+                # print(f"total included: {bmask.sum()}")
 
         mcube = cube.with_mask(bmask)
         ncube = cube.with_mask(~bmask).with_mask(bmask.any(axis=0))[:, :, 250:]
@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
             slcs_big, slcs_small = cmsk.get_overlap_slices(cube.shape[1:])
             flagmap[slcs_big] += (cmsk.data[slcs_small] * int(comp.meta['label'])) * (flagmap[slcs_big] == 0)
-            #_, glat, glon = cube.world[0,slcs_big[0],slcs_big[1]]
+            # _, glat, glon = cube.world[0,slcs_big[0],slcs_big[1]]
             # ax2.contour(glon, glat, cmsk.data, levels=[0.5], colors=['r'],
             #           transform=ax2.get_transform('galactic'))
 
