@@ -80,7 +80,7 @@ def main():
         if 'original' in sbname:
             field = field+"_original"
 
-        for clean in ('mfs', 'cube',):
+        for clean in ('mfs', 'cont', 'cube',):
             for suffix in (".image",  ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
 
                 #globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
@@ -98,9 +98,11 @@ def main():
                     # aggregate continuum is named with the full list of spws
                     if spw == 'aggregate':
                         spw = 'spw*'
-                        clean = 'cont' # _not_ mfs
+                        clean_ = 'cont' # _not_ mfs
+                    else:
+                        clean_ = clean
 
-                    bn = f'{mous}.s*_0.Sgr_A_star_sci.{spw}.{clean}.I'
+                    bn = f'{mous}.s*_0.Sgr_A_star_sci.{spw}.{clean_}.I'
                     workingpath = f'{fullpath}/calibrated/working/'
 
 
