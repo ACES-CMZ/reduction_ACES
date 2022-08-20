@@ -3,8 +3,9 @@ from astropy import units as u
 from astropy.io import fits
 from astropy import log
 from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
+import numpy as np
 
-from .. import conf
+from aces import conf
 
 basepath = conf.basepath
 
@@ -21,6 +22,8 @@ basepath = conf.basepath
 
 
 def main():
+
+    np.seterr('ignore')
 
     header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
 
@@ -46,7 +49,7 @@ def main():
                 target_header=header,
                 )
 
-    log.info("12m continuum regimaged")
+    log.info("12m continuum reimaged")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I.iter1.image.tt0.pbcor')
     hdus = [read_as_2d(fn) for fn in filelist]
     print(flush=True)
