@@ -14,9 +14,7 @@ Optional:
     GOUS
 """
 import os
-import sys
 import glob
-import json
 import shutil
 import textwrap
 from .. import conf

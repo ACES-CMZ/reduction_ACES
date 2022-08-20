@@ -2,12 +2,9 @@ import numpy as np
 import regions
 import glob
 from spectral_cube.spectral_cube import _regionlist_to_single_region
-import reproject
 from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
-from astropy import coordinates
-from astropy import wcs
 from spectral_cube import SpectralCube
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd

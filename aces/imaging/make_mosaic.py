@@ -2,14 +2,12 @@ import numpy as np
 import regions
 import radio_beam
 import spectral_cube
-from spectral_cube import Projection
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 from spectral_cube import SpectralCube
 from spectral_cube.wcs_utils import strip_wcs_from_header
 from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
-from astropy import coordinates
 from astropy import wcs
 from astropy import log
 from astropy.utils.console import ProgressBar
