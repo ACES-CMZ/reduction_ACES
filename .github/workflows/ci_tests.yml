@@ -32,10 +32,10 @@ jobs:
             python: 3.9
             toxenv: py39-test
 
-          - name: Python 3.9 with all optional dependencies and coverage checking
-            os: ubuntu-latest
-            python: 3.9
-            toxenv: py39-test-alldeps-cov
+            # - name: Python 3.9 with all optional dependencies and coverage checking
+            #   os: ubuntu-latest
+            #   python: 3.9
+            #   toxenv: py39-test-alldeps-cov
 
           - name: macOS - Python 3.9 with all optional dependencies
             os: macos-latest
