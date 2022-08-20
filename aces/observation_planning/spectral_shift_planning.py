@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     tbl = Table.read('../SB_naming.tsv', format='ascii.csv', delimiter='\t')
 
-    vwidth = 102.585 * 2048 * u.m/u.s
+    vwidth = 102.585 * 2048 * u.m / u.s
 
     for cube, name in ((hcopcube, 'hcop'), (hncocube, 'hnco')):
 
@@ -43,8 +43,8 @@ if __name__ == "__main__":
             composite.meta['label'] = indx
             composites.append(composite)
 
-            voff = row['velocity offset']*u.km/u.s
-            vmin, vmax = voff-vwidth/2, voff+vwidth/2
+            voff = row['velocity offset'] * u.km / u.s
+            vmin, vmax = voff - vwidth / 2, voff + vwidth / 2
 
             insidespecslice = (cube.spectral_axis > vmin) & (cube.spectral_axis < vmax)
             outsidespecslice = (cube.spectral_axis < vmin) & (cube.spectral_axis > vmax)
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         mx_missed = ncube.max(axis=0)
         mx_missed.write(f'{name}_missed_peak_intensity.fits', overwrite=True)
 
-        vmax_missed = ncube.with_spectral_unit(u.km/u.s).argmax_world(axis=0)
+        vmax_missed = ncube.with_spectral_unit(u.km / u.s).argmax_world(axis=0)
         vmax_missed.write(f'{name}_missed_peak_velocity.fits', overwrite=True)
 
         import pylab as pl
@@ -98,17 +98,17 @@ if __name__ == "__main__":
             # ax2.contour(glon, glat, cmsk.data, levels=[0.5], colors=['r'],
             #           transform=ax2.get_transform('galactic'))
 
-        ax1.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r']*50,
-                    linewidths=[0.2]*50)
-        ax2.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r']*50,
-                    linewidths=[0.2]*50)
+        ax1.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r'] * 50,
+                    linewidths=[0.2] * 50)
+        ax2.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r'] * 50,
+                    linewidths=[0.2] * 50)
 
         pl.savefig(f"peak_missed_{name}_regcontours.png", bbox_inches='tight')
 
         fig2 = pl.figure(2, figsize=(20, 7))
         fig2.set_facecolor('w')
         ax = fig2.add_subplot(111, projection=cube[:, :, 250:].wcs.celestial)
-        ax.contour(flagmap[:, 250:], cmap='prism', levels=np.arange(flagmap.max())+0.5)
+        ax.contour(flagmap[:, 250:], cmap='prism', levels=np.arange(flagmap.max()) + 0.5)
         fm = flagmap[:, 250:]
         for ii in np.unique(fm):
             if ii > 0:
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         ax.coords[1].set_axislabel('Galactic Latitude')
         ax.coords[0].set_major_formatter('d.dd')
         ax.coords[1].set_major_formatter('d.dd')
-        ax.coords[0].set_ticks(spacing=0.1*u.deg)
+        ax.coords[0].set_ticks(spacing=0.1 * u.deg)
         ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
         if os.path.exists('../../mosaics'):
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         fig2.clf()
         fig2.set_facecolor('w')
         ax = fig2.add_subplot(111, projection=cube[:, :, 250:].wcs.celestial)
-        ax.contour(flagmap[:, 250:], cmap='prism', levels=np.arange(flagmap.max())+0.5)
+        ax.contour(flagmap[:, 250:], cmap='prism', levels=np.arange(flagmap.max()) + 0.5)
         fm = flagmap[:, 250:]
         for ii in np.unique(fm):
             if ii > 0:
@@ -150,7 +150,7 @@ if __name__ == "__main__":
         ax.coords[1].set_axislabel('Galactic Latitude')
         ax.coords[0].set_major_formatter('d.dd')
         ax.coords[1].set_major_formatter('d.dd')
-        ax.coords[0].set_ticks(spacing=0.1*u.deg)
+        ax.coords[0].set_ticks(spacing=0.1 * u.deg)
         ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
         if os.path.exists('../../mosaics'):
@@ -176,13 +176,13 @@ if __name__ == "__main__":
         flagmapfits.writeto('region_number_map.fits', overwrite=True)
 
         voff = 0
-        vmin, vmax = voff-vwidth/2, voff+vwidth/2
+        vmin, vmax = voff - vwidth / 2, voff + vwidth / 2
 
         outsidespecslice = (cube.spectral_axis < vmin) | (cube.spectral_axis > vmax)
 
         origslab = cube.with_mask(bmask.any(axis=0)).with_mask(outsidespecslice[:, None, None])[:, :, 250:]
         mxmissed_noshift = origslab.max(axis=0)
-        vmaxmissed_noshift = origslab.with_spectral_unit(u.km/u.s).argmax_world(axis=0)
+        vmaxmissed_noshift = origslab.with_spectral_unit(u.km / u.s).argmax_world(axis=0)
 
         fig = pl.figure(3, figsize=(14, 7))
         fig.clf()
@@ -201,9 +201,9 @@ if __name__ == "__main__":
 
         pl.savefig(f"peak_missed_{name}_noshift.png", bbox_inches='tight')
 
-        ax1.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r']*50,
-                    linewidths=[0.2]*50)
-        ax2.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r']*50,
-                    linewidths=[0.2]*50)
+        ax1.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r'] * 50,
+                    linewidths=[0.2] * 50)
+        ax2.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r'] * 50,
+                    linewidths=[0.2] * 50)
 
         pl.savefig(f"peak_missed_{name}_noshift_regcontours.png", bbox_inches='tight')

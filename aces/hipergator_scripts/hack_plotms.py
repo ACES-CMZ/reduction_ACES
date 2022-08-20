@@ -37,7 +37,7 @@ if apppath_string in lines:
         for line in lines[:linenum]:
             fh.write(line)
         fh.write(newstr)
-        for line in lines[linenum+1:]:
+        for line in lines[linenum + 1:]:
             fh.write(line)
     print(f"Hacked line {linenum} of {plotmstool}")
 elif new_apppath_string not in lines:
@@ -55,7 +55,7 @@ elif new_apppath_string not in lines:
         for line in lines[:linenum]:
             fh.write(line)
         fh.write(new_apppath_string)
-        for line in lines[linenum+1:]:
+        for line in lines[linenum + 1:]:
             fh.write(line)
     print(f"Hacked line {linenum} of {plotmstool}")
 
@@ -64,4 +64,4 @@ else:
     linenum = lines.index(new_apppath_string)
 
 print(f"Lines {linenum}-{linenum+5}: ")
-print("".join(lines[linenum:linenum+5]))
+print("".join(lines[linenum:linenum + 5]))

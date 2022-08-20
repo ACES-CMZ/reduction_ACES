@@ -55,12 +55,12 @@ def main():
 
     print("7m H40a")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw24.cube.I.pbcor.fits')
-    hdus = [get_peak(fn, slab_kwargs={'lo': -200*u.km/u.s, 'hi': 200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
     make_mosaic(hdus, name='h40a_max', cb_unit='K',
                 target_header=header,
                 norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'),
                 array='7m', basepath=basepath)
-    hdus = [get_m0(fn, slab_kwargs={'lo': -200*u.km/u.s, 'hi': 200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
     make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s',
                 target_header=header,
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},

@@ -112,8 +112,8 @@ def main():
         gous = matches['group_ous_uid'][0].replace(":", "_").replace("/", "_")
         calibrated_dir = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/calibrated'
         if os.path.exists(calibrated_dir):
-            mses = (glob.glob(f'{calibrated_dir}/*.ms')
-                    + glob.glob(f'{calibrated_dir}/*.ms.split.cal'))
+            mses = (glob.glob(f'{calibrated_dir}/*.ms') +
+                    glob.glob(f'{calibrated_dir}/*.ms.split.cal'))
         pipeline_run = os.path.exists(calibrated_dir) and len(mses) > 0
         pipeline_links = [x.replace("/orange/adamginsburg/web/secure/", "https://data.rc.ufl.edu/secure/adamginsburg/")
                           for x in glob.glob(f"/orange/adamginsburg/web/secure/ACES/weblogs-reimaging/member.{mous}/pipeline*/html/t1-4.html")]
@@ -218,7 +218,7 @@ def main():
                     lines[ii] = f"* [{'x' if delivered else ' '}] Delivered?"
                 elif 'Downloaded?' in line:
                     lines[ii] = f"* [{'x' if downloaded else ' '}] Downloaded? (specify where)"
-                    insert_hipergator_at = ii+1
+                    insert_hipergator_at = ii + 1
                 elif 'Quality Assessment?' in line:
                     if 'unpacked' not in body:
                         insert_weblog_at = ii
@@ -242,7 +242,7 @@ def main():
                 need_update.append("Downloaded to hipergator")
                 lines[insert_hipergator_at] = f"  * [{'x' if downloaded else ' '}] hipergator"
 
-            pipeline_linenumber = insert_hipergator_at+1
+            pipeline_linenumber = insert_hipergator_at + 1
             pipeline_line_text = f"  * [{'x' if pipeline_run else ' '}] hipergator pipeline run"
             if 'hipergator pipeline run' not in lines[pipeline_linenumber] and array != "TP":
                 need_update.append("Pipelined")
@@ -251,7 +251,7 @@ def main():
                 need_update.append("Pipelined")
                 lines[pipeline_linenumber] = pipeline_line_text
 
-            pipeline_links_linenumber = pipeline_linenumber+1
+            pipeline_links_linenumber = pipeline_linenumber + 1
             # check if the link is included at all
             pipeline_links_done = [link in body for link in pipeline_links]
             if len(pipeline_links) > sum(pipeline_links_done):

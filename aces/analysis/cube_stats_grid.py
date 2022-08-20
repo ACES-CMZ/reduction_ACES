@@ -123,9 +123,9 @@ def main():
     colnames_apriori = ['Field', 'Config', 'spw', 'suffix', 'filename', 'bmaj', 'bmin', 'bpa', 'wcs_restfreq', 'minfreq', 'maxfreq']
     colnames_fromheader = ['imsize', 'cell', 'threshold', 'niter', 'pblimit', 'pbmask', 'restfreq', 'nchan',
                            'width', 'start', 'chanchunks', 'deconvolver', 'weighting', 'robust', 'git_version', 'git_date', ]
-    colnames_stats = 'min max std sum mean'.split() + 'lowmin lowmax lowstd lowmadstd lowsum lowmean'.split() + ['mod'+x for x in 'min max std sum mean'.split()] + ['epsilon']
+    colnames_stats = 'min max std sum mean'.split() + 'lowmin lowmax lowstd lowmadstd lowsum lowmean'.split() + ['mod' + x for x in 'min max std sum mean'.split()] + ['epsilon']
 
-    colnames = colnames_apriori+colnames_fromheader+colnames_stats
+    colnames = colnames_apriori + colnames_fromheader + colnames_stats
     assert len(colnames) == 44
 
     def try_qty(x):
@@ -209,12 +209,12 @@ def main():
                 jvmimage = fn.replace(".image", ".JvM.image")
                 if os.path.exists(jvmimage):
                     fn = jvmimage
-                elif os.path.exists(jvmimage+".fits"):
-                    fn = jvmimage+".fits"
+                elif os.path.exists(jvmimage + ".fits"):
+                    fn = jvmimage + ".fits"
                 elif os.path.exists(fn):
                     pass
-                elif os.path.exists(fn+".fits"):
-                    fn = fn+".fits"
+                elif os.path.exists(fn + ".fits"):
+                    fn = fn + ".fits"
 
                 if 'fits' in fn:
                     cube = SpectralCube.read(fn, format='fits', use_dask=True)
@@ -236,7 +236,7 @@ def main():
                 if hasattr(cube, 'beams'):
                     beams = cube.beams
                     # use the middle-ish beam
-                    beam = beams[len(beams)//2]
+                    beam = beams[len(beams) // 2]
 
                 print(f"Beam: {beam}, {beam.major}, {beam.minor}", flush=True)
 
@@ -317,8 +317,8 @@ def main():
 
                 if os.path.exists(modfn):
                     modcube = SpectralCube.read(modfn, format='casa_image', target_chunksize=target_chunksize)
-                elif os.path.exists(modfn+".fits"):
-                    modcube = SpectralCube.read(modfn+".fits", format='fits', use_dask=True)
+                elif os.path.exists(modfn + ".fits"):
+                    modcube = SpectralCube.read(modfn + ".fits", format='fits', use_dask=True)
                 modsched = modcube.use_dask_scheduler(scheduler=scheduler, num_workers=num_workers)
 
                 dt(modcube)
@@ -336,7 +336,7 @@ def main():
                 del modstats
 
                 if os.path.exists(psffn):
-                    (residual_peak, peakloc_as, frac, epsilon, firstnull, r_sidelobe, _) = get_psf_secondpeak(psffn, specslice=slice(cube.shape[0]//2, cube.shape[0]//2+1))
+                    (residual_peak, peakloc_as, frac, epsilon, firstnull, r_sidelobe, _) = get_psf_secondpeak(psffn, specslice=slice(cube.shape[0] // 2, cube.shape[0] // 2 + 1))
 
                 del cube
 

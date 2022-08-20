@@ -49,7 +49,7 @@ def read_as_2d(fn, minval=None):
 def get_peak(fn, slab_kwargs=None, rest_value=None):
     print(".", end='', flush=True)
     ft = 'fits' if fn.endswith(".fits") else "casa_image"
-    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
     if slab_kwargs is not None:
         cube = cube.spectral_slab(**slab_kwargs)
     with cube.use_dask_scheduler('threads'):
@@ -63,13 +63,13 @@ def get_peak(fn, slab_kwargs=None, rest_value=None):
 def get_m0(fn, slab_kwargs=None, rest_value=None):
     print(".", end='', flush=True)
     ft = 'fits' if fn.endswith(".fits") else "casa_image"
-    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
     if slab_kwargs is not None:
         cube = cube.spectral_slab(**slab_kwargs)
     with cube.use_dask_scheduler('threads'):
         moment0 = cube.moment0(axis=0)
-    moment0 = (moment0 * u.s/u.km).to(u.K,
-                                      equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km/u.s
+    moment0 = (moment0 * u.s / u.km).to(u.K,
+                                        equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km / u.s
     return moment0
 
 
@@ -139,7 +139,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.coords[1].set_axislabel('Galactic Latitude')
     ax.coords[0].set_major_formatter('d.dd')
     ax.coords[1].set_major_formatter('d.dd')
-    ax.coords[0].set_ticks(spacing=0.1*u.deg)
+    ax.coords[0].set_ticks(spacing=0.1 * u.deg)
     ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic.png', bbox_inches='tight')
@@ -187,7 +187,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     fits.PrimaryHDU(data=flagmap,
                     header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/{array}_{name}_field_number_map.fits', overwrite=True)
 
-    ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max())+0.5, zorder=fronter)
+    ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max()) + 0.5, zorder=fronter)
 
     for ii in np.unique(flagmap):
         if ii > 0:

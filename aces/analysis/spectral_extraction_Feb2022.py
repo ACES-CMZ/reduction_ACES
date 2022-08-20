@@ -23,10 +23,10 @@ if __name__ == "__main__":
                     'SgrC_hotcore': f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001/X15a0/X174/"
                     }
 
-    regions_dict = {'brick_h2o_core': regions.CircleSkyRegion(coordinates.SkyCoord('17:46:10.628', '-28:42:17.75', frame='icrs', unit=(u.h, u.deg)), radius=15*u.arcsec),
-                    'SgrB2_G0.69': regions.CircleSkyRegion(coordinates.SkyCoord('17h47m22s', '-28:21:27', frame='fk5', unit=(u.h, u.deg)),  radius=15*u.arcsec),
-                    'cloud_e_hotcore': regions.CircleSkyRegion(coordinates.SkyCoord(0.4751733*u.deg, -0.0096808*u.deg, frame='galactic'), radius=15*u.arcsec),
-                    'SgrC_hotcore': regions.CircleSkyRegion(coordinates.SkyCoord('17:44:40.58', '-29:28:16.28', frame='icrs', unit=(u.h, u.deg)), radius=15*u.arcsec),
+    regions_dict = {'brick_h2o_core': regions.CircleSkyRegion(coordinates.SkyCoord('17:46:10.628', '-28:42:17.75', frame='icrs', unit=(u.h, u.deg)), radius=15 * u.arcsec),
+                    'SgrB2_G0.69': regions.CircleSkyRegion(coordinates.SkyCoord('17h47m22s', '-28:21:27', frame='fk5', unit=(u.h, u.deg)), radius=15 * u.arcsec),
+                    'cloud_e_hotcore': regions.CircleSkyRegion(coordinates.SkyCoord(0.4751733 * u.deg, -0.0096808 * u.deg, frame='galactic'), radius=15 * u.arcsec),
+                    'SgrC_hotcore': regions.CircleSkyRegion(coordinates.SkyCoord('17:44:40.58', '-29:28:16.28', frame='icrs', unit=(u.h, u.deg)), radius=15 * u.arcsec),
                     }
 
     for regname in product_dict:
@@ -48,4 +48,4 @@ if __name__ == "__main__":
             hdu.header.update(ww.to_header())
             hdu.data = hdu.data[:, None, None]
 
-            hdu.writeto(f"{regname}_average_"+fn.split("/")[-1], overwrite=True)
+            hdu.writeto(f"{regname}_average_" + fn.split("/")[-1], overwrite=True)

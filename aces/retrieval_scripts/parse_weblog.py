@@ -24,7 +24,7 @@ def get_mous_to_sb_mapping(project_code):
 
 def grouped(iterable, n):
     "s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ..."
-    return zip(*[iter(iterable)]*n)
+    return zip(*[iter(iterable)] * n)
 
 
 def striptext(x):
@@ -65,8 +65,8 @@ def get_human_readable_name(weblog, mapping=None):
             max_baseline = re.compile("<th>Max Baseline</th>\s*<td>([0-9a-z\. ]*)</td>").search(txt).groups()[0]
             max_baseline = u.Quantity(max_baseline)
 
-            array_name = ('7MorTP' if max_baseline < 100*u.m else 'TM2'
-                          if max_baseline < 1000*u.m else 'TM1')
+            array_name = ('7MorTP' if max_baseline < 100 * u.m else 'TM2'
+                          if max_baseline < 1000 * u.m else 'TM1')
             #print("array_name = {0}".format(array_name))
             break
 
@@ -169,8 +169,8 @@ def get_calibrator_fluxes(weblog):
 
             soup = BeautifulSoup(txt, 'html5lib')
             date_tbls = [xx for xx in soup.findAll('table')
-                         if 'summary' in xx.attrs
-                         and xx.attrs['summary'] == 'Measurement Set Summaries']
+                         if 'summary' in xx.attrs and
+                         xx.attrs['summary'] == 'Measurement Set Summaries']
             assert len(date_tbls) == 1
             date_tbl = date_tbls[0]
 
@@ -188,8 +188,8 @@ def get_calibrator_fluxes(weblog):
             soup = BeautifulSoup(txt, 'html5lib')
 
             tbls = [xx for xx in soup.findAll('table')
-                    if 'summary' in xx.attrs
-                    and xx.attrs['summary'] == 'Flux density results']
+                    if 'summary' in xx.attrs and
+                    xx.attrs['summary'] == 'Flux density results']
             if len(tbls) != 1:
                 raise ValueError("No flux density data found in pipeline run "
                                  "{0}.".format(weblog))

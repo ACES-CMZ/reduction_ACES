@@ -82,7 +82,7 @@ imaging_script = 'imaging_pipeline_rerun.py'
 science_goal_dirs = glob.glob("science_goal*")
 
 for scigoal in science_goal_dirs:
-    for group in glob.glob(scigoal+"/*"):
+    for group in glob.glob(scigoal + "/*"):
         for member in glob.glob(os.path.join(group, "*")):
             dirpath = member
             scriptsforpi = glob.glob(os.path.join(dirpath, "script/*scriptForPI.py"))

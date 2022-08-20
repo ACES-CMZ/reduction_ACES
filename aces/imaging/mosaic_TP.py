@@ -61,7 +61,7 @@ def main():
     ax.coords[1].set_axislabel('Galactic Latitude')
     ax.coords[0].set_major_formatter('d.dd')
     ax.coords[1].set_major_formatter('d.dd')
-    ax.coords[0].set_ticks(spacing=0.1*u.deg)
+    ax.coords[0].set_ticks(spacing=0.1 * u.deg)
     ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
     fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic.png', bbox_inches='tight')
@@ -104,7 +104,7 @@ def main():
                 # expected to occur if no overlap
                 continue
 
-    ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max())+0.5, zorder=fronter)
+    ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max()) + 0.5, zorder=fronter)
 
     for ii in np.unique(flagmap):
         if ii > 0:

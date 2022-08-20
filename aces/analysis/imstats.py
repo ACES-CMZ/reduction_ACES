@@ -41,8 +41,8 @@ def get_requested_sens():
     return tbl
 
 
-def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
-                       max_radial_extent=5*u.arcsec, max_npix_peak=100,
+def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5 * u.arcsec,
+                       max_radial_extent=5 * u.arcsec, max_npix_peak=100,
                        specslice=slice(0, 1)):
     """ REDUNDANT with get_psf_secondpeak_old, but this one is better
 
@@ -81,7 +81,7 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
     assert cx - npix >= 0
     assert cy - npix >= 0
 
-    cutout = psfim[cy-npix:cy+npix+1, cx-npix:cx+npix+1]
+    cutout = psfim[cy - npix:cy + npix + 1, cx - npix:cx + npix + 1]
 
     try:
         beam = cube.beam
@@ -96,7 +96,7 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
     shape = cutout.shape
     sy, sx = shape
 
-    fullbeam = beam.as_kernel(pixscale, x_size=npix*2+1, y_size=npix*2+1,)
+    fullbeam = beam.as_kernel(pixscale, x_size=npix * 2 + 1, y_size=npix * 2 + 1,)
     # will break things below fullbeam = beam.as_kernel(pixscale, x_size=sx, y_size=sy)
 
     Y, X = np.mgrid[0:sy, 0:sx]
@@ -123,8 +123,8 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
     # within this radius as part of the main beam
     first_min_ind = scipy.signal.find_peaks(-radial_mean)[0][0]
 
-    view = (slice(cy-first_min_ind.astype('int'), cy+first_min_ind.astype('int')+1),
-            slice(cx-first_min_ind.astype('int'), cx+first_min_ind.astype('int')+1))
+    view = (slice(cy - first_min_ind.astype('int'), cy + first_min_ind.astype('int') + 1),
+            slice(cx - first_min_ind.astype('int'), cx + first_min_ind.astype('int') + 1))
     data = cutout[view].value
     bm = fullbeam.array[view]
     # the data and beam must be concentric
@@ -134,12 +134,12 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
     assert np.argmax(data) == np.argmax(bm)
     assert (bm.max() == bm).sum() == 1
 
-    bmfit_residual = data-bm/bm.max()
+    bmfit_residual = data - bm / bm.max()
     radial_mask = rr[view] < first_min_ind
 
     # calculate epsilon, the ratio of the PSF integral out to the first null to the integral of the PSF
     # the integral of the PSF should be very close to 1, but we want to peak-normalize to match the dirty beam
-    synthbeam_integral = (fullbeam.array/fullbeam.array.max()).sum()
+    synthbeam_integral = (fullbeam.array / fullbeam.array.max()).sum()
     log.debug(f"Synthetic beam integral = {synthbeam_integral}")
     dirtybeam_integral = (data / data.max() * radial_mask).sum()
     log.debug(f"Dirty beam integral = {dirtybeam_integral}")
@@ -185,14 +185,14 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
                  f"first_sidelobe_ind={first_sidelobe_ind}, "
                  f"first_min_ind = {first_min_ind}")
 
-        bm2 = beam.as_kernel(pixscale, x_size=radial_extent.astype('int')*2+1,
-                             y_size=radial_extent.astype('int')*2+1,)
-        view = (slice(cy-radial_extent.astype('int'), cy+radial_extent.astype('int')+1),
-                slice(cx-radial_extent.astype('int'), cx+radial_extent.astype('int')+1))
-        bmfit_residual2 = cutout[view].value-bm2.array/bm2.array.max()
+        bm2 = beam.as_kernel(pixscale, x_size=radial_extent.astype('int') * 2 + 1,
+                             y_size=radial_extent.astype('int') * 2 + 1,)
+        view = (slice(cy - radial_extent.astype('int'), cy + radial_extent.astype('int') + 1),
+                slice(cx - radial_extent.astype('int'), cx + radial_extent.astype('int') + 1))
+        bmfit_residual2 = cutout[view].value - bm2.array / bm2.array.max()
 
         #extent = np.array([-first_min_ind, first_min_ind, -first_min_ind, first_min_ind])*pixscale.to(u.arcsec).value
-        extent = np.array([-radial_extent, radial_extent, -radial_extent, radial_extent])*pixscale.to(u.arcsec).value
+        extent = np.array([-radial_extent, radial_extent, -radial_extent, radial_extent]) * pixscale.to(u.arcsec).value
         ax = pl.gca()
         im = ax.imshow(bmfit_residual2, origin='lower',
                        interpolation='nearest', extent=extent, cmap='gray_r')
@@ -205,7 +205,7 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
                                                       colors=[(0.1, 0.7, 0.1, 0.9)],
                                                       linewidths=1)
 
-        ax.contour(bm2.array/bm2.array.max(), levels=[0.1, 0.5, 0.9], colors=['r']*3, extent=extent)
+        ax.contour(bm2.array / bm2.array.max(), levels=[0.1, 0.5, 0.9], colors=['r'] * 3, extent=extent)
         ax.contour(rr[view], levels=[first_min_ind, r_max_sidelobe],
                    linestyles=['--', ':'],
                    colors=[(0.2, 0.2, 1, 0.5), (0.1, 0.7, 0.1, 0.5)], extent=extent)
@@ -214,10 +214,10 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
 
     return (residual_peak,
             peakloc_as.value,
-            psf_residual_integral/psf_integral_firstpeak,
+            psf_residual_integral / psf_integral_firstpeak,
             epsilon,
-            first_min_ind*pixscale.to(u.arcsec),
-            r_max_sidelobe*pixscale.to(u.arcsec),
+            first_min_ind * pixscale.to(u.arcsec),
+            r_max_sidelobe * pixscale.to(u.arcsec),
             (rr, pixscale, cutout, beam, fullbeam, view, bmfit_residual)
             )
 
@@ -246,10 +246,10 @@ def imstats(fn, reg=None):
     mad = mad_std(data, ignore_nan=True)
     peak = np.nanmax(data)
     imsum = np.nansum(data)
-    sumgt5sig = np.nansum(data[data > 5*mad])
-    sumgt3sig = np.nansum(data[data > 3*mad])
+    sumgt5sig = np.nansum(data[data > 5 * mad])
+    sumgt3sig = np.nansum(data[data > 3 * mad])
 
-    pixscale = wcs.utils.proj_plane_pixel_area(ww)*u.deg**2
+    pixscale = wcs.utils.proj_plane_pixel_area(ww) * u.deg**2
 
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', category=UserWarning, append=True)
@@ -322,7 +322,7 @@ def imstats(fn, reg=None):
             psf_secondpeak, psf_secondpeak_loc, psf_sidelobe1_fraction, epsilon, firstmin, r_sidelobe, _ = get_psf_secondpeak(psf_fn, max_npix_peak=200)
         except ValueError as ex:
             log.error(f"PSF {psf_fn} had exception {ex}")
-            psf_secondpeak, psf_secondpeak_loc, psf_sidelobe1_fraction, epsilon, firstmin, r_sidelobe, _ = (np.nan,)*7
+            psf_secondpeak, psf_secondpeak_loc, psf_sidelobe1_fraction, epsilon, firstmin, r_sidelobe, _ = (np.nan,) * 7
         meta['psf_secondpeak'] = psf_secondpeak
         meta['psf_epsilon'] = epsilon
         meta['psf_secondpeak_radius'] = psf_secondpeak_loc
@@ -370,7 +370,7 @@ def parse_fn(fn):
             'band': 'B3',
             'muid': muid,
             'array': '12M' if any('TM1' in x for x in sbname.split("_")) else '7M' if any('7M' in x for x in sbname.split("_")) else '????',
-            'robust': 'r'+str(robust),
+            'robust': 'r' + str(robust),
             'suffix': split[-1],
             'pbcor': 'pbcor' in fn.lower(),
             }
@@ -505,12 +505,12 @@ def savestats(basepath=basepath,
                  [requested_this[key][0] for key in req_keys if band in key]
                  ]
 
-    tbl = Table(rows=rows, names=meta_keys+stats_keys+req_keys_head)
+    tbl = Table(rows=rows, names=meta_keys + stats_keys + req_keys_head)
 
     # do some QA
-    tbl.add_column(Column(name='SensVsReq', data=tbl['mad']*1e3/tbl['Req_Sens']))
-    tbl.add_column(Column(name='BeamVsReq', data=(tbl['bmaj']*tbl['bmin'])**0.5/tbl['Req_Res']))
-    tbl.add_column(Column(name='BmajVsReq', data=tbl['bmaj']/tbl['Req_Res']))
+    tbl.add_column(Column(name='SensVsReq', data=tbl['mad'] * 1e3 / tbl['Req_Sens']))
+    tbl.add_column(Column(name='BeamVsReq', data=(tbl['bmaj'] * tbl['bmin'])**0.5 / tbl['Req_Res']))
+    tbl.add_column(Column(name='BmajVsReq', data=tbl['bmaj'] / tbl['Req_Res']))
 
     tbl.write(f'{basepath}/tables/metadata_{suffix.strip("*")}.ecsv', overwrite=True)
     tbl.write(f'{basepath}/tables/metadata_{suffix.strip("*")}.html',

@@ -21,7 +21,7 @@ datatable = {}
 spwlist = {'12M': {25, 27, 29, 31, 33, 35, },
            'TM1': {25, 27, 29, 31, 33, 35, },
            '7M': {16, 18, 20, 22, 24, 26},
-           'TP':  {16, 18, 20, 22, 24, 26},
+           'TP': {16, 18, 20, 22, 24, 26},
            }
 
 
@@ -71,9 +71,9 @@ def main():
         rerun = 'original' in sbname
 
         if 'updated' in sbname:
-            field = field+"_updated"
+            field = field + "_updated"
         if 'original' in sbname:
-            field = field+"_original"
+            field = field + "_original"
 
         # 'cont' mode isn't really used, even though it's more proper
         # 'mfs' is remapped to 'cont' in the job runner and in the renaming
@@ -111,8 +111,8 @@ def main():
                     pbcorglob = f'{workingpath}/{bn}.iter1.image{tts}.pbcor'
                     psfglob = f'{workingpath}/{bn}.iter1.psf{tts}'
 
-                    exists = (wildexists(pbcorglob)
-                              or ("WIPim" if wildexists(imageglob)
+                    exists = (wildexists(pbcorglob) or
+                              ("WIPim" if wildexists(imageglob)
                                   else "WIPpsf" if wildexists(psfglob)
                                   else False))
 

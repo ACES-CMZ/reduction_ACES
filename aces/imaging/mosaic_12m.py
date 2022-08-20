@@ -104,7 +104,7 @@ def main():
                 )
     hdus = [get_m0(fn).hdu for fn in filelist]
     print(flush=True)
-    make_mosaic(hdus,  name='hcop_m0', cb_unit='K km/s', array='12m', basepath=basepath,
+    make_mosaic(hdus, name='hcop_m0', cb_unit='K km/s', array='12m', basepath=basepath,
                 weights=wthdus,
                 target_header=header,
                 norm_kwargs=dict(max_cut=100, min_cut=-10,))
@@ -129,13 +129,13 @@ def main():
     log.info("12m H40a")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
-    hdus = [get_peak(fn, slab_kwargs={'lo': -200*u.km/u.s, 'hi': 200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')
-    wthdus = [get_peak(fn, slab_kwargs={'lo': -200*u.km/u.s, 'hi': 200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in weightfiles]
+    wthdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in weightfiles]
     make_mosaic(hdus, name='h40a_max', cb_unit='K',
                 norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'),
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
-    hdus = [get_m0(fn, slab_kwargs={'lo': -200*u.km/u.s, 'hi': 200*u.km/u.s}, rest_value=99.02295*u.GHz).hdu for fn in filelist]
+    hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
     make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s',
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
