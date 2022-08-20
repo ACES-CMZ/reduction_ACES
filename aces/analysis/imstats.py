@@ -16,10 +16,8 @@ import scipy.signal
 from scipy import ndimage
 import regions
 import os
-import glob
 from functools import reduce
 import operator
-import re
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ..pipeline_scripts.merge_tclean_commands import commands

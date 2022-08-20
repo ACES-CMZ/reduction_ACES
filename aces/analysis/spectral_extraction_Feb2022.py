@@ -1,10 +1,8 @@
 import regions
 from numpy import floor, ceil
-from astropy.io import fits
 from astropy import coordinates
 from astropy import units as u
 import glob
-from spectral_cube import Projection
 from spectral_cube import SpectralCube
 from spectral_cube import wcs_utils
 

@@ -2,8 +2,6 @@ from parse_contdotdat import parse_contdotdat, contchannels_to_linechannels
 import os
 import sys
 import glob
-import string
-import numpy as np
 from casatools import quanta
 sys.path.append('scripts')
 

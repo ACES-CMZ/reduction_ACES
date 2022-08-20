@@ -3,8 +3,6 @@ Run this with some care; it will require manual pushing
 """
 
 import json
-import os
-import sys
 
 # TODO: make sure this imports correctly (it's the same directory so it should
 # be ok, but might need to be

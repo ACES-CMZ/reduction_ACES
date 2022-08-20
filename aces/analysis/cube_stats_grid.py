@@ -1,24 +1,16 @@
 import glob
-import sys
-from astropy.io import fits
-from astropy import visualization
-import pylab as pl
 import regions
 
 
 import os
 import time
 import numpy as np
-from astropy.io import fits
 from astropy import units as u
 from astropy.stats import mad_std
 from astropy.table import Table
 from astropy import log
-import pylab as pl
-import radio_beam
 import glob
-from spectral_cube import SpectralCube, DaskSpectralCube
-from spectral_cube.lower_dimensional_structures import Projection
+from spectral_cube import SpectralCube
 from spectral_cube.utils import NoBeamError
 
 from casa_formats_io import Table as casaTable

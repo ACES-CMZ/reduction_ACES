@@ -3,7 +3,6 @@ import os
 import json
 import glob
 import shutil
-import copy
 import subprocess
 import datetime
 import os

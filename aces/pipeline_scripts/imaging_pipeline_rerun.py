@@ -1,9 +1,7 @@
 import glob
-import sys
 import shutil
 import os
 from casarecipes.almahelpers import fixsyscaltimes  # SACM/JAO - Fixes
-from casatasks import fixplanets
 context = h_init()
 context.set_state('ProjectSummary', 'proposal_code', '2021.1.00172.L')
 context.set_state('ProjectSummary', 'proposal_title', 'unknown')

@@ -1,5 +1,5 @@
-from parse_weblog import (weblog_names, make_links, get_human_readable_name,
-                          get_mous_to_sb_mapping, get_all_fluxes, fluxes_to_table)
+from parse_weblog import (weblog_names, make_links, get_mous_to_sb_mapping,
+                          get_all_fluxes, fluxes_to_table)
 import glob
 import os
 import json

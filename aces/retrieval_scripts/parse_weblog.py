@@ -7,7 +7,6 @@ from astropy.utils.console import ProgressBar
 from astroquery.alma import Alma
 from bs4 import BeautifulSoup
 import re
-import itertools
 
 flux_scales = {'Jy': 1,
                'mJy': 1e-3,

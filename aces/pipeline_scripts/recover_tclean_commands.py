@@ -6,7 +6,6 @@ Two environmental variables must be set:
 """
 from ..retrieval_scripts.parse_weblog import (get_human_readable_name, get_uid_and_name)
 import os
-import sys
 import glob
 import json
 from astropy import log

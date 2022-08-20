@@ -1,5 +1,4 @@
 import json
-import os
 
 from .. import conf
 rootdir = conf.basepath

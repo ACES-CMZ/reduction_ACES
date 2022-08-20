@@ -1,16 +1,6 @@
-import numpy as np
-import itertools
-import warnings
 import glob
 import os
-from astropy.io import fits
-from astropy import visualization
-from astropy.table import Table, Column
-from spectral_cube import SpectralCube
-from astropy.stats import mad_std
 from astropy import log
-import pylab as pl
-import subprocess
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from aces import conf
 
