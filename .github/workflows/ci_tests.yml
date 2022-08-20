@@ -30,27 +30,27 @@ jobs:
           - name: Python 3.9 with minimal dependencies
             os: ubuntu-latest
             python: 3.9
-            toxenv: py37-test
+            toxenv: py39-test
 
           - name: Python 3.9 with all optional dependencies and coverage checking
             os: ubuntu-latest
             python: 3.9
-            toxenv: py38-test-alldeps-cov
+            toxenv: py39-test-alldeps-cov
 
           - name: macOS - Python 3.9 with all optional dependencies
             os: macos-latest
             python: 3.9
-            toxenv: py38-test-alldeps
+            toxenv: py39-test-alldeps
 
           - name: Windows - Python 3.9 with all optional dependencies
             os: windows-latest
             python: 3.9
-            toxenv: py38-test-alldeps
+            toxenv: py39-test-alldeps
 
           # - name: Python 3.9 with oldest supported version of all dependencies
           #   os: ubuntu-16.04
           #   python: 3.9
-          #   toxenv: py37-test-oldestdeps
+          #   toxenv: py39-test-oldestdeps
 
           # - name: Python 3.9 with latest dev versions of key dependencies
           #   os: ubuntu-latest
