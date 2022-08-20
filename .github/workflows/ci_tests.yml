@@ -27,9 +27,9 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Validate json files
-            os: ubuntu-latest
-            uses: RaaLabs/validate-json@v0.0.7
+            #- name: Validate json files
+            #  os: ubuntu-latest
+            #  uses: RaaLabs/validate-json@v0.0.7
 
           - name: Python 3.9 with minimal dependencies
             os: ubuntu-latest
