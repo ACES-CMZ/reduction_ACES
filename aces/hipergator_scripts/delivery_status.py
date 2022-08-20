@@ -80,7 +80,10 @@ def main():
         if 'original' in sbname:
             field = field+"_original"
 
-        for clean in ('mfs', 'cont', 'cube',):
+        # 'cont' mode isn't really used, even though it's more proper
+        # 'mfs' is remapped to 'cont' in the job runner and in the renaming
+        # if-statement below
+        for clean in ('mfs', 'cube',): # 'cont',
             for suffix in (".image",  ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
 
                 #globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
@@ -98,6 +101,7 @@ def main():
                     # aggregate continuum is named with the full list of spws
                     if spw == 'aggregate':
                         spw = 'spw*'
+                        # the name in the files is cont, not mfs, for aggregate
                         clean_ = 'cont' # _not_ mfs
                     else:
                         clean_ = clean
