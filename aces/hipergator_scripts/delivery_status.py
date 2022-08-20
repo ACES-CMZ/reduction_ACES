@@ -14,10 +14,11 @@ import subprocess
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from aces import conf
 
+
 def get_mousmap_(**kwargs):
     mousmap = get_mous_to_sb_mapping('2021.1.00172.L', **kwargs)
-    mousmap_ = {key.replace("/","_").replace(":","_"): val
-                for key,val in mousmap.items()}
+    mousmap_ = {key.replace("/", "_").replace(":", "_"): val
+                for key, val in mousmap.items()}
     return mousmap_
 
 
@@ -33,8 +34,10 @@ spwlist = {'12M': {25, 27, 29, 31, 33, 35, },
            'TP':  {16, 18, 20, 22, 24, 26},
            }
 
+
 def wildexists(x):
     return len(glob.glob(x)) > 0
+
 
 def main():
     datapath = dataroot = f'{basepath}/data/2021.1.00172.L'
@@ -69,7 +72,8 @@ def main():
 
         # sanity check
         if config in ('updated', 'original', '03'):
-            raise ValueError(f"sbname={sbname} is not being handled correctly by delivery_status.py")
+            raise ValueError(
+                f"sbname={sbname} is not being handled correctly by delivery_status.py")
 
         if ' ' in config:
             # handle this case: 'Sgr_A_st_aj_03_7M Sgr_A_st_aj_03_7M_original'
@@ -84,13 +88,14 @@ def main():
         # 'cont' mode isn't really used, even though it's more proper
         # 'mfs' is remapped to 'cont' in the job runner and in the renaming
         # if-statement below
-        for clean in ('mfs', 'cube',): # 'cont',
-            for suffix in (".image",  ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
+        for clean in ('mfs', 'cube',):  # 'cont',
+            for suffix in (".image",):
+                # ".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
 
                 #globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
                 #fn = glob.glob(f'{dataroot}/{globblob}')
 
-                for spwn in sorted(spwlist[config] | ({'aggregate'} if clean!='cube' else set()), key=lambda x: str(x)):
+                for spwn in sorted(spwlist[config] | ({'aggregate'} if clean != 'cube' else set()), key=lambda x: str(x)):
                     # /orange/adamginsburg/ACES/rawdata/2021.1.00172.L/
                     # science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_Xae/calibrated/working/uid___A001_X15a0_Xae.s9_0.Sgr_A_star_sci.spw26.mfs.I.iter1.image
                     spw = spwn if isinstance(spwn, str) else f'spw{spwn}'
@@ -103,13 +108,12 @@ def main():
                     if spw == 'aggregate':
                         spw = 'spw*'
                         # the name in the files is cont, not mfs, for aggregate
-                        clean_ = 'cont' # _not_ mfs
+                        clean_ = 'cont'  # _not_ mfs
                     else:
                         clean_ = clean
 
                     bn = f'{mous}.s*_0.Sgr_A_star_sci.{spw}.{clean_}.I'
                     workingpath = f'{fullpath}/calibrated/working/'
-
 
                     tts = '.tt0' if spwkey == 'aggregate' else ''
 
@@ -122,7 +126,6 @@ def main():
                                   else "WIPpsf" if wildexists(psfglob)
                                   else False))
 
-
                     if mous not in datatable:
                         datatable[mous] = {}
                     if config not in datatable[mous]:
@@ -132,17 +135,16 @@ def main():
                     if clean not in datatable[mous][config][spwkey]:
                         datatable[mous][config][spwkey][clean] = {}
 
-
                     datatable[mous][config][spwkey][clean] = {
-                            "field": field,
-                            "image": wildexists(imageglob),
-                            "pbcor": wildexists(pbcorglob),
-                            "psf": wildexists(psfglob),
-                            "WIP": ("Done" if wildexists(pbcorglob)
-                                    else "WIPim" if wildexists(imageglob)
-                                    else "WIPpsf" if wildexists(psfglob)
-                                    else False)
-                            }
+                        "field": field,
+                        "image": wildexists(imageglob),
+                        "pbcor": wildexists(pbcorglob),
+                        "psf": wildexists(psfglob),
+                        "WIP": ("Done" if wildexists(pbcorglob)
+                                else "WIPim" if wildexists(imageglob)
+                                else "WIPpsf" if wildexists(psfglob)
+                                else False)
+                    }
 
     import json
     with open(f'{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.json', 'w') as fh:
@@ -151,7 +153,7 @@ def main():
     # make a table
     from astropy.table import Table
     tables = {}
-    for sbname,xx in datatable.items():
+    for sbname, xx in datatable.items():
         cols = {}
         tables[sbname] = cols
         for config, yy in xx.items():
@@ -161,15 +163,15 @@ def main():
                     rows = ww
                     #cols[f'{config}.{spw}'].append(','.join([argtype for argtype, status in ww.items() if status is True]))
                 cols[f'{config}.{spw}'] = rows
-        rows = [[cn,] + list(v.values()) for cn,v in cols.items()]
-        tables[sbname] = Table(rows=rows, names=['config.spw'] + list(ww.keys()))
+        rows = [[cn, ] + list(v.values()) for cn, v in cols.items()]
+        tables[sbname] = Table(
+            rows=rows, names=['config.spw'] + list(ww.keys()))
 
     with open(f'{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.txt', 'w') as fh:
-        for key,tb in tables.items():
+        for key, tb in tables.items():
             fh.write(f'SB {key}:\n')
             fh.write("\n".join(tb.pformat()))
             fh.write("\n\n")
-
 
     os.chdir(cwd)
 
