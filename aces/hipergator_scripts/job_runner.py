@@ -3,33 +3,30 @@ import os
 import json
 import glob
 import shutil
-import copy
 import subprocess
 import datetime
-import os
-import json
 from astropy.io import ascii
 import sys
 from astropy import log
-from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
-from .. import conf
+from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
+from aces import conf
 
 basepath = conf.basepath
 datapath = f"{basepath}/data"
 grouppath = f"{datapath}/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9"
 
 mouses = [os.path.basename(x)
-        for x in
-        glob.glob(f'{grouppath}/member.uid___A001_X15*_X*')]
+          for x in
+          glob.glob(f'{grouppath}/member.uid___A001_X15*_X*')]
 
 mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
-mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
+mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
 
-parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': True,  },
-              'member.uid___A001_X15a0_X142': {'mem': 128, 'ntasks': 1, 'mpi': False,  }, # the usual MPI crash error is occurring
-              'member.uid___A001_X15a0_Xca': {'mem': 128, 'ntasks': 1, 'mpi': False,  }, # ditto
-              'member.uid___A001_X15a0_X160': {'mem': 128, 'ntasks': 1, 'mpi': False,  }, # field ag: MPI crash
-             }
+parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': True, },  # the usual MPI crash error is occurring
+              'member.uid___A001_X15a0_X142': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # ditto
+              'member.uid___A001_X15a0_Xca': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # field ag: MPI crash
+              'member.uid___A001_X15a0_X160': {'mem': 128, 'ntasks': 1, 'mpi': False, },
+              }
 newpars = parameters.copy()
 
 # June 1, 2022: try using fewer tasks to see if it reduces likelihood of race condition
@@ -37,23 +34,27 @@ newpars = parameters.copy()
 # July 14, 2022: the failure rate is ~1, so let's just say 'f it'
 default_parameters = {f'{os.path.basename(mous.strip("/"))}':
                       {'mem': 128, 'ntasks': 1, 'mpi': False, }
-    for mous in mouses}
+                      for mous in mouses}
 
 for key in newpars:
     default_parameters[key] = newpars[key]
 
 parameters = default_parameters
 
+
 def main():
 
     verbose = '--verbose' in sys.argv
     debug = '--debug' in sys.argv
 
+    if debug:
+        log.setLevel('DEBUG')
+
     with open(f'{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.json', 'r') as fh:
         imaging_status = json.load(fh)
 
     sacct = subprocess.check_output(['sacct',
-                                   '--format=JobID,JobName%45,Account%15,QOS%17,State,Priority%8,ReqMem%8,CPUTime%15,Elapsed%15,Timelimit%15,NodeList%20'])
+                                     '--format=JobID,JobName%45,Account%15,QOS%17,State,Priority%8,ReqMem%8,CPUTime%15,Elapsed%15,Timelimit%15,NodeList%20'])
     tbl = ascii.read(sacct.decode().split("\n"))
 
     scriptpath = f'{basepath}/reduction_ACES/aces/hipergator_scripts/'
@@ -68,8 +69,7 @@ def main():
         qos = 'astronomy-dept-b'
     logpath = os.environ['LOGPATH'] = conf.logpath
 
-
-    for mous,spwpars in parameters.items():
+    for mous, spwpars in parameters.items():
         mousname = mous.split('.')[1]
 
         sbname = mousmap_[mousname]
@@ -98,7 +98,7 @@ def main():
                 continue
             for spw in imaging_status[mousname][config]:
                 for imtype in imaging_status[mousname][config][spw]:
-                    log.debug(f"spw={spw} imtype={imtype}")
+                    log.debug(f"spw={spw} imtype={imtype}{'**************AGGREGATE**********' if 'aggregate' in imtype else ''}")
                     imstatus = imaging_status[mousname][config][spw][imtype]
 
                     calwork = f'{grouppath}/{mous}/calibrated/working'
@@ -123,7 +123,7 @@ def main():
                             pass
                     else:
                         # skip MFS individual spws
-                        log.debug(f"imtype is {imtype} and spw is {spw}.  SKIPPING")
+                        log.debug(f"imtype is {imtype} and spw is {spw}.  SKIPPING because it's an MFS single-window")
                         continue
                     os.environ['SCRIPTNAME'] = scriptname
 
@@ -143,7 +143,6 @@ def main():
 
                     if verbose:
                         print(f"spw={spw}, imtype={imtype}, spwpars={spwpars}, imstatus={imstatus}")
-
 
                     workdir = conf.workpath
                     jobname = f"{field}_{config}_{spw}_{imtype}"
@@ -177,7 +176,6 @@ def main():
                             jobid = tbl['JobID'][match & (tbl['State'] == 'TIMEOUT')]
                             print(f"Restarting job {jobname} because it TIMED OUT as {set(jobid)}")
 
-
                     # handle specific parameters
                     mem = int(spwpars["mem"])
                     os.environ['MEM'] = mem = f'{mem}gb'
@@ -188,10 +186,9 @@ def main():
                     os.environ['WORK_DIRECTORY'] = workdir
                     os.environ['FIELD_ID'] = field
 
-                    #/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/
-                    #group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X130/calibrated/working/
-                    #tclean_cube_pars_Sgr_A_st_y_03_TM1_spw27.py
-
+                    # /orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/
+                    # group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X130/calibrated/working/
+                    # tclean_cube_pars_Sgr_A_st_y_03_TM1_spw27.py
 
                     basename = f'{field}_{spw}_{imtype}{contsub_suffix}'
                     # basename = "{0}_{1}_spw{2}_{3}".format(field, band, spw, arrayname)
@@ -234,16 +231,17 @@ def main():
                     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
 
-
                     cmd = f'sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} --mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} --qos={qos} --export=ALL  {runcmd}'
 
                     if '--dry-run' in sys.argv:
                         if verbose:
                             print(cmd)
-                        print()
-                        #print(subprocess.check_output('env').decode())
-                        #raise
+                            print()
+                        # print(subprocess.check_output('env').decode())
+                        # raise
                     else:
                         sbatch = subprocess.check_output(cmd.split())
 
                         print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
+
+    globals().update(locals())

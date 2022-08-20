@@ -2,17 +2,14 @@ import numpy as np
 import regions
 import glob
 from spectral_cube.spectral_cube import _regionlist_to_single_region
-import reproject
 from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
-from astropy import coordinates
-from astropy import wcs
 from spectral_cube import SpectralCube
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 
-from .. import conf
+from aces import conf
 
 basepath = conf.basepath
 
@@ -22,10 +19,11 @@ basepath = conf.basepath
 # target_wcs.wcs.cunit = ['deg', 'deg']
 # target_wcs.wcs.cdelt = [-6.38888888888888e-4, 6.388888888888888e-4]
 # target_wcs.wcs.crpix = [2000, 2000]
-# 
+#
 # header = target_wcs.to_header()
 # header['NAXIS1'] = 4000
 # header['NAXIS2'] = 4000
+
 
 def main():
 
@@ -55,7 +53,7 @@ def main():
     back = -10
     fronter = 20
 
-    fig = pl.figure(figsize=(20,7))
+    fig = pl.figure(figsize=(20, 7))
     ax = fig.add_subplot(111, projection=target_wcs)
     im = ax.imshow(array, norm=visualization.simple_norm(array, stretch='asinh'), zorder=front, cmap='gray')
     pl.colorbar(mappable=im)
@@ -63,9 +61,8 @@ def main():
     ax.coords[1].set_axislabel('Galactic Latitude')
     ax.coords[0].set_major_formatter('d.dd')
     ax.coords[1].set_major_formatter('d.dd')
-    ax.coords[0].set_ticks(spacing=0.1*u.deg)
+    ax.coords[0].set_ticks(spacing=0.1 * u.deg)
     ax.coords[0].set_ticklabel(rotation=45, pad=20)
-
 
     fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic.png', bbox_inches='tight')
 
@@ -79,10 +76,6 @@ def main():
     ax.set_axisbelow(True)
     ax.set_zorder(back)
     fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic_withgrid.png', bbox_inches='tight')
-
-
-
-
 
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.tsv', format='ascii.csv', delimiter='\t')
 
@@ -111,18 +104,16 @@ def main():
                 # expected to occur if no overlap
                 continue
 
-
-
-    ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max())+0.5, zorder=fronter)
+    ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max()) + 0.5, zorder=fronter)
 
     for ii in np.unique(flagmap):
         if ii > 0:
-            fsum = (flagmap==ii).sum()
-            cy,cx = ((np.arange(flagmap.shape[0])[:,None] * (flagmap==ii)).sum() / fsum,
-                     (np.arange(flagmap.shape[1])[None,:] * (flagmap==ii)).sum() / fsum)
+            fsum = (flagmap == ii).sum()
+            cy, cx = ((np.arange(flagmap.shape[0])[:, None] * (flagmap == ii)).sum() / fsum,
+                      (np.arange(flagmap.shape[1])[None, :] * (flagmap == ii)).sum() / fsum)
             pl.text(cx, cy, f"{ii}\n{tbl[ii-1]['Obs ID']}",
                     horizontalalignment='left', verticalalignment='center',
-                    color=(1,0.8,0.5), transform=ax.get_transform('pixel'),
+                    color=(1, 0.8, 0.5), transform=ax.get_transform('pixel'),
                     zorder=fronter)
 
     fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic_withgridandlabels.png', bbox_inches='tight')

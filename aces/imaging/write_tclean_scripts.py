@@ -13,10 +13,12 @@ Optional:
     SOUS
     GOUS
 """
-import os, sys, glob, json, shutil, textwrap
-from .. import conf
-from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
-from ..pipeline_scripts.merge_tclean_commands import commands
+import os
+import glob
+import shutil
+import textwrap
+from aces import conf
+from aces.pipeline_scripts.merge_tclean_commands import commands
 
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
@@ -30,7 +32,7 @@ else:
 def main():
     # if this isn't in the env pars, we get an intentional crash:
     # you have to specify that.
-    datadir = f'{conf.basepath}/data/' #os.environ['ACES_DATADIR']
+    datadir = f'{conf.basepath}/data/'  # os.environ['ACES_DATADIR']
 
     projcode = os.getenv('PROJCODE') or '2021.1.00172.L'
     sous = os.getenv('SOUS') or 'A001_X1590_X30a8'
@@ -46,23 +48,18 @@ def main():
 
     print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))} SCRIPTLIST={scriptlist} TEMP_WORKDIR={temp_workdir}")
 
-    mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
-    mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
-
     # touch scriptlist
     with open(scriptlist, 'w') as fh:
         fh.write("")
-
-
 
     suffixes = {"tclean_cont_pars": ("image.tt0", "residual.tt0", "model.tt0", "psf.tt0"),
                 "tclean_cube_pars": ("image", "residual", "model", "psf"),
                 }
 
     # these aren't really user-configurable
-    tcpars_override = {'calcpsf': True, 'calcres': True,}
+    tcpars_override = {'calcpsf': True, 'calcres': True, }
 
-    for sbname,allpars in commands.items():
+    for sbname, allpars in commands.items():
         mous_ = allpars['mous']
         mous = mous_[6:].replace("/", "_")
         assert len(mous) in (14, 15, 16)
@@ -82,7 +79,7 @@ def main():
                     os.chdir(workingpath)
 
                     field = sbname.split("_")[3]
-                    config = sbname.split("_")[5]
+                    # config = sbname.split("_")[5]
                     print(f"{sbname} {partype} {spwsel} {field}: ", end=" ")
                     if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
                         tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
@@ -102,7 +99,7 @@ def main():
                         if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
                             os.mkdir(tempdir_name)
                         # copy & move files around first
-                        #obsolete
+                        # obsolete
                         # copycmds = "\n".join(
                         #         ["import shutil",
                         #          "try:"] +
@@ -113,9 +110,13 @@ def main():
                         #         )
 
                         if spwsel == 'aggregate':
+                            def rename(x):
+                                return os.path.join(tempdir_name,
+                                                    os.path.basename(x).replace('.ms',
+                                                                                '_aggregate.ms'))
                             splitcmd = [textwrap.dedent(
-                                    f"""
-                                    outputvis='{tempdir_name}/{os.path.basename(vis).replace('.ms', '_aggregate.ms')}'
+                                f"""
+                                    outputvis='{rename(vis)}'
                                     if not os.path.exists(outputvis):
                                         try:
                                             split(vis='{vis}',
@@ -132,13 +133,17 @@ def main():
                                                 datacolumn='data',
                                                 width=8)
                                         """) for vis in tcpars['vis']]
+
+                            # hard code that parallel = False for non-MPI runs
+                            tcpars['parallel'] = False
                         else:
                             spw = int(spwsel.lstrip('spw'))
+
                             def rename(x):
                                 return os.path.join(tempdir_name,
-                                        os.path.basename(x).replace('.ms', f'_spw{spw}.ms'))
+                                                    os.path.basename(x).replace('.ms', f'_spw{spw}.ms'))
                             splitcmd = [textwrap.dedent(
-                                    f"""
+                                f"""
                                     outputvis='{rename(vis)}'
                                     if not os.path.exists(outputvis):
                                         try:
@@ -156,24 +161,26 @@ def main():
                                                 datacolumn='data',
                                                 spw={spw})
                                                 """) for vis in tcpars['vis']]
-                            tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
+
+                        # both cube and aggregate need new names
+                        tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
 
                         cleanupcmds = "\n".join(
-                                        ["import glob",
-                                         f"flist = glob.glob('{tempdir_name}/{os.path.basename(tcpars['imagename'])}.*')",
-                                         "for fn in flist:",
-                                         f"    shutil.move(fn, '{os.path.dirname(tcpars['imagename'])}/')",
-                                         ] + 
-                                         [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]
-                                        )
+                            ["import glob",
+                             f"flist = glob.glob('{tempdir_name}/{os.path.basename(tcpars['imagename'])}.*')",
+                             "for fn in flist:",
+                             f"    logprint(f'Moving {{fn}} to {os.path.dirname(tcpars['imagename'])})",
+                             f"    shutil.move(fn, '{os.path.dirname(tcpars['imagename'])}/')",
+                             ] +
+                            [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]
+                        )
                         tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
 
                         # the spw selection should now be 'everything in the MS'
                         tcpars['spw'] = ''
 
-
                     print(f"Creating script for {partype} tclean in {workingpath} for sb {sbname} ")
-                    #with kwargs: \n{tcpars}")
+                    # with kwargs: \n{tcpars}")
 
                     with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
                         fh.write("import os, shutil, glob\n")
@@ -187,14 +194,23 @@ def main():
                                      casalog.post(string, origin='tclean_script')
                                      print(string)
 
+                                 mpi_ntasks = os.getenv('mpi_ntasks')
+                                 if mpi_ntasks is not None:
+                                     parallel = int(mpi_ntasks) > 1
+                                 else:
+                                     parallel = False
+
                                  """))
                         fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
                         if temp_workdir:
                             fh.write("".join(splitcmd))
                             fh.write("\n\n")
-                        fh.write(f"tclean(\n")
+                        fh.write("tclean(\n")
                         for key, val in tcpars.items():
-                            fh.write(f"       {key}={repr(val)},\n")
+                            if key == 'parallel':
+                                fh.write(f"       {key}=parallel,\n")
+                            else:
+                                fh.write(f"       {key}={repr(val)},\n")
                         fh.write(")\n\n\n")
                         if tcpars['specmode'] == 'cube':
                             fh.write(f"exportfits('{tcpars['imagename']}.image.pbcor', '{tcpars['imagename']}.image.pbcor.fits', overwrite=True)\n\n\n")
@@ -208,16 +224,16 @@ def main():
 
                     if not all(exists.values()) and not all(exists_wild.values()):
                         pass
-                        #tclean(**tcpars)
+                        # tclean(**tcpars)
 
-                        #if runonce:
+                        # if runonce:
                         #    sys.exit(0)
                     elif all(exists.values()):
                         #print(f"Found all files exist for {mous}")
-                        pass # this is the "OK" state
+                        pass  # this is the "OK" state
                     elif all(exists_wild.values()):
                         #print(f"Found all files exist for {mous} but from a different stage")
-                        pass # this is the "OK" state
+                        pass  # this is the "OK" state
                     else:
                         if any(exists.values()):
                             print(f"Found partially-completed run for {sbname} {partype} {spwsel}: {exists}")

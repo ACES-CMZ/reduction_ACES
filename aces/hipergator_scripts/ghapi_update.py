@@ -10,8 +10,9 @@ import glob
 from .. import conf
 basepath = conf.basepath
 
+
 def main():
-    dryrun = os.getenv("DRYRUN") or (dryrun if "dryrun" in locals() else False)
+    dryrun = os.getenv("DRYRUN") or (dryrun if "dryrun" in locals() else False)  # noqa
     print(f"Dryrun={dryrun}")
 
     def all_flat(apicall, **kwargs):
@@ -22,9 +23,9 @@ def main():
 
     api = GhApi(repo='reduction_ACES', owner='ACES-CMZ')
 
-    #paged_issues = paged(api('/repos/ACES-CMZ/reduction_ACES/issues', query={'state': 'all'}))
-    #paged_issues = paged(api.issues.list_for_repo, state='all')
-    #issues = [x for page in paged_issues for x in page]
+    # paged_issues = paged(api('/repos/ACES-CMZ/reduction_ACES/issues', query={'state': 'all'}))
+    # paged_issues = paged(api.issues.list_for_repo, state='all')
+    # issues = [x for page in paged_issues for x in page]
     issues = all_flat(api.issues.list_for_repo, state='all')
     assert len(issues) > 30
 
@@ -34,11 +35,9 @@ def main():
     # example: Sgr_A_st_ak_03_7M
     sb_re = re.compile('Sgr_A_st_([a-z]*)(_[a-z]*)?_03_(7M|12M|TP|TM1|TM2).*')
 
-
     sb_searches = [sb_re.search(issue.title) for issue in issues]
     issue_sb_names = [search.group() for search in sb_searches if search]
     sb_arrays = {search.group(): search.groups()[1] for search in sb_searches if search}
-
 
     uid_searches = [uid_re.search(issue.title) for issue in issues]
     uid_names = [search.group() for search in uid_searches if search]
@@ -53,7 +52,6 @@ def main():
 
     assert set(sbs_to_issues.keys()) == set(issue_sb_names)
 
-
     alma = Alma()
     alma.archive_url = 'https://almascience.eso.org'
     alma.dataarchive_url = 'https://almascience.eso.org'
@@ -64,7 +62,6 @@ def main():
     unique_oids = np.unique(results['obs_id'].data)
     unique_sbs = np.unique(results['schedblock_name'])
     # remember that .unique sorts the data so you can't zip these together!
-
 
     assert unique_oids.size == unique_sbs.size
 
@@ -78,7 +75,6 @@ def main():
         assert len(sbnames) == 1
         return sbnames[0]
 
-
     # add mapping for new (not already in issues) SBs
     # explicitly avoid overwriting any existing entries b/c we want the issue names
     # to override the archive names
@@ -90,13 +86,11 @@ def main():
     # don't get caught out by pagination again
     assert 'Sgr_A_st_aq_03_7M' not in new_sbs
 
-
     underscore_uid_re = re.compile("uid___A[0-9]*_X[a-z0-9]*_X[a-z0-9]*")
     downloaded_uids = [underscore_uid_re.search(x).group()
                        for x in glob.glob(f'{data_dir}/2021.1.00172.L_*_001_of_001.tar')]
     print(f"Downloaded uids = {downloaded_uids}")
     weblog_names = [os.path.basename(x) for x in glob.glob('/orange/adamginsburg/web/secure/ACES/weblogs/humanreadable/*')]
-
 
     sb_status = {}
 
@@ -106,39 +100,39 @@ def main():
         new_sb_issuename = uids_to_sbs[new_oid]
         new_sb = new_sb_issuename.split(" ")[0]
 
-        need_update = [] # empty list = False
+        need_update = []  # empty list = False
         matches = results.loc[new_oid]
         new_uid = matches['obs_id'][0]
         delivered = '3000' not in matches['obs_release_date'][0]
 
-        uuid = new_oid.replace("/","_").replace(":","_")
+        uuid = new_oid.replace("/", "_").replace(":", "_")
         downloaded = uuid in downloaded_uids
 
-        mous = matches['member_ous_uid'][0].replace(":","_").replace("/","_")
-        gous = matches['group_ous_uid'][0].replace(":","_").replace("/","_")
+        mous = matches['member_ous_uid'][0].replace(":", "_").replace("/", "_")
+        gous = matches['group_ous_uid'][0].replace(":", "_").replace("/", "_")
         calibrated_dir = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/calibrated'
         if os.path.exists(calibrated_dir):
-            mses = (glob.glob(f'{calibrated_dir}/*.ms')
-                    + glob.glob(f'{calibrated_dir}/*.ms.split.cal'))
+            mses = (glob.glob(f'{calibrated_dir}/*.ms') +
+                    glob.glob(f'{calibrated_dir}/*.ms.split.cal'))
         pipeline_run = os.path.exists(calibrated_dir) and len(mses) > 0
         pipeline_links = [x.replace("/orange/adamginsburg/web/secure/", "https://data.rc.ufl.edu/secure/adamginsburg/")
-                for x in glob.glob(f"/orange/adamginsburg/web/secure/ACES/weblogs-reimaging/member.{mous}/pipeline*/html/t1-4.html")]
+                          for x in glob.glob(f"/orange/adamginsburg/web/secure/ACES/weblogs-reimaging/member.{mous}/pipeline*/html/t1-4.html")]
 
         product_dir = f'{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/product'
         product_filenames = (glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cube.I.pbcor.fits") +
-                glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.mfs.I.pbcor.fits") +
-                glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cont.I.*.fits") +
-                glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cube.I.sd.fits")
-                )
+                             glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.mfs.I.pbcor.fits") +
+                             glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cont.I.*.fits") +
+                             glob.glob(f"{product_dir}/*Sgr_A_star_sci.spw*.cube.I.sd.fits")
+                             )
 
         reproc_product_dir = f'{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/calibrated/working/'
         reclean_dir = f'{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/*reclean*/'
         reproc_product_filenames = (glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.cont.I.iter1.image.tt0.pbcor.fits") +
-                glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.mfs.I.iter1.image.pbcor.fits") +
-                glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.cube.I.iter1.image.pbcor.fits") +
-                glob.glob(f"{reclean_dir}/*Sgr_A_star_sci.spw*.mfs.I.iter1.image.pbcor.fits") +
-                glob.glob(f"{reclean_dir}/*Sgr_A_star_sci.spw*.cube.I.iter1.image.pbcor.fits")
-                                   )
+                                    glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.mfs.I.iter1.image.pbcor.fits") +
+                                    glob.glob(f"{reproc_product_dir}/*Sgr_A_star_sci.spw*.cube.I.iter1.image.pbcor.fits") +
+                                    glob.glob(f"{reclean_dir}/*Sgr_A_star_sci.spw*.mfs.I.iter1.image.pbcor.fits") +
+                                    glob.glob(f"{reclean_dir}/*Sgr_A_star_sci.spw*.cube.I.iter1.image.pbcor.fits")
+                                    )
 
         # https://g-76492b.55ba.08cc.data.globus.org/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X114/product/member.uid___A001_X15a0_X114.J1427-4206_bp.spw18.mfs.I.pbcor.fits
         product_links = [f" - [{os.path.basename(fn)}](https://g-76492b.55ba.08cc.data.globus.org/{fn[25:]})" for fn in product_filenames]
@@ -183,7 +177,7 @@ def main():
   * [{'x' if downloaded else ' '}] hipergator""" + ("" if array == 'TP' else f"""
   * [{'x' if pipeline_run else ' '}] hipergator pipeline run
 """) +
-f"""
+                         f"""
 * [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked
 * [ ] [Weblog]({weblog_url}) Quality Assessment?
 * [ ] Imaging: Continuum
@@ -197,12 +191,11 @@ f"""
 ## Reprocessed Product Links:
 
 {reproc_product_link_text}
-""".replace("\r",""))
-
+""".replace("\r", ""))
 
             print(f"Posting new issue for {new_sb} -> {new_sb_issuename}")
 
-            title=f"Execution Block ID {new_uid} {new_sb_issuename}"
+            title = f"Execution Block ID {new_uid} {new_sb_issuename}"
 
             labels = ['EB', array]
             if delivered:
@@ -225,13 +218,13 @@ f"""
                     lines[ii] = f"* [{'x' if delivered else ' '}] Delivered?"
                 elif 'Downloaded?' in line:
                     lines[ii] = f"* [{'x' if downloaded else ' '}] Downloaded? (specify where)"
-                    insert_hipergator_at = ii+1
+                    insert_hipergator_at = ii + 1
                 elif 'Quality Assessment?' in line:
                     if 'unpacked' not in body:
                         insert_weblog_at = ii
                     else:
                         insert_weblog_at = False
-                    #don't overwrite!  this would un-check!
+                    # don't overwrite!  this would un-check!
                     # (probably this was added earlier when some versions were missing the link URL, but it's not now)
                     # lines[ii] = f"* [ ] [Weblog]({weblog_url}) Quality Assessment?"
                 elif 'unpacked' in line and '[Weblog]' in line:
@@ -249,7 +242,7 @@ f"""
                 need_update.append("Downloaded to hipergator")
                 lines[insert_hipergator_at] = f"  * [{'x' if downloaded else ' '}] hipergator"
 
-            pipeline_linenumber = insert_hipergator_at+1
+            pipeline_linenumber = insert_hipergator_at + 1
             pipeline_line_text = f"  * [{'x' if pipeline_run else ' '}] hipergator pipeline run"
             if 'hipergator pipeline run' not in lines[pipeline_linenumber] and array != "TP":
                 need_update.append("Pipelined")
@@ -258,18 +251,17 @@ f"""
                 need_update.append("Pipelined")
                 lines[pipeline_linenumber] = pipeline_line_text
 
-            pipeline_links_linenumber = pipeline_linenumber+1
+            pipeline_links_linenumber = pipeline_linenumber + 1
             # check if the link is included at all
             pipeline_links_done = [link in body for link in pipeline_links]
             if len(pipeline_links) > sum(pipeline_links_done):
                 need_update.append("New pipeline run links")
-                for link,done in zip(pipeline_links, pipeline_links_done):
+                for link, done in zip(pipeline_links, pipeline_links_done):
                     if not done:
                         assert 'https' in link
                         pipenumber = link.split("/")[-3].split("-")[1]
                         plink_text = f"    * [Pipeline Run {pipenumber}]({link})"
                         lines.insert(pipeline_links_linenumber, plink_text)
-
 
             issuebody = "\n".join(lines)
 
@@ -277,9 +269,8 @@ f"""
                 labels.append('Delivered')
                 need_update.append('Delivered')
 
-            if re.sub('\s', '', issue.body) != re.sub('\s', '', issuebody):
+            if re.sub(r'\s', '', issue.body) != re.sub(r'\s', '', issuebody):
                 need_update.append("Generic: something changed")
-
 
             if product_link_text:
                 log.debug(f"product_link_text is something: {product_link_text}")
@@ -288,7 +279,7 @@ f"""
 ## Product Links:
 
 {product_link_text}
-""".replace("\r","")
+""".replace("\r", "")
 
                 if '## Product Links:' not in issue.body:
                     need_update.append("New product links - none were present")
@@ -306,7 +297,7 @@ f"""
                 else:
                     pass
                     #print("Product link text was found in issue body.")
-                    #print(issue.body.split("## Product Links:")[-1])
+                    # print(issue.body.split("## Product Links:")[-1])
 
             if reproc_product_link_text:
                 log.debug(f"reproc_product_link_text is something: {reproc_product_link_text}")
@@ -315,7 +306,7 @@ f"""
 ## Reprocessed Product Links:
 
 {reproc_product_link_text}
-""".replace("\r","")
+""".replace("\r", "")
 
                 if '## Reprocessed Product Links:' not in issue.body:
                     need_update.append("New reproduct links")
@@ -341,7 +332,6 @@ f"""
                             reproc_lines_split.remove(item)
                             redundant += 1
 
-
                     if len(new_items) > 0 or redundant > 0:
                         need_update.append(f"Update reproduct links: found {len(new_items)} new ones and {redundant} redundant ones")
 
@@ -352,15 +342,14 @@ f"""
                             reproc_lines_split.insert(2, item)
                             assert reproc_lines_split.count(item) == 1
 
-                        issuebody = "\n".join([before, "## Reprocessed Product Links:"] +reproc_lines_split)
+                        issuebody = "\n".join([before, "## Reprocessed Product Links:"] + reproc_lines_split)
 
             if need_update:
                 print(f"Updating issue for {new_sb} -> {new_sb_issuename}.  need_update={need_update}")
                 if False:
                     print('\n'.join(difflib.ndiff(issuebody.split("\n"),
                                                   issue.body.split("\n"))
-                                 ))
-
+                                    ))
 
                 if not dryrun:
                     api.issues.update(issue_number=issue.number,
@@ -369,9 +358,8 @@ f"""
                                       labels=labels)
 
             log.debug(f"Done with issue {new_sb} = {issue.number}")
-            # use this to break 
+            # use this to break
             # DEBUG raise Exception("Completed a run; check it")
-
 
     paged_issues = paged(api.issues.list_for_repo, state='all')
     issues = [x for page in paged_issues for x in page]
@@ -380,7 +368,7 @@ f"""
     # should only ever be 1 project, so pagination not needed
     projects = api.projects.list_for_repo()
 
-    columns = api.projects.list_columns(projects[0].id) #api(projects[0].columns_url)
+    columns = api.projects.list_columns(projects[0].id)  # api(projects[0].columns_url)
     coldict = {column.name: column for column in columns}
     #cards = [api(col.cards_url) for col in columns]
     cards = [x for col in columns for x in all_flat(api.projects.list_cards, column_id=col.id)]
@@ -415,9 +403,9 @@ f"""
                         data={'content_id': issue.id,
                               'column_id': col.id,
                               'content_type': 'Issue'
-                             },
+                              },
                              headers={"Accept": "application/vnd.github.v3+json"}
-                          )
+                        )
             else:
                 # check if issue is categorized right
 
@@ -443,7 +431,6 @@ f"""
                                 data={'content_id': issue.id,
                                       'column_id': CADid,
                                       'content_type': 'Issue'
-                                     },
+                                      },
                                      headers={"Accept": "application/vnd.github.v3+json"}
-                                  )
-
+                                )

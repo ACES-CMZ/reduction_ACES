@@ -1,8 +1,9 @@
-from parse_weblog import (weblog_names, make_links, get_human_readable_name,
-                          get_mous_to_sb_mapping, get_all_fluxes, fluxes_to_table)
+from parse_weblog import (weblog_names, make_links, get_mous_to_sb_mapping,
+                          get_all_fluxes, fluxes_to_table)
 import glob
 import os
 import json
+
 
 def main():
     if 'weblog_dir' not in locals():
@@ -34,5 +35,5 @@ def main():
 
     fluxtbl = fluxes_to_table(fluxes)
     for colname in fluxtbl.colnames:
-        fluxtbl.rename_column(colname, colname.replace(" ","_"))
+        fluxtbl.rename_column(colname, colname.replace(" ", "_"))
     fluxtbl.write('fluxes.ipac', format='ascii.ipac', overwrite=True)

@@ -1,5 +1,7 @@
+from casatools import quanta
 import numpy as np
 import string
+
 
 def parse_contdotdat(filepath):
 
@@ -10,13 +12,11 @@ def parse_contdotdat(filepath):
             if "LSRK" in line:
                 selections.append(line.split()[0])
 
-
     return ";".join(selections)
 
 
-from casatools import quanta 
-
 qq = quanta()
+
 
 def contchannels_to_linechannels(contsel, freqslist, return_fractions=False):
     """
@@ -40,7 +40,7 @@ def contchannels_to_linechannels(contsel, freqslist, return_fractions=False):
 
     line_fraction = {}
 
-    for spw,freq in freqslist.items():
+    for spw, freq in freqslist.items():
         fmin, fmax = np.min(freq), np.max(freq)
         if fmin > fmax:
             raise ValueError("this is literally impossible")
@@ -48,10 +48,10 @@ def contchannels_to_linechannels(contsel, freqslist, return_fractions=False):
         for selstr in contsel.split(";"):
             lo, hi = selstr.strip(string.ascii_letters).split("~")
             unit = selstr.lstrip(string.punctuation + string.digits)
-            flo = qq.convert({'value':float(lo), 'unit':unit}, 'Hz')['value']
-            fhi = qq.convert({'value':float(hi), 'unit':unit}, 'Hz')['value']
+            flo = qq.convert({'value': float(lo), 'unit': unit}, 'Hz')['value']
+            fhi = qq.convert({'value': float(hi), 'unit': unit}, 'Hz')['value']
             if flo > fhi:
-                flo,fhi = fhi,flo
+                flo, fhi = fhi, flo
 
             # only include selections that are at least partly in range
             if fmin < fhi < fmax or fmax > flo > fmin:
@@ -74,14 +74,14 @@ def contchannels_to_linechannels(contsel, freqslist, return_fractions=False):
             # if the first index is 'True', then we start with selected
             chans = [0] + chans
         if invselected[-1]:
-            chans = chans + [len(freq)-1]
+            chans = chans + [len(freq) - 1]
 
         if len(chans) % 2 > 0:
             raise ValueError("Found an odd number of channel endpoints in "
                              "line inclusion for spw {0}. ".format(spw))
 
         selchan = ("{0}:".format(spw) +
-                   ";".join(["{0}~{1}".format(lo,hi)
+                   ";".join(["{0}~{1}".format(lo, hi)
                              for lo, hi in zip(chans[::2], chans[1::2])]))
 
         new_sel.append(selchan)
@@ -90,4 +90,3 @@ def contchannels_to_linechannels(contsel, freqslist, return_fractions=False):
         return ",".join(new_sel), line_fraction
     else:
         return ",".join(new_sel)
-

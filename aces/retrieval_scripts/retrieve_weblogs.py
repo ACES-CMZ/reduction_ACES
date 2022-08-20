@@ -7,6 +7,7 @@ import os
 import six
 import sys
 
+
 def main():
     if len(sys.argv) > 1:
         username = sys.argv[1]
@@ -34,7 +35,7 @@ def main():
     existing_tarballs = glob.glob("2021.1.00172.L/weblog_tarballs/*weblog.tgz")
     mouses = results['obs_id']
     mouses_filtered = [x for x in mouses
-                       if not any([x[6:].replace("/","_") in y
+                       if not any([x[6:].replace("/", "_") in y
                                    for y in existing_tarballs])]
 
     print("Found {0} new files out of {1}".format(len(mouses_filtered), len(mouses)))
@@ -55,7 +56,7 @@ def main():
         print("Found {0} weblogs to download".format(len(weblog_files)))
         weblog_fns = [x.split("/")[-1] for x in weblog_files['access_url']]
         existing_weblog_fns = [x.split("/")[-1] for x in existing_tarballs]
-        weblog_urls_to_download = [row['access_url'] for row,fn in zip(weblog_files, weblog_fns) if fn not in existing_weblog_fns]
+        weblog_urls_to_download = [row['access_url'] for row, fn in zip(weblog_files, weblog_fns) if fn not in existing_weblog_fns]
         print("Found {0} *new* weblogs to download".format(len(weblog_urls_to_download)))
 
         for fn in weblog_urls_to_download:

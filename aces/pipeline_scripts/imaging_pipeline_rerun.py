@@ -1,13 +1,13 @@
-from casarecipes.almahelpers import fixsyscaltimes # SACM/JAO - Fixes
-from casatasks import fixplanets
+# flake8: noqa
+import glob
+import shutil
+import os
+from casarecipes.almahelpers import fixsyscaltimes  # SACM/JAO - Fixes
 context = h_init()
 context.set_state('ProjectSummary', 'proposal_code', '2021.1.00172.L')
 context.set_state('ProjectSummary', 'proposal_title', 'unknown')
 context.set_state('ProjectSummary', 'piname', 'unknown')
 
-import os
-import shutil
-import sys
 cwd = os.getcwd()
 mous = cwd.split("/")[-3].split(".")[1].split("_")
 ous_entity_id = f"{mous[0]}://{mous[3]}/{mous[4]}/{mous[5]}"
@@ -18,7 +18,6 @@ context.set_state('ProjectStructure', 'ous_title', 'Undefined')
 context.set_state('ProjectStructure', 'ousstatus_entity_id', ous_entity_id)
 context.set_state('ProjectStructure', 'recipe_name', 'hifa_calimage_renorm')
 
-import glob
 # don't re-run this on things that already inclue 'target'
 # (mstransform will try again and again...)
 mses = [x for x in glob.glob("*.ms") if 'target' not in x]
@@ -35,7 +34,7 @@ try:
         hif_mstransform(pipelinemode="automatic")
 
     # per Tafoya, flagtargets is probably not needed (and it was already done once)
-    #hifa_flagtargets(pipelinemode="automatic")
+    # hifa_flagtargets(pipelinemode="automatic")
 
     hifa_imageprecheck(pipelinemode="automatic")
 

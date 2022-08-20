@@ -2,14 +2,12 @@ import numpy as np
 import regions
 import radio_beam
 import spectral_cube
-from spectral_cube import Projection
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 from spectral_cube import SpectralCube
 from spectral_cube.wcs_utils import strip_wcs_from_header
 from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
-from astropy import coordinates
 from astropy import wcs
 from astropy import log
 from astropy.utils.console import ProgressBar
@@ -20,37 +18,38 @@ from spectral_cube.utils import SpectralCubeWarning
 warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
                         append=True)
 
-from .. import conf
-basepath = conf.basepath
-
 
 def read_as_2d(fn, minval=None):
     print(".", end='', flush=True)
-    fh = fits.open(fn)
-    ww = wcs.WCS(fh[0].header).celestial
+    if fn.endswith('fits'):
+        fh = fits.open(fn)
+        ww = wcs.WCS(fh[0].header).celestial
 
-    # strip the WCS
-    header = strip_wcs_from_header(fh[0].header)
-    header.update(ww.to_header())
+        # strip the WCS
+        header = strip_wcs_from_header(fh[0].header)
+        header.update(ww.to_header())
 
-    if minval is None:
-        hdu2d = fits.PrimaryHDU(data=fh[0].data.squeeze(),
-                                header=header)
+        if minval is None:
+            hdu2d = fits.PrimaryHDU(data=fh[0].data.squeeze(),
+                                    header=header)
+        else:
+            data = fh[0].data.squeeze()
+            # meant for weights; we're setting weights to zero
+            data[data < minval] = 0
+            # sanity check
+            assert np.nanmax(data) == 1
+            hdu2d = fits.PrimaryHDU(data=data,
+                                    header=header)
+        return fits.HDUList([hdu2d])
     else:
-        data = fh[0].data.squeeze()
-        # meant for weights; we're setting weights to zero
-        data[data < minval] = 0
-        # sanity check
-        assert np.nanmax(data) == 1
-        hdu2d = fits.PrimaryHDU(data=data,
-                                header=header)
-    return fits.HDUList([hdu2d])
+        cube = SpectralCube.read(fn, format='casa_image')
+        return fits.HDUList([cube[0].hdu])
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None):
     print(".", end='', flush=True)
     ft = 'fits' if fn.endswith(".fits") else "casa_image"
-    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
     if slab_kwargs is not None:
         cube = cube.spectral_slab(**slab_kwargs)
     with cube.use_dask_scheduler('threads'):
@@ -64,13 +63,13 @@ def get_peak(fn, slab_kwargs=None, rest_value=None):
 def get_m0(fn, slab_kwargs=None, rest_value=None):
     print(".", end='', flush=True)
     ft = 'fits' if fn.endswith(".fits") else "casa_image"
-    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=rest_value)
+    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
     if slab_kwargs is not None:
         cube = cube.spectral_slab(**slab_kwargs)
     with cube.use_dask_scheduler('threads'):
         moment0 = cube.moment0(axis=0)
-    moment0 = (moment0 * u.s/u.km).to(u.K,
-            equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km/u.s
+    moment0 = (moment0 * u.s / u.km).to(u.K,
+                                        equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km / u.s
     return moment0
 
 
@@ -78,7 +77,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 weights=None,
                 target_header=None,
                 commonbeam=False,
-                rest_value=None, cb_unit=None, array='7m', basepath=basepath):
+                rest_value=None, cb_unit=None, array='7m', basepath='./'):
 
     if target_header is None:
         log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
@@ -87,23 +86,23 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         target_wcs = wcs.WCS(target_header)
         shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
-
     if commonbeam:
         beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
-            for hdul in twod_hdus])
+                                        for hdul in twod_hdus])
         cb = beams.common_beam()
         if commonbeam == 'circular':
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
             cb = circbeam
-        
+
         log.info(f"Convolving HDUs to common beam {cb}\n")
         twod_hdus = [spectral_cube.Projection.from_hdu(hdul).convolve_to(cb).hdu
-                for hdul in ProgressBar(twod_hdus)]
+                     for hdul in ProgressBar(twod_hdus)]
 
     log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
     # number of items to count in progress bar
     npb = len(twod_hdus)
     pb = ProgressBar(npb)
+
     def repr_function(*args, **kwargs):
         pb.update()
         return reproject_interp(*args, **kwargs)
@@ -113,11 +112,14 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                                             input_weights=weights,
                                             shape_out=shape_out,
                                             reproject_function=repr_function)
+    header = target_wcs.to_header()
+    if commonbeam:
+        header.update(cb.to_header_keywords())
 
-    log.info(f"Writing reprojected data to disk")
-    fits.PrimaryHDU(data=prjarr, header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/{array}_{name}_mosaic.fits', overwrite=True)
+    log.info("Writing reprojected data to disk")
+    fits.PrimaryHDU(data=prjarr, header=header).writeto(f'{basepath}/mosaics/{array}_{name}_mosaic.fits', overwrite=True)
 
-    log.info(f"Creating plots")
+    log.info("Creating plots")
     import pylab as pl
     from astropy import visualization
     pl.rc('axes', axisbelow=True)
@@ -127,7 +129,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     back = -10
     fronter = 20
 
-    fig = pl.figure(figsize=(20,7))
+    fig = pl.figure(figsize=(20, 7))
     ax = fig.add_subplot(111, projection=target_wcs)
     im = ax.imshow(prjarr, norm=visualization.simple_norm(prjarr, **norm_kwargs), zorder=front, cmap='gray')
     cb = pl.colorbar(mappable=im)
@@ -137,9 +139,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.coords[1].set_axislabel('Galactic Latitude')
     ax.coords[0].set_major_formatter('d.dd')
     ax.coords[1].set_major_formatter('d.dd')
-    ax.coords[0].set_ticks(spacing=0.1*u.deg)
+    ax.coords[0].set_ticks(spacing=0.1 * u.deg)
     ax.coords[0].set_ticklabel(rotation=45, pad=20)
-
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic.png', bbox_inches='tight')
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
@@ -154,8 +155,6 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.set_axisbelow(True)
     ax.set_zorder(back)
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgrid.png', bbox_inches='tight')
-
-
 
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.tsv', format='ascii.csv', delimiter='\t')
 
@@ -188,17 +187,16 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     fits.PrimaryHDU(data=flagmap,
                     header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/{array}_{name}_field_number_map.fits', overwrite=True)
 
-
-    ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max())+0.5, zorder=fronter)
+    ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max()) + 0.5, zorder=fronter)
 
     for ii in np.unique(flagmap):
         if ii > 0:
-            fsum = (flagmap==ii).sum()
-            cy,cx = ((np.arange(flagmap.shape[0])[:,None] * (flagmap==ii)).sum() / fsum,
-                     (np.arange(flagmap.shape[1])[None,:] * (flagmap==ii)).sum() / fsum)
+            fsum = (flagmap == ii).sum()
+            cy, cx = ((np.arange(flagmap.shape[0])[:, None] * (flagmap == ii)).sum() / fsum,
+                      (np.arange(flagmap.shape[1])[None, :] * (flagmap == ii)).sum() / fsum)
             pl.text(cx, cy, f"{ii}\n{tbl[ii-1]['Obs ID']}",
                     horizontalalignment='left', verticalalignment='center',
-                    color=(1,0.8,0.5), transform=ax.get_transform('pixel'),
+                    color=(1, 0.8, 0.5), transform=ax.get_transform('pixel'),
                     zorder=fronter)
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')

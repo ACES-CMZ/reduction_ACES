@@ -1,35 +1,38 @@
 import os
 import numpy as np
 from astropy import table
-from astropy.table import Table,Column
+from astropy.table import Table, Column
 from astropy import units as u
 from astropy.utils.console import ProgressBar
 from astroquery.alma import Alma
 from bs4 import BeautifulSoup
 import re
-import itertools
 
 flux_scales = {'Jy': 1,
                'mJy': 1e-3,
                'µJy': 1e-6,
-              }
+               }
+
 
 def get_mous_to_sb_mapping(project_code):
 
     tbl = Alma.query(payload={'project_code': project_code}, cache=False,
-                     public=False)['member_ous_uid','schedblock_name', 'qa2_passed']
+                     public=False)['member_ous_uid', 'schedblock_name', 'qa2_passed']
     mapping = {row['member_ous_uid']: row['schedblock_name'] for row in tbl if row['qa2_passed'] == 'T'}
     return mapping
 
+
 def grouped(iterable, n):
     "s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ..."
-    return zip(*[iter(iterable)]*n)
+    return zip(*[iter(iterable)] * n)
+
 
 def striptext(x):
     if hasattr(x, 'text'):
         return x.text.strip()
     else:
         return x.strip()
+
 
 def get_uid_and_name(t1fn):
     """
@@ -42,13 +45,14 @@ def get_uid_and_name(t1fn):
 
     """
     with open(t1fn, 'r') as fh:
-        text=fh.read()
+        text = fh.read()
     soup = BeautifulSoup(text, 'lxml')
 
     cc = soup.find('b', text=' Observing Unit Set Status: ').parent.children
-    dd = {striptext(k).strip(":"):striptext(v) for k,v in grouped(cc,2)}
+    dd = {striptext(k).strip(":"): striptext(v) for k, v in grouped(cc, 2)}
 
     return dd
+
 
 def get_human_readable_name(weblog, mapping=None):
     print("Reading weblog {0}".format(weblog))
@@ -58,11 +62,11 @@ def get_human_readable_name(weblog, mapping=None):
             with open(os.path.join(directory, 't2-1_details.html')) as fh:
                 txt = fh.read()
 
-            max_baseline = re.compile("<th>Max Baseline</th>\s*<td>([0-9a-z\. ]*)</td>").search(txt).groups()[0]
+            max_baseline = re.compile(r"<th>Max Baseline</th>\s*<td>([0-9a-z\. ]*)</td>").search(txt).groups()[0]
             max_baseline = u.Quantity(max_baseline)
 
-            array_name = ('7MorTP' if max_baseline < 100*u.m else 'TM2'
-                          if max_baseline < 1000*u.m else 'TM1')
+            array_name = ('7MorTP' if max_baseline < 100 * u.m else 'TM2'
+                          if max_baseline < 1000 * u.m else 'TM1')
             #print("array_name = {0}".format(array_name))
             break
 
@@ -75,7 +79,6 @@ def get_human_readable_name(weblog, mapping=None):
     except Exception as ex:
         print(ex)
         sbname = None
-
 
     if sbname is None:
         if mapping is None:
@@ -147,6 +150,7 @@ def get_human_readable_name(weblog, mapping=None):
 
     return sbname, max_baseline
 
+
 def get_matching_text(list_of_elts, text):
     if hasattr(text, 'search'):
         match = [xx.text for xx in list_of_elts if text.search(xx.text)]
@@ -154,6 +158,7 @@ def get_matching_text(list_of_elts, text):
         match = [xx.text for xx in list_of_elts if text in xx.text]
     if len(match) >= 1:
         return match[0]
+
 
 def get_calibrator_fluxes(weblog):
 
@@ -164,8 +169,8 @@ def get_calibrator_fluxes(weblog):
 
             soup = BeautifulSoup(txt, 'html5lib')
             date_tbls = [xx for xx in soup.findAll('table')
-                         if 'summary' in xx.attrs
-                         and xx.attrs['summary'] == 'Measurement Set Summaries']
+                         if 'summary' in xx.attrs and
+                         xx.attrs['summary'] == 'Measurement Set Summaries']
             assert len(date_tbls) == 1
             date_tbl = date_tbls[0]
 
@@ -183,18 +188,18 @@ def get_calibrator_fluxes(weblog):
             soup = BeautifulSoup(txt, 'html5lib')
 
             tbls = [xx for xx in soup.findAll('table')
-                    if 'summary' in xx.attrs
-                    and xx.attrs['summary'] == 'Flux density results']
+                    if 'summary' in xx.attrs and
+                    xx.attrs['summary'] == 'Flux density results']
             if len(tbls) != 1:
                 raise ValueError("No flux density data found in pipeline run "
                                  "{0}.".format(weblog))
             tbl = tbls[0]
             rows = tbl.findAll('tr')
 
-            uid, source, freq, spw = None,None,None,None
+            uid, source, freq, spw = None, None, None, None
 
             data = {}
-            for row_a,row_b in zip(rows[3::2],rows[4::2]):
+            for row_a, row_b in zip(rows[3::2], rows[4::2]):
                 uid = get_matching_text(row_a.findAll('td'), 'uid') or uid
                 source = get_matching_text(row_a.findAll('td'), 'PHASE') or source
                 freqstr = get_matching_text(row_a.findAll('td'), 'GHz') or freq
@@ -217,12 +222,13 @@ def get_calibrator_fluxes(weblog):
                 freq = float(freqstr.split()[0])
                 #freqres = float(freqstr.split()[2])
 
-                data[(source, uid, spw, freq, date)] = {'measured':flux,
+                data[(source, uid, spw, freq, date)] = {'measured': flux,
                                                         'error': eflux,
                                                         'catalog': catflux}
 
             return data
     raise ValueError("{0} is not a valid weblog (it may be missing stage15)".format(weblog))
+
 
 def get_all_fluxes(weblog_list, mapping=None):
 
@@ -230,36 +236,37 @@ def get_all_fluxes(weblog_list, mapping=None):
     for weblog in ProgressBar(weblog_list):
         try:
             data = get_calibrator_fluxes(weblog)
-            name,_ = get_human_readable_name(weblog, mapping=mapping)
+            name, _ = get_human_readable_name(weblog, mapping=mapping)
             data_dict[name] = data
         except ValueError:
             continue
 
-    flux_data = {name:{ii:
-                       {'date': key[4],
-                        'ms': key[1],
-                        'calibrator': key[0],
-                        'spw': key[2],
-                        'freq': key[3],
-                        'measurement': value}
-                       for ii,(key,value) in enumerate(data_.items())
-                      }
-                 for name,data_ in data_dict.items()
-                }
+    flux_data = {name: {ii:
+                        {'date': key[4],
+                         'ms': key[1],
+                         'calibrator': key[0],
+                         'spw': key[2],
+                         'freq': key[3],
+                         'measurement': value}
+                        for ii, (key, value) in enumerate(data_.items())
+                        }
+                 for name, data_ in data_dict.items()
+                 }
 
     return flux_data
 
+
 def fluxes_to_table(flux_dict):
 
-    sbname = Column(name='schedblock_name', data=[name for name,item in flux_dict.items() for row in item])
-    uid = Column(name='UID', data=[data['ms'] for name,item in flux_dict.items() for num,data in item.items()])
-    calname = Column(name='Calibrator', data=[data['calibrator'] for name,item in flux_dict.items() for num,data in item.items()])
-    spw = Column(name='SPW', data=[data['spw'] for name,item in flux_dict.items() for num,data in item.items()])
-    date = Column(name='Date', data=[data['date'] for name,item in flux_dict.items() for num,data in item.items()])
-    freq = Column(name='Frequency', data=[data['freq'] for name,item in flux_dict.items() for num,data in item.items()])
-    flux = Column(name='Flux', data=[data['measurement']['measured'] for name,item in flux_dict.items() for num,data in item.items()])
-    eflux = Column(name='Flux error', data=[data['measurement']['error'] for name,item in flux_dict.items() for num,data in item.items()])
-    catflux = Column(name='Catalog flux', data=[data['measurement']['catalog'] for name,item in flux_dict.items() for num,data in item.items()])
+    sbname = Column(name='schedblock_name', data=[name for name, item in flux_dict.items() for row in item])
+    uid = Column(name='UID', data=[data['ms'] for name, item in flux_dict.items() for num, data in item.items()])
+    calname = Column(name='Calibrator', data=[data['calibrator'] for name, item in flux_dict.items() for num, data in item.items()])
+    spw = Column(name='SPW', data=[data['spw'] for name, item in flux_dict.items() for num, data in item.items()])
+    date = Column(name='Date', data=[data['date'] for name, item in flux_dict.items() for num, data in item.items()])
+    freq = Column(name='Frequency', data=[data['freq'] for name, item in flux_dict.items() for num, data in item.items()])
+    flux = Column(name='Flux', data=[data['measurement']['measured'] for name, item in flux_dict.items() for num, data in item.items()])
+    eflux = Column(name='Flux error', data=[data['measurement']['error'] for name, item in flux_dict.items() for num, data in item.items()])
+    catflux = Column(name='Catalog flux', data=[data['measurement']['catalog'] for name, item in flux_dict.items() for num, data in item.items()])
 
     tbl = Table([sbname, uid, calname, spw, date, freq, flux, eflux, catflux])
 
@@ -275,7 +282,7 @@ def weblog_names(list_of_weblogs, mapping):
         for nm in set(hrns):
             if hrns.count(nm) > 1:
                 print("Fixing {0}".format(nm))
-                dupes = [ii for ii,x in enumerate(hrns) if x==nm]
+                dupes = [ii for ii, x in enumerate(hrns) if x == nm]
                 assert len(dupes) == 2
                 bl1 = data[dupes[0]][0][1]
                 bl2 = data[dupes[1]][0][1]
@@ -283,27 +290,28 @@ def weblog_names(list_of_weblogs, mapping):
                     # short = TM2
                     # long = TM1
                     data[dupes[0]] = \
-                        (((data[dupes[0]][0][0].replace('TM1','TM2'),
+                        (((data[dupes[0]][0][0].replace('TM1', 'TM2'),
                            data[dupes[0]][0][1])), data[dupes[0]][1])
                     data[dupes[1]] = \
-                        (((data[dupes[1]][0][0].replace('TM2','TM1'),
+                        (((data[dupes[1]][0][0].replace('TM2', 'TM1'),
                            data[dupes[1]][0][1]), data[dupes[1]][1]))
                 else:
                     data[dupes[1]] = \
-                        (((data[dupes[1]][0][0].replace('TM1','TM2'),
+                        (((data[dupes[1]][0][0].replace('TM1', 'TM2'),
                            data[dupes[1]][0][1]), data[dupes[1]][1]))
                     data[dupes[0]] = \
-                        (((data[dupes[0]][0][0].replace('TM2','TM1'),
+                        (((data[dupes[0]][0][0].replace('TM2', 'TM1'),
                            data[dupes[0]][0][1]), data[dupes[0]][1]))
 
     rslt = {x[0][0]: x[1] for x in data}
     return rslt
 
+
 def make_links(weblog_maps):
-    reverse_map = {v:k for k,v in weblog_maps.items()}
+    reverse_map = {v: k for k, v in weblog_maps.items()}
     assert len(reverse_map) == len(weblog_maps)
 
-    for k,v in weblog_maps.items():
+    for k, v in weblog_maps.items():
         try:
             os.symlink('../{0}'.format(v), 'humanreadable/{0}'.format(k))
         except FileExistsError:
