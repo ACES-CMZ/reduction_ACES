@@ -16,7 +16,8 @@ from aces import conf
 
 def get_mousmap_(**kwargs):
     mousmap = get_mous_to_sb_mapping('2021.1.00172.L', **kwargs)
-    mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
+    mousmap_ = {key.replace("/","_").replace(":","_"): val
+                for key,val in mousmap.items()}
     return mousmap_
 
 
