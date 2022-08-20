@@ -49,9 +49,6 @@ def main():
 
     print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))} SCRIPTLIST={scriptlist} TEMP_WORKDIR={temp_workdir}")
 
-    mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
-    mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
-
     # touch scriptlist
     with open(scriptlist, 'w') as fh:
         fh.write("")
@@ -83,7 +80,7 @@ def main():
                     os.chdir(workingpath)
 
                     field = sbname.split("_")[3]
-                    config = sbname.split("_")[5]
+                    # config = sbname.split("_")[5]
                     print(f"{sbname} {partype} {spwsel} {field}: ", end=" ")
                     if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
                         tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]

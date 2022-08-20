@@ -82,7 +82,6 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
     assert cy - npix >= 0
 
     cutout = psfim[cy-npix:cy+npix+1, cx-npix:cx+npix+1]
-    psfim_cutout = cutout
 
     try:
         beam = cube.beam

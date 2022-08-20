@@ -233,7 +233,7 @@ def main():
                     if hasattr(cube, 'beam'):
                         beam = cube.beam
                 except NoBeamError as ex:
-                    print("Beam not found: {ex}")
+                    print(f"Beam not found: {ex}")
                     continue
 
                 if hasattr(cube, 'beams'):
