@@ -1,3 +1,4 @@
+# flake8: noqa
 from parse_contdotdat import parse_contdotdat, contchannels_to_linechannels
 import os
 import sys

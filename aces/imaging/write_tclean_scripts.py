@@ -17,9 +17,8 @@ import os
 import glob
 import shutil
 import textwrap
-from .. import conf
-from ..retrieval_scripts.mous_map import get_mous_to_sb_mapping
-from ..pipeline_scripts.merge_tclean_commands import commands
+from aces import conf
+from aces.pipeline_scripts.merge_tclean_commands import commands
 
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
@@ -206,7 +205,7 @@ def main():
                         if temp_workdir:
                             fh.write("".join(splitcmd))
                             fh.write("\n\n")
-                        fh.write(f"tclean(\n")
+                        fh.write("tclean(\n")
                         for key, val in tcpars.items():
                             if key == 'parallel':
                                 fh.write(f"       {key}=parallel,\n")

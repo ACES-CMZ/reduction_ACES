@@ -269,7 +269,7 @@ def main():
                 labels.append('Delivered')
                 need_update.append('Delivered')
 
-            if re.sub('\s', '', issue.body) != re.sub('\s', '', issuebody):
+            if re.sub(r'\s', '', issue.body) != re.sub(r'\s', '', issuebody):
                 need_update.append("Generic: something changed")
 
             if product_link_text:

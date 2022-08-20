@@ -5,8 +5,6 @@ import glob
 import shutil
 import subprocess
 import datetime
-import os
-import json
 from astropy.io import ascii
 import sys
 from astropy import log

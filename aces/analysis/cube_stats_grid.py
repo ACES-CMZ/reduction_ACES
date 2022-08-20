@@ -9,7 +9,6 @@ from astropy import units as u
 from astropy.stats import mad_std
 from astropy.table import Table
 from astropy import log
-import glob
 from spectral_cube import SpectralCube
 from spectral_cube.utils import NoBeamError
 
@@ -131,7 +130,7 @@ def main():
     def try_qty(x):
         try:
             return u.Quantity(x)
-        except:
+        except Exception:
             return list(x)
 
     def save_tbl(rows, colnames):
@@ -325,7 +324,7 @@ def main():
                 dt(f"Computing model cube statistics with scheduler {scheduler} and sched args {modcube._scheduler_kwargs}")
                 with modsched:
                     modstats = modcube.statistics()
-                dt(f"Done with model stats")
+                dt("Done with model stats")
                 modmin = modstats['min']
                 modmax = modstats['max']
                 modstd = modstats['sigma']

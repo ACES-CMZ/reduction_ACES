@@ -116,10 +116,10 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     if commonbeam:
         header.update(cb.to_header_keywords())
 
-    log.info(f"Writing reprojected data to disk")
+    log.info("Writing reprojected data to disk")
     fits.PrimaryHDU(data=prjarr, header=header).writeto(f'{basepath}/mosaics/{array}_{name}_mosaic.fits', overwrite=True)
 
-    log.info(f"Creating plots")
+    log.info("Creating plots")
     import pylab as pl
     from astropy import visualization
     pl.rc('axes', axisbelow=True)

@@ -62,7 +62,7 @@ def get_human_readable_name(weblog, mapping=None):
             with open(os.path.join(directory, 't2-1_details.html')) as fh:
                 txt = fh.read()
 
-            max_baseline = re.compile("<th>Max Baseline</th>\s*<td>([0-9a-z\. ]*)</td>").search(txt).groups()[0]
+            max_baseline = re.compile(r"<th>Max Baseline</th>\s*<td>([0-9a-z\. ]*)</td>").search(txt).groups()[0]
             max_baseline = u.Quantity(max_baseline)
 
             array_name = ('7MorTP' if max_baseline < 100 * u.m else 'TM2'
