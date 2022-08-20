@@ -1,7 +1,7 @@
 import numpy as np
 import warnings
 import json
-from astropy.table import Table,Column
+from astropy.table import Table, Column
 from astropy import units as u
 from astropy import log
 from astropy import wcs
@@ -32,6 +32,7 @@ warnings.filterwarnings('ignore', category=BeamWarning, append=True)
 warnings.filterwarnings('ignore', category=StokesWarning, append=True)
 np.seterr(all='ignore')
 
+
 def get_requested_sens():
     # use this file's path
     requested_fn = os.path.join(os.path.dirname(__file__), 'requested.txt')
@@ -41,9 +42,10 @@ def get_requested_sens():
     tbl = ascii.read(requested_fn, data_start=2)
     return tbl
 
+
 def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
                        max_radial_extent=5*u.arcsec, max_npix_peak=100,
-                       specslice=slice(0,1)):
+                       specslice=slice(0, 1)):
     """ REDUNDANT with get_psf_secondpeak_old, but this one is better
 
     Process:
@@ -86,14 +88,13 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
 
     try:
         beam = cube.beam
-    except (AttributeError,NoBeamError):
+    except (AttributeError, NoBeamError):
         try:
             # assume we've appropriately sliced to get a single beam above
             beam = cube.beams[0]
-        except (AttributeError,NoBeamError):
+        except (AttributeError, NoBeamError):
             log.error(f"File {fn} is not a valid PSF cube")
             return (np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan)
-
 
     shape = cutout.shape
     sy, sx = shape
@@ -165,7 +166,7 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
     # (useful for display)
     outside_first_peak_mask = (rr > first_min_ind) & (fullbeam.array < 1e-5)
     first_sidelobe_ind = scipy.signal.find_peaks(radial_mean *
-                          (np.arange(len(radial_mean)) > first_min_ind))[0][0]
+                                                 (np.arange(len(radial_mean)) > first_min_ind))[0][0]
     max_sidelobe = cutout[outside_first_peak_mask].max()
     max_sidelobe_loc = cutout[outside_first_peak_mask].argmax()
     r_max_sidelobe = rr[outside_first_peak_mask][max_sidelobe_loc]
@@ -183,7 +184,7 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
 
         log.info(f"radial extent = {radial_extent},  "
                  f"r_max_sidelobe = {r_max_sidelobe}, "
-                 "********" if r_max_sidelobe >  radial_extent else ""
+                 "********" if r_max_sidelobe > radial_extent else ""
                  f"first_sidelobe_ind={first_sidelobe_ind}, "
                  f"first_min_ind = {first_min_ind}")
 
@@ -204,13 +205,13 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
         cb = pl.colorbar(mappable=im, cax=cax)
         pl.matplotlib.colorbar.ColorbarBase.add_lines(self=cb,
                                                       levels=[max_sidelobe],
-                                                      colors=[(0.1,0.7,0.1,0.9)],
+                                                      colors=[(0.1, 0.7, 0.1, 0.9)],
                                                       linewidths=1)
 
-        ax.contour(bm2.array/bm2.array.max(), levels=[0.1,0.5,0.9], colors=['r']*3, extent=extent)
+        ax.contour(bm2.array/bm2.array.max(), levels=[0.1, 0.5, 0.9], colors=['r']*3, extent=extent)
         ax.contour(rr[view], levels=[first_min_ind, r_max_sidelobe],
-                   linestyles=['--',':'],
-                   colors=[(0.2,0.2,1,0.5), (0.1,0.7,0.1,0.5)], extent=extent)
+                   linestyles=['--', ':'],
+                   colors=[(0.2, 0.2, 1, 0.5), (0.1, 0.7, 0.1, 0.5)], extent=extent)
         ax.set_xlabel("RA Offset [arcsec]")
         ax.set_ylabel("Dec Offset [arcsec]")
 
@@ -221,11 +222,7 @@ def get_psf_secondpeak(fn, show_image=False, min_radial_extent=1.5*u.arcsec,
             first_min_ind*pixscale.to(u.arcsec),
             r_max_sidelobe*pixscale.to(u.arcsec),
             (rr, pixscale, cutout, beam, fullbeam, view, bmfit_residual)
-           )
-
-
-
-
+            )
 
 
 def imstats(fn, reg=None):
@@ -248,7 +245,6 @@ def imstats(fn, reg=None):
         cube = SpectralCube.read(fn, format='casa_image')
         data = cube[0].value
         ww = cube.wcs
-
 
     mad = mad_std(data, ignore_nan=True)
     peak = np.nanmax(data)
@@ -281,7 +277,6 @@ def imstats(fn, reg=None):
                 ppbeam = np.nan
                 bm = Beam(np.nan)
 
-
         meta = {'beam': bm.to_header_keywords(),
                 'bmaj': bm.major.to(u.arcsec).value,
                 'bmin': bm.minor.to(u.arcsec).value,
@@ -295,12 +290,12 @@ def imstats(fn, reg=None):
                 'sumgt5sig': sumgt5sig,
                 'sumgt3sig': sumgt3sig,
                 'cellsize': (pixscale**0.5).to(u.arcsec).value
-               }
+                }
 
     if reg is not None:
         try:
             reglist = regions.read_ds9(reg)
-        except AttributeError: # newer version
+        except AttributeError:  # newer version
             reglist = regions.Regions.read(reg)
         data = data.squeeze()
         composite_region = reduce(operator.or_, reglist)
@@ -343,6 +338,7 @@ def imstats(fn, reg=None):
 
     return meta
 
+
 """
 We want to calculate the "epsilon" value from https://ui.adsabs.harvard.edu/abs/1995AJ....110.2037J/abstract
 
@@ -367,7 +363,7 @@ def parse_fn(fn):
 
     muid = split[0]
     mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
-    mousmap_ = {key.replace("/","_").replace(":","_"):val for key,val in mousmap.items()}
+    mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
     sbname = mousmap_[muid]
     region = field = sbname.split("_")[3]
 
@@ -380,7 +376,8 @@ def parse_fn(fn):
             'robust': 'r'+str(robust),
             'suffix': split[-1],
             'pbcor': 'pbcor' in fn.lower(),
-           }
+            }
+
 
 def assemble_stats(globstr, ditch_suffix=None):
     import glob
@@ -421,12 +418,10 @@ def get_noise_region(field, band):
     except AssertionError:
         noisepath = f'{basepath}/reduction_ACES/aces/data/regions/noise_estimation_regions/'
 
-
     regfn = f"{noisepath}/{field}_noise_sampling.reg"
 
     if os.path.exists(regfn):
         return regfn
-
 
 
 def get_psf_secondpeak_old(fn, neighborhood_size=5, threshold=0.01):
@@ -446,7 +441,7 @@ def get_psf_secondpeak_old(fn, neighborhood_size=5, threshold=0.01):
     if data.ndim > 2:
         data = data.squeeze()
     if data.ndim > 2:
-        data = data[0,:,:]
+        data = data[0, :, :]
 
     data_max = filters.maximum_filter(data, neighborhood_size)
 
@@ -468,6 +463,7 @@ def get_psf_secondpeak_old(fn, neighborhood_size=5, threshold=0.01):
 
 class MyEncoder(json.JSONEncoder):
     "https://stackoverflow.com/a/27050186/814354"
+
     def default(self, obj):
         if isinstance(obj, np.integer):
             return int(obj)
@@ -482,7 +478,9 @@ class MyEncoder(json.JSONEncoder):
 def savestats(basepath=basepath,
               suffix='image.tt0*', filetype=".fits"):
 
-    stats = assemble_stats(f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}", ditch_suffix=f".{suffix[:-1]}")
+    stats = assemble_stats(
+        f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}",
+        ditch_suffix=f".{suffix[:-1]}")
     with open(f'{basepath}/tables/metadata_{suffix}.json', 'w') as fh:
         json.dump(stats, fh, cls=MyEncoder)
 
@@ -494,7 +492,7 @@ def savestats(basepath=basepath,
                   'sumgt5sig', 'mad', 'mad_sample', 'std_sample', 'peak/mad',
                   'psf_secondpeak', 'psf_secondpeak_radius',
                   'psf_secondpeak_sidelobefraction', 'cellsize',
-                 ]
+                  ]
     req_keys = ['B3_res', 'B3_sens', ]
     req_keys_head = ['Req_Res', 'Req_Sens']
 
@@ -508,7 +506,7 @@ def savestats(basepath=basepath,
         rows += [[entry['meta'][key] for key in meta_keys] +
                  [entry['stats'][key] if key in entry['stats'] else np.nan for key in stats_keys] +
                  [requested_this[key][0] for key in req_keys if band in key]
-                ]
+                 ]
 
     tbl = Table(rows=rows, names=meta_keys+stats_keys+req_keys_head)
 
@@ -525,6 +523,7 @@ def savestats(basepath=basepath,
               format='jsviewer', overwrite=True)
 
     return tbl
+
 
 def main():
     savestats()
