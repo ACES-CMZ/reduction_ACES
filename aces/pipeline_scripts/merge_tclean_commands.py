@@ -4,7 +4,7 @@ import os
 from .. import conf
 rootdir = conf.basepath
 
-#old version
+# old version
 # if os.getenv('ACES_ROOTDIR') is None:
 #     raise ValueError("Specify ACES_ROOTDIR environment variable ")
 # else:
@@ -21,9 +21,9 @@ with open(f"{rootdir}/reduction_ACES/aces/pipeline_scripts/override_tclean_comma
 
 commands = default_commands
 
-for sbname,allpars in override_commands.items():
+for sbname, allpars in override_commands.items():
     for partype, replacements in allpars.items():
-        for spwsel,tcpars in replacements.items():
+        for spwsel, tcpars in replacements.items():
             if spwsel in commands[sbname][partype]:
                 # we're replacing/overriding arguments here
                 for key, val in tcpars.items():

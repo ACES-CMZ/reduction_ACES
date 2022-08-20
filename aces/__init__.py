@@ -28,12 +28,11 @@ class Conf(_config.ConfigNamespace):
         'High-performance system where intermediate data products can go')
 
 
-
 conf = Conf()
 
-from . import retrieval_scripts
-from . import pipeline_scripts
 from . import imaging
+from . import pipeline_scripts
+from . import retrieval_scripts
 
 __all__ = ['retrieval_scripts',
            'pipeline_scripts',

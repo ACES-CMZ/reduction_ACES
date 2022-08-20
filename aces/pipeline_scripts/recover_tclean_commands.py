@@ -4,7 +4,11 @@ Two environmental variables must be set:
     ACES_ROOTDIR: the reduction_ACES directory
     WEBLOG_DIR: the path containing the pipeline* weblogs
 """
-import os, sys, glob, json
+from ..retrieval_scripts.parse_weblog import (get_human_readable_name, get_uid_and_name)
+import os
+import sys
+import glob
+import json
 from astropy import log
 
 from .. import conf
@@ -25,8 +29,6 @@ rootdir = conf.basepath
 #     sys.path.append(f'{rootdir}/retrieval_scripts')
 
 
-from ..retrieval_scripts.parse_weblog import (get_human_readable_name, get_uid_and_name)
-
 def main():
 
     projcode = '2021.1.00172.L'
@@ -39,7 +41,6 @@ def main():
             raise ValueError("Set an environmental variable 'WEBLOG_DIR' or a local variable `weblog_dir` to specify where to extract the weblogs.")
 
     os.chdir(weblog_dir)
-
 
     all_cubepars = {}
 
@@ -73,11 +74,11 @@ def main():
                             # hif_makeimlist(specmode='cube')
                             # or
                             # hif_makeimlist(specmode='cont', robust=1.0)
-                            cuberun=True
+                            cuberun = True
                             # skip to next: that will be cubes
                             break
                         if "hif_makeimlist(specmode='cont'" in line:
-                            aggregatecontrun=True
+                            aggregatecontrun = True
                             # skip to next: that will be the aggregate continuum
                             # (individual continuum is 'mfs')
                             break
@@ -112,10 +113,10 @@ def main():
             raise ValueError("TEST")
 
         # only keep the 'iter1' examples *if* they exist
-        cubepars = {key:pars for key,pars in cubepars.items()
-                if 'iter1' in pars['imagename']}
-        contpars = {key:pars for key,pars in contpars.items()
-                if 'iter1' in pars['imagename']}
+        cubepars = {key: pars for key, pars in cubepars.items()
+                    if 'iter1' in pars['imagename']}
+        contpars = {key: pars for key, pars in contpars.items()
+                    if 'iter1' in pars['imagename']}
 
         # clean out paths from vis
         for pars in cubepars.values():
@@ -124,11 +125,11 @@ def main():
             pars["vis"] = [os.path.basename(x) for x in pars["vis"]]
 
         all_cubepars[sbname] = {
-                'tclean_cube_pars': cubepars,
-                'tclean_cont_pars': contpars,
-                'mous': mous,
-                'pipeline_run': pipeline_base,
-                }
+            'tclean_cube_pars': cubepars,
+            'tclean_cont_pars': contpars,
+            'mous': mous,
+            'pipeline_run': pipeline_base,
+        }
 
     with open(f'{rootdir}/reduction_ACES/aces/pipeline_scripts/default_tclean_commands.json', 'w') as tcfh:
         json.dump(all_cubepars, tcfh, indent=2)

@@ -2,7 +2,9 @@
 Run this with some care; it will require manual pushing
 """
 
-import json, os, sys
+import json
+import os
+import sys
 
 # TODO: make sure this imports correctly (it's the same directory so it should
 # be ok, but might need to be
@@ -33,7 +35,7 @@ if __name__ == "__main__":
                 spw33pars['start'] = start
                 spw33pars['width'] = chwid
                 spw33pars['threshold'] = '0.01Jy'
-                spw33pars['spw'] = [x.replace('35','33') for x in spw33pars['spw']]
+                spw33pars['spw'] = [x.replace('35', '33') for x in spw33pars['spw']]
                 if key in override_commands:
                     override_commands[key]['tclean_cube_pars']['spw33'] = spw33pars
                 else:

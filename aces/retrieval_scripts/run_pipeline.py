@@ -23,6 +23,7 @@ Environmental Variables read by this script:
     end partway along.
 
 """
+import shutil
 import os
 import sys
 import runpy
@@ -31,10 +32,11 @@ from datetime import datetime
 
 try:
     from casatasks import casalog
-except (ModuleNotFoundError,ImportError):
+except (ModuleNotFoundError, ImportError):
     from taskinit import casalog
 
 run = os.environ.get('RUNSCRIPTS') not in ('False', 'false')
+
 
 def logprint(string, origin='almaimf_metadata',
              priority='INFO'):
@@ -42,11 +44,12 @@ def logprint(string, origin='almaimf_metadata',
         print(string)
     casalog.post(string, origin=origin, priority=priority)
 
+
 if os.getenv('ACES_ROOTDIR') is None:
     try:
         from .. import conf
         os.environ['ACES_ROOTDIR'] = conf.basepath
-        #os.path.split(metadata_tools.__file__)[0]
+        # os.path.split(metadata_tools.__file__)[0]
     except ImportError:
         raise ValueError("metadata_tools not found on path; make sure to "
                          "specify ACES_ROOTDIR environment variable "
@@ -57,8 +60,6 @@ else:
 
 rootdir = os.environ['ACES_ROOTDIR']
 
-import shutil
-import os
 
 if os.getenv('LOGFILENAME'):
     if os.getenv('LOGFILENAME').startswith('/'):
@@ -109,7 +110,6 @@ for scigoal in science_goal_dirs:
 
                     shutil.copy(scriptpath, '.')
 
-
                     if run:
                         logprint("Running script {0} in {1}.  cwd={2}".format(imaging_script, dirpath, os.getcwd()),
                                  origin='pipeline_runner')
@@ -118,7 +118,6 @@ for scigoal in science_goal_dirs:
                         logprint("Dry-running script {0} in {1}.  cwd={2}".format(imaging_script, dirpath, os.getcwd()),
                                  origin='pipeline_runner')
                         print(os.path.join(dirpath, 'calibrated/working', imaging_script))
-
 
                     logprint("Done running script {0} in {1}".format(imaging_script, dirpath),
                              origin='pipeline_runner')
@@ -153,11 +152,11 @@ for scigoal in science_goal_dirs:
                 else:
                     logprint("Dry running scriptForPI {0} in {1}.  cwd={2}".format(local_scriptforPI, dirpath, os.getcwd()),
                              origin='pipeline_runner')
-                    
+
                     print(scriptforpi)
 
                 # too verbose, includes a ton of junk
-                #logprint("result = {0}".format(result),
+                # logprint("result = {0}".format(result),
                 #         origin='pipeline_runner')
 
                 logprint("Done running script {0} in {1}".format(local_scriptforPI, dirpath),

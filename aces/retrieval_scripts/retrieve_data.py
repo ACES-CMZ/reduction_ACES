@@ -5,6 +5,7 @@ import six
 import os
 import sys
 
+
 def main():
     if len(sys.argv) > 1:
         username = sys.argv[1]
@@ -52,7 +53,6 @@ def main():
         except requests.exceptions.HTTPError as ex:
             print(ex)
             continue
-
 
     # Optional: %run retrieve_data <username> True will extract files
     if len(sys.argv) > 2:

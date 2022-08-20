@@ -4,6 +4,7 @@ import glob
 import os
 import json
 
+
 def main():
     if 'weblog_dir' not in locals():
         weblog_dir = os.getenv('WEBLOG_DIR')
@@ -34,5 +35,5 @@ def main():
 
     fluxtbl = fluxes_to_table(fluxes)
     for colname in fluxtbl.colnames:
-        fluxtbl.rename_column(colname, colname.replace(" ","_"))
+        fluxtbl.rename_column(colname, colname.replace(" ", "_"))
     fluxtbl.write('fluxes.ipac', format='ascii.ipac', overwrite=True)
