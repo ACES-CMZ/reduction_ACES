@@ -80,7 +80,7 @@ def main():
         if 'original' in sbname:
             field = field+"_original"
 
-        for clean in ('mfs', 'cont', 'cube',):
+        for clean in ('mfs', 'cube',):
             for suffix in (".image",  ):#".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
 
                 #globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
