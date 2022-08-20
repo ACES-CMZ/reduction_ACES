@@ -5,6 +5,7 @@ from astropy import log
 from .. import conf
 basepath = conf.basepath
 
+
 def main():
     for dirname in glob.glob(f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member*"):
         member = os.path.basename(dirname)

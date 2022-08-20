@@ -65,4 +65,3 @@ else:
 
 print(f"Lines {linenum}-{linenum+5}: ")
 print("".join(lines[linenum:linenum+5]))
-
