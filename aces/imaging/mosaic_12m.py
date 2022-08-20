@@ -53,8 +53,11 @@ def main():
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I.iter1.image.tt0.pbcor')
     hdus = [read_as_2d(fn) for fn in filelist]
     print(flush=True)
-    weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*I.iter1.pb.tt0')
+    weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
+    weightfiles_ = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*I.iter1.pb.tt0')
     assert len(weightfiles) == len(filelist)
+    for missing in set(weightfiles_) - set(weightfiles):
+        print(f"Missing {missing}")
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
