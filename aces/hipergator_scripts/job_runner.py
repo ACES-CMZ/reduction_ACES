@@ -3,11 +3,8 @@ import os
 import json
 import glob
 import shutil
-import copy
 import subprocess
 import datetime
-import os
-import json
 from astropy.io import ascii
 import sys
 from astropy import log
