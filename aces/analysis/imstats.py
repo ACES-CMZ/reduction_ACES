@@ -429,7 +429,7 @@ def get_psf_secondpeak_old(fn, neighborhood_size=5, threshold=0.01):
     if fn.endswith('fits'):
         data = fits.getdata(fn)
     else:
-        from casatools import image
+        from casatools import image  # noqa
         ia = image()
         ia.open(fn)
         data = ia.getchunk()
