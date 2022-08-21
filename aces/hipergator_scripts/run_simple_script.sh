@@ -71,8 +71,8 @@ fi
 # the following should not be necessary (it's actually totally redundant) but
 # mpicasa has been very severely failing yet reporting COMPLETED instead of
 # FAILED
-ppid="$!"
-wait $ppid
-exitcode=$?
-echo "pid=$ppid exitcode=$exitcode"
-exit $exitcode
+# ppid="$!"
+# wait $ppid
+# exitcode=$?
+# echo "pid=$ppid exitcode=$exitcode"
+# exit $exitcode

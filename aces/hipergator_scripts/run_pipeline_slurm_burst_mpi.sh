@@ -135,7 +135,7 @@ for script in $(cat $SLURM_TMPDIR/scriptlist); do
     #echo srun --export=ALL --mpi=pmix_v3 ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('${script}')"
     #srun --export=ALL --mpi=pmix_v3 
     echo xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$(basename ${script})')"
-    xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$(basename ${script})')"
+    xvfb-run -d ${MPICASA} -n $SLURM_NTASKS ${CASA} --logfile=${LOGFILENAME} --pipeline --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$(basename ${script})')" || exit 1
     echo "Completed MPICASA run"
     cd $cwd
 done
