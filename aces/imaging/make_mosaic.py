@@ -87,16 +87,19 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
     if commonbeam:
-        beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
-                                        for hdul in twod_hdus])
-        cb = beams.common_beam()
-        if commonbeam == 'circular':
-            circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
-            cb = circbeam
+        if isinstance(commonbeam, radio_beam.Beam):
+            cb = commonbeam
+        else:
+            beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
+                                            for hdul in twod_hdus])
+            cb = beams.common_beam()
+            if commonbeam == 'circular':
+                circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
+                cb = circbeam
 
-        log.info(f"Convolving HDUs to common beam {cb}\n")
-        twod_hdus = [spectral_cube.Projection.from_hdu(hdul).convolve_to(cb).hdu
-                     for hdul in ProgressBar(twod_hdus)]
+            log.info(f"Convolving HDUs to common beam {cb}\n")
+            twod_hdus = [spectral_cube.Projection.from_hdu(hdul).convolve_to(cb).hdu
+                         for hdul in ProgressBar(twod_hdus)]
 
     log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
     # number of items to count in progress bar
@@ -200,3 +203,5 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                     zorder=fronter)
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')
+
+    return cb

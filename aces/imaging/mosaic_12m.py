@@ -60,13 +60,13 @@ def main():
         print(f"Missing {missing}")
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
-    make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
-                commonbeam='circular',
-                weights=wthdus,
-                cb_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
-                target_header=header,
-                )
+    cb = make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
+                     commonbeam='circular',
+                     weights=wthdus,
+                     cb_unit='Jy/beam', array='12m', basepath=basepath,
+                     norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                     target_header=header,
+                     )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
                 cb_unit='Jy/beam', array='12m', basepath=basepath,
@@ -82,17 +82,17 @@ def main():
     assert len(weightfiles) == len(filelist)
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
-    make_mosaic(hdus, name='continuum_residual_commonbeam_circular_reimaged',
-                commonbeam='circular',
-                weights=wthdus,
+    make_mosaic(hdus, name='continuum_residual_reimaged', weights=wthdus,
                 cb_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.001),
                 target_header=header,
                 )
     print(flush=True)
-    make_mosaic(hdus, name='continuum_residual_reimaged', weights=wthdus,
+    make_mosaic(hdus, name='continuum_residual_commonbeam_circular_reimaged',
+                commonbeam=cb,
+                weights=wthdus,
                 cb_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.001),
                 target_header=header,
                 )
 
