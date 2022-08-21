@@ -169,7 +169,7 @@ def main():
                             ["import glob",
                              f"flist = glob.glob('{tempdir_name}/{os.path.basename(tcpars['imagename'])}.*')",
                              "for fn in flist:",
-                             f"    logprint(f'Moving {{fn}} to {os.path.dirname(tcpars['imagename'])})'",
+                             f"    logprint(f'Moving {{fn}} to {os.path.dirname(tcpars['imagename'])}')",
                              f"    shutil.move(fn, '{os.path.dirname(tcpars['imagename'])}/')",
                              ] +
                             [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]

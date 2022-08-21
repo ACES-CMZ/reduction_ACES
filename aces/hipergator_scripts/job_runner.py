@@ -3,8 +3,11 @@ import os
 import json
 import glob
 import shutil
+import copy
 import subprocess
 import datetime
+import os
+import json
 from astropy.io import ascii
 import sys
 from astropy import log
@@ -125,6 +128,17 @@ def main():
                         # skip MFS individual spws
                         log.debug(f"imtype is {imtype} and spw is {spw}.  SKIPPING because it's an MFS single-window")
                         continue
+
+                    # check syntax
+                    flake = subprocess.run(['/orange/adamginsburg/miniconda3/envs/python39/bin/flake8',
+                                            '--select=E999',
+                                            scriptname],
+                                           check=True)
+                    if flake.returncode == 0:
+                        log.debug(flake.stdout)
+                    else:
+                        raise SyntaxError(flake.stdout)
+
                     os.environ['SCRIPTNAME'] = scriptname
 
                     if imstatus['image'] and imstatus['pbcor']:
