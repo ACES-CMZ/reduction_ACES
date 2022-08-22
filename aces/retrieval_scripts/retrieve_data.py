@@ -71,3 +71,5 @@ def main():
                     for member in tf.getmembers():
                         if not os.path.exists(member.name):
                             tf.extract(member)
+
+    globals().update(locals())

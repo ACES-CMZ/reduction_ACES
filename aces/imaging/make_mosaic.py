@@ -15,6 +15,7 @@ from astropy.utils.console import ProgressBar
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 import warnings
+import multiprocessing
 from spectral_cube.utils import SpectralCubeWarning
 warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
                         append=True)
@@ -111,8 +112,15 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 prj.beam = bm
 
         log.info(f"Convolving HDUs to common beam {cb}\n")
-        twod_hdus = [prj.convolve_to(cb).hdu
-                     for prj in ProgressBar(prjs)]
+        pb = ProgressBar(len(prjs))
+
+        def reprj(prj):
+            rslt = prj.convolve_to(cb).hdu
+            pb.update()
+            return rslt
+
+        with multiprocessing.Pool() as pool:
+            twod_hdus = pool.map(reprj, prjs)
 
     log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
     # number of items to count in progress bar
@@ -120,8 +128,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     pb = ProgressBar(npb)
 
     def repr_function(*args, **kwargs):
+        rslt = reproject_interp(*args, **kwargs)
         pb.update()
-        return reproject_interp(*args, **kwargs)
+        return rslt
 
     prjarr, footprint = reproject_and_coadd(twod_hdus,
                                             target_wcs,

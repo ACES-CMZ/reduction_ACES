@@ -26,7 +26,7 @@ if os.getenv('DUMMYRUN'):
         print(kwargs['imagename'], kwargs['parallel'])
 else:
     pass
-    #from casatasks import tclean
+    # from casatasks import tclean
 
 
 def main():
@@ -79,8 +79,8 @@ def main():
                     os.chdir(workingpath)
 
                     field = sbname.split("_")[3]
-                    # config = sbname.split("_")[5]
-                    print(f"{sbname} {partype} {spwsel} {field}: ", end=" ")
+                    config = sbname.split("_")[5]
+                    print(f"{sbname} {partype} {spwsel} {field} {config}: ", end=" ")
                     if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
                         tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
                     if not all(os.path.exists(x) for x in tcpars['vis']):
@@ -95,7 +95,7 @@ def main():
                     if temp_workdir:
 
                         imtype = tcpars['specmode']
-                        tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}'
+                        tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}_{config}_{mous}'
                         if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
                             os.mkdir(tempdir_name)
                         # copy & move files around first
@@ -229,10 +229,10 @@ def main():
                         # if runonce:
                         #    sys.exit(0)
                     elif all(exists.values()):
-                        #print(f"Found all files exist for {mous}")
+                        # print(f"Found all files exist for {mous}")
                         pass  # this is the "OK" state
                     elif all(exists_wild.values()):
-                        #print(f"Found all files exist for {mous} but from a different stage")
+                        # print(f"Found all files exist for {mous} but from a different stage")
                         pass  # this is the "OK" state
                     else:
                         if any(exists.values()):
