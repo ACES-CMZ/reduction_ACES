@@ -23,9 +23,9 @@ cd /orange/adamginsburg/ACES/rawdata
 echo "test import"
 /orange/adamginsburg/miniconda3/envs/python39/bin/python -c "import zipfile" || exit 1
 echo "Retrieve data"
-aces_retrieve_data keflavich True True || exit 1
+/orange/adamginsburg/miniconda3/envs/python39/bin/aces_retrieve_data keflavich True True || exit 1
 echo "Retrieve weblogs"
-aces_retrieve_weblogs keflavich || exit 1
+/orange/adamginsburg/miniconda3/envs/python39/bin/aces_retrieve_weblogs keflavich || exit 1
 
 
 export WEBLOG_DIR=/orange/adamginsburg/web/secure/ACES/weblogs/
