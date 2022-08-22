@@ -47,13 +47,13 @@ def continuum(header):
     make_mosaic(hdus, name='continuum_commonbeam_circular',
                 commonbeam='circular',
                 weights=wthdus,
-                cb_unit='Jy/beam', array='12m', basepath=basepath,
+                cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum', weights=wthdus,
-                cb_unit='Jy/beam', array='12m', basepath=basepath,
+                cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
                 )
@@ -73,13 +73,13 @@ def reimaged(header):
     cb = make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
                      commonbeam='circular',
                      weights=wthdus,
-                     cb_unit='Jy/beam', array='12m', basepath=basepath,
+                     cbar_unit='Jy/beam', array='12m', basepath=basepath,
                      norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                      target_header=header,
                      )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
-                cb_unit='Jy/beam', array='12m', basepath=basepath,
+                cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
                 )
@@ -97,7 +97,7 @@ def residuals(header):
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='continuum_residual_reimaged', weights=wthdus,
-                cb_unit='Jy/beam', array='12m', basepath=basepath,
+                cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.001),
                 target_header=header,
                 )
@@ -107,7 +107,7 @@ def residuals(header):
                 commonbeam=cb,
                 beams=beams,
                 weights=wthdus,
-                cb_unit='Jy/beam', array='12m', basepath=basepath,
+                cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.001),
                 target_header=header,
                 )
@@ -120,14 +120,14 @@ def hcop(header):
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw29.mfs.I.pb.fits.gz')
     wthdus = [read_as_2d(fn, minval=0.3) for fn in weightfiles]
     print(flush=True)
-    make_mosaic(hdus, name='hcop_max', cb_unit='K', array='12m', basepath=basepath,
+    make_mosaic(hdus, name='hcop_max', cbar_unit='K', array='12m', basepath=basepath,
                 weights=wthdus,
                 norm_kwargs=dict(max_cut=20, min_cut=-0.5, ),
                 target_header=header,
                 )
     hdus = [get_m0(fn).hdu for fn in filelist]
     print(flush=True)
-    make_mosaic(hdus, name='hcop_m0', cb_unit='K km/s', array='12m', basepath=basepath,
+    make_mosaic(hdus, name='hcop_m0', cbar_unit='K km/s', array='12m', basepath=basepath,
                 weights=wthdus,
                 target_header=header,
                 norm_kwargs=dict(max_cut=100, min_cut=-10,))
@@ -146,7 +146,7 @@ def hnco(header):
                 norm_kwargs=dict(max_cut=10, min_cut=-0.5, ))
     hdus = [get_m0(fn).hdu for fn in filelist]
     print(flush=True)
-    make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='12m',
+    make_mosaic(hdus, name='hnco_m0', cbar_unit='K km/s', array='12m',
                 basepath=basepath, weights=wthdus, target_header=header,
                 norm_kwargs=dict(max_cut=100, min_cut=-10, ))
 
@@ -157,10 +157,10 @@ def h40a(header):
     hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')
     wthdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in weightfiles]
-    make_mosaic(hdus, name='h40a_max', cb_unit='K',
+    make_mosaic(hdus, name='h40a_max', cbar_unit='K',
                 norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'),
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
     hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
-    make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s',
+    make_mosaic(hdus, name='h40a_m0', cbar_unit='K km/s',
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
