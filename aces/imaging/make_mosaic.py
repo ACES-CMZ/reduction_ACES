@@ -97,7 +97,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         else:
             cb = beams.common_beam()
 
-        if commonbeam == 'circular':
+        if isinstance(commonbeam, str) and commonbeam == 'circular':
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
             cb = circbeam
 
