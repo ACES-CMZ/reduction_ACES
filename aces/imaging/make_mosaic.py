@@ -135,9 +135,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     fig = pl.figure(figsize=(20, 7))
     ax = fig.add_subplot(111, projection=target_wcs)
     im = ax.imshow(prjarr, norm=visualization.simple_norm(prjarr, **norm_kwargs), zorder=front, cmap='gray')
-    cb = pl.colorbar(mappable=im)
-    if cb_unit is not None:
-        cb.set_label(cb_unit)
+    cbar = pl.colorbar(mappable=im)
+    if cbar_unit is not None:
+        cbar.set_label(cbar_unit)
     ax.coords[0].set_axislabel('Galactic Longitude')
     ax.coords[1].set_axislabel('Galactic Latitude')
     ax.coords[0].set_major_formatter('d.dd')

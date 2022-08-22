@@ -253,3 +253,5 @@ def main():
 
     if runonce:
         print("Completed re-imaging run with RUNONCE enabled, but didn't run at all.")
+
+    globals().update(locals())
