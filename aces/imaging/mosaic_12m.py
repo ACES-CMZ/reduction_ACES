@@ -101,7 +101,7 @@ def residuals(header):
     print(flush=True)
     make_mosaic(hdus, name='continuum_residual_reimaged', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.001),
+                norm_kwargs=dict(stretch='linear', max_cut=0.001, min_cut=-0.001),
                 target_header=header,
                 )
     print(flush=True)
