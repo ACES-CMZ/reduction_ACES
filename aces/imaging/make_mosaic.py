@@ -15,7 +15,7 @@ from astropy.utils.console import ProgressBar
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 import warnings
-import multiprocessing
+import pathos
 from spectral_cube.utils import SpectralCubeWarning
 warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
                         append=True)
@@ -119,7 +119,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             pb.update()
             return rslt
 
-        with multiprocessing.Pool() as pool:
+        with pathos.Pool() as pool:
             twod_hdus = pool.map(reprj, prjs)
 
     log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")

@@ -2258,6 +2258,13 @@
     }
   },
   "Sgr_A_st_aj_03_TM1": {
+    "tclean_cont_pars": {
+      "aggregate": {
+        "niter": 20000000,
+        "threshold": "0.00060Jy",
+        "cyclefactor": 1.5
+      }
+    },
     "tclean_cube_pars": {
       "spw33": {
         "vis": [
