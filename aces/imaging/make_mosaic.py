@@ -5,6 +5,7 @@ import spectral_cube
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 from spectral_cube import SpectralCube
 from spectral_cube.wcs_utils import strip_wcs_from_header
+from spectral_cube.utils import NoBeamError
 from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
