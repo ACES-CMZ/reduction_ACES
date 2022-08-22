@@ -35,6 +35,7 @@ def main():
     hnco(header)
     h40a(header)
 
+
 def continuum(header):
     log.info("12m continuum")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.tt0.pbcor.fits')
@@ -58,6 +59,7 @@ def continuum(header):
                 target_header=header,
                 )
 
+
 def reimaged(header):
     log.info("12m continuum reimaged")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I.iter1.image.tt0.pbcor')
@@ -70,7 +72,7 @@ def reimaged(header):
         print(f"Missing {missing}")
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
-    cb = make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
+    make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
                      commonbeam='circular',
                      weights=wthdus,
                      cbar_unit='Jy/beam', array='12m', basepath=basepath,
@@ -83,6 +85,7 @@ def reimaged(header):
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
                 )
+
 
 def residuals(header):
     log.info("12m continuum residuals")
@@ -112,6 +115,7 @@ def residuals(header):
                 target_header=header,
                 )
 
+
 def hcop(header):
     log.info("12m HCO+")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw29.cube.I.pbcor.fits')
@@ -132,6 +136,7 @@ def hcop(header):
                 target_header=header,
                 norm_kwargs=dict(max_cut=100, min_cut=-10,))
 
+
 def hnco(header):
     log.info("12m HNCO")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw31.cube.I.pbcor.fits')
@@ -149,6 +154,7 @@ def hnco(header):
     make_mosaic(hdus, name='hnco_m0', cbar_unit='K km/s', array='12m',
                 basepath=basepath, weights=wthdus, target_header=header,
                 norm_kwargs=dict(max_cut=100, min_cut=-10, ))
+
 
 def h40a(header):
     log.info("12m H40a")

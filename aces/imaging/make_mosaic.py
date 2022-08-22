@@ -104,7 +104,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         log.info("Loading HDUs and projecting to common beam")
         prjs = [spectral_cube.Projection.from_hdu(hdul) for hdul in
                 ProgressBar(twod_hdus)]
-        for prj,bm in (zip(ProgressBar(prjs), beams)):
+        for prj, bm in (zip(ProgressBar(prjs), beams)):
             try:
                 prj.beam
             except NoBeamError:
