@@ -77,7 +77,8 @@ def reimaged(header):
                 array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01,
                                  min_cut=-0.001),
-                target_header=header,)
+                target_header=header,
+                )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
