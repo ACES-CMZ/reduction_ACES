@@ -23,7 +23,7 @@ export LOGFILENAME="${LOG_DIR}/casa_log_mpi_pipeline_${SLURM_JOB_ID}_$(date +%Y-
 WORK_DIR='/orange/adamginsburg/ACES/rawdata/2021.1.00172.L'
 cd ${WORK_DIR}
 # this directory should contain a folder pipeline_scripts/ if any overloaded pipeline scripts are expected
-export ACES_ROOTDIR="/orange/adamginsburg/ACES/reduction_ACES/"
+export ACES_ROOTDIR="/orange/adamginsburg/ACES/"
 
 # 6.2.1 is the 2021 release version, but it contains the readBlock error
 CASAVERSION=casa-6.2.1-7-pipeline-2021.2.0.128
@@ -84,7 +84,7 @@ cd -
 
 echo "Hacking plotms"
 echo "plotms = /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py"
-python3 ${ACES_ROOTDIR}/aces/hipergator_scripts/hack_plotms.py  /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py
+python3 ${ACES_ROOTDIR}/reduction_ACES/aces/hipergator_scripts/hack_plotms.py  /orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/private/plotmstool.py
 hacksuccess=$?
 if [ $hacksuccess -eq 99 ]; then
     echo "plotms file was corrupted"
@@ -98,7 +98,7 @@ echo "Hacked plotms"
 echo "CASA version is $CASAVERSION"
 
 
-RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 ${ACES_ROOTDIR}/aces/retrieval_scripts/run_pipeline.py > $SLURM_TMPDIR/scriptlist
+RUNSCRIPTS=False /orange/adamginsburg/casa/${CASAVERSION}/bin/python3 ${ACES_ROOTDIR}/reduction_ACES/aces/retrieval_scripts/run_pipeline.py > $SLURM_TMPDIR/scriptlist
 
 echo "Script List"
 cat $SLURM_TMPDIR/scriptlist
