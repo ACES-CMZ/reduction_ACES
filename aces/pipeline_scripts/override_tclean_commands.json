@@ -1,4 +1,16 @@
 {
+  "Sgr_A_st_ai_03_7M": {
+    "tclean_cube_pars": {
+      "spw20": {
+        "imagename": "uid___A001_X1590_X30a8.s3_0.Sgr_A_star_sci.spw20.cube.I.iter1.reclean",
+        "cyclefactor": 1.5
+      },
+      "spw24": {
+        "imagename": "uid___A001_X1590_X30a8.s3_0.Sgr_A_star_sci.spw24.cube.I.iter1.reclean",
+        "cyclefactor": 1.5
+      }
+    }
+  },
   "Sgr_A_st_c_03_7M": {
     "tclean_cont_pars": {
       "aggregate": {
