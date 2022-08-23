@@ -80,7 +80,10 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 target_header=None,
                 commonbeam=False,
                 beams=None,
-                rest_value=None, cbar_unit=None, array='7m', basepath='./'):
+                rest_value=None,
+                cbar_unit=None,
+                array='7m',
+                basepath='./'):
 
     if target_header is None:
         log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
