@@ -23,7 +23,7 @@ warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
 
 def read_as_2d(fn, minval=None):
     print(".", end='', flush=True)
-    if fn.endswith('fits'):
+    if fn.endswith('fits') or fn.endswith('.fits.gz'):
         fh = fits.open(fn)
         ww = wcs.WCS(fh[0].header).celestial
 

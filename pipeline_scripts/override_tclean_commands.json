@@ -2426,7 +2426,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "width": "488246Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
