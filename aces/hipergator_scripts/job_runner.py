@@ -125,6 +125,17 @@ def main():
                         # skip MFS individual spws
                         log.debug(f"imtype is {imtype} and spw is {spw}.  SKIPPING because it's an MFS single-window")
                         continue
+
+                    # check syntax
+                    flake = subprocess.run(['/orange/adamginsburg/miniconda3/envs/python39/bin/flake8',
+                                            '--select=E999',
+                                            scriptname],
+                                           check=True)
+                    if flake.returncode == 0:
+                        log.debug(flake.stdout)
+                    else:
+                        raise SyntaxError(flake.stdout)
+
                     os.environ['SCRIPTNAME'] = scriptname
 
                     if imstatus['image'] and imstatus['pbcor']:
@@ -197,11 +208,11 @@ def main():
                     # to re-running
                     if '--dry-run' not in sys.argv:
                         if '--remove-failed' in sys.argv:
-                            #print(f"Removing files matching '{workdir}/{basename}.*'")
+                            # print(f"Removing files matching '{workdir}/{basename}.*'")
                             failed_files = glob.glob(f'{workdir}/{basename}.*')
                             if any('.image' in x for x in failed_files):
                                 print(f"Found a .image in the failed file list: {failed_files}.  Continuing.")
-                                #raise ValueError(f"Found a .image in the failed file list: {failed_files}")
+                                # raise ValueError(f"Found a .image in the failed file list: {failed_files}")
                             else:
                                 for ff in failed_files:
                                     print(f"Removing {ff}")

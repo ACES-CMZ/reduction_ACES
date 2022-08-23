@@ -36,6 +36,12 @@
   },
   "Sgr_A_st_ao_03_TM1": {
     "tclean_cube_pars": {
+      "spw33": {
+        "nchan": 3836,
+        "start": "97.6660537907GHz",
+        "width": "488244Hz",
+        "threshold": "0.01Jy"
+      },
       "spw35": {
         "imagename": "uid___A001_X15a0_X190.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1.reclean",
         "threshold": "0.01Jy",
@@ -180,16 +186,6 @@
         "calcpsf": false,
         "psfcutoff": 0.35,
         "parallel": true
-      }
-    }
-  },
-  "Sgr_A_st_ao_03_TM1": {
-    "tclean_cube_pars": {
-      "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
-        "threshold": "0.01Jy"
       }
     }
   },
@@ -2085,7 +2081,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "width": "488246Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -2270,6 +2266,13 @@
     }
   },
   "Sgr_A_st_aj_03_TM1": {
+    "tclean_cont_pars": {
+      "aggregate": {
+        "niter": 20000000,
+        "threshold": "0.00060Jy",
+        "cyclefactor": 1.5
+      }
+    },
     "tclean_cube_pars": {
       "spw33": {
         "vis": [
@@ -2438,7 +2441,7 @@
         "reffreq": "",
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "width": "488246Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],

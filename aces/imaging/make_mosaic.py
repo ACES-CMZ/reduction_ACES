@@ -5,6 +5,7 @@ import spectral_cube
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 from spectral_cube import SpectralCube
 from spectral_cube.wcs_utils import strip_wcs_from_header
+from spectral_cube.utils import NoBeamError
 from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
@@ -21,7 +22,7 @@ warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
 
 def read_as_2d(fn, minval=None):
     print(".", end='', flush=True)
-    if fn.endswith('fits'):
+    if fn.endswith('fits') or fn.endswith('.fits.gz'):
         fh = fits.open(fn)
         ww = wcs.WCS(fh[0].header).celestial
 
@@ -77,7 +78,11 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 weights=None,
                 target_header=None,
                 commonbeam=False,
-                rest_value=None, cb_unit=None, array='7m', basepath='./'):
+                beams=None,
+                rest_value=None,
+                cbar_unit=None,
+                array='7m',
+                basepath='./'):
 
     if target_header is None:
         log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
@@ -87,16 +92,37 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
     if commonbeam:
-        beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
-                                        for hdul in twod_hdus])
-        cb = beams.common_beam()
-        if commonbeam == 'circular':
+        if beams is None:
+            beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
+                                            for hdul in twod_hdus])
+        if isinstance(commonbeam, radio_beam.Beam):
+            cb = commonbeam
+        else:
+            cb = beams.common_beam()
+
+        if isinstance(commonbeam, str) and commonbeam == 'circular':
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
             cb = circbeam
 
+        log.info("Loading HDUs and projecting to common beam")
+        prjs = [spectral_cube.Projection.from_hdu(hdul) for hdul in
+                ProgressBar(twod_hdus)]
+        for prj, bm in (zip(ProgressBar(prjs), beams)):
+            try:
+                prj.beam
+            except NoBeamError:
+                prj.beam = bm
+
         log.info(f"Convolving HDUs to common beam {cb}\n")
-        twod_hdus = [spectral_cube.Projection.from_hdu(hdul).convolve_to(cb).hdu
-                     for hdul in ProgressBar(twod_hdus)]
+        pb = ProgressBar(len(prjs))
+
+        def reprj(prj):
+            rslt = prj.convolve_to(cb).hdu
+            pb.update()
+            return rslt
+
+        # parallelization of this failed
+        twod_hdus = [reprj(prj) for prj in prjs]
 
     log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
     # number of items to count in progress bar
@@ -104,8 +130,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     pb = ProgressBar(npb)
 
     def repr_function(*args, **kwargs):
+        rslt = reproject_interp(*args, **kwargs)
         pb.update()
-        return reproject_interp(*args, **kwargs)
+        return rslt
 
     prjarr, footprint = reproject_and_coadd(twod_hdus,
                                             target_wcs,
@@ -132,9 +159,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     fig = pl.figure(figsize=(20, 7))
     ax = fig.add_subplot(111, projection=target_wcs)
     im = ax.imshow(prjarr, norm=visualization.simple_norm(prjarr, **norm_kwargs), zorder=front, cmap='gray')
-    cb = pl.colorbar(mappable=im)
-    if cb_unit is not None:
-        cb.set_label(cb_unit)
+    cbar = pl.colorbar(mappable=im)
+    if cbar_unit is not None:
+        cbar.set_label(cbar_unit)
     ax.coords[0].set_axislabel('Galactic Longitude')
     ax.coords[1].set_axislabel('Galactic Latitude')
     ax.coords[0].set_major_formatter('d.dd')
@@ -200,3 +227,6 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                     zorder=fronter)
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')
+
+    if commonbeam:
+        return cb

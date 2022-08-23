@@ -62,17 +62,17 @@ pwd
 
 if [ ${mpi_ntasks} -gt 1 ]; then
     echo ${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
-    ${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
+    ${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')" || exit 1
 else 
     echo xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
-    xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
+    xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')" || exit 1
 fi
 
 # the following should not be necessary (it's actually totally redundant) but
 # mpicasa has been very severely failing yet reporting COMPLETED instead of
 # FAILED
-ppid="$!"
-wait $ppid
-exitcode=$?
-echo "pid=$ppid exitcode=$exitcode"
-exit $exitcode
+# ppid="$!"
+# wait $ppid
+# exitcode=$?
+# echo "pid=$ppid exitcode=$exitcode"
+# exit $exitcode

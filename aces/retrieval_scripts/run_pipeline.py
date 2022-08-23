@@ -47,7 +47,7 @@ def logprint(string, origin='almaimf_metadata',
 
 if os.getenv('ACES_ROOTDIR') is None:
     try:
-        from .. import conf
+        from aces import conf
         os.environ['ACES_ROOTDIR'] = conf.basepath
         # os.path.split(metadata_tools.__file__)[0]
     except ImportError:
