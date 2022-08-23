@@ -208,11 +208,11 @@ def main():
                     # to re-running
                     if '--dry-run' not in sys.argv:
                         if '--remove-failed' in sys.argv:
-                            #print(f"Removing files matching '{workdir}/{basename}.*'")
+                            # print(f"Removing files matching '{workdir}/{basename}.*'")
                             failed_files = glob.glob(f'{workdir}/{basename}.*')
                             if any('.image' in x for x in failed_files):
                                 print(f"Found a .image in the failed file list: {failed_files}.  Continuing.")
-                                #raise ValueError(f"Found a .image in the failed file list: {failed_files}")
+                                # raise ValueError(f"Found a .image in the failed file list: {failed_files}")
                             else:
                                 for ff in failed_files:
                                     print(f"Removing {ff}")
