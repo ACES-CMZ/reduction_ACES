@@ -4,14 +4,16 @@ This will create (or overwrite) existing tclean commands with label 'aggregate_h
 
 import json
 import os
+from astropy import log
 
 from aces.pipeline_scripts.merge_tclean_commands import commands
+from aces import conf
+rootdir = os.path.join(conf.basepath, "reduction_ACES")
 
 if __name__ == "__main__":
 
-    if os.getenv('ACES_ROOTDIR') is None:
-        raise ValueError("Specify ACES_ROOTDIR environment variable ")
-    else:
+    if os.getenv('ACES_ROOTDIR') is not None:
+        log.warn(f"Overridding default rootdir={rootdir} with rootdir={os.environ['ACES_ROOTDIR']}")
         rootdir = os.environ['ACES_ROOTDIR']
 
     with open(f"{rootdir}/aces/pipeline_scripts/default_tclean_commands.json", "r") as fh:
@@ -38,5 +40,5 @@ if __name__ == "__main__":
 
     assert len(override_commands) >= ncmds
 
-    with open(f"{rootdir}/pipeline_scripts/override_tclean_commands.json", "w") as fh:
+    with open(f"{rootdir}/aces/pipeline_scripts/override_tclean_commands.json", "w") as fh:
         json.dump(override_commands, fh, indent=2)
