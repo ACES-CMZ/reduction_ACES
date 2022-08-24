@@ -278,6 +278,7 @@ def imstats(fn, reg=None):
                 'bmaj': bm.major.to(u.arcsec).value,
                 'bmin': bm.minor.to(u.arcsec).value,
                 'bpa': bm.pa.value,
+                'beam_geomavg': (bm.major.to(u.arcsec).value * bm.minor.to(u.arcsec).value)**0.5,
                 'mad': mad,
                 'peak': peak,
                 'peak/mad': peak / mad,
@@ -485,7 +486,7 @@ def savestats(basepath=basepath,
 
     meta_keys = ['region', 'band', 'array', 'robust', 'suffix',
                  'pbcor', 'filename']
-    stats_keys = ['bmaj', 'bmin', 'bpa', 'peak', 'sum', 'fluxsum', 'sumgt3sig',
+    stats_keys = ['bmaj', 'bmin', 'bpa', 'beam_geomavg' 'peak', 'sum', 'fluxsum', 'sumgt3sig',
                   'sumgt5sig', 'mad', 'mad_sample', 'std_sample', 'peak/mad',
                   'psf_secondpeak', 'psf_secondpeak_radius',
                   'psf_secondpeak_sidelobefraction', 'cellsize',
