@@ -117,7 +117,7 @@ def main():
                         spwname = spw
                     scriptname = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}_03_{config}_{spwname}.py'
                     scriptname_glob = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}_03_{config}*_{spwname}.py'
-                    if (imtype == 'mfs' and spw == 'aggregate') or imtype == 'cube':
+                    if (imtype == 'mfs' and 'aggregate' in spw) or imtype == 'cube':
                         if not os.path.exists(scriptname):
                             if any(glob.glob(scriptname_glob)):
                                 scriptname = glob.glob(scriptname_glob)[0]

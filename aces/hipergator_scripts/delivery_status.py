@@ -82,10 +82,10 @@ def main():
             for suffix in (".image",):
                 # ".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
 
-                #globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
-                #fn = glob.glob(f'{dataroot}/{globblob}')
+                # globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
+                # fn = glob.glob(f'{dataroot}/{globblob}')
 
-                for spwn in sorted(spwlist[config] | ({'aggregate'} if clean != 'cube' else set()), key=lambda x: str(x)):
+                for spwn in sorted(spwlist[config] | ({'aggregate', 'aggregate_high'} if clean != 'cube' else set()), key=lambda x: str(x)):
                     # /orange/adamginsburg/ACES/rawdata/2021.1.00172.L/
                     # science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_Xae/calibrated/working/uid___A001_X15a0_Xae.s9_0.Sgr_A_star_sci.spw26.mfs.I.iter1.image
                     spw = spwn if isinstance(spwn, str) else f'spw{spwn}'
@@ -95,7 +95,7 @@ def main():
                     spwkey = spw
 
                     # aggregate continuum is named with the full list of spws
-                    if spw == 'aggregate':
+                    if 'aggregate' in spw:
                         spw = 'spw*'
                         # the name in the files is cont, not mfs, for aggregate
                         clean_ = 'cont'  # _not_ mfs
@@ -105,7 +105,7 @@ def main():
                     bn = f'{mous}.s*_0.Sgr_A_star_sci.{spw}.{clean_}.I'
                     workingpath = f'{fullpath}/calibrated/working/'
 
-                    tts = '.tt0' if spwkey == 'aggregate' else ''
+                    tts = '.tt0' if 'aggregate' in spwkey else ''
 
                     imageglob = f'{workingpath}/{bn}.iter1.image{tts}'
                     pbcorglob = f'{workingpath}/{bn}.iter1.image{tts}.pbcor'
@@ -151,7 +151,7 @@ def main():
             for spw, zz in yy.items():
                 for imtype, ww in zz.items():
                     rows = ww
-                    #cols[f'{config}.{spw}'].append(','.join([argtype for argtype, status in ww.items() if status is True]))
+                    # cols[f'{config}.{spw}'].append(','.join([argtype for argtype, status in ww.items() if status is True]))
                 cols[f'{config}.{spw}'] = rows
         rows = [[cn, ] + list(v.values()) for cn, v in cols.items()]
         tables[sbname] = Table(
