@@ -29,6 +29,10 @@ if __name__ == "__main__":
 
     for key in commands:
         if 'TM' in key:
+            if key not in override_commands:
+                override_commands[key] = {}
+            if 'tclean_cont_pars' not in override_commands[key]:
+                override_commands[key]['tclean_cont_pars'] = {}
             if 'aggregate_high' not in commands[key]['tclean_cont_pars']:
                 print(f"Adding {key}")
                 pars = commands[key]['tclean_cont_pars']['aggregate']
