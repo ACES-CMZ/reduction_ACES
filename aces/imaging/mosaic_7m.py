@@ -1,7 +1,7 @@
 import glob
 from astropy import units as u
 from astropy.io import fits
-from aces.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
+from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
 
 from aces import conf
 
