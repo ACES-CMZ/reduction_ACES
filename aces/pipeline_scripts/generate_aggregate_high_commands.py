@@ -28,6 +28,12 @@ if __name__ == "__main__":
                 print(f"Adding {key}")
                 pars = commands[key]['tclean_cont_pars']['aggregate']
                 pars['imagename'] = pars['imagename'].replace('25_27_29_31_33_35', '33_35')
+
+                # split all the spw selections such that only 33 and 35 are kept
+                spwsel = pars['spw']
+                spwsel = ["33:" + x.split("33:")[-1] for x in spwsel]
+                pars['spw'] = spwsel
+
                 commands[key]['tclean_cont_pars']['aggregate_high'] = pars
 
     assert len(override_commands) >= ncmds
