@@ -72,6 +72,10 @@ def main():
     for mous, spwpars in parameters.items():
         mousname = mous.split('.')[1]
 
+        if mousname not in mousmap_:
+            log.error(f"mousname {mousname}  (from {mous}) is not in the mousmap.")
+            continue
+
         sbname = mousmap_[mousname]
         field = sbname.split("_")[3]
         config = sbname.split("_")[5]

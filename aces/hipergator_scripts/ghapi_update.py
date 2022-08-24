@@ -55,7 +55,10 @@ def main():
     alma = Alma()
     alma.archive_url = 'https://almascience.eso.org'
     alma.dataarchive_url = 'https://almascience.eso.org'
-    results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
+    try:
+        results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
+    except TypeError:
+        results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None)
     results.add_index('obs_id')
 
     # .data required b/c making it an index breaks normal usage?
