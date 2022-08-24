@@ -109,7 +109,7 @@ def main():
                         #          "    print(f'MS file already copied: {ex}.  Proceeding.')"]
                         #         )
 
-                        if spwsel == 'aggregate':
+                        if 'aggregate' in spwsel:
                             def rename(x):
                                 return os.path.join(tempdir_name,
                                                     os.path.basename(x).replace('.ms',

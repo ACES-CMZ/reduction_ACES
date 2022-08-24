@@ -124,7 +124,7 @@ def main():
                             else:
                                 print(f"ERROR: script {scriptname} does not exist!  This may indicate that `write_tclean_scripts` has not been run or the pipeline hasn't finished.")
                                 if mousname in 'member.uid___A001_X15b4_X3d':
-                                    raise ValueError("The script definited _does_ exist.")
+                                    raise ValueError("The script definitely _does_ exist.")
                                 continue
                         else:
                             # all is good

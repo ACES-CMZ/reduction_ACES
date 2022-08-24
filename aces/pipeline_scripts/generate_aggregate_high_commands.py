@@ -8,7 +8,6 @@ import json
 import os
 from astropy import log
 
-from aces.pipeline_scripts.merge_tclean_commands import commands
 from aces import conf
 rootdir = os.path.join(conf.basepath, "reduction_ACES")
 
@@ -18,6 +17,9 @@ if os.getenv('ACES_ROOTDIR') is not None:
 
 
 def main():
+
+    with open(f"{rootdir}/aces/pipeline_scripts/default_tclean_commands.json", "r") as fh:
+        commands = json.load(fh)
 
     aggregate_high_file = f"{rootdir}/aces/pipeline_scripts/aggregate_high_tclean_commands.json"
     if os.path.exists(aggregate_high_file):
