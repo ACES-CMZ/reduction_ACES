@@ -19,7 +19,8 @@ if __name__ == "__main__":
     with open(f"{rootdir}/aces/pipeline_scripts/default_tclean_commands.json", "r") as fh:
         default_commands = json.load(fh)
 
-    with open(f"{rootdir}/aces/pipeline_scripts/override_tclean_commands.json", "r") as fh:
+    override_file = f"{rootdir}/aces/pipeline_scripts/override_tclean_commands.json"
+    with open(override_file, "r") as fh:
         override_commands = json.load(fh)
 
     ncmds = (len(override_commands))
@@ -38,9 +39,10 @@ if __name__ == "__main__":
                 spwsel = ["33:" + x.split("33:")[-1] for x in spwsel]
                 pars['spw'] = spwsel
 
-                commands[key]['tclean_cont_pars']['aggregate_high'] = pars
+                override_commands[key]['tclean_cont_pars']['aggregate_high'] = pars
 
     assert len(override_commands) >= ncmds
 
-    with open(f"{rootdir}/aces/pipeline_scripts/override_tclean_commands.json", "w") as fh:
+    log.debug(f"Overwriting to {override_file}")
+    with open(override_file, "w") as fh:
         json.dump(override_commands, fh, indent=2)
