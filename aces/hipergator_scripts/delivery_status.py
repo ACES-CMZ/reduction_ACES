@@ -31,7 +31,7 @@ def wildexists(x):
 
 def main():
     datapath = dataroot = f'{basepath}/data/2021.1.00172.L'
-    #workpath = '/blue/adamginsburg/adamginsburg/ACES/workdir/'
+    # workpath = '/blue/adamginsburg/adamginsburg/ACES/workdir/'
 
     looplist = glob.glob(f"{datapath}/sci*/group*/member*/")
     assert len(looplist) > 0

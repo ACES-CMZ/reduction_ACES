@@ -81,6 +81,10 @@ def main():
 
         log.debug(f"mous={mous} field={field} sbname={sbname} config={config}")
 
+        if mousname not in imaging_status:
+            log.warn(f"WARNING: MOUS {mousname} aka {mous} (field={field}, sbname={sbname}, config={config}) has no delivery status; it may be incomplete")
+            continue
+
         for config_ in imaging_status[mousname]:
             log.debug(f"mous={mous} field={field} sbname={sbname} config={config} config_={config_}")
 

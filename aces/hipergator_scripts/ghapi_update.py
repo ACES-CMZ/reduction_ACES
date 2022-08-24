@@ -296,7 +296,7 @@ def main():
                     issuebody = issuebody.replace("## Product Links:\n\n\n\n", productlinks)
                 else:
                     pass
-                    #print("Product link text was found in issue body.")
+                    # print("Product link text was found in issue body.")
                     # print(issue.body.split("## Product Links:")[-1])
 
             if reproc_product_link_text:
@@ -370,7 +370,7 @@ def main():
 
     columns = api.projects.list_columns(projects[0].id)  # api(projects[0].columns_url)
     coldict = {column.name: column for column in columns}
-    #cards = [api(col.cards_url) for col in columns]
+    # cards = [api(col.cards_url) for col in columns]
     cards = [x for col in columns for x in all_flat(api.projects.list_cards, column_id=col.id)]
     # need flattened API for this
     carddict = {col.name: [x for x in all_flat(api.projects.list_cards, column_id=col.id)] for col in columns}
