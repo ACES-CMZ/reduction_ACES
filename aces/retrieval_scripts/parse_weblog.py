@@ -58,7 +58,7 @@ def get_human_readable_name(weblog, mapping=None):
     print("Reading weblog {0}".format(weblog))
     for directory, dirnames, filenames in os.walk(weblog):
         if 't2-1_details.html' in filenames:
-            #print("Found {0}:{1}".format(directory, "t2-1_details.html"))
+            # print("Found {0}:{1}".format(directory, "t2-1_details.html"))
             with open(os.path.join(directory, 't2-1_details.html')) as fh:
                 txt = fh.read()
 
@@ -67,7 +67,7 @@ def get_human_readable_name(weblog, mapping=None):
 
             array_name = ('7MorTP' if max_baseline < 100 * u.m else 'TM2'
                           if max_baseline < 1000 * u.m else 'TM1')
-            #print("array_name = {0}".format(array_name))
+            # print("array_name = {0}".format(array_name))
             break
 
     try:

@@ -18,10 +18,10 @@ os.chdir(basepath)
 
 datatable = {}
 
-spwlist = {'12M': {25, 27, 29, 31, 33, 35, },
-           'TM1': {25, 27, 29, 31, 33, 35, },
-           '7M': {16, 18, 20, 22, 24, 26},
-           'TP': {16, 18, 20, 22, 24, 26},
+spwlist = {'12M': [25, 27, 29, 31, 33, 35],
+           'TM1': [25, 27, 29, 31, 33, 35],
+           '7M': [16, 18, 20, 22, 24, 26],
+           'TP': [16, 18, 20, 22, 24, 26],
            }
 
 
@@ -85,7 +85,12 @@ def main():
                 # globblob = f'{fullpath}/calibrated/working/*{clean}*.iter1{suffix}'
                 # fn = glob.glob(f'{dataroot}/{globblob}')
 
-                for spwn in sorted(spwlist[config] | ({'aggregate', 'aggregate_high'} if clean != 'cube' else set()), key=lambda x: str(x)):
+                if clean == 'cube':
+                    spwlist_ = spwlist[config]
+                else:
+                    spwlist_ = ['aggregate', 'aggregate_high']
+
+                for spwn in sorted(spwlist_, key=lambda x: str(x)):
                     # /orange/adamginsburg/ACES/rawdata/2021.1.00172.L/
                     # science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_Xae/calibrated/working/uid___A001_X15a0_Xae.s9_0.Sgr_A_star_sci.spw26.mfs.I.iter1.image
                     spw = spwn if isinstance(spwn, str) else f'spw{spwn}'
@@ -95,8 +100,12 @@ def main():
                     spwkey = spw
 
                     # aggregate continuum is named with the full list of spws
-                    if 'aggregate' in spw:
-                        spw = 'spw*'
+                    if spw == 'aggregate':
+                        spw = "spw"+"_".join(str(x) for x in spwlist[config])
+                        # the name in the files is cont, not mfs, for aggregate
+                        clean_ = 'cont'  # _not_ mfs
+                    elif spw == 'aggregate_high':
+                        spw = "spw"+"_".join(str(x) for x in spwlist[config][-2:])
                         # the name in the files is cont, not mfs, for aggregate
                         clean_ = 'cont'  # _not_ mfs
                     else:
