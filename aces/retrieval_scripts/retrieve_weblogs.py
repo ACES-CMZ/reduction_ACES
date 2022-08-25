@@ -41,7 +41,7 @@ def main():
     print("Found {0} new files out of {1}".format(len(mouses_filtered), len(mouses)))
     if len(mouses_filtered) > 0:
 
-        #files = alma.stage_data(mouses_filtered)
+        # files = alma.stage_data(mouses_filtered)
         files = alma.get_data_info(mouses_filtered, expand_tarfiles=True)
 
         print(f"Found {len(files)} files using get_data_info")
@@ -72,7 +72,7 @@ def main():
         if not os.path.exists('2021.1.00172.L/weblogs'):
             os.mkdir('2021.1.00172.L/weblogs')
 
-        #weblogs = weblogs_band3+weblogs_band6
+        # weblogs = weblogs_band3+weblogs_band6
         for logfile in weblog_tarballs:
             print(logfile)
             with tarfile.open(logfile) as tf:

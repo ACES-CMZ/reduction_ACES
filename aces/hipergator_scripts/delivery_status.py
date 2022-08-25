@@ -101,11 +101,11 @@ def main():
 
                     # aggregate continuum is named with the full list of spws
                     if spw == 'aggregate':
-                        spw = "spw"+"_".join(str(x) for x in spwlist[config])
+                        spw = "spw" + "_".join(str(x) for x in spwlist[config])
                         # the name in the files is cont, not mfs, for aggregate
                         clean_ = 'cont'  # _not_ mfs
                     elif spw == 'aggregate_high':
-                        spw = "spw"+"_".join(str(x) for x in spwlist[config][-2:])
+                        spw = "spw" + "_".join(str(x) for x in spwlist[config][-2:])
                         # the name in the files is cont, not mfs, for aggregate
                         clean_ = 'cont'  # _not_ mfs
                     else:

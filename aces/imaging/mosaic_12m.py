@@ -4,6 +4,7 @@ from astropy import units as u
 from astropy.io import fits
 from astropy import log
 from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
+from multiprocessing import Process
 import numpy as np
 
 from aces import conf
@@ -28,8 +29,27 @@ def main():
 
     header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
 
+    processes = []
+    for func in (residuals, reimaged, reimaged_high, continuum, hcop, hnco,
+                 h40a):
+        print(f"Starting function {func}")
+        proc = Process(target=func, args=(header,))
+        proc.start()
+        processes.append(proc)
+
+    for proc in processes:
+        proc.join()
+
+
+def main_():
+
+    np.seterr('ignore')
+
+    header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
+
     residuals(header)
     reimaged(header)
+    reimaged_high(header)
     continuum(header)
     hcop(header)
     hnco(header)
@@ -81,6 +101,33 @@ def reimaged(header):
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
+                cbar_unit='Jy/beam', array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                target_header=header,
+                )
+
+
+def reimaged_high(header):
+    log.info("12m continuum reimaged")
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*cont.I.iter1.image.tt0.pbcor')
+    hdus = [read_as_2d(fn) for fn in filelist]
+    print(flush=True)
+    weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
+    weightfiles_ = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*I.iter1.pb.tt0')
+    assert len(weightfiles) == len(filelist)
+    for missing in set(weightfiles_) - set(weightfiles):
+        print(f"Missing {missing}")
+    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+    print(flush=True)
+    make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged_spw33_35',
+                commonbeam='circular', weights=wthdus, cbar_unit='Jy/beam',
+                array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01,
+                                 min_cut=-0.001),
+                target_header=header,
+                )
+    print(flush=True)
+    make_mosaic(hdus, name='continuum_reimaged_spw33_35', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,

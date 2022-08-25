@@ -11,6 +11,7 @@ from . import imaging
 
 from astropy import config as _config
 
+
 class Conf(_config.ConfigNamespace):
     """
     Configuration parameters for `aces`.

@@ -220,7 +220,7 @@ def get_calibrator_fluxes(weblog):
                 date = date_map[uid]
 
                 freq = float(freqstr.split()[0])
-                #freqres = float(freqstr.split()[2])
+                # freqres = float(freqstr.split()[2])
 
                 data[(source, uid, spw, freq, date)] = {'measured': flux,
                                                         'error': eflux,
