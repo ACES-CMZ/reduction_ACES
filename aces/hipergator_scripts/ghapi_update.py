@@ -7,11 +7,11 @@ from astroquery.alma import Alma
 import re
 import glob
 
-from .. import conf
+from aces import conf
 basepath = conf.basepath
 
 
-def main():
+def main(dryrun=False):
     dryrun = os.getenv("DRYRUN") or (dryrun if "dryrun" in locals() else False)  # noqa
     print(f"Dryrun={dryrun}")
 
@@ -28,6 +28,8 @@ def main():
     # issues = [x for page in paged_issues for x in page]
     issues = all_flat(api.issues.list_for_repo, state='all')
     assert len(issues) > 30
+    # filter out pull requests
+    issues = [x for x in issues if not hasattr(x, 'pull_request')]
 
     # example: uid://A001/X15a0/X17a
     uid_re = re.compile("uid://A[0-9]*/X[a-z0-9]*/X[a-z0-9]*")
@@ -59,10 +61,10 @@ def main():
         results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
     except TypeError:
         results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None)
-    results.add_index('obs_id')
+    results.add_index('member_ous_uid')
 
     # .data required b/c making it an index breaks normal usage?
-    unique_oids = np.unique(results['obs_id'].data)
+    unique_oids = np.unique(results['member_ous_uid'].data)
     unique_sbs = np.unique(results['schedblock_name'])
     # remember that .unique sorts the data so you can't zip these together!
 
@@ -105,7 +107,7 @@ def main():
 
         need_update = []  # empty list = False
         matches = results.loc[new_oid]
-        new_uid = matches['obs_id'][0]
+        new_uid = matches['member_ous_uid'][0]
         delivered = '3000' not in matches['obs_release_date'][0]
 
         uuid = new_oid.replace("/", "_").replace(":", "_")
@@ -437,3 +439,5 @@ def main():
                                       },
                                      headers={"Accept": "application/vnd.github.v3+json"}
                                 )
+
+    globals().update(locals())
