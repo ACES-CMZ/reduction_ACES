@@ -44,7 +44,8 @@ def main():
     if os.getenv('TEMPORARY_WORKING_DIRECTORY'):
         temp_workdir = os.getenv('TEMPORARY_WORKING_DIRECTORY')
     else:
-        temp_workdir = False
+        temp_workdir = "/blue/adamginsburg/adamginsburg/ACES/workdir"
+        # temp_workdir = False
 
     print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))} SCRIPTLIST={scriptlist} TEMP_WORKDIR={temp_workdir}")
 
