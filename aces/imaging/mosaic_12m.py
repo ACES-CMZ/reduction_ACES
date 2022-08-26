@@ -40,6 +40,9 @@ def main():
     for proc in processes:
         proc.join()
 
+    # do this _after_
+    all_lines(header)
+
 
 def main_():
 
@@ -54,6 +57,7 @@ def main_():
     hcop(header)
     hnco(header)
     h40a(header)
+    all_lines(header)
 
 
 def continuum(header):
@@ -217,3 +221,31 @@ def h40a(header):
     make_mosaic(hdus, name='h40a_m0', cbar_unit='K km/s',
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
+
+
+def all_lines(header):
+
+    from astropy.table import Table
+
+    tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/linelist.csv')
+
+    for row in tbl:
+        spwn = row['12m SPW']
+        line = row['Line'].replace(" ", "_").replace("(", "_").replace(")", "_")
+        restf = row['Rest (GHz)'] * u.GHz
+
+        log.info(f"12m {line}")
+
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spwn}.cube.I.iter1.image.pbcor')
+        print(len(filelist))
+        assert len(filelist) > 0
+        weightfiles = [fn.replace("image.pbcor", "pb") for fn in filelist]
+
+        hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf).hdu for fn in filelist]
+        print(flush=True)
+        wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, rest_value=restf).hdu for fn in weightfiles]
+        print(flush=True)
+
+        make_mosaic(hdus, name='{line}_max', cbar_unit='K',
+                    norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'),
+                    array='12m', basepath=basepath, weights=wthdus, target_header=header)
