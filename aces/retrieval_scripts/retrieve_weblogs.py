@@ -23,7 +23,7 @@ def main():
     alma.dataarchive_url = 'https://almascience.eso.org'
 
     alma.login(username)
-    print(f"Logged in as {username}.  Performing query.", flush=True)
+    print(f"Logged in as {username}.  Performing weblog query.", flush=True)
 
     results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None)
 
@@ -33,7 +33,7 @@ def main():
     results = results[ok_release_dates]
 
     existing_tarballs = glob.glob("2021.1.00172.L/weblog_tarballs/*weblog.tgz")
-    mouses = results['obs_id']
+    mouses = results['member_ous_uid']
     mouses_filtered = [x for x in mouses
                        if not any([x[6:].replace("/", "_") in y
                                    for y in existing_tarballs])]

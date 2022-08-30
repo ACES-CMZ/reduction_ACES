@@ -39,10 +39,10 @@ echo "Update github"
 
 echo "Make 7m mosaic"
 /orange/adamginsburg/miniconda3/envs/python39/bin/aces_mosaic_7m || exit 1
-echo "Make 12m mosaic"
-/orange/adamginsburg/miniconda3/envs/python39/bin/aces_mosaic_12m || exit 1
 echo "Make TP mosaic"
 /orange/adamginsburg/miniconda3/envs/python39/bin/aces_mosaic_TP || exit 1
+echo "Make 12m mosaic"
+/orange/adamginsburg/miniconda3/envs/python39/bin/aces_mosaic_12m || exit 1
 
 # technically shouldn't need to be re-run, but as I add new mosaics, it will
 # (but this causes a 'failed' error)
