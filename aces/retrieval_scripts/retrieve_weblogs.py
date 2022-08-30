@@ -7,6 +7,10 @@ import os
 import six
 import sys
 
+from aces import conf
+
+basepath = conf.basepath
+
 
 def main():
     if len(sys.argv) > 1:
@@ -32,7 +36,7 @@ def main():
     ok_release_dates = np.array([int(x[0]) < 3 for x in release_dates])
     results = results[ok_release_dates]
 
-    existing_tarballs = glob.glob("2021.1.00172.L/weblog_tarballs/*weblog.tgz")
+    existing_tarballs = glob.glob(f"{basepath}/data/2021.1.00172.L/weblog_tarballs/*weblog.tgz")
     mouses = results['member_ous_uid']
     mouses_filtered = [x for x in mouses
                        if not any([x[6:].replace("/", "_") in y
@@ -65,21 +69,21 @@ def main():
 
         weblog_tarballs = alma.download_files(weblog_urls_to_download)
 
-        if not os.path.exists('2021.1.00172.L'):
-            os.mkdir('2021.1.00172.L')
-        if not os.path.exists('2021.1.00172.L/weblog_tarballs'):
-            os.mkdir('2021.1.00172.L/weblog_tarballs')
-        if not os.path.exists('2021.1.00172.L/weblogs'):
-            os.mkdir('2021.1.00172.L/weblogs')
+        if not os.path.exists(f'{basepath}/data/2021.1.00172.L'):
+            os.mkdir(f'{basepath}/data/2021.1.00172.L')
+        if not os.path.exists(f'{basepath}/data/2021.1.00172.L/weblog_tarballs'):
+            os.mkdir(f'{basepath}/data/2021.1.00172.L/weblog_tarballs')
+        if not os.path.exists(f'{basepath}/data/2021.1.00172.L/weblogs'):
+            os.mkdir(f'{basepath}/data/2021.1.00172.L/weblogs')
 
         # weblogs = weblogs_band3+weblogs_band6
         for logfile in weblog_tarballs:
             print(logfile)
             with tarfile.open(logfile) as tf:
-                tf.extractall('2021.1.00172.L/weblogs')
+                tf.extractall(f'{basepath}/data/2021.1.00172.L/weblogs')
 
         for dirpath, dirnames, filenames in os.walk('.'):
             for fn in filenames:
                 if "weblog.tgz" in fn:
                     shutil.move(os.path.join(dirpath, fn),
-                                os.path.join('2021.1.00172.L/weblog_tarballs', fn))
+                                os.path.join(f'{basepath}/data/2021.1.00172.L/weblog_tarballs', fn))
