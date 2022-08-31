@@ -123,6 +123,7 @@ def main():
                                             split(vis='{vis}',
                                                 outputvis=outputvis,
                                                 field='Sgr_A_star',
+                                                spw='{spw_kwd}',
                                                 width=8)
                                             if not os.path.exists(outputvis):
                                                 raise ValueError("Did not split")
@@ -132,8 +133,9 @@ def main():
                                                 outputvis=outputvis,
                                                 field='Sgr_A_star',
                                                 datacolumn='data',
+                                                spw='{spw_kwd}',
                                                 width=8)
-                                        """) for vis in tcpars['vis']]
+                                        """) for vis, spw_kwd in zip(tcpars['vis'], tcpars['spw'])]
 
                             # hard code that parallel = False for non-MPI runs
                             tcpars['parallel'] = False
