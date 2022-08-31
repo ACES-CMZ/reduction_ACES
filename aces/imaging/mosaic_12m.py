@@ -234,7 +234,7 @@ def all_lines(header, parallel=False):
     if parallel:
         processes = []
 
-    for row in tbl[::-1]:
+    for row in tbl:
         spwn = row['12m SPW']
         line = row['Line'].replace(" ", "_").replace("(", "_").replace(")", "_")
         restf = row['Rest (GHz)'] * u.GHz
@@ -274,6 +274,30 @@ def all_lines(header, parallel=False):
             make_mosaic(hdus, name=f'{line}_max', cbar_unit='K',
                         norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                         array='12m', basepath=basepath, weights=wthdus, target_header=header)
+            del hdus
+
+        if parallel:
+            pool = Pool()
+            m0hdus = pool.map(partial(get_m0, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}), filelist)
+            m0hdus = [x.hdu for x in m0hdus]
+        else:
+            m0hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf).hdu for fn in filelist]
+            print(flush=True)
+
+        if parallel:
+            print(f"Starting function make_mosaic for {line}")
+            proc = Process(target=make_mosaic, args=(m0hdus,),
+                           kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
+                           norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                           array='12m', basepath=basepath, weights=wthdus, target_header=header))
+            proc.start()
+            processes.append(proc)
+        else:
+            make_mosaic(m0hdus, name=f'{line}_m0', cbar_unit='K km/s',
+                        norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                        array='12m', basepath=basepath, weights=wthdus, target_header=header)
+            del m0hdus
+            del wthdus
 
     for proc in processes:
         proc.join()

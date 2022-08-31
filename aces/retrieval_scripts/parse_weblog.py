@@ -62,7 +62,11 @@ def get_human_readable_name(weblog, mapping=None):
             with open(os.path.join(directory, 't2-1_details.html')) as fh:
                 txt = fh.read()
 
-            max_baseline = re.compile(r"<th>Max Baseline</th>\s*<td>([0-9a-z\. ]*)</td>").search(txt).groups()[0]
+            try:
+                max_baseline = re.compile(r"<th>Max Baseline</th>\s*<td>([0-9a-z\. ]*)</td>").search(txt).groups()[0]
+            except AttributeError as ex:
+                print(f"Failed to read file {directory}/t2-1_details.html.  exception={ex}")
+                continue
             max_baseline = u.Quantity(max_baseline)
 
             array_name = ('7MorTP' if max_baseline < 100 * u.m else 'TM2'
@@ -120,7 +124,10 @@ def get_human_readable_name(weblog, mapping=None):
 
             sbname = "{0}_a_{1:02d}_{2}".format(source_name, band, array_name, )
 
-            print(sbname, max_baseline)
+            if 'max_baseline' not in locals():
+                print(f"{sbname} is broken; max_baseline wasn't found")
+            else:
+                print(sbname, max_baseline)
 
         else:
             for directory, dirnames, filenames in os.walk(weblog):
@@ -148,6 +155,9 @@ def get_human_readable_name(weblog, mapping=None):
     #                    sbname = 'fail'
     #                    print('fail = {0}'.format(directory))
 
+    if 'max_baseline' not in locals():
+        print(f"{sbname} is broken; max_baseline wasn't found")
+        max_baseline = None
     return sbname, max_baseline
 
 
@@ -286,6 +296,9 @@ def weblog_names(list_of_weblogs, mapping):
                 assert len(dupes) == 2
                 bl1 = data[dupes[0]][0][1]
                 bl2 = data[dupes[1]][0][1]
+                if None in (bl1, bl2):
+                    print(f"Have to skip {nm} because no baseline length was measured")
+                    continue
                 if bl1 < bl2:
                     # short = TM2
                     # long = TM1
