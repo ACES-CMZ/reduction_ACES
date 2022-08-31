@@ -311,7 +311,7 @@ def make_links(weblog_maps):
     reverse_map = {v: k for k, v in weblog_maps.items()}
     assert len(reverse_map) == len(weblog_maps)
 
-    for k, v in weblog_maps.items():
+    for k, v in ProgressBar(weblog_maps.items()):
         try:
             os.symlink('../{0}'.format(v), 'humanreadable/{0}'.format(k))
         except FileExistsError:

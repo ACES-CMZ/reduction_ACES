@@ -12,12 +12,13 @@ from aces import conf
 basepath = conf.basepath
 
 
-def main():
-    if len(sys.argv) > 1:
-        username = sys.argv[1]
-        print(f"Using username {username}")
-    else:
-        username = six.moves.input("Username: ")
+def main(username=None):
+    if username is None:
+        if len(sys.argv) > 1:
+            username = sys.argv[1]
+            print(f"Using username {username}")
+        else:
+            username = six.moves.input("Username: ")
 
     alma = Alma()
     alma.cache_location = Alma.cache_location = '.'
@@ -87,3 +88,13 @@ def main():
                 if "weblog.tgz" in fn:
                     shutil.move(os.path.join(dirpath, fn),
                                 os.path.join(f'{basepath}/data/2021.1.00172.L/weblog_tarballs', fn))
+
+    for tfname in existing_tarballs:
+        with tarfile.open(tfname) as tf:
+            dirname = os.path.dirname(tf.firstmember.name)
+            tgt_dirname = f'{basepath}/data/2021.1.00172.L/weblogs/{dirname}'
+            if not os.path.exists(tgt_dirname):
+                print(f"Extracting {tfname} into {tgt_dirname}.  (It was already downloaded but not extracted)")
+                tf.extractall(f'{basepath}/data/2021.1.00172.L/weblogs')
+
+    globals().update(locals())
