@@ -99,45 +99,23 @@ def main():
                         tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}_{config}_{mous}'
                         if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
                             os.mkdir(tempdir_name)
-                        # copy & move files around first
-                        # obsolete
-                        # copycmds = "\n".join(
-                        #         ["import shutil",
-                        #          "try:"] +
-                        #         [f"    shutil.copytree('{x}', '{temp_workdir}/{os.path.basename(x)}')"
-                        #             for x in tcpars['vis']] +
-                        #         ["except FileExistsError as ex:",
-                        #          "    print(f'MS file already copied: {ex}.  Proceeding.')"]
-                        #         )
 
                         if 'aggregate' in spwsel:
                             def rename(x):
-                                return os.path.join(tempdir_name,
-                                                    os.path.basename(x).replace('.ms',
-                                                                                '_aggregate.ms'))
-                            splitcmd = [textwrap.dedent(
-                                f"""
-                                    outputvis='{rename(vis)}'
-                                    if not os.path.exists(outputvis):
-                                        try:
-                                            split(vis='{vis}',
-                                                outputvis=outputvis,
-                                                field='Sgr_A_star',
-                                                spw='{spw_kwd}',
-                                                width=[8]*{spw_kwd.count(':')}
-                                                )
-                                            if not os.path.exists(outputvis):
-                                                raise ValueError("Did not split")
-                                        except Exception as ex:
-                                            logprint(ex)
-                                            split(vis='{vis}',
-                                                outputvis=outputvis,
-                                                field='Sgr_A_star',
-                                                datacolumn='data',
-                                                spw='{spw_kwd}',
-                                                width=[8]*{spw_kwd.count(':')}
-                                                )
-                                        """) for vis, spw_kwd in zip(tcpars['vis'], tcpars['spw'])]
+                                return os.path.join(tempdir_name, os.path.basename(x))
+
+                            splitcmd = copycmds = "\n".join(
+                                ["import shutil"] +
+                                [textwrap.dedent(
+                                    f"""
+                                    try:
+                                        shutil.copytree('{x}', '{rename(x)}')
+                                    except FileExistsError as ex:
+                                        print(f'MS file already copied: {{ex}}.  Proceeding.')
+                                    """)
+                                 for x in tcpars['vis']
+                                 ]
+                                )
 
                             # hard code that parallel = False for non-MPI runs
                             tcpars['parallel'] = False
@@ -167,7 +145,11 @@ def main():
                                                 spw={spw})
                                                 """) for vis in tcpars['vis']]
 
-                        # both cube and aggregate need new names
+                            # ONLY for line cubes, which are individually split out:
+                            # the spw selection should now be 'everything in the MS'
+                            tcpars['spw'] = ''
+
+                        # all 'vis' must be renamed because of their new locations
                         tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
 
                         cleanupcmds = "\n".join(
@@ -184,9 +166,6 @@ def main():
                             [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]
                         )
                         tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
-
-                        # the spw selection should now be 'everything in the MS'
-                        tcpars['spw'] = ''
 
                     print(f"Creating script for {partype} tclean in {workingpath} for sb {sbname} ")
                     # with kwargs: \n{tcpars}")
