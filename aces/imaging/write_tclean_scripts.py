@@ -114,8 +114,7 @@ def main():
                                         print(f'MS file already copied: {{ex}}.  Proceeding.')
                                     """)
                                  for x in tcpars['vis']
-                                 ]
-                                )
+                                 ])
 
                             # hard code that parallel = False for non-MPI runs
                             tcpars['parallel'] = False
