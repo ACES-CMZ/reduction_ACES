@@ -287,34 +287,16 @@ def weblog_names(list_of_weblogs, mapping):
 
     data = [(get_human_readable_name(weblog, mapping), weblog)
             for weblog in list_of_weblogs]
+    # hrn = human readable name
     hrns = [x[0][0] for x in data]
     if len(set(hrns)) < len(data):
         for nm in set(hrns):
             if hrns.count(nm) > 1:
-                print("Fixing {0}".format(nm))
+                print(f"There are duplicate pipelines for {nm}")
                 dupes = [ii for ii, x in enumerate(hrns) if x == nm]
-                assert len(dupes) == 2
-                bl1 = data[dupes[0]][0][1]
-                bl2 = data[dupes[1]][0][1]
-                if None in (bl1, bl2):
-                    print(f"Have to skip {nm} because no baseline length was measured")
-                    continue
-                if bl1 < bl2:
-                    # short = TM2
-                    # long = TM1
-                    data[dupes[0]] = \
-                        (((data[dupes[0]][0][0].replace('TM1', 'TM2'),
-                           data[dupes[0]][0][1])), data[dupes[0]][1])
-                    data[dupes[1]] = \
-                        (((data[dupes[1]][0][0].replace('TM2', 'TM1'),
-                           data[dupes[1]][0][1]), data[dupes[1]][1]))
-                else:
-                    data[dupes[1]] = \
-                        (((data[dupes[1]][0][0].replace('TM1', 'TM2'),
-                           data[dupes[1]][0][1]), data[dupes[1]][1]))
-                    data[dupes[0]] = \
-                        (((data[dupes[0]][0][0].replace('TM2', 'TM1'),
-                           data[dupes[0]][0][1]), data[dupes[0]][1]))
+                for ind, ii in enumerate(dupes):
+                    data[ii] = ((data[ii][0][0] + "_" + str(ind), data[ii][0][1]), data[ii][1])
+                    print(f"Renamed {nm} {ind} (numbered {ii}) to {data[ii][0][0]}")
 
     rslt = {x[0][0]: x[1] for x in data}
     return rslt

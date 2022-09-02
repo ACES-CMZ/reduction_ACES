@@ -146,8 +146,23 @@ def main(dryrun=False):
         reproc_product_links = [f" - [{os.path.basename(fn)}](https://g-76492b.55ba.08cc.data.globus.org/{fn[25:]})" for fn in reproc_product_filenames]
         reproc_product_link_text = "\n".join(reproc_product_links)
 
-        weblog_url = f'https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable/{new_sb.strip().replace(" ","_")}/html/'
-        print(f"Operating on sb={new_sb}, oid={new_oid}, dl={downloaded}, delivered={delivered}, url={weblog_url}, weblognames={new_sb in weblog_names}.  pipeline_run={pipeline_run}")
+        humanreadable_url = "https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable"
+
+        # New weblogs were discovered September 2, 2022.  Don't know what they are yet.
+        extra_weblogs = [x.rstrip("/") for x in glob.glob(f'/orange/adamginsburg/web/secure/ACES/weblogs/humanreadable/{new_sb.strip().replace(" ", "_")}*/')
+                         if os.path.basename(x.rstrip('/')) != new_sb.strip().replace(" ", "_")]
+        extra_weblog_urls = [f"{humanreadable_url}/{os.path.basename(xtra)}" for xtra in extra_weblogs]
+        if any(extra_weblog_urls):
+            extra_weblog_line = "\n   * " + ", ".join([f"[Extra Weblog {os.path.basename(xtra)} -> {os.path.basename(os.path.realpath(xtra))}]({url})"
+                                                       for xtra, url in zip(extra_weblogs, extra_weblog_urls)])
+        else:
+            extra_weblog_line = ""
+
+        weblog_url = f'{humanreadable_url}/{new_sb.strip().replace(" ","_")}/html/'
+        print(f"Operating on sb={new_sb}, oid={new_oid}, dl={downloaded}, delivered={delivered}, url={weblog_url}, weblognames={new_sb in weblog_names}."
+              f"  pipeline_run={pipeline_run}.  "
+              "Extra weblogs=" + ",".join([f"{os.path.basename(xtra)} -> {os.path.basename(os.path.realpath(xtra))}" for xtra in extra_weblogs])
+              )
         sb_status[new_sb] = {'downloaded': downloaded,
                              'delivered': delivered,
                              'weblog_url': weblog_url}
@@ -183,7 +198,7 @@ def main(dryrun=False):
   * [{'x' if pipeline_run else ' '}] hipergator pipeline run
 """) +
                          f"""
-* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked
+* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked{extra_weblog_line}
 * [ ] [Weblog]({weblog_url}) Quality Assessment?
 * [ ] Imaging: Continuum
 * [ ] Imaging: Lines
@@ -225,19 +240,25 @@ def main(dryrun=False):
                     lines[ii] = f"* [{'x' if downloaded else ' '}] Downloaded? (specify where)"
                     insert_hipergator_at = ii + 1
                 elif 'Quality Assessment?' in line:
-                    if 'unpacked' not in body:
-                        insert_weblog_at = ii
-                    else:
-                        insert_weblog_at = False
+                    insert_weblog_at = ii if 'unpacked' not in body else False
+                    insert_extra_weblog_at = ii + 1 if 'Extra Weblog' not in body else False
                     # don't overwrite!  this would un-check!
                     # (probably this was added earlier when some versions were missing the link URL, but it's not now)
                     # lines[ii] = f"* [ ] [Weblog]({weblog_url}) Quality Assessment?"
                 elif 'unpacked' in line and '[Weblog]' in line:
                     lines[ii] = f"* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked"
+                elif 'Extra Weblog' in line:
+                    if extra_weblog_line:
+                        lines[ii] = extra_weblog_line.strip()
+                    else:
+                        raise ValueError("Issue previously had extra weblogs but no longer does")
 
             # we never want to insert at 0, so it's OK if 0 evaluates to False
             if insert_weblog_at:
                 lines.insert(insert_weblog_at, f"* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked")
+
+            if extra_weblog_line and insert_extra_weblog_at:
+                lines.insert(insert_extra_weblog_at, extra_weblog_line.strip())
 
             if 'hipergator' not in lines[insert_hipergator_at]:
                 need_update.append("Downloaded")
@@ -351,6 +372,9 @@ def main(dryrun=False):
 
             if need_update:
                 print(f"Updating issue for {new_sb} -> {new_sb_issuename}.  need_update={need_update}")
+                # DEBUG if 'Extra Weblog' in issuebody:
+                # DEBUG     globals().update(locals())
+                # DEBUG     return
                 if False:
                     print('\n'.join(difflib.ndiff(issuebody.split("\n"),
                                                   issue.body.split("\n"))
