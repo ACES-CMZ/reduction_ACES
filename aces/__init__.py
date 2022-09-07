@@ -3,14 +3,11 @@
 # Packages may add whatever they like to this file, but
 # should keep this content at the top.
 # ----------------------------------------------------------------------------
+from ._astropy_init import *   # noqa
 from . import retrieval_scripts
 from . import pipeline_scripts
 from . import imaging
-from ._astropy_init import *   # noqa
 # ----------------------------------------------------------------------------
-
-__all__ = []
-
 
 from astropy import config as _config
 

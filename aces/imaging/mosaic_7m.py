@@ -1,7 +1,7 @@
 import glob
 from astropy import units as u
 from astropy.io import fits
-from aces.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
+from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
 
 from aces import conf
 
@@ -27,18 +27,18 @@ def main():
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*16_18_20_22*cont.I.tt0.pbcor.fits')
     hdus = [read_as_2d(fn) for fn in filelist]
     make_mosaic(hdus, name='continuum', norm_kwargs=dict(stretch='asinh',
-                max_cut=0.2, min_cut=-0.025), cb_unit='Jy/beam', array='7m',
+                max_cut=0.2, min_cut=-0.025), cbar_unit='Jy/beam', array='7m',
                 target_header=header,
                 basepath=basepath)
 
     print("7m HCO+")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw20.cube.I.pbcor.fits')
     hdus = [get_peak(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hcop_max', cb_unit='K', array='7m',
+    make_mosaic(hdus, name='hcop_max', cbar_unit='K', array='7m',
                 target_header=header,
                 basepath=basepath, norm_kwargs=dict(max_cut=5, min_cut=-0.1))
     hdus = [get_m0(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hcop_m0', cb_unit='K km/s', array='7m',
+    make_mosaic(hdus, name='hcop_m0', cbar_unit='K km/s', array='7m',
                 target_header=header,
                 basepath=basepath, norm_kwargs=dict(min_cut=-25, max_cut=150))
 
@@ -49,19 +49,19 @@ def main():
                 target_header=header,
                 norm_kwargs=dict(max_cut=5, min_cut=-0.1))
     hdus = [get_m0(fn).hdu for fn in filelist]
-    make_mosaic(hdus, name='hnco_m0', cb_unit='K km/s', array='7m',
+    make_mosaic(hdus, name='hnco_m0', cbar_unit='K km/s', array='7m',
                 target_header=header,
                 basepath=basepath, norm_kwargs=dict(min_cut=-25, max_cut=150))
 
     print("7m H40a")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw24.cube.I.pbcor.fits')
     hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
-    make_mosaic(hdus, name='h40a_max', cb_unit='K',
+    make_mosaic(hdus, name='h40a_max', cbar_unit='K',
                 target_header=header,
                 norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'),
                 array='7m', basepath=basepath)
     hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
-    make_mosaic(hdus, name='h40a_m0', cb_unit='K km/s',
+    make_mosaic(hdus, name='h40a_m0', cbar_unit='K km/s',
                 target_header=header,
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='7m', basepath=basepath)

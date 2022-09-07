@@ -1,9 +1,12 @@
+import os
 import glob
 import radio_beam
 from astropy import units as u
 from astropy.io import fits
 from astropy import log
 from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
+from functools import partial
+from multiprocessing import Process, Pool
 import numpy as np
 
 from aces import conf
@@ -28,12 +31,35 @@ def main():
 
     header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
 
+    processes = []
+    for func in (residuals, reimaged, reimaged_high, continuum, hcop, hnco,
+                 h40a):
+        print(f"Starting function {func}")
+        proc = Process(target=func, args=(header,))
+        proc.start()
+        processes.append(proc)
+
+    for proc in processes:
+        proc.join()
+
+    # do this _after_
+    all_lines(header)
+
+
+def main_():
+
+    np.seterr('ignore')
+
+    header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
+
     residuals(header)
     reimaged(header)
+    reimaged_high(header)
     continuum(header)
     hcop(header)
     hnco(header)
     h40a(header)
+    all_lines(header)
 
 
 def continuum(header):
@@ -81,6 +107,33 @@ def reimaged(header):
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
+                cbar_unit='Jy/beam', array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                target_header=header,
+                )
+
+
+def reimaged_high(header):
+    log.info("12m continuum reimaged")
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*cont.I.iter1.image.tt0.pbcor')
+    hdus = [read_as_2d(fn) for fn in filelist]
+    print(flush=True)
+    weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
+    weightfiles_ = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*I.iter1.pb.tt0')
+    assert len(weightfiles) == len(filelist)
+    for missing in set(weightfiles_) - set(weightfiles):
+        print(f"Missing {missing}")
+    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+    print(flush=True)
+    make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged_spw33_35',
+                commonbeam='circular', weights=wthdus, cbar_unit='Jy/beam',
+                array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01,
+                                 min_cut=-0.001),
+                target_header=header,
+                )
+    print(flush=True)
+    make_mosaic(hdus, name='continuum_reimaged_spw33_35', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
@@ -164,9 +217,87 @@ def h40a(header):
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')
     wthdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in weightfiles]
     make_mosaic(hdus, name='h40a_max', cbar_unit='K',
-                norm_kwargs=dict(max_cut=0.5, min_cut=-0.01, stretch='asinh'),
+                norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
     hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
     make_mosaic(hdus, name='h40a_m0', cbar_unit='K km/s',
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
+
+
+def all_lines(header, parallel=False):
+
+    from astropy.table import Table
+
+    tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/linelist.csv')
+
+    if parallel:
+        processes = []
+
+    for row in tbl:
+        spwn = row['12m SPW']
+        line = row['Line'].replace(" ", "_").replace("(", "_").replace(")", "_")
+        restf = row['Rest (GHz)'] * u.GHz
+
+        log.info(f"12m {line}")
+
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spwn}.cube.I.iter1.image.pbcor')
+        assert len(filelist) > 0
+        weightfiles = [fn.replace("image.pbcor", "pb") for fn in filelist]
+        for ii, (ifn, wfn) in enumerate(zip(list(filelist), list(weightfiles))):
+            if not os.path.exists(wfn):
+                log.error(f"Missing file {wfn}")
+                filelist.remove(ifn)
+                weightfiles.remove(wfn)
+
+        if parallel:
+            pool = Pool()
+            hdus = pool.map(partial(get_peak, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}), filelist)
+            hdus = [x.hdu for x in hdus]
+            wthdus = pool.map(partial(get_peak, **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, 'rest_value': restf}), weightfiles)
+            wthdus = [x.hdu for x in wthdus]
+        else:
+            hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf).hdu for fn in filelist]
+            print(flush=True)
+            wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, rest_value=restf).hdu for fn in weightfiles]
+            print(flush=True)
+
+        if parallel:
+            print(f"Starting function make_mosaic for {line}")
+            proc = Process(target=make_mosaic, args=(hdus,),
+                           kwargs=dict(name=f'{line}_max', cbar_unit='K',
+                           norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
+                           array='12m', basepath=basepath, weights=wthdus, target_header=header))
+            proc.start()
+            processes.append(proc)
+        else:
+            make_mosaic(hdus, name=f'{line}_max', cbar_unit='K',
+                        norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
+                        array='12m', basepath=basepath, weights=wthdus, target_header=header)
+            del hdus
+
+        if parallel:
+            pool = Pool()
+            m0hdus = pool.map(partial(get_m0, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}), filelist)
+            m0hdus = [x.hdu for x in m0hdus]
+        else:
+            m0hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf).hdu for fn in filelist]
+            print(flush=True)
+
+        if parallel:
+            print(f"Starting function make_mosaic for {line}")
+            proc = Process(target=make_mosaic, args=(m0hdus,),
+                           kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
+                           norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                           array='12m', basepath=basepath, weights=wthdus, target_header=header))
+            proc.start()
+            processes.append(proc)
+        else:
+            make_mosaic(m0hdus, name=f'{line}_m0', cbar_unit='K km/s',
+                        norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                        array='12m', basepath=basepath, weights=wthdus, target_header=header)
+            del m0hdus
+            del wthdus
+
+    for proc in processes:
+        proc.join()

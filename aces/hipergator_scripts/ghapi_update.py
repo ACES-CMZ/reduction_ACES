@@ -7,11 +7,11 @@ from astroquery.alma import Alma
 import re
 import glob
 
-from .. import conf
+from aces import conf
 basepath = conf.basepath
 
 
-def main():
+def main(dryrun=False):
     dryrun = os.getenv("DRYRUN") or (dryrun if "dryrun" in locals() else False)  # noqa
     print(f"Dryrun={dryrun}")
 
@@ -28,6 +28,8 @@ def main():
     # issues = [x for page in paged_issues for x in page]
     issues = all_flat(api.issues.list_for_repo, state='all')
     assert len(issues) > 30
+    # filter out pull requests
+    issues = [x for x in issues if not hasattr(x, 'pull_request')]
 
     # example: uid://A001/X15a0/X17a
     uid_re = re.compile("uid://A[0-9]*/X[a-z0-9]*/X[a-z0-9]*")
@@ -55,11 +57,14 @@ def main():
     alma = Alma()
     alma.archive_url = 'https://almascience.eso.org'
     alma.dataarchive_url = 'https://almascience.eso.org'
-    results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
-    results.add_index('obs_id')
+    try:
+        results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None, cache=False)
+    except TypeError:
+        results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None)
+    results.add_index('member_ous_uid')
 
     # .data required b/c making it an index breaks normal usage?
-    unique_oids = np.unique(results['obs_id'].data)
+    unique_oids = np.unique(results['member_ous_uid'].data)
     unique_sbs = np.unique(results['schedblock_name'])
     # remember that .unique sorts the data so you can't zip these together!
 
@@ -102,7 +107,7 @@ def main():
 
         need_update = []  # empty list = False
         matches = results.loc[new_oid]
-        new_uid = matches['obs_id'][0]
+        new_uid = matches['member_ous_uid'][0]
         delivered = '3000' not in matches['obs_release_date'][0]
 
         uuid = new_oid.replace("/", "_").replace(":", "_")
@@ -141,8 +146,23 @@ def main():
         reproc_product_links = [f" - [{os.path.basename(fn)}](https://g-76492b.55ba.08cc.data.globus.org/{fn[25:]})" for fn in reproc_product_filenames]
         reproc_product_link_text = "\n".join(reproc_product_links)
 
-        weblog_url = f'https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable/{new_sb.strip().replace(" ","_")}/html/'
-        print(f"Operating on sb={new_sb}, oid={new_oid}, dl={downloaded}, delivered={delivered}, url={weblog_url}, weblognames={new_sb in weblog_names}.  pipeline_run={pipeline_run}")
+        humanreadable_url = "https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable"
+
+        # New weblogs were discovered September 2, 2022.  Don't know what they are yet.
+        extra_weblogs = [x.rstrip("/") for x in glob.glob(f'/orange/adamginsburg/web/secure/ACES/weblogs/humanreadable/{new_sb.strip().replace(" ", "_")}*/')
+                         if os.path.basename(x.rstrip('/')) != new_sb.strip().replace(" ", "_")]
+        extra_weblog_urls = [f"{humanreadable_url}/{os.path.basename(xtra)}" for xtra in extra_weblogs]
+        if any(extra_weblog_urls):
+            extra_weblog_line = "\n   * " + ", ".join([f"[Extra Weblog {os.path.basename(xtra)} -> {os.path.basename(os.path.realpath(xtra))}]({url})"
+                                                       for xtra, url in zip(extra_weblogs, extra_weblog_urls)])
+        else:
+            extra_weblog_line = ""
+
+        weblog_url = f'{humanreadable_url}/{new_sb.strip().replace(" ","_")}/html/'
+        print(f"Operating on sb={new_sb}, oid={new_oid}, dl={downloaded}, delivered={delivered}, url={weblog_url}, weblognames={new_sb in weblog_names}."
+              f"  pipeline_run={pipeline_run}.  "
+              "Extra weblogs=" + ",".join([f"{os.path.basename(xtra)} -> {os.path.basename(os.path.realpath(xtra))}" for xtra in extra_weblogs])
+              )
         sb_status[new_sb] = {'downloaded': downloaded,
                              'delivered': delivered,
                              'weblog_url': weblog_url}
@@ -178,7 +198,7 @@ def main():
   * [{'x' if pipeline_run else ' '}] hipergator pipeline run
 """) +
                          f"""
-* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked
+* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked{extra_weblog_line}
 * [ ] [Weblog]({weblog_url}) Quality Assessment?
 * [ ] Imaging: Continuum
 * [ ] Imaging: Lines
@@ -220,19 +240,25 @@ def main():
                     lines[ii] = f"* [{'x' if downloaded else ' '}] Downloaded? (specify where)"
                     insert_hipergator_at = ii + 1
                 elif 'Quality Assessment?' in line:
-                    if 'unpacked' not in body:
-                        insert_weblog_at = ii
-                    else:
-                        insert_weblog_at = False
+                    insert_weblog_at = ii if 'unpacked' not in body else False
+                    insert_extra_weblog_at = ii + 1 if 'Extra Weblog' not in body else False
                     # don't overwrite!  this would un-check!
                     # (probably this was added earlier when some versions were missing the link URL, but it's not now)
                     # lines[ii] = f"* [ ] [Weblog]({weblog_url}) Quality Assessment?"
                 elif 'unpacked' in line and '[Weblog]' in line:
                     lines[ii] = f"* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked"
+                elif 'Extra Weblog' in line:
+                    if extra_weblog_line:
+                        lines[ii] = extra_weblog_line.strip()
+                    else:
+                        raise ValueError("Issue previously had extra weblogs but no longer does")
 
             # we never want to insert at 0, so it's OK if 0 evaluates to False
             if insert_weblog_at:
                 lines.insert(insert_weblog_at, f"* [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked")
+
+            if extra_weblog_line and insert_extra_weblog_at:
+                lines.insert(insert_extra_weblog_at, extra_weblog_line.strip())
 
             if 'hipergator' not in lines[insert_hipergator_at]:
                 need_update.append("Downloaded")
@@ -296,7 +322,7 @@ def main():
                     issuebody = issuebody.replace("## Product Links:\n\n\n\n", productlinks)
                 else:
                     pass
-                    #print("Product link text was found in issue body.")
+                    # print("Product link text was found in issue body.")
                     # print(issue.body.split("## Product Links:")[-1])
 
             if reproc_product_link_text:
@@ -346,6 +372,9 @@ def main():
 
             if need_update:
                 print(f"Updating issue for {new_sb} -> {new_sb_issuename}.  need_update={need_update}")
+                # DEBUG if 'Extra Weblog' in issuebody:
+                # DEBUG     globals().update(locals())
+                # DEBUG     return
                 if False:
                     print('\n'.join(difflib.ndiff(issuebody.split("\n"),
                                                   issue.body.split("\n"))
@@ -370,7 +399,7 @@ def main():
 
     columns = api.projects.list_columns(projects[0].id)  # api(projects[0].columns_url)
     coldict = {column.name: column for column in columns}
-    #cards = [api(col.cards_url) for col in columns]
+    # cards = [api(col.cards_url) for col in columns]
     cards = [x for col in columns for x in all_flat(api.projects.list_cards, column_id=col.id)]
     # need flattened API for this
     carddict = {col.name: [x for x in all_flat(api.projects.list_cards, column_id=col.id)] for col in columns}
@@ -434,3 +463,5 @@ def main():
                                       },
                                      headers={"Accept": "application/vnd.github.v3+json"}
                                 )
+
+    globals().update(locals())

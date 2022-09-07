@@ -24,7 +24,7 @@
       "aggregate": {
         "imagename": "uid___A001_X15a0_Xae.s36_0.Sgr_A_star_sci.spw16_18_20_22_24_26.cont.I.iter1.reclean",
         "threshold": "0.0024Jy",
-        "noisethreshold": 3,
+        "noisethreshold": 3.0,
         "lownoisethreshold": 1.75,
         "growiterations": 150
       }
@@ -2044,6 +2044,14 @@
     }
   },
   "Sgr_A_st_b_03_TM1": {
+    "tclean_cont_pars": {
+      "aggregate": {
+        "threshold": "0.010Jy"
+      },
+      "aggregate_high": {
+        "threshold": "0.010Jy"
+      }
+    },
     "tclean_cube_pars": {
       "spw33": {
         "vis": [
@@ -2569,54 +2577,64 @@
       }
     }
   },
-  "Sgr_A_st_c_03_7M": {
-    "tclean_cont_pars": {
-      "aggregate": {
-        "imagename": "uid___A001_X15a0_Xae.s36_0.Sgr_A_star_sci.spw16_18_20_22_24_26.cont.I.iter1.reclean",
-        "threshold": "0.0024Jy",
-        "noisethreshold": 3.0,
-        "lownoisethreshold": 1.75,
-        "growiterations": 150
-      }
-    }
-  },
   "Sgr_A_st_al_03_7M": {
     "tclean_cont_pars": {
       "aggregate": {
         "imagename": "uid___A001_X15a0_X180.s36_0.Sgr_A_star_sci.spw16_18_20_22_24_26.cont.I.iter1.reclean",
-        "imsize": [650, 650],
+        "imsize": [
+          650,
+          650
+        ],
         "phasecenter": "ICRS 17:46:29.197  -028.32.13.868"
       }
     },
     "tclean_cube_pars": {
       "spw16": {
         "imagename": "uid___A001_X15a0_X180.s38_0.Sgr_A_star_sci.spw16.cube.I.iter1.reclean",
-        "imsize": [650, 650],
+        "imsize": [
+          650,
+          650
+        ],
         "phasecenter": "ICRS 17:46:29.197  -028.32.13.868"
       },
       "spw18": {
         "imagename": "uid___A001_X15a0_X180.s38_0.Sgr_A_star_sci.spw18.cube.I.iter1.reclean",
-        "imsize": [650, 650],
+        "imsize": [
+          650,
+          650
+        ],
         "phasecenter": "ICRS 17:46:29.197  -028.32.13.868"
       },
       "spw20": {
         "imagename": "uid___A001_X15a0_X180.s38_0.Sgr_A_star_sci.spw20.cube.I.iter1.reclean",
-        "imsize": [650, 650],
+        "imsize": [
+          650,
+          650
+        ],
         "phasecenter": "ICRS 17:46:29.197  -028.32.13.868"
       },
       "spw22": {
         "imagename": "uid___A001_X15a0_X180.s38_0.Sgr_A_star_sci.spw22.cube.I.iter1.reclean",
-        "imsize": [650, 650],
+        "imsize": [
+          650,
+          650
+        ],
         "phasecenter": "ICRS 17:46:29.197  -028.32.13.868"
       },
       "spw24": {
         "imagename": "uid___A001_X15a0_X180.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1.reclean",
-        "imsize": [650, 650],
+        "imsize": [
+          650,
+          650
+        ],
         "phasecenter": "ICRS 17:46:29.197  -028.32.13.868"
       },
       "spw26": {
         "imagename": "uid___A001_X15a0_X180.s38_0.Sgr_A_star_sci.spw26.cube.I.iter1.reclean",
-        "imsize": [650, 650],
+        "imsize": [
+          650,
+          650
+        ],
         "phasecenter": "ICRS 17:46:29.197  -028.32.13.868"
       }
     }

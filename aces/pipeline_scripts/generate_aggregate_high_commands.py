@@ -1,29 +1,43 @@
 """
 This will create (or overwrite) existing tclean commands with label 'aggregate_high' and therefore should not be run automatically.
+
+(actually this should run automatically)
 """
 
 import json
 import os
+from astropy import log
 
-from aces.pipeline_scripts.merge_tclean_commands import commands
+from aces import conf
+rootdir = os.path.join(conf.basepath, "reduction_ACES")
 
-if __name__ == "__main__":
+if os.getenv('ACES_ROOTDIR') is not None:
+    log.warning(f"Overridding default rootdir={rootdir} with rootdir={os.environ['ACES_ROOTDIR']}")
+    rootdir = os.environ['ACES_ROOTDIR']
 
-    if os.getenv('ACES_ROOTDIR') is None:
-        raise ValueError("Specify ACES_ROOTDIR environment variable ")
-    else:
-        rootdir = os.environ['ACES_ROOTDIR']
+
+def main():
 
     with open(f"{rootdir}/aces/pipeline_scripts/default_tclean_commands.json", "r") as fh:
-        default_commands = json.load(fh)
+        commands = json.load(fh)
 
-    with open(f"{rootdir}/aces/pipeline_scripts/override_tclean_commands.json", "r") as fh:
-        override_commands = json.load(fh)
+    aggregate_high_file = f"{rootdir}/aces/pipeline_scripts/aggregate_high_tclean_commands.json"
+    if os.path.exists(aggregate_high_file):
+        with open(aggregate_high_file, "r") as fh:
+            aggregate_high_commands = json.load(fh)
+    else:
+        aggregate_high_commands = {}
 
-    ncmds = (len(override_commands))
+    ncmds = (len(aggregate_high_commands))
+
+    log.debug(f"There are {len(aggregate_high_commands)} aggregate_high commands and {len(commands)} commands.")
 
     for key in commands:
         if 'TM' in key:
+            if key not in aggregate_high_commands:
+                aggregate_high_commands[key] = {}
+            if 'tclean_cont_pars' not in aggregate_high_commands[key]:
+                aggregate_high_commands[key]['tclean_cont_pars'] = {}
             if 'aggregate_high' not in commands[key]['tclean_cont_pars']:
                 print(f"Adding {key}")
                 pars = commands[key]['tclean_cont_pars']['aggregate']
@@ -34,9 +48,10 @@ if __name__ == "__main__":
                 spwsel = ["33:" + x.split("33:")[-1] for x in spwsel]
                 pars['spw'] = spwsel
 
-                commands[key]['tclean_cont_pars']['aggregate_high'] = pars
+                aggregate_high_commands[key]['tclean_cont_pars']['aggregate_high'] = pars
 
-    assert len(override_commands) >= ncmds
+    assert len(aggregate_high_commands) >= ncmds
 
-    with open(f"{rootdir}/pipeline_scripts/override_tclean_commands.json", "w") as fh:
-        json.dump(override_commands, fh, indent=2)
+    log.debug(f"Overwriting to {aggregate_high_file}")
+    with open(aggregate_high_file, "w") as fh:
+        json.dump(aggregate_high_commands, fh, indent=2)

@@ -16,7 +16,7 @@ flux_scales = {'Jy': 1,
 
 def get_mous_to_sb_mapping(project_code):
 
-    tbl = Alma.query(payload={'project_code': project_code}, cache=False,
+    tbl = Alma.query(payload={'project_code': project_code},
                      public=False)['member_ous_uid', 'schedblock_name', 'qa2_passed']
     mapping = {row['member_ous_uid']: row['schedblock_name'] for row in tbl if row['qa2_passed'] == 'T'}
     return mapping
@@ -58,16 +58,20 @@ def get_human_readable_name(weblog, mapping=None):
     print("Reading weblog {0}".format(weblog))
     for directory, dirnames, filenames in os.walk(weblog):
         if 't2-1_details.html' in filenames:
-            #print("Found {0}:{1}".format(directory, "t2-1_details.html"))
+            # print("Found {0}:{1}".format(directory, "t2-1_details.html"))
             with open(os.path.join(directory, 't2-1_details.html')) as fh:
                 txt = fh.read()
 
-            max_baseline = re.compile(r"<th>Max Baseline</th>\s*<td>([0-9a-z\. ]*)</td>").search(txt).groups()[0]
+            try:
+                max_baseline = re.compile(r"<th>Max Baseline</th>\s*<td>([0-9a-z\. ]*)</td>").search(txt).groups()[0]
+            except AttributeError as ex:
+                print(f"Failed to read file {directory}/t2-1_details.html.  exception={ex}")
+                continue
             max_baseline = u.Quantity(max_baseline)
 
             array_name = ('7MorTP' if max_baseline < 100 * u.m else 'TM2'
                           if max_baseline < 1000 * u.m else 'TM1')
-            #print("array_name = {0}".format(array_name))
+            # print("array_name = {0}".format(array_name))
             break
 
     try:
@@ -120,7 +124,10 @@ def get_human_readable_name(weblog, mapping=None):
 
             sbname = "{0}_a_{1:02d}_{2}".format(source_name, band, array_name, )
 
-            print(sbname, max_baseline)
+            if 'max_baseline' not in locals():
+                print(f"{sbname} is broken; max_baseline wasn't found")
+            else:
+                print(sbname, max_baseline)
 
         else:
             for directory, dirnames, filenames in os.walk(weblog):
@@ -148,6 +155,9 @@ def get_human_readable_name(weblog, mapping=None):
     #                    sbname = 'fail'
     #                    print('fail = {0}'.format(directory))
 
+    if 'max_baseline' not in locals():
+        print(f"{sbname} is broken; max_baseline wasn't found")
+        max_baseline = None
     return sbname, max_baseline
 
 
@@ -220,7 +230,7 @@ def get_calibrator_fluxes(weblog):
                 date = date_map[uid]
 
                 freq = float(freqstr.split()[0])
-                #freqres = float(freqstr.split()[2])
+                # freqres = float(freqstr.split()[2])
 
                 data[(source, uid, spw, freq, date)] = {'measured': flux,
                                                         'error': eflux,
@@ -277,31 +287,16 @@ def weblog_names(list_of_weblogs, mapping):
 
     data = [(get_human_readable_name(weblog, mapping), weblog)
             for weblog in list_of_weblogs]
+    # hrn = human readable name
     hrns = [x[0][0] for x in data]
     if len(set(hrns)) < len(data):
         for nm in set(hrns):
             if hrns.count(nm) > 1:
-                print("Fixing {0}".format(nm))
+                print(f"There are duplicate pipelines for {nm}")
                 dupes = [ii for ii, x in enumerate(hrns) if x == nm]
-                assert len(dupes) == 2
-                bl1 = data[dupes[0]][0][1]
-                bl2 = data[dupes[1]][0][1]
-                if bl1 < bl2:
-                    # short = TM2
-                    # long = TM1
-                    data[dupes[0]] = \
-                        (((data[dupes[0]][0][0].replace('TM1', 'TM2'),
-                           data[dupes[0]][0][1])), data[dupes[0]][1])
-                    data[dupes[1]] = \
-                        (((data[dupes[1]][0][0].replace('TM2', 'TM1'),
-                           data[dupes[1]][0][1]), data[dupes[1]][1]))
-                else:
-                    data[dupes[1]] = \
-                        (((data[dupes[1]][0][0].replace('TM1', 'TM2'),
-                           data[dupes[1]][0][1]), data[dupes[1]][1]))
-                    data[dupes[0]] = \
-                        (((data[dupes[0]][0][0].replace('TM2', 'TM1'),
-                           data[dupes[0]][0][1]), data[dupes[0]][1]))
+                for ind, ii in enumerate(dupes):
+                    data[ii] = ((data[ii][0][0] + "_" + str(ind), data[ii][0][1]), data[ii][1])
+                    print(f"Renamed {nm} {ind} (numbered {ii}) to {data[ii][0][0]}")
 
     rslt = {x[0][0]: x[1] for x in data}
     return rslt
@@ -311,7 +306,7 @@ def make_links(weblog_maps):
     reverse_map = {v: k for k, v in weblog_maps.items()}
     assert len(reverse_map) == len(weblog_maps)
 
-    for k, v in weblog_maps.items():
+    for k, v in ProgressBar(weblog_maps.items()):
         try:
             os.symlink('../{0}'.format(v), 'humanreadable/{0}'.format(k))
         except FileExistsError:

@@ -31,9 +31,9 @@ import glob
 from datetime import datetime
 
 try:
-    from casatasks import casalog
+    from casatasks import casalog  # noqa
 except (ModuleNotFoundError, ImportError):
-    from taskinit import casalog
+    from taskinit import casalog  # noqa
 
 run = os.environ.get('RUNSCRIPTS') not in ('False', 'false')
 

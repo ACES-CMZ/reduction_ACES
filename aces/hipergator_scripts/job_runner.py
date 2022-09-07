@@ -72,6 +72,10 @@ def main():
     for mous, spwpars in parameters.items():
         mousname = mous.split('.')[1]
 
+        if mousname not in mousmap_:
+            log.error(f"mousname {mousname}  (from {mous}) is not in the mousmap.")
+            continue
+
         sbname = mousmap_[mousname]
         field = sbname.split("_")[3]
         config = sbname.split("_")[5]
@@ -80,6 +84,10 @@ def main():
         contsub_suffix = '.contsub' if do_contsub else ''
 
         log.debug(f"mous={mous} field={field} sbname={sbname} config={config}")
+
+        if mousname not in imaging_status:
+            log.warn(f"WARNING: MOUS {mousname} aka {mous} (field={field}, sbname={sbname}, config={config}) has no delivery status; it may be incomplete")
+            continue
 
         for config_ in imaging_status[mousname]:
             log.debug(f"mous={mous} field={field} sbname={sbname} config={config} config_={config_}")
@@ -109,14 +117,14 @@ def main():
                         spwname = spw
                     scriptname = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}_03_{config}_{spwname}.py'
                     scriptname_glob = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}_03_{config}*_{spwname}.py'
-                    if (imtype == 'mfs' and spw == 'aggregate') or imtype == 'cube':
+                    if (imtype == 'mfs' and 'aggregate' in spw) or imtype == 'cube':
                         if not os.path.exists(scriptname):
                             if any(glob.glob(scriptname_glob)):
                                 scriptname = glob.glob(scriptname_glob)[0]
                             else:
                                 print(f"ERROR: script {scriptname} does not exist!  This may indicate that `write_tclean_scripts` has not been run or the pipeline hasn't finished.")
                                 if mousname in 'member.uid___A001_X15b4_X3d':
-                                    raise ValueError("The script definited _does_ exist.")
+                                    raise ValueError("The script definitely _does_ exist.")
                                 continue
                         else:
                             # all is good

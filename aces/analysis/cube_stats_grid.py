@@ -1,7 +1,6 @@
 import glob
 import regions
 
-
 import os
 import time
 import numpy as np
@@ -14,10 +13,9 @@ from spectral_cube.utils import NoBeamError
 
 from casa_formats_io import Table as casaTable
 
-from .imstats import get_psf_secondpeak, get_noise_region
-
 from pathlib import Path
 
+from aces.analysis.imstats import get_psf_secondpeak, get_noise_region
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from aces import conf
 basepath = conf.basepath
@@ -122,10 +120,13 @@ def main():
     colnames_apriori = ['Field', 'Config', 'spw', 'suffix', 'filename', 'bmaj', 'bmin', 'bpa', 'wcs_restfreq', 'minfreq', 'maxfreq']
     colnames_fromheader = ['imsize', 'cell', 'threshold', 'niter', 'pblimit', 'pbmask', 'restfreq', 'nchan',
                            'width', 'start', 'chanchunks', 'deconvolver', 'weighting', 'robust', 'git_version', 'git_date', ]
-    colnames_stats = 'min max std sum mean'.split() + 'lowmin lowmax lowstd lowmadstd lowsum lowmean'.split() + ['mod' + x for x in 'min max std sum mean'.split()] + ['epsilon']
+    colnames_stats = ('min max std sum mean'.split() +
+                      'min_K max_K std_K sum_K mean_K'.split() +
+                      'lowmin lowmax lowstd lowmadstd lowsum lowmean'.split() +
+                      ['mod' + x for x in 'min max std sum mean'.split()] + ['epsilon'])
 
     colnames = colnames_apriori + colnames_fromheader + colnames_stats
-    assert len(colnames) == 44
+    assert len(colnames) == 49
 
     def try_qty(x):
         try:
@@ -143,12 +144,19 @@ def main():
         tbl.write(tbldir / 'cube_stats.js.html', format='jsviewer')
         return tbl
 
-    start_from_cached = False  # TODO: make a parameter
+    if os.getenv('START_FROM_CACHED') == 'False':
+        start_from_cached = False  # TODO: make a parameter
+    else:
+        start_from_cached = True
+        print(f"Starting from cached file {tbldir / 'cube_stats.ecsv'}")
     tbl = None
     if start_from_cached and os.path.exists(tbldir / 'cube_stats.ecsv'):
         tbl = Table.read(tbldir / 'cube_stats.ecsv')
         print(tbl)
-        rows = [list(row) for row in tbl]
+        rows = [[tbl[cn].quantity[ii]
+                 if tbl[cn].unit not in (None, u.dimensionless_unscaled)
+                 else tbl[cn][ii] for cn in tbl.colnames]
+                for ii in range(len(tbl))]
     else:
         rows = []
 
@@ -339,9 +347,13 @@ def main():
 
                 del cube
 
-                row = ([field, config, spw, suffix, os.path.basename(fn), beam.major.to(u.arcsec).value, beam.minor.to(u.arcsec).value, beam.pa.value, restfreq, minfreq, maxfreq] +
+                jtok_equiv = beam.jtok_equiv(u.Quantity(minfreq + maxfreq, u.Hz) / 2)
+
+                row = ([field, config, spw, suffix, os.path.basename(fn), beam.major.to(u.arcsec), beam.minor.to(u.arcsec), beam.pa,
+                        u.Quantity(restfreq, u.Hz), u.Quantity(minfreq, u.Hz), u.Quantity(maxfreq, u.Hz)] +
                        [history[key] if key in history else '' for key in colnames_fromheader] +
                        [min, max, std, sum, mean] +
+                       u.Quantity([min, max, std, sum, mean]).to(u.K, jtok_equiv) +
                        [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean] +
                        [modmin, modmax, modstd, modsum, modmean, epsilon])
                 assert len(row) == len(colnames)

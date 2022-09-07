@@ -7,13 +7,18 @@ import os
 import six
 import sys
 
+from aces import conf
 
-def main():
-    if len(sys.argv) > 1:
-        username = sys.argv[1]
-        print(f"Using username {username}")
-    else:
-        username = six.moves.input("Username: ")
+basepath = conf.basepath
+
+
+def main(username=None):
+    if username is None:
+        if len(sys.argv) > 1:
+            username = sys.argv[1]
+            print(f"Using username {username}")
+        else:
+            username = six.moves.input("Username: ")
 
     alma = Alma()
     alma.cache_location = Alma.cache_location = '.'
@@ -23,7 +28,7 @@ def main():
     alma.dataarchive_url = 'https://almascience.eso.org'
 
     alma.login(username)
-    print(f"Logged in as {username}.  Performing query.", flush=True)
+    print(f"Logged in as {username}.  Performing weblog query.", flush=True)
 
     results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None)
 
@@ -32,8 +37,8 @@ def main():
     ok_release_dates = np.array([int(x[0]) < 3 for x in release_dates])
     results = results[ok_release_dates]
 
-    existing_tarballs = glob.glob("2021.1.00172.L/weblog_tarballs/*weblog.tgz")
-    mouses = results['obs_id']
+    existing_tarballs = glob.glob(f"{basepath}/data/2021.1.00172.L/weblog_tarballs/*weblog.tgz")
+    mouses = results['member_ous_uid']
     mouses_filtered = [x for x in mouses
                        if not any([x[6:].replace("/", "_") in y
                                    for y in existing_tarballs])]
@@ -41,7 +46,7 @@ def main():
     print("Found {0} new files out of {1}".format(len(mouses_filtered), len(mouses)))
     if len(mouses_filtered) > 0:
 
-        #files = alma.stage_data(mouses_filtered)
+        # files = alma.stage_data(mouses_filtered)
         files = alma.get_data_info(mouses_filtered, expand_tarfiles=True)
 
         print(f"Found {len(files)} files using get_data_info")
@@ -65,21 +70,31 @@ def main():
 
         weblog_tarballs = alma.download_files(weblog_urls_to_download)
 
-        if not os.path.exists('2021.1.00172.L'):
-            os.mkdir('2021.1.00172.L')
-        if not os.path.exists('2021.1.00172.L/weblog_tarballs'):
-            os.mkdir('2021.1.00172.L/weblog_tarballs')
-        if not os.path.exists('2021.1.00172.L/weblogs'):
-            os.mkdir('2021.1.00172.L/weblogs')
+        if not os.path.exists(f'{basepath}/data/2021.1.00172.L'):
+            os.mkdir(f'{basepath}/data/2021.1.00172.L')
+        if not os.path.exists(f'{basepath}/data/2021.1.00172.L/weblog_tarballs'):
+            os.mkdir(f'{basepath}/data/2021.1.00172.L/weblog_tarballs')
+        if not os.path.exists(f'{basepath}/data/2021.1.00172.L/weblogs'):
+            os.mkdir(f'{basepath}/data/2021.1.00172.L/weblogs')
 
-        #weblogs = weblogs_band3+weblogs_band6
+        # weblogs = weblogs_band3+weblogs_band6
         for logfile in weblog_tarballs:
             print(logfile)
             with tarfile.open(logfile) as tf:
-                tf.extractall('2021.1.00172.L/weblogs')
+                tf.extractall(f'{basepath}/data/2021.1.00172.L/weblogs')
 
         for dirpath, dirnames, filenames in os.walk('.'):
             for fn in filenames:
                 if "weblog.tgz" in fn:
                     shutil.move(os.path.join(dirpath, fn),
-                                os.path.join('2021.1.00172.L/weblog_tarballs', fn))
+                                os.path.join(f'{basepath}/data/2021.1.00172.L/weblog_tarballs', fn))
+
+    for tfname in existing_tarballs:
+        with tarfile.open(tfname) as tf:
+            dirname = os.path.dirname(tf.firstmember.name)
+            tgt_dirname = f'{basepath}/data/2021.1.00172.L/weblogs/{dirname}'
+            if not os.path.exists(tgt_dirname):
+                print(f"Extracting {tfname} into {tgt_dirname}.  (It was already downloaded but not extracted)")
+                tf.extractall(f'{basepath}/data/2021.1.00172.L/weblogs')
+
+    globals().update(locals())
