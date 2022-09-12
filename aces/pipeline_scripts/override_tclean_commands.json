@@ -34,11 +34,11 @@
     "tclean_cube_pars": {
       "spw24": {
         "imagename": "uid___A001_X15a0_X1a4.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1.reclean",
-        "cyclefactor": 2
+        "cyclefactor": 3
       },
       "spw26": {
         "imagename": "uid___A001_X15a0_X1a4.s38_0.Sgr_A_star_sci.spw26.cube.I.iter1.reclean",
-        "cyclefactor": 2
+        "cyclefactor": 3
       }
     }
   },
