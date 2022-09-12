@@ -8,6 +8,7 @@ from astropy.io import fits
 from spectral_cube import SpectralCube
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
+from aces.imaging.make_mosaic import all_lines
 
 from aces import conf
 
@@ -41,8 +42,10 @@ def main():
     array, footprint = reproject_and_coadd(hdus,
                                            target_wcs, shape_out=shape_out,
                                            reproject_function=reproject_interp)
-
-    fits.PrimaryHDU(data=array, header=target_wcs.to_header()).writeto(f'{basepath}/mosaics/TP_spw17mx_mosaic.fits', overwrite=True)
+    header = target_wcs.to_header()
+    fits.PrimaryHDU(data=array, header=header).writeto(f'{basepath}/mosaics/TP_spw17mx_mosaic.fits', overwrite=True)
+    # re-load the header so it includes NAXIS
+    header = fits.getheader(f'{basepath}/mosaics/TP_spw17mx_mosaic.fits')
 
     import pylab as pl
     from astropy import visualization
@@ -117,3 +120,5 @@ def main():
                     zorder=fronter)
 
     fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic_withgridandlabels.png', bbox_inches='tight')
+
+    all_lines(header, array='TP', glob_suffix='cube.I.sd.fits', globdir='product', use_weights=False)

@@ -14,8 +14,17 @@ from astropy import log
 from astropy.utils.console import ProgressBar
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
+import os
+import glob
+from functools import partial
+from multiprocessing import Process, Pool
 import warnings
 from spectral_cube.utils import SpectralCubeWarning
+
+from aces import conf
+
+basepath = conf.basepath
+
 warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
                         append=True)
 
@@ -230,3 +239,88 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
     if commonbeam:
         return cb
+
+
+def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.image.pbcor',
+              globdir='calibrated/working', use_weights=True):
+
+    from astropy.table import Table
+
+    tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/linelist.csv')
+
+    if parallel:
+        processes = []
+
+    for row in tbl:
+        spwn = row[f'{array} SPW']
+        line = row['Line'].replace(" ", "_").replace("(", "_").replace(")", "_")
+        restf = row['Rest (GHz)'] * u.GHz
+
+        log.info(f"{array} {line}")
+
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*spw{spwn}.{glob_suffix}')
+        assert len(filelist) > 0
+        if use_weights:
+            weightfiles = [fn.replace("image.pbcor", "pb") for fn in filelist]
+            for ii, (ifn, wfn) in enumerate(zip(list(filelist), list(weightfiles))):
+                if not os.path.exists(wfn):
+                    log.error(f"Missing file {wfn}")
+                    filelist.remove(ifn)
+                    weightfiles.remove(wfn)
+
+        if parallel:
+            pool = Pool()
+            hdus = pool.map(partial(get_peak, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}), filelist)
+            hdus = [x.hdu for x in hdus]
+            if use_weights:
+                wthdus = pool.map(partial(get_peak, **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, 'rest_value': restf}), weightfiles)
+                wthdus = [x.hdu for x in wthdus]
+        else:
+            hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf).hdu for fn in filelist]
+            print(flush=True)
+            if use_weights:
+                wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, rest_value=restf).hdu for fn in weightfiles]
+                print(flush=True)
+
+        if parallel:
+            print(f"Starting function make_mosaic for {line}")
+            proc = Process(target=make_mosaic, args=(hdus,),
+                           kwargs=dict(name=f'{line}_max', cbar_unit='K',
+                           norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
+                           array=array, basepath=basepath, weights=wthdus if use_weights else None,
+                           target_header=header))
+            proc.start()
+            processes.append(proc)
+        else:
+            make_mosaic(hdus, name=f'{line}_max', cbar_unit='K',
+                        norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
+                        array=array, basepath=basepath, weights=wthdus if use_weights else None,
+                        target_header=header)
+            del hdus
+
+        if parallel:
+            pool = Pool()
+            m0hdus = pool.map(partial(get_m0, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}), filelist)
+            m0hdus = [x.hdu for x in m0hdus]
+        else:
+            m0hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf).hdu for fn in filelist]
+            print(flush=True)
+
+        if parallel:
+            print(f"Starting function make_mosaic for {line}")
+            proc = Process(target=make_mosaic, args=(m0hdus,),
+                           kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
+                           norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                           array=array, basepath=basepath, weights=wthdus if use_weights else None, target_header=header))
+            proc.start()
+            processes.append(proc)
+        else:
+            make_mosaic(m0hdus, name=f'{line}_m0', cbar_unit='K km/s',
+                        norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                        array=array, basepath=basepath, weights=wthdus if use_weights else None, target_header=header)
+            del m0hdus
+            if use_weights:
+                del wthdus
+
+    for proc in processes:
+        proc.join()
