@@ -66,4 +66,4 @@ def main():
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='7m', basepath=basepath)
 
-    all_lines(header, array='7m')
+    all_lines(header, array='7m', parallel=False)

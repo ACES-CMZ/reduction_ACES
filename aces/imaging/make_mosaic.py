@@ -322,5 +322,6 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             if use_weights:
                 del wthdus
 
-    for proc in processes:
-        proc.join()
+    if parallel:
+        for proc in processes:
+            proc.join()

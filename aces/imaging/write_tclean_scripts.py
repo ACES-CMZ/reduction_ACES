@@ -204,7 +204,7 @@ def main():
 
                         expected_imname = os.path.join(tempdir_name,
                                                        os.path.basename(tcpars['imagename']) +
-                                                       ('.image.tt0.pbcor' if tcpars['specmode'] == 'mfs' else 'image.pbcor')
+                                                       ('.image.tt0.pbcor' if tcpars['specmode'] == 'mfs' else '.image.pbcor')
                                                       )
                         check_exists = textwrap.dedent(f"""
                                               if not os.path.exists('{expected_imname}'):

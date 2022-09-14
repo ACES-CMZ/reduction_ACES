@@ -4,13 +4,14 @@ Two environmental variables must be set:
     ACES_ROOTDIR: the reduction_ACES directory
     WEBLOG_DIR: the path containing the pipeline* weblogs
 """
-from ..retrieval_scripts.parse_weblog import (get_human_readable_name, get_uid_and_name)
+from aces.retrieval_scripts.parse_weblog import (get_human_readable_name, get_uid_and_name)
+import re
 import os
 import glob
 import json
 from astropy import log
 
-from .. import conf
+from aces import conf
 rootdir = conf.basepath
 
 # if os.getenv('ACES_ROOTDIR') is None:
@@ -41,6 +42,10 @@ def main():
 
     os.chdir(weblog_dir)
 
+    cube_re = re.compile("hif_makeimlist\(.*specmode='cube'")
+    mfs_re = re.compile("hif_makeimlist\(.*specmode='mfs'")
+    cont_re = re.compile("hif_makeimlist\(.*specmode='cont'")
+
     all_cubepars = {}
 
     for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
@@ -68,7 +73,7 @@ def main():
             if os.path.exists(logfile):
                 with open(logfile, 'r') as fh:
                     for line in fh.readlines():
-                        if "hif_makeimlist(specmode='cube'" in line:
+                        if cube_re.search(line):
                             # can be
                             # hif_makeimlist(specmode='cube')
                             # or
@@ -76,7 +81,7 @@ def main():
                             cuberun = True
                             # skip to next: that will be cubes
                             break
-                        if "hif_makeimlist(specmode='cont'" in line:
+                        if cont_re.search(line):
                             aggregatecontrun = True
                             # skip to next: that will be the aggregate continuum
                             # (individual continuum is 'mfs')
@@ -109,7 +114,9 @@ def main():
             raise ValueError("No parameters found")
 
         if not (any('iter1' in pars['imagename'] for pars in cubepars.values())):
-            raise ValueError("TEST")
+            print("There is no iter1 in the imagename parameters")
+            print(f"sbname {sbname} has images {[pars['imagename'] for pars in cubepars.values()]}")
+            continue
 
         # only keep the 'iter1' examples *if* they exist
         cubepars = {key: pars for key, pars in cubepars.items()
@@ -132,3 +139,5 @@ def main():
 
     with open(f'{rootdir}/reduction_ACES/aces/pipeline_scripts/default_tclean_commands.json', 'w') as tcfh:
         json.dump(all_cubepars, tcfh, indent=2)
+
+    globals().update(locals())

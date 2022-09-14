@@ -121,4 +121,5 @@ def main():
 
     fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic_withgridandlabels.png', bbox_inches='tight')
 
-    all_lines(header, array='TP', glob_suffix='cube.I.sd.fits', globdir='product', use_weights=False)
+    all_lines(header, array='TP', glob_suffix='cube.I.sd.fits', globdir='product', use_weights=False,
+              parallel=False)
