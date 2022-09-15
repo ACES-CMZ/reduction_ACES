@@ -42,9 +42,9 @@ def main():
 
     os.chdir(weblog_dir)
 
-    cube_re = re.compile("hif_makeimlist\(.*specmode='cube'")
-    mfs_re = re.compile("hif_makeimlist\(.*specmode='mfs'")
-    cont_re = re.compile("hif_makeimlist\(.*specmode='cont'")
+    cube_re = re.compile(r"hif_makeimlist\(.*specmode='cube'")
+    mfs_re = re.compile(r"hif_makeimlist\(.*specmode='mfs'")
+    cont_re = re.compile(r"hif_makeimlist\(.*specmode='cont'")
 
     all_cubepars = {}
 
@@ -116,6 +116,7 @@ def main():
         if not (any('iter1' in pars['imagename'] for pars in cubepars.values())):
             print("There is no iter1 in the imagename parameters")
             print(f"sbname {sbname} has images {[pars['imagename'] for pars in cubepars.values()]}")
+            print("Skipping")
             continue
 
         # only keep the 'iter1' examples *if* they exist
