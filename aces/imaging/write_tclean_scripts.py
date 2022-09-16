@@ -151,10 +151,8 @@ def main():
                         # all 'vis' must be renamed because of their new locations
                         tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
 
-
                         cleanupcmds = "\n".join(
-                            [
-                             "import glob",
+                            ["import glob",
                              f"flist = glob.glob('{tempdir_name}/{os.path.basename(tcpars['imagename'])}.*')",
                              "for fn in flist:",
                              f"    logprint(f'Moving {{fn}} to {os.path.dirname(tcpars['imagename'])}')",
@@ -205,7 +203,7 @@ def main():
                         expected_imname = os.path.join(tempdir_name,
                                                        os.path.basename(tcpars['imagename']) +
                                                        ('.image.tt0.pbcor' if tcpars['specmode'] == 'mfs' else '.image.pbcor')
-                                                      )
+                                                       )
                         check_exists = textwrap.dedent(f"""
                                               if not os.path.exists('{expected_imname}'):
                                                   raise IOError('Expected output file {expected_imname} does not exist.')
