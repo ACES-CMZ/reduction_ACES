@@ -94,11 +94,24 @@ def main():
                     tcpars['imagename'] = os.path.realpath(tcpars['imagename'])
 
                     if temp_workdir:
-
                         imtype = tcpars['specmode']
                         tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}_{config}_{mous}'
+
                         if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
                             os.mkdir(tempdir_name)
+
+                    # check for PSF
+                    expected_psfname = os.path.join(tempdir_name if temp_workdir else os.path.dirname(tcpars['imagename']),
+                                                    os.path.basename(tcpars['imagename']) +
+                                                    ('.psf.tt0' if tcpars['specmode'] == 'mfs' else '.psf')
+                                                    )
+                    check_psf_exists = textwrap.dedent(f"""
+                                            # if the PSF exists, don't re-calculate it
+                                            calcpsf = not os.path.exists('{expected_psfname}')
+                                                \n\n""")
+                    # this is overridden below tcpars['calcpsf'] = 'calcpsf'
+
+                    if temp_workdir:
 
                         if 'aggregate' in spwsel:
                             def rename(x):
@@ -192,10 +205,11 @@ def main():
                         if temp_workdir:
                             fh.write("".join(splitcmd))
                             fh.write("\n\n")
+                        fh.write(check_psf_exists)
                         fh.write("tclean(\n")
                         for key, val in tcpars.items():
-                            if key == 'parallel':
-                                fh.write(f"       {key}=parallel,\n")
+                            if key in ('parallel', 'calcpsf'):
+                                fh.write(f"       {key}={key},\n")
                             else:
                                 fh.write(f"       {key}={repr(val)},\n")
                         fh.write(")\n\n\n")
