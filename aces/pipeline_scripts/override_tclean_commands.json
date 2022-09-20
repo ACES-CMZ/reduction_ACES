@@ -2656,5 +2656,25 @@
         "phasecenter": "ICRS 17:46:29.197  -028.32.13.868"
       }
     }
-  }
+  },
+  "Sgr_A_st_ar_updated_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 3
+      },
+      "spw26": {
+        "cyclefactor": 3
+      }
+    }
+  },
+  "Sgr_A_st_p_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 3
+      },
+      "spw26": {
+        "cyclefactor": 3
+      }
+    }
+  },
 }
