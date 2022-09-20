@@ -69,6 +69,9 @@ def main():
             for partype in suffixes.keys():
                 parsset = allpars[partype]
                 for spwsel, tcpars in parsset.items():
+                    if 'imagename' not in tcpars:
+                        print(f"***** BROKEN  spw {spwsel} *****")
+                        continue
                     baseimname = tcpars['imagename']
                     stage_wildcard_name = ".".join(baseimname.split(".")[:1] + ["*"] + baseimname.split(".")[2:])
                     imname = f"{workingpath}/{baseimname}"
