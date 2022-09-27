@@ -173,9 +173,9 @@ def main():
                              "for fn in flist:",
                              f"    logprint(f'Moving {{fn}} to {os.path.dirname(tcpars['imagename'])}')",
                              f"    if os.path.exists(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}'):",
-                             f"        logprint(f'Removing {os.path.dirname(tcpars['imagename'])}/{{fn}} because it exists')",
-                             f"        assert 'iter1' in f'{os.path.dirname(tcpars['imagename'])}/{{fn}}'",  # sanity check - don't remove important directories!
-                             f"        shutil.rmtree(f'{os.path.dirname(tcpars['imagename'])}/{{fn}}')",
+                             f"        logprint(f'Removing {os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}} because it exists')",
+                             f"        assert 'iter1' in f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}'",  # sanity check - don't remove important directories!
+                             f"        shutil.rmtree(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}')",
                              f"    shutil.move(fn, '{os.path.dirname(tcpars['imagename'])}/')",
                              ] +
                             [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]
