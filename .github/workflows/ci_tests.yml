@@ -76,7 +76,6 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install tox codecov
     - name: Validate json files
-      os: ubuntu-latest
       uses: RaaLabs/validate-json@v0.0.7
     - name: Test with tox
       run: |
