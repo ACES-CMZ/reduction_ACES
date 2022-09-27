@@ -1,4 +1,12 @@
 {
+  "Sgr_A_st_ap_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "imagename": "uid___A001_X15a0_X196.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1.reclean",
+        "cyclefactor": 4.0
+      }
+    }
+  },
   "Sgr_A_st_ai_03_7M": {
     "tclean_cube_pars": {
       "spw20": {
@@ -26,11 +34,11 @@
     "tclean_cube_pars": {
       "spw24": {
         "imagename": "uid___A001_X15a0_X1a4.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1.reclean",
-        "cyclefactor": 2
+        "cyclefactor": 3
       },
       "spw26": {
         "imagename": "uid___A001_X15a0_X1a4.s38_0.Sgr_A_star_sci.spw26.cube.I.iter1.reclean",
-        "cyclefactor": 2
+        "cyclefactor": 3
       }
     }
   },
@@ -2409,6 +2417,24 @@
   },
   "Sgr_A_st_p_03_TM1": {
     "tclean_cube_pars": {
+      "spw27": {
+        "usemask": "pb",
+        "pbmask": 0.5,
+        "niter": 20000000,
+        "cyclefactor": 3
+      },
+      "spw29": {
+        "usemask": "pb",
+        "pbmask": 0.5,
+        "niter": 20000000,
+        "cyclefactor": 3
+      },
+      "spw31": {
+        "usemask": "pb",
+        "pbmask": 0.5,
+        "niter": 20000000,
+        "cyclefactor": 3
+      },
       "spw33": {
         "vis": [
           "uid___A002_Xf99390_X12c7_target.ms",
@@ -2630,5 +2656,25 @@
         "phasecenter": "ICRS 17:46:29.197  -028.32.13.868"
       }
     }
-  }
+  },
+  "Sgr_A_st_ar_updated_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 3
+      },
+      "spw26": {
+        "cyclefactor": 3
+      }
+    }
+  },
+  "Sgr_A_st_p_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 3
+      },
+      "spw26": {
+        "cyclefactor": 3
+      }
+    }
+  },
 }
