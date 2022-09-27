@@ -14,6 +14,10 @@ on:
     #    - main
 
 jobs:
+  name: Validate json files
+    os: ubuntu-latest
+    uses: RaaLabs/validate-json@v0.0.7
+    python: 3.x
   # Github Actions supports ubuntu, windows, and macos virtual environments:
   # https://help.github.com/en/actions/reference/virtual-environments-for-github-hosted-runners
   ci_tests:
@@ -27,11 +31,6 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Validate json files
-            os: ubuntu-latest
-            uses: RaaLabs/validate-json@v0.0.7
-            python: 3.x
-            toxenv: json
 
           - name: Python 3.9 with minimal dependencies
             os: ubuntu-latest
