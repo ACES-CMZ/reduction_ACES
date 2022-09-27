@@ -31,6 +31,7 @@ jobs:
             os: ubuntu-latest
             uses: RaaLabs/validate-json@v0.0.7
             python: 3.x
+            toxenv: json
 
           - name: Python 3.9 with minimal dependencies
             os: ubuntu-latest
