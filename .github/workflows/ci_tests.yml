@@ -16,7 +16,7 @@ on:
 jobs:
   # Github Actions supports ubuntu, windows, and macos virtual environments:
   # https://help.github.com/en/actions/reference/virtual-environments-for-github-hosted-runners
-  - name: Validate json files
+  name: Validate json files
     os: ubuntu-latest
     uses: RaaLabs/validate-json@v0.0.7
   ci_tests:
