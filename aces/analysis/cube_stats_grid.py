@@ -27,11 +27,13 @@ dataroot = f'{basepath}/data/2021.1.00172.L'
 global then
 then = time.time()
 
+
 def dt(message=""):
     global then
     now = time.time()
     print(f"Elapsed: {now-then}.  {message}", flush=True)
     then = now
+
 
 def main(num_workers=None):
 
