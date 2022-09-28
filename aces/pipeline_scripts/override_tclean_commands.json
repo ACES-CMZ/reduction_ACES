@@ -2668,5 +2668,45 @@
         "cyclefactor": 3
       }
     }
+  },
+  "Sgr_A_st_ac_03_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "nchan": 3836,
+        "start": "97.6660537907GHz",
+        "width": "488244Hz",
+        "threshold": "0.01Jy"
+      }
+    }
+  },
+  "Sgr_A_st_v_03_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "nchan": 3836,
+        "start": "97.6660537907GHz",
+        "width": "488244Hz",
+        "threshold": "0.01Jy"
+      }
+    }
+  },
+  "Sgr_A_st_u_03_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "nchan": 3836,
+        "start": "97.6660537907GHz",
+        "width": "488244Hz",
+        "threshold": "0.01Jy"
+      }
+    }
+  },
+  "Sgr_A_st_n_03_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "nchan": 3836,
+        "start": "97.6660537907GHz",
+        "width": "488244Hz",
+        "threshold": "0.01Jy"
+      }
+    }
   }
 }

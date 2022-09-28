@@ -12,7 +12,9 @@ import aces.imaging
 from aces.pipeline_scripts import generate_spw33_commands
 from aces.pipeline_scripts import merge_tclean_commands
 from aces.pipeline_scripts import recover_tclean_commands
-from aces.pipeline_scripts import imaging_pipeline_rerun
+
+# CASA, not valid python
+#from aces.pipeline_scripts import imaging_pipeline_rerun
 
 from aces.retrieval_scripts import parse_weblog
 from aces.retrieval_scripts import make_humanreadable_links
@@ -45,7 +47,8 @@ def test_imports():
     from aces.pipeline_scripts import generate_spw33_commands
     from aces.pipeline_scripts import merge_tclean_commands
     from aces.pipeline_scripts import recover_tclean_commands
-    from aces.pipeline_scripts import imaging_pipeline_rerun
+    # CASA, not valid python
+    #from aces.pipeline_scripts import imaging_pipeline_rerun
 
     from aces.retrieval_scripts import parse_weblog
     from aces.retrieval_scripts import make_humanreadable_links
