@@ -63,7 +63,6 @@ def main():
             print("Skipping TP")
             continue
 
-
         cubepars = {}
         contpars = {}
 
