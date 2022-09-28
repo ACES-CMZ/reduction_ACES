@@ -13,7 +13,7 @@ with open(f"{rootdir}/reduction_ACES/aces/pipeline_scripts/override_tclean_comma
     override_commands = json.load(fh)
 
 
-@pytest.mark_parametrize('jsonfile', ('default_tclean_commands.json', 
+@pytest.mark.parametrize('jsonfile', ('default_tclean_commands.json', 
                                     'aggregate_high_tclean_commands.json',
                                     'override_tclean_commands.json'))
 def test_json(jsonfile):
