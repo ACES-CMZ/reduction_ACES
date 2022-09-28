@@ -63,6 +63,7 @@ def main():
             print("Skipping TP")
             continue
 
+
         cubepars = {}
         contpars = {}
 
@@ -104,7 +105,7 @@ def main():
                                     cubepars[f'spw{spw}'] = tcleanpars
                                 if tcleanpars['specmode'] == 'mfs' and aggregatecontrun:
                                     contpars['aggregate'] = tcleanpars
-                log.debug(f"{logfile} {aggregatecontrun} {cuberun}")
+                log.info(f"{logfile}: aggregate continuum = {aggregatecontrun}, cube = {cuberun}")
                 if cubepars and cuberun:
                     cuberun = False
                 if contpars and aggregatecontrun:
@@ -134,6 +135,7 @@ def main():
         for pars in contpars.values():
             pars["vis"] = [os.path.basename(x) for x in pars["vis"]]
 
+        log.debug(f'For sb {sbname} = {mous}, added parameters')
         all_cubepars[sbname] = {
             'tclean_cube_pars': cubepars,
             'tclean_cont_pars': contpars,
