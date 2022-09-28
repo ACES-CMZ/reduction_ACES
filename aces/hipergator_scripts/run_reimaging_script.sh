@@ -19,6 +19,7 @@ echo "Memory=${MEM}"
 module load intel/2020.0.166
 module load openmpi/4.1.1
 #module load libfuse/3.10.4
+# test
 
 LOG_DIR=/blue/adamginsburg/adamginsburg/ACES/logs
 export LOGFILENAME="${LOG_DIR}/casa_log_mpi_reimaging_${SLURM_JOB_ID}_$(date +%Y-%m-%d_%H_%M_%S).log"

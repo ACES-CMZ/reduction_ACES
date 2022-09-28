@@ -69,6 +69,9 @@ def main():
             for partype in suffixes.keys():
                 parsset = allpars[partype]
                 for spwsel, tcpars in parsset.items():
+                    if 'imagename' not in tcpars:
+                        print(f"***** BROKEN  spw {spwsel} *****")
+                        continue
                     baseimname = tcpars['imagename']
                     stage_wildcard_name = ".".join(baseimname.split(".")[:1] + ["*"] + baseimname.split(".")[2:])
                     imname = f"{workingpath}/{baseimname}"
@@ -94,11 +97,24 @@ def main():
                     tcpars['imagename'] = os.path.realpath(tcpars['imagename'])
 
                     if temp_workdir:
-
                         imtype = tcpars['specmode']
                         tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}_{config}_{mous}'
+
                         if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
                             os.mkdir(tempdir_name)
+
+                    # check for PSF
+                    expected_psfname = os.path.join(tempdir_name if temp_workdir else os.path.dirname(tcpars['imagename']),
+                                                    os.path.basename(tcpars['imagename']) +
+                                                    ('.psf.tt0' if tcpars['specmode'] == 'mfs' else '.psf')
+                                                    )
+                    check_psf_exists = textwrap.dedent(f"""
+                                            # if the PSF exists, don't re-calculate it
+                                            calcpsf = not os.path.exists('{expected_psfname}')
+                                                \n\n""")
+                    # this is overridden below tcpars['calcpsf'] = 'calcpsf'
+
+                    if temp_workdir:
 
                         if 'aggregate' in spwsel:
                             def rename(x):
@@ -156,10 +172,10 @@ def main():
                              f"flist = glob.glob('{tempdir_name}/{os.path.basename(tcpars['imagename'])}.*')",
                              "for fn in flist:",
                              f"    logprint(f'Moving {{fn}} to {os.path.dirname(tcpars['imagename'])}')",
-                             f"    if os.path.exists(f'{os.path.dirname(tcpars['imagename'])}/{{fn}}'):",
-                             f"        logprint(f'Removing {os.path.dirname(tcpars['imagename'])}/{{fn}} because it exists')",
-                             f"        assert 'iter1' in f'{os.path.dirname(tcpars['imagename'])}/{{fn}}'",  # sanity check - don't remove important directories!
-                             f"        shutil.rmtree(f'{os.path.dirname(tcpars['imagename'])}/{{fn}}')",
+                             f"    if os.path.exists(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}'):",
+                             f"        logprint(f'Removing {os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}} because it exists')",
+                             f"        assert 'iter1' in f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}'",  # sanity check - don't remove important directories!
+                             f"        shutil.rmtree(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}')",
                              f"    shutil.move(fn, '{os.path.dirname(tcpars['imagename'])}/')",
                              ] +
                             [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]
@@ -192,17 +208,32 @@ def main():
                         if temp_workdir:
                             fh.write("".join(splitcmd))
                             fh.write("\n\n")
+                        fh.write(check_psf_exists)
                         fh.write("tclean(\n")
                         for key, val in tcpars.items():
-                            if key == 'parallel':
-                                fh.write(f"       {key}=parallel,\n")
+                            if key in ('parallel', 'calcpsf'):
+                                fh.write(f"       {key}={key},\n")
                             else:
                                 fh.write(f"       {key}={repr(val)},\n")
                         fh.write(")\n\n\n")
+
+                        expected_imname = os.path.join(tempdir_name,
+                                                       os.path.basename(tcpars['imagename']) +
+                                                       ('.image.tt0.pbcor' if tcpars['specmode'] == 'mfs' else '.image.pbcor')
+                                                       )
+                        check_exists = textwrap.dedent(f"""
+                                              if not os.path.exists('{expected_imname}'):
+                                                  raise IOError('Expected output file {expected_imname} does not exist.')
+                                                  sys.exit(1)
+                                                  \n\n""")
+                        fh.write(check_exists)
+
                         if tcpars['specmode'] == 'cube':
                             fh.write(f"exportfits('{tcpars['imagename']}.image.pbcor', '{tcpars['imagename']}.image.pbcor.fits', overwrite=True)\n\n\n")
                         elif tcpars['specmode'] == 'mfs':
                             fh.write(f"exportfits('{tcpars['imagename']}.image.tt0.pbcor', '{tcpars['imagename']}.image.tt0.pbcor.fits', overwrite=True)\n\n\n")
+                        else:
+                            raise ValueError(f"Specmode was neither cube nor mfs: specmode={tcpars['specmode']}")
                         if temp_workdir:
                             fh.write(cleanupcmds)
 

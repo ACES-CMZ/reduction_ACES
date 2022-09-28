@@ -1,7 +1,7 @@
 import glob
 from astropy import units as u
 from astropy.io import fits
-from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0
+from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0, all_lines
 
 from aces import conf
 
@@ -65,3 +65,5 @@ def main():
                 target_header=header,
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='7m', basepath=basepath)
+
+    all_lines(header, array='7m', parallel=False)
