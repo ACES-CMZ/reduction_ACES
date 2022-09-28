@@ -19,11 +19,11 @@ from aces.pipeline_scripts import recover_tclean_commands
 from aces.retrieval_scripts import parse_weblog
 from aces.retrieval_scripts import make_humanreadable_links
 from aces.retrieval_scripts import retrieve_weblogs
-from aces.retrieval_scripts import run_pipeline
+# CASA from aces.retrieval_scripts import run_pipeline
 from aces.retrieval_scripts import retrieve_data
 from aces.retrieval_scripts import mous_map
 
-from aces.hipergator_scripts import hack_plotms
+# CASA from aces.hipergator_scripts import hack_plotms
 from aces.hipergator_scripts import link_repipeline_weblogs
 from aces.hipergator_scripts import job_runner
 from aces.hipergator_scripts import ghapi_update
@@ -53,11 +53,11 @@ def test_imports():
     from aces.retrieval_scripts import parse_weblog
     from aces.retrieval_scripts import make_humanreadable_links
     from aces.retrieval_scripts import retrieve_weblogs
-    from aces.retrieval_scripts import run_pipeline
+    # CASA from aces.retrieval_scripts import run_pipeline
     from aces.retrieval_scripts import retrieve_data
     from aces.retrieval_scripts import mous_map
 
-    from aces.hipergator_scripts import hack_plotms
+    # CASA from aces.hipergator_scripts import hack_plotms
     from aces.hipergator_scripts import link_repipeline_weblogs
     from aces.hipergator_scripts import job_runner
     from aces.hipergator_scripts import ghapi_update

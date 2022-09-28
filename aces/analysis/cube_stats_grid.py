@@ -24,27 +24,8 @@ tbldir = Path(f'{basepath}/reduction_ACES/aces/data/tables')
 
 dataroot = f'{basepath}/data/2021.1.00172.L'
 
-if os.getenv('NO_PROGRESSBAR') is None and not (os.getenv('ENVIRON') == 'BATCH'):
-    from dask.diagnostics import ProgressBar
-    pbar = ProgressBar()
-    pbar.register()
-
-print(f"TMPDIR = {os.environ.get('TMPDIR')}")
-
-# Dask writes some log stuff; let's make sure it gets written on local scratch
-# or in a blue drive and not on orange
-os.chdir(os.getenv('TMPDIR'))
-
-threads = int(os.getenv('DASK_THREADS') or os.getenv('SLURM_NTASKS'))
-print(f"Using {threads} threads.")
-
-spws = {3: list(range(5)), }
-
-suffix = '.image'
-
 global then
 then = time.time()
-
 
 def dt(message=""):
     global then
@@ -52,12 +33,29 @@ def dt(message=""):
     print(f"Elapsed: {now-then}.  {message}", flush=True)
     then = now
 
+def main(num_workers=None):
 
-num_workers = None
-dt(f"PID = {os.getpid()}")
+    if os.getenv('NO_PROGRESSBAR') is None and not (os.getenv('ENVIRON') == 'BATCH'):
+        from dask.diagnostics import ProgressBar
+        pbar = ProgressBar()
+        pbar.register()
 
+    print(f"TMPDIR = {os.environ.get('TMPDIR')}")
 
-def main():
+    # Dask writes some log stuff; let's make sure it gets written on local scratch
+    # or in a blue drive and not on orange
+    if os.getenv('TMPDIR'):
+        os.chdir(os.getenv('TMPDIR'))
+
+    threads = int(os.getenv('DASK_THREADS') or os.getenv('SLURM_NTASKS'))
+    print(f"Using {threads} threads.")
+
+    spws = {3: list(range(5)), }
+
+    suffix = '.image'
+
+    dt(f"PID = {os.getpid()}")
+
     if threads:
         # try dask.distrib again
         from dask.distributed import Client, LocalCluster
