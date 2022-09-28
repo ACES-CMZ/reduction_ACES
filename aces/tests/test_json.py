@@ -3,7 +3,7 @@ import pytest
 from aces import conf
 import os
 
-# the tests have to run on tox 
+# the tests have to run on tox
 rootdir = os.getcwd()
 #rootdir = conf.basepath
 
