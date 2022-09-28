@@ -1,7 +1,11 @@
 import json
 import pytest
 from aces import conf
-rootdir = conf.basepath
+import os
+
+# the tests have to run on tox 
+rootdir = os.getcwd()
+#rootdir = conf.basepath
 
 with open(f"{rootdir}/reduction_ACES/aces/pipeline_scripts/default_tclean_commands.json", "r") as fh:
     default_commands = json.load(fh)

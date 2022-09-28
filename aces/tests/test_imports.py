@@ -43,6 +43,11 @@ from aces.imaging import mosaic_TP
 
 
 def test_imports():
+    from aces import conf
+    import os
+
+    # the tests have to run on tox 
+    conf.basepath = os.getcwd()
         
     from aces.pipeline_scripts import generate_spw33_commands
     from aces.pipeline_scripts import merge_tclean_commands
