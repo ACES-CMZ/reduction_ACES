@@ -7,6 +7,7 @@ from astropy.utils.console import ProgressBar
 from astroquery.alma import Alma
 from bs4 import BeautifulSoup
 import re
+from astropy import log
 
 flux_scales = {'Jy': 1,
                'mJy': 1e-3,
@@ -54,8 +55,9 @@ def get_uid_and_name(t1fn):
     return dd
 
 
-def get_human_readable_name(weblog, mapping=None):
-    print("Reading weblog {0}".format(weblog))
+def get_human_readable_name(weblog, mapping=None, verbose=True):
+    if verbose:
+        log.info("Reading weblog {0}".format(weblog))
     for directory, dirnames, filenames in os.walk(weblog):
         if 't2-1_details.html' in filenames:
             # print("Found {0}:{1}".format(directory, "t2-1_details.html"))

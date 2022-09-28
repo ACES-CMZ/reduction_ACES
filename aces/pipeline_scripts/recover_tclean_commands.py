@@ -49,19 +49,28 @@ def main():
     all_cubepars = {}
 
     for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
-        sbname, max_baseline = get_human_readable_name(pipeline_base)
+        sbname, max_baseline = get_human_readable_name(pipeline_base, verbose=False)
+        # DEBUG tool - uncomment as needed
+        # if '_ac_' not in sbname:
+        #     continue
         namedict = get_uid_and_name(f"{pipeline_base}/html/t1-1.html")
         mous = namedict['Observing Unit Set Status']
         sbname = namedict['Scheduling Block Name']
         pipeline_run = glob.glob(f"{pipeline_base}/html/stage*")
 
+        if len(pipeline_run) < 30:
+            log.info(f"Skipping pipeline {pipeline_base} from mous {mous} sb {sbname}"
+                     f"because it only had {len(pipeline_run)} stages and was therefore likely a rerun.")
+            continue
+
         # need them to run in order
         pipeline_run = sorted(pipeline_run, key=lambda x: int(x.split("stage")[-1]))
 
-        print(f"{sbname} = {mous} from {pipeline_base}")
         if 'TP' in sbname:
-            print("Skipping TP")
+            log.info(f"Skipping TP {sbname} = {mous} from {pipeline_base}:  TP Skipped!")
             continue
+        else:
+            log.info(f"Processing {sbname} = {mous} from {pipeline_base}")
 
         cubepars = {}
         contpars = {}
@@ -104,7 +113,7 @@ def main():
                                     cubepars[f'spw{spw}'] = tcleanpars
                                 if tcleanpars['specmode'] == 'mfs' and aggregatecontrun:
                                     contpars['aggregate'] = tcleanpars
-                log.info(f"{logfile}: aggregate continuum = {aggregatecontrun}, cube = {cuberun}")
+                log.debug(f"{logfile}: aggregate continuum = {aggregatecontrun}, cube = {cuberun}")
                 if cubepars and cuberun:
                     cuberun = False
                 if contpars and aggregatecontrun:
@@ -141,6 +150,11 @@ def main():
             'mous': mous,
             'pipeline_run': pipeline_base,
         }
+
+        # DEBUG tool.  Uncomment as needed
+        #if '_ac_' in sbname and 'TM1' in sbname:
+        #    globals().update(locals())
+        #    return all_cubepars
 
     with open(f'{rootdir}/reduction_ACES/aces/pipeline_scripts/default_tclean_commands.json', 'w') as tcfh:
         json.dump(all_cubepars, tcfh, indent=2)
