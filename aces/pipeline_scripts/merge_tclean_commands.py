@@ -1,7 +1,6 @@
 import json
 from aces.pipeline_scripts import generate_aggregate_high_commands
 from aces import conf
-rootdir = conf.basepath
 
 generate_aggregate_high_commands.main()
 
@@ -14,13 +13,15 @@ generate_aggregate_high_commands.main()
 if 'verbose' not in locals():
     verbose = False
 
-with open(f"{rootdir}/reduction_ACES/aces/pipeline_scripts/default_tclean_commands.json", "r") as fh:
+pipedir = os.path.dirname(__file__)
+
+with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
     default_commands = json.load(fh)
 
-with open(f"{rootdir}/reduction_ACES/aces/pipeline_scripts/aggregate_high_tclean_commands.json", "r") as fh:
+with open(f"{pipedir}/aggregate_high_tclean_commands.json", "r") as fh:
     aggregate_high_commands = json.load(fh)
 
-with open(f"{rootdir}/reduction_ACES/aces/pipeline_scripts/override_tclean_commands.json", "r") as fh:
+with open(f"{pipedir}/override_tclean_commands.json", "r") as fh:
     override_commands = json.load(fh)
 
 commands = default_commands
