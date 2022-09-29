@@ -8,6 +8,7 @@ import os
 #rootdir = conf.basepath
 
 rootdir = os.path.join(os.path.dirname(__file__), '..', 'pipeline_scripts')
+rootdir = os.path.realpath(rootdir)
 
 with open(f"{rootdir}/default_tclean_commands.json", "r") as fh:
     default_commands = json.load(fh)
