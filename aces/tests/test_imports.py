@@ -48,7 +48,8 @@ def test_imports():
 
     # the tests have to run on tox 
     conf.basepath = os.getcwd()
-    conf.basepath = os.path.realpath(os.path.join, os.path.dirname(__file__), '..')
+    # set the directory to the parent of the parent of this one (so, should be the package-containing directory, under which aces/ will exist)
+    conf.basepath = os.path.realpath(os.path.join, os.path.dirname(__file__), '../..')
     print(conf.basepath)
 
     from aces.pipeline_scripts import generate_spw33_commands
