@@ -17,6 +17,7 @@ if os.getenv('ACES_ROOTDIR') is not None:
 
 pipedir = os.path.dirname(__file__)
 
+
 def main():
 
     with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
