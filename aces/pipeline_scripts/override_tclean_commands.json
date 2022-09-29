@@ -2684,8 +2684,13 @@
       "spw33": {
         "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "width": "488310Hz",
         "threshold": "0.01Jy"
+      },
+      "spw35": {
+        "nchan": 3836,
+        "start": "99.5533154972GHz",
+        "width": "4883141Hz"
       }
     }
   },
