@@ -29,7 +29,6 @@ def main():
                'TP': [16, 18, 20, 22, 24, 26],
                }
 
-
     datapath = dataroot = f'{basepath}/data/2021.1.00172.L'
     # workpath = '/blue/adamginsburg/adamginsburg/ACES/workdir/'
 
