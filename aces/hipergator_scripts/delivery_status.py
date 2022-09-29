@@ -12,24 +12,23 @@ def get_mousmap_(**kwargs):
     return mousmap_
 
 
-cwd = os.getcwd()
-basepath = conf.basepath
-os.chdir(basepath)
-
-datatable = {}
-
-spwlist = {'12M': [25, 27, 29, 31, 33, 35],
-           'TM1': [25, 27, 29, 31, 33, 35],
-           '7M': [16, 18, 20, 22, 24, 26],
-           'TP': [16, 18, 20, 22, 24, 26],
-           }
-
-
 def wildexists(x):
     return len(glob.glob(x)) > 0
 
 
 def main():
+    cwd = os.getcwd()
+    basepath = conf.basepath
+    os.chdir(basepath)
+
+    datatable = {}
+
+    spwlist = {'12M': [25, 27, 29, 31, 33, 35],
+               'TM1': [25, 27, 29, 31, 33, 35],
+               '7M': [16, 18, 20, 22, 24, 26],
+               'TP': [16, 18, 20, 22, 24, 26],
+               }
+
     datapath = dataroot = f'{basepath}/data/2021.1.00172.L'
     # workpath = '/blue/adamginsburg/adamginsburg/ACES/workdir/'
 

@@ -19,9 +19,6 @@ mouses = [os.path.basename(x)
           for x in
           glob.glob(f'{grouppath}/member.uid___A001_X15*_X*')]
 
-mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
-mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
-
 parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': True, },  # the usual MPI crash error is occurring
               'member.uid___A001_X15a0_X142': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # ditto
               'member.uid___A001_X15a0_Xca': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # field ag: MPI crash
@@ -52,6 +49,9 @@ def main():
 
     with open(f'{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.json', 'r') as fh:
         imaging_status = json.load(fh)
+
+    mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
+    mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
 
     sacct = subprocess.check_output(['sacct',
                                      '--format=JobID,JobName%45,Account%15,QOS%17,State,Priority%8,ReqMem%8,CPUTime%15,Elapsed%15,Timelimit%15,NodeList%20'])

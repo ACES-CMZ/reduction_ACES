@@ -12,16 +12,18 @@ import aces.imaging
 from aces.pipeline_scripts import generate_spw33_commands
 from aces.pipeline_scripts import merge_tclean_commands
 from aces.pipeline_scripts import recover_tclean_commands
-from aces.pipeline_scripts import imaging_pipeline_rerun
+
+# CASA, not valid python
+#from aces.pipeline_scripts import imaging_pipeline_rerun
 
 from aces.retrieval_scripts import parse_weblog
 from aces.retrieval_scripts import make_humanreadable_links
 from aces.retrieval_scripts import retrieve_weblogs
-from aces.retrieval_scripts import run_pipeline
+# CASA from aces.retrieval_scripts import run_pipeline
 from aces.retrieval_scripts import retrieve_data
 from aces.retrieval_scripts import mous_map
 
-from aces.hipergator_scripts import hack_plotms
+# CASA from aces.hipergator_scripts import hack_plotms
 from aces.hipergator_scripts import link_repipeline_weblogs
 from aces.hipergator_scripts import job_runner
 from aces.hipergator_scripts import ghapi_update
@@ -41,20 +43,29 @@ from aces.imaging import mosaic_TP
 
 
 def test_imports():
-        
+    from aces import conf
+    import os
+
+    # the tests have to run on tox 
+    conf.basepath = os.getcwd()
+    # set the directory to the parent of the parent of this one (so, should be the package-containing directory, under which aces/ will exist)
+    conf.basepath = os.path.realpath(os.path.join(os.path.dirname(__file__), '../..'))
+    print(conf.basepath)
+
     from aces.pipeline_scripts import generate_spw33_commands
     from aces.pipeline_scripts import merge_tclean_commands
     from aces.pipeline_scripts import recover_tclean_commands
-    from aces.pipeline_scripts import imaging_pipeline_rerun
+    # CASA, not valid python
+    #from aces.pipeline_scripts import imaging_pipeline_rerun
 
     from aces.retrieval_scripts import parse_weblog
     from aces.retrieval_scripts import make_humanreadable_links
     from aces.retrieval_scripts import retrieve_weblogs
-    from aces.retrieval_scripts import run_pipeline
+    # CASA from aces.retrieval_scripts import run_pipeline
     from aces.retrieval_scripts import retrieve_data
     from aces.retrieval_scripts import mous_map
 
-    from aces.hipergator_scripts import hack_plotms
+    # CASA from aces.hipergator_scripts import hack_plotms
     from aces.hipergator_scripts import link_repipeline_weblogs
     from aces.hipergator_scripts import job_runner
     from aces.hipergator_scripts import ghapi_update

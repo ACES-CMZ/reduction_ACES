@@ -15,13 +15,15 @@ if os.getenv('ACES_ROOTDIR') is not None:
     log.warning(f"Overridding default rootdir={rootdir} with rootdir={os.environ['ACES_ROOTDIR']}")
     rootdir = os.environ['ACES_ROOTDIR']
 
+pipedir = os.path.dirname(__file__)
+
 
 def main():
 
-    with open(f"{rootdir}/aces/pipeline_scripts/default_tclean_commands.json", "r") as fh:
+    with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
         commands = json.load(fh)
 
-    aggregate_high_file = f"{rootdir}/aces/pipeline_scripts/aggregate_high_tclean_commands.json"
+    aggregate_high_file = f"{pipedir}/aggregate_high_tclean_commands.json"
     if os.path.exists(aggregate_high_file):
         with open(aggregate_high_file, "r") as fh:
             aggregate_high_commands = json.load(fh)
