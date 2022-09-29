@@ -48,7 +48,9 @@ def test_imports():
 
     # the tests have to run on tox 
     conf.basepath = os.getcwd()
-        
+    conf.basepath = os.path.realpath(os.path.join, os.path.dirname(__file__), '..')
+    print(conf.basepath)
+
     from aces.pipeline_scripts import generate_spw33_commands
     from aces.pipeline_scripts import merge_tclean_commands
     from aces.pipeline_scripts import recover_tclean_commands

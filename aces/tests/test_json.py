@@ -4,8 +4,10 @@ from aces import conf
 import os
 
 # the tests have to run on tox
-rootdir = os.getcwd()
+# rootdir = os.getcwd()
 #rootdir = conf.basepath
+
+rootdir = os.path.dirname(__file__)
 
 with open(f"{rootdir}/reduction_ACES/aces/pipeline_scripts/default_tclean_commands.json", "r") as fh:
     default_commands = json.load(fh)
