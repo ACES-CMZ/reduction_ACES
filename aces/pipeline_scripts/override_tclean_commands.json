@@ -52,7 +52,10 @@
         "negativethreshold": 10,
         "smoothfactor": 1,
         "minbeamfrac": 0.3,
-        "cutthreshold": 0.01
+        "cutthreshold": 0.01,
+        "nchan": -1,
+        "start": "",
+        "width": ""
       }
     }
   },
