@@ -1,4 +1,20 @@
 {
+  "Sgr_A_st_ap_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "imagename": "uid___A001_X15a0_X198.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1.reclean",
+        "cyclefactor": 2.0
+      }
+    }
+  },
+  "Sgr_A_st_ap_03_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "imagename": "uid___A001_X15a0_X196.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1.reclean",
+        "cyclefactor": 4.0
+      }
+    }
+  },
   "Sgr_A_st_ai_03_7M": {
     "tclean_cube_pars": {
       "spw20": {
