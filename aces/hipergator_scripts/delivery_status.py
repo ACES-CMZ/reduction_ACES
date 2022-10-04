@@ -3,6 +3,7 @@ import os
 from astropy import log
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from aces import conf
+import time
 
 
 def get_mousmap_(**kwargs):
@@ -17,6 +18,7 @@ def wildexists(x):
 
 
 def main():
+    t0 = time.time()
     cwd = os.getcwd()
     basepath = conf.basepath
     os.chdir(basepath)
@@ -172,6 +174,9 @@ def main():
             fh.write("\n\n")
 
     os.chdir(cwd)
+
+    t1 = time.time()
+    print(f"delivery_status took {t1 - t0} seconds = {(t1-t0)/60} minutes = {(t1 - t0)/3600} hours")
 
     # Hack for debugging
     globals().update(locals())

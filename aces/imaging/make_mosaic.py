@@ -2,6 +2,7 @@ import numpy as np
 import regions
 import radio_beam
 import spectral_cube
+from spectral_cube.lower_dimensional_structures import Projection
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 from spectral_cube import SpectralCube
 from spectral_cube.wcs_utils import strip_wcs_from_header
@@ -56,31 +57,47 @@ def read_as_2d(fn, minval=None):
         return fits.HDUList([cube[0].hdu])
 
 
-def get_peak(fn, slab_kwargs=None, rest_value=None):
+def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
     print(".", end='', flush=True)
-    ft = 'fits' if fn.endswith(".fits") else "casa_image"
-    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
-    if slab_kwargs is not None:
-        cube = cube.spectral_slab(**slab_kwargs)
-    with cube.use_dask_scheduler('threads'):
-        if cube.unit == u.dimensionless_unscaled:
-            mx = cube.max(axis=0)
-        else:
-            mx = cube.max(axis=0).to(u.K)
-    return mx
+    outfn = fn.replace(".fits", "") + f"{suffix}_max.fits"
+    if os.path.exists(outfn):
+        hdu = fits.open(outfn)
+        proj = Projection.from_hdu(hdu)
+        return proj
+    else:
+        ft = 'fits' if fn.endswith(".fits") else "casa_image"
+        cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
+        if slab_kwargs is not None:
+            cube = cube.spectral_slab(**slab_kwargs)
+        with cube.use_dask_scheduler('threads'):
+            if cube.unit == u.dimensionless_unscaled:
+                mx = cube.max(axis=0)
+            else:
+                mx = cube.max(axis=0).to(u.K)
+        if save_file:
+            mx.hdu.writeto(outfn)
+        return mx
 
 
-def get_m0(fn, slab_kwargs=None, rest_value=None):
+def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
     print(".", end='', flush=True)
-    ft = 'fits' if fn.endswith(".fits") else "casa_image"
-    cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
-    if slab_kwargs is not None:
-        cube = cube.spectral_slab(**slab_kwargs)
-    with cube.use_dask_scheduler('threads'):
-        moment0 = cube.moment0(axis=0)
-    moment0 = (moment0 * u.s / u.km).to(u.K,
-                                        equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km / u.s
-    return moment0
+    outfn = fn.replace(".fits", "") + f"{suffix}_mom0.fits"
+    if os.path.exists(outfn):
+        hdu = fits.open(outfn)
+        proj = Projection.from_hdu(hdu)
+        return proj
+    else:
+        ft = 'fits' if fn.endswith(".fits") else "casa_image"
+        cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
+        if slab_kwargs is not None:
+            cube = cube.spectral_slab(**slab_kwargs)
+        with cube.use_dask_scheduler('threads'):
+            moment0 = cube.moment0(axis=0)
+        moment0 = (moment0 * u.s / u.km).to(u.K,
+                                            equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km / u.s
+        if save_file:
+            moment0.hdu.writeto(outfn)
+        return moment0
 
 
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
@@ -270,16 +287,16 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
 
         if parallel:
             pool = Pool()
-            hdus = pool.map(partial(get_peak, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}), filelist)
+            hdus = pool.map(partial(get_peak, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}, suffix=f'_{line}'), filelist)
             hdus = [x.hdu for x in hdus]
             if use_weights:
-                wthdus = pool.map(partial(get_peak, **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, 'rest_value': restf}), weightfiles)
+                wthdus = pool.map(partial(get_peak, **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, 'rest_value': restf}, suffix=f'_{line}'), weightfiles)
                 wthdus = [x.hdu for x in wthdus]
         else:
-            hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf).hdu for fn in filelist]
+            hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf, suffix=f'_{line}').hdu for fn in filelist]
             print(flush=True)
             if use_weights:
-                wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, rest_value=restf).hdu for fn in weightfiles]
+                wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, rest_value=restf, suffix=f'_{line}').hdu for fn in weightfiles]
                 print(flush=True)
 
         if parallel:
@@ -300,10 +317,10 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
 
         if parallel:
             pool = Pool()
-            m0hdus = pool.map(partial(get_m0, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}), filelist)
+            m0hdus = pool.map(partial(get_m0, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}, suffix=f'_{line}'), filelist)
             m0hdus = [x.hdu for x in m0hdus]
         else:
-            m0hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf).hdu for fn in filelist]
+            m0hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf, suffix=f'_{line}').hdu for fn in filelist]
             print(flush=True)
 
         if parallel:
