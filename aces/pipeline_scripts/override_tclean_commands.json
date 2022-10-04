@@ -707,7 +707,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_X196.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_X196.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1.reclean",
         "imsize": [
           1458,
           1440
@@ -766,7 +766,7 @@
         "threshold": "0.01Jy",
         "nsigma": 0.0,
         "cycleniter": -1,
-        "cyclefactor": 1.0,
+        "cyclefactor": 4.0,
         "minpsffraction": 0.05,
         "maxpsffraction": 0.8,
         "interactive": 0,
@@ -2682,6 +2682,51 @@
       },
       "spw26": {
         "cyclefactor": 3
+      }
+    }
+  },
+  "Sgr_A_st_ac_03_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "nchan": 3836,
+        "start": "97.6660537907GHz",
+        "width": "488244Hz",
+        "threshold": "0.01Jy"
+      }
+    }
+  },
+  "Sgr_A_st_v_03_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "nchan": 3836,
+        "start": "97.6660537907GHz",
+        "width": "488310Hz",
+        "threshold": "0.01Jy"
+      },
+      "spw35": {
+        "nchan": 3836,
+        "start": "99.5533154972GHz",
+        "width": "4883141Hz"
+      }
+    }
+  },
+  "Sgr_A_st_u_03_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "nchan": 3836,
+        "start": "97.6660537907GHz",
+        "width": "488244Hz",
+        "threshold": "0.01Jy"
+      }
+    }
+  },
+  "Sgr_A_st_n_03_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "nchan": 3836,
+        "start": "97.6660537907GHz",
+        "width": "488244Hz",
+        "threshold": "0.01Jy"
       }
     }
   }
