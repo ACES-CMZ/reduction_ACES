@@ -53,7 +53,7 @@
         "smoothfactor": 1,
         "minbeamfrac": 0.3,
         "cutthreshold": 0.01,
-        "nchan": -1,
+        "nchan": 1916,
         "start": "",
         "width": ""
       }
