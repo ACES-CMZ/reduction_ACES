@@ -48,7 +48,7 @@ def cube_mosaicing():
         #                         cube0.wcs.wcs.crpix[2]]
 
         result = mosaic_cubes([SpectralCube.read(fn) for fn in filelist], combine_header_kwargs=dict(frame='galactic'))
-        result.write(f'{basepath}/mosaics/cubes/ACES_TP_spw{spw}_mosaic.fits')
+        result.write(f'{basepath}/mosaics/cubes/ACES_TP_spw{spw}_mosaic.fits', overwrite=True)
 
 
 def main():
