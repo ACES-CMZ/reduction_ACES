@@ -30,6 +30,9 @@ else:
 
 
 def main():
+    import time
+    t0 = time.time()
+    print("Starting aces_write_tclean_scripts")
     # if this isn't in the env pars, we get an intentional crash:
     # you have to specify that.
     datadir = f'{conf.basepath}/data/'  # os.environ['ACES_DATADIR']
@@ -275,4 +278,5 @@ def main():
     if runonce:
         print("Completed re-imaging run with RUNONCE enabled, but didn't run at all.")
 
+    print(f"Done with aces_write_tclean_scripts after t={time.time()-t0}")
     globals().update(locals())
