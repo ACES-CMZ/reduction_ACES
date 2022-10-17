@@ -5,7 +5,9 @@ from spectral_cube.spectral_cube import _regionlist_to_single_region
 from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
+from astropy.wcs import WCS
 from spectral_cube import SpectralCube
+from spectral_cube.cube_utils import mosaic_cubes
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 from aces.imaging.make_mosaic import all_lines
@@ -24,6 +26,29 @@ basepath = conf.basepath
 # header = target_wcs.to_header()
 # header['NAXIS1'] = 4000
 # header['NAXIS2'] = 4000
+
+
+def cube_mosaicing():
+
+    for spw in (17, 19, 21, 23, 25, 27):
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw{spw}.cube.I.sd.fits')
+
+        # cube0 = SpectralCube.read(filelist[0])
+        # output_wcs = WCS(naxis=3)
+        # output_wcs.wcs.ctype = ['GLON-CAR', 'GLAT-CAR', 'FREQ']
+        # output_wcs.wcs.crval = [0, 0, cube0.wcs.wcs.crval[2]]
+        # output_wcs.wcs.cdelt = cube0.wcs.wcs.cdelt
+        # output_wcs.wcs.cunit = cube0.wcs.wcs.cunit
+        # output_shape = [int(np.abs(1.5 / cube0.wcs.wcs.cdelt[0])),
+        #                 int(np.abs(0.55 / cube0.wcs.wcs.cdelt[1])),
+        #                 cube0.shape[0]]
+        # # crpix * cdelt + crval = cornerval
+        # output_wcs.wcs.crpix = [-0.92 / output_wcs.wcs.cdelt[0],
+        #                         -0.30 / output_wcs.wcs.cdelt[1],
+        #                         cube0.wcs.wcs.crpix[2]]
+
+        result = mosaic_cubes([SpectralCube.read(fn) for fn in filelist], combine_header_kwargs=dict(frame='galactic'))
+        result.write(f'{basepath}/mosaics/cubes/ACES_TP_spw{spw}_mosaic.fits', overwrite=True)
 
 
 def main():
@@ -123,3 +148,5 @@ def main():
 
     all_lines(header, array='TP', glob_suffix='cube.I.sd.fits', globdir='product', use_weights=False,
               parallel=False)
+
+    cube_mosaicing()
