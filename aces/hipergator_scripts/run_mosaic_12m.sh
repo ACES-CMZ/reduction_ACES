@@ -8,8 +8,8 @@
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
 #SBATCH --qos=astronomy-dept-b
 #SBATCH --account=astronomy-dept
-#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/ACES_retrieval_%j.log
-#SBATCH --job-name=ACES_retrieval
+#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/ACES_mosaic12m_%j.log
+#SBATCH --job-name=ACES_mosaic12m
 #SBATCH --export=ALL
 
 

@@ -30,6 +30,9 @@ else:
 
 
 def main():
+    import time
+    t0 = time.time()
+    print("Starting aces_write_tclean_scripts")
     # if this isn't in the env pars, we get an intentional crash:
     # you have to specify that.
     datadir = f'{conf.basepath}/data/'  # os.environ['ACES_DATADIR']
@@ -175,7 +178,10 @@ def main():
                              f"    if os.path.exists(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}'):",
                              f"        logprint(f'Removing {os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}} because it exists')",
                              f"        assert 'iter1' in f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}'",  # sanity check - don't remove important directories!
-                             f"        shutil.rmtree(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}')",
+                             "        if fn.endswith('.fits'):",
+                             f"            os.remove(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}')",
+                             "        else:",
+                             f"            shutil.rmtree(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}')",
                              f"    shutil.move(fn, '{os.path.dirname(tcpars['imagename'])}/')",
                              ] +
                             [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]
@@ -272,4 +278,5 @@ def main():
     if runonce:
         print("Completed re-imaging run with RUNONCE enabled, but didn't run at all.")
 
+    print(f"Done with aces_write_tclean_scripts after t={time.time()-t0}")
     globals().update(locals())

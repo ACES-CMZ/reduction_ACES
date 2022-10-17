@@ -180,14 +180,14 @@ def hcop(header):
     hdus = [get_peak(fn).hdu for fn in filelist]
     print(flush=True)
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw29.mfs.I.pb.fits.gz')
-    wthdus = [read_as_2d(fn, minval=0.3) for fn in weightfiles]
+    wthdus = [read_as_2d(fn, minval=0.3, suffix='_hcop') for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='hcop_max', cbar_unit='K', array='12m', basepath=basepath,
                 weights=wthdus,
                 norm_kwargs=dict(max_cut=20, min_cut=-0.5, ),
                 target_header=header,
                 )
-    hdus = [get_m0(fn).hdu for fn in filelist]
+    hdus = [get_m0(fn, suffix='_hcop').hdu for fn in filelist]
     print(flush=True)
     make_mosaic(hdus, name='hcop_m0', cbar_unit='K km/s', array='12m', basepath=basepath,
                 weights=wthdus,
@@ -198,7 +198,7 @@ def hcop(header):
 def hnco(header):
     log.info("12m HNCO")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw31.cube.I.pbcor.fits')
-    hdus = [get_peak(fn).hdu for fn in filelist]
+    hdus = [get_peak(fn, suffix='_hnco').hdu for fn in filelist]
     print(flush=True)
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw31.mfs.I.pb.fits.gz')
     wthdus = [read_as_2d(fn, minval=0.3) for fn in weightfiles]
@@ -206,8 +206,8 @@ def hnco(header):
     make_mosaic(hdus, name='hnco_max', basepath=basepath, array='12m',
                 target_header=header,
                 weights=wthdus,
-                norm_kwargs=dict(max_cut=10, min_cut=-0.5, ))
-    hdus = [get_m0(fn).hdu for fn in filelist]
+                norm_kwargs=dict(max_cut=20, min_cut=-0.5, ))
+    hdus = [get_m0(fn, suffix='_hnco').hdu for fn in filelist]
     print(flush=True)
     make_mosaic(hdus, name='hnco_m0', cbar_unit='K km/s', array='12m',
                 basepath=basepath, weights=wthdus, target_header=header,
@@ -218,9 +218,9 @@ def h40a(header):
     log.info("12m H40a")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
-    hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
+    hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz, suffix='_h40a').hdu for fn in filelist]
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')
-    wthdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in weightfiles]
+    wthdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz, suffix='_h40a').hdu for fn in weightfiles]
     make_mosaic(hdus, name='h40a_max', cbar_unit='K',
                 norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
