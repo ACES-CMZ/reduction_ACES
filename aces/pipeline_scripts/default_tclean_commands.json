@@ -852,7 +852,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X114",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20211109T152042"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20211109T152042"
   },
   "Sgr_A_st_ac_03_TM1": {
     "tclean_cube_pars": {
@@ -1595,7 +1595,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X148",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220907T200359"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220907T200359"
   },
   "Sgr_A_st_k_03_7M": {
     "tclean_cube_pars": {
@@ -2478,7 +2478,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xde",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220811T161547"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220811T161547"
   },
   "Sgr_A_st_ao_03_TM1": {
     "tclean_cube_pars": {
@@ -3249,7 +3249,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X190",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220204T172410"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220204T172410"
   },
   "Sgr_A_st_aq_03_7M": {
     "tclean_cube_pars": {
@@ -4160,7 +4160,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X19e",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220516T130337"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220516T130337"
   },
   "Sgr_A_st_ad_03_TM1": {
     "tclean_cube_pars": {
@@ -4903,7 +4903,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X14e",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220112T205732"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220112T205732"
   },
   "Sgr_A_st_d_03_7M": {
     "tclean_cube_pars": {
@@ -5730,7 +5730,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xb4",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220901T125658"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220901T125658"
   },
   "Sgr_A_st_e_03_7M": {
     "tclean_cube_pars": {
@@ -6557,7 +6557,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xba",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220406T115801"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220406T115801"
   },
   "Sgr_A_st_j_03_TM1": {
     "tclean_cube_pars": {
@@ -7219,7 +7219,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xd6",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220510T121544"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220510T121544"
   },
   "Sgr_A_st_b_03_TM1": {
     "tclean_cube_pars": {
@@ -7905,7 +7905,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xa6",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220622T211122"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220622T211122"
   },
   "Sgr_A_st_ar_03_7M": {
     "tclean_cube_pars": {
@@ -8788,7 +8788,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X1a4",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220112T135738"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220112T135738"
   },
   "Sgr_A_st_x_03_7M": {
     "tclean_cube_pars": {
@@ -9587,7 +9587,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X12c",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220616T213105"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220616T213105"
   },
   "Sgr_A_st_ak_03_7M_updated": {
     "tclean_cube_pars": {
@@ -10386,7 +10386,7 @@
       }
     },
     "mous": "uid://A001/X15a9/X12d5",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220421T112818"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220421T112818"
   },
   "Sgr_A_st_ag_03_TM1": {
     "tclean_cube_pars": {
@@ -11157,7 +11157,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X160",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220612T192553"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220612T192553"
   },
   "Sgr_A_st_g_03_7M": {
     "tclean_cube_pars": {
@@ -12012,7 +12012,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xc6",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220623T194044"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220623T194044"
   },
   "Sgr_A_st_u_03_7M": {
     "tclean_cube_pars": {
@@ -12783,7 +12783,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X11a",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220822T204452"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220822T204452"
   },
   "Sgr_A_st_s_03_7M": {
     "tclean_cube_pars": {
@@ -13666,7 +13666,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X10e",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220921T165607"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220921T165607"
   },
   "Sgr_A_st_ak_03_TM1_updated": {
     "tclean_cube_pars": {
@@ -14409,7 +14409,7 @@
       }
     },
     "mous": "uid://A001/X15b4/X4b",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220505T134801"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220505T134801"
   },
   "Sgr_A_st_an_03_7M": {
     "tclean_cube_pars": {
@@ -15292,7 +15292,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X18c",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220823T090748"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220823T090748"
   },
   "Sgr_A_st_ag_03_7M": {
     "tclean_cube_pars": {
@@ -16175,7 +16175,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X162",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220805T145417"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220805T145417"
   },
   "Sgr_A_st_ai_03_TM1": {
     "tclean_cube_pars": {
@@ -16837,7 +16837,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X16c",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220602T152400"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220602T152400"
   },
   "Sgr_A_st_ae_03_TM1": {
     "tclean_cube_pars": {
@@ -17499,7 +17499,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X154",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220603T155839"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220603T155839"
   },
   "Sgr_A_st_v_03_TM1": {
     "tclean_cube_pars": {
@@ -18242,7 +18242,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X11e",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220918T152619"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220918T152619"
   },
   "Sgr_A_st_z_03_7M_updated": {
     "tclean_cube_pars": {
@@ -19097,7 +19097,7 @@
       }
     },
     "mous": "uid://A001/X15a9/X12d3",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220608T180310"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220608T180310"
   },
   "Sgr_A_st_l_03_TM1": {
     "tclean_cube_pars": {
@@ -19759,7 +19759,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xe2",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220608T184646"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220608T184646"
   },
   "Sgr_A_st_ap_03_TM1": {
     "tclean_cube_pars": {
@@ -20445,7 +20445,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X196",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220524T150931"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220524T150931"
   },
   "Sgr_A_st_m_03_TM1": {
     "tclean_cube_pars": {
@@ -21107,7 +21107,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xe8",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220325T214348"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220325T214348"
   },
   "Sgr_A_st_aa_03_7M": {
     "tclean_cube_pars": {
@@ -21934,7 +21934,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X13e",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220912T140708"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220912T140708"
   },
   "Sgr_A_st_z_03_TM1": {
     "tclean_cube_pars": {
@@ -22596,7 +22596,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X136",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220601T145206"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220601T145206"
   },
   "Sgr_A_st_ai_03_7M": {
     "tclean_cube_pars": {
@@ -23451,7 +23451,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X16e",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220530T120642"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220530T120642"
   },
   "Sgr_A_st_ao_03_7M": {
     "tclean_cube_pars": {
@@ -24278,7 +24278,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X192",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20211110T104242"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20211110T104242"
   },
   "Sgr_A_st_p_03_7M": {
     "tclean_cube_pars": {
@@ -25161,7 +25161,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xfc",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220726T085435"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220726T085435"
   },
   "Sgr_A_st_n_03_7M": {
     "tclean_cube_pars": {
@@ -25960,7 +25960,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xf0",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220818T140814"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220818T140814"
   },
   "Sgr_A_st_aj_03_TM1": {
     "tclean_cube_pars": {
@@ -26646,7 +26646,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X172",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220622T104538"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220622T104538"
   },
   "Sgr_A_st_m_03_7M_updated": {
     "tclean_cube_pars": {
@@ -27473,7 +27473,7 @@
       }
     },
     "mous": "uid://A001/X15b4/X43",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220425T201124"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220425T201124"
   },
   "Sgr_A_st_b_updated_03_7M": {
     "tclean_cube_pars": {
@@ -28356,7 +28356,7 @@
       }
     },
     "mous": "uid://A001/X15b4/X37",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220713T220117"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220713T220117"
   },
   "Sgr_A_st_q_03_7M": {
     "tclean_cube_pars": {
@@ -29295,7 +29295,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X102",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220727T175022"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220727T175022"
   },
   "Sgr_A_st_h_03_7M": {
     "tclean_cube_pars": {
@@ -30178,7 +30178,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xcc",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220629T122046"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220629T122046"
   },
   "Sgr_A_st_ae_03_7M": {
     "tclean_cube_pars": {
@@ -31061,7 +31061,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X156",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220816T132938"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220816T132938"
   },
   "Sgr_A_st_ab_03_7M": {
     "tclean_cube_pars": {
@@ -31860,7 +31860,862 @@
       }
     },
     "mous": "uid://A001/X15a0/X144",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220530T180704"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220530T180704"
+  },
+  "Sgr_A_st_r_03_7M": {
+    "tclean_cube_pars": {
+      "spw16": {
+        "vis": [
+          "uid___A002_Xfddca6_X678e_target.ms",
+          "uid___A002_Xfddca6_X7053_target.ms",
+          "uid___A002_Xfddca6_X7b73_target.ms",
+          "uid___A002_Xfdf45f_X29fe_target.ms",
+          "uid___A002_Xfdf45f_X3281_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "16",
+          "16",
+          "16",
+          "16",
+          "16"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X108.s38_0.Sgr_A_star_sci.spw16.cube.I.iter1",
+        "imsize": [
+          300,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:32.0332 -028.52.55.020",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 2042,
+        "start": "85.9419830648GHz",
+        "width": "0.2441671MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 499999,
+        "gain": 0.1,
+        "threshold": "0.127Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw18": {
+        "vis": [
+          "uid___A002_Xfddca6_X678e_target.ms",
+          "uid___A002_Xfddca6_X7053_target.ms",
+          "uid___A002_Xfddca6_X7b73_target.ms",
+          "uid___A002_Xfdf45f_X29fe_target.ms",
+          "uid___A002_Xfdf45f_X3281_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "18",
+          "18",
+          "18",
+          "18",
+          "18"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X108.s38_0.Sgr_A_star_sci.spw18.cube.I.iter1",
+        "imsize": [
+          300,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:32.0332 -028.52.55.020",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 2042,
+        "start": "86.6412442536GHz",
+        "width": "0.2441672MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 499999,
+        "gain": 0.1,
+        "threshold": "0.126Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw20": {
+        "vis": [
+          "uid___A002_Xfddca6_X678e_target.ms",
+          "uid___A002_Xfddca6_X7053_target.ms",
+          "uid___A002_Xfddca6_X7b73_target.ms",
+          "uid___A002_Xfdf45f_X29fe_target.ms",
+          "uid___A002_Xfdf45f_X3281_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "20",
+          "20",
+          "20",
+          "20",
+          "20"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X108.s38_0.Sgr_A_star_sci.spw20.cube.I.iter1",
+        "imsize": [
+          300,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:32.0332 -028.52.55.020",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 2043,
+        "start": "89.1487597270GHz",
+        "width": "0.0305315MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 499999,
+        "gain": 0.1,
+        "threshold": "0.363Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw22": {
+        "vis": [
+          "uid___A002_Xfddca6_X678e_target.ms",
+          "uid___A002_Xfddca6_X7053_target.ms",
+          "uid___A002_Xfddca6_X7b73_target.ms",
+          "uid___A002_Xfdf45f_X29fe_target.ms",
+          "uid___A002_Xfdf45f_X3281_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "22",
+          "22",
+          "22",
+          "22",
+          "22"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X108.s38_0.Sgr_A_star_sci.spw22.cube.I.iter1",
+        "imsize": [
+          300,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:32.0332 -028.52.55.020",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 2043,
+        "start": "87.8852553093GHz",
+        "width": "0.0305313MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 300000,
+        "gain": 0.1,
+        "threshold": "0.312Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw24": {
+        "vis": [
+          "uid___A002_Xfddca6_X678e_target.ms",
+          "uid___A002_Xfddca6_X7053_target.ms",
+          "uid___A002_Xfddca6_X7b73_target.ms",
+          "uid___A002_Xfdf45f_X29fe_target.ms",
+          "uid___A002_Xfdf45f_X3281_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "24",
+          "24",
+          "24",
+          "24",
+          "24"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X108.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1",
+        "imsize": [
+          300,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:32.0332 -028.52.55.020",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 3834,
+        "start": "97.6574465921GHz",
+        "width": "0.4883181MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 1000000,
+        "gain": 0.1,
+        "threshold": "0.167Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw26": {
+        "vis": [
+          "uid___A002_Xfddca6_X678e_target.ms",
+          "uid___A002_Xfddca6_X7053_target.ms",
+          "uid___A002_Xfddca6_X7b73_target.ms",
+          "uid___A002_Xfdf45f_X29fe_target.ms",
+          "uid___A002_Xfdf45f_X3281_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "26",
+          "26",
+          "26",
+          "26",
+          "26"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X108.s38_0.Sgr_A_star_sci.spw26.cube.I.iter1",
+        "imsize": [
+          300,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:32.0332 -028.52.55.020",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 3834,
+        "start": "99.5530616557GHz",
+        "width": "0.4883182MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 899999,
+        "gain": 0.1,
+        "threshold": "0.129Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    },
+    "tclean_cont_pars": {
+      "aggregate": {
+        "vis": [
+          "uid___A002_Xfddca6_X678e_target.ms",
+          "uid___A002_Xfddca6_X7053_target.ms",
+          "uid___A002_Xfddca6_X7b73_target.ms",
+          "uid___A002_Xfdf45f_X29fe_target.ms",
+          "uid___A002_Xfdf45f_X3281_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "16:85.9389234642~86.0089918236GHz;86.1684156517~86.2021070579GHz;86.2785230736~86.2846265892GHz;86.3586011986~86.4330640892GHz,18:86.6391187767~86.6466871361GHz;86.6510816673~86.6523023704GHz;86.6579176048~86.6698804954GHz;86.6857496361~86.6891676048GHz;86.7675367454~86.7824293236GHz;86.8820386986~87.0053297142GHz;87.0356031517~87.0404859642GHz;87.1049390892~87.1264234642GHz,20:89.1446376272~89.1476893850GHz;89.1826625296~89.1853480764GHz;89.2028651663~89.2057033010GHz,22:87.8801112600~87.8847194143GHz;87.9019618460~87.9037318655GHz;87.9098964163~87.9135280081GHz;87.9346156546~87.9421534963GHz,24:97.6582038510~97.6674811948GHz;97.7343757260~97.7968757260GHz;97.8691413510~97.8833015073GHz;98.0273444760~98.0898444760GHz;98.1538093198~98.1977546323GHz;98.2539069760~98.4882819760GHz;98.5810554135~98.6513679135GHz;98.7192390073~98.7285163510GHz;98.7456061948~98.8027351010GHz;98.9204108823~99.0014655698GHz;99.0595710385~99.1923835385GHz;99.3403327573~99.3544929135GHz;99.3671882260~99.3828132260GHz;99.3872077573~99.3955085385GHz;99.4023444760~99.4248054135GHz;99.4599616635~99.4995124448GHz,26:99.5483327573~99.5561452573GHz;99.5673757260~99.6074147885GHz;99.6713796323~99.6889577573GHz;99.6996999448~99.7133718198GHz;99.7329030698~99.8066335385GHz;99.8178640073~99.8266530698GHz;99.8642507260~99.8998952573GHz;99.9121022885~99.9228444760GHz;99.9345632260~99.9374929135GHz;99.9565358823~99.9736257260GHz;99.9985280698~100.0019460385GHz;100.1113210385~100.1225515073GHz;100.1269460385~100.1406179135GHz;100.1689382260~100.1884694760GHz;100.2138601010~100.2236257260GHz;100.2309499448~100.2499929135GHz;100.2646413510~100.2690358823GHz;100.2797780698~100.2871022885GHz;100.3061452573~100.3120046323GHz;100.3178640073~100.3246999448GHz;100.3271413510~100.3369069760GHz;100.3530202573~100.3994069760GHz;100.4228444760~100.4355397885GHz;100.4663015073~100.4770436948GHz;100.5170827573~100.5253835385GHz;100.5317311948~100.5375905698GHz;100.6557546323~100.6679616635GHz;100.6840749448~100.7001882260GHz;100.7177663510~100.7421804135GHz;100.7480397885~100.7514577573GHz;100.7529226010~100.7602468198GHz;100.7670827573~100.7709890073GHz;100.7797780698~100.7866140073GHz;100.7914968198~100.7963796323GHz;100.7988210385~100.8032155698GHz;100.8129811948~100.8178640073GHz;100.8198171323~100.8261647885GHz;100.8295827573~100.8364186948GHz;100.8417897885~100.8574147885GHz;100.8705983823~100.8896413510GHz;100.8950124448~100.8989186948GHz;100.9096608823~100.9228444760GHz;100.9277272885~100.9350515073GHz;100.9433522885~100.9638601010GHz;100.9755788510~100.9804616635GHz;101.0068288510~101.0234304135GHz;101.0371022885~101.0400319760GHz;101.0434499448~101.0468679135GHz;101.0546804135~101.0771413510GHz;101.0830007260~101.0961843198GHz;101.1103444760~101.1186452573GHz;101.1547780698~101.1601491635GHz;101.1689382260~101.1870046323GHz;101.1909108823~101.2016530698GHz;101.2119069760~101.2329030698GHz;101.2509694760~101.2680593198GHz;101.2939382260~101.2988210385GHz;101.3139577573~101.3432546323GHz;101.3598561948~101.3955007260GHz;101.4042897885~101.4145436948GHz",
+          "16:85.9388786287~86.0089469880GHz;86.1683708162~86.2020622224GHz;86.2784782380~86.2845817537GHz;86.3585563630~86.4330192537GHz,18:86.6390739412~86.6466423005GHz;86.6510368318~86.6522575349GHz;86.6578727693~86.6698356599GHz;86.6857048005~86.6891227693GHz;86.7674919099~86.7823844880GHz;86.8819938630~87.0052848787GHz;87.0355583162~87.0404411287GHz;87.1048942537~87.1263786287GHz,20:89.1445917556~89.1476435134GHz;89.1826166579~89.1853022048GHz;89.2028192947~89.2056574294GHz,22:87.8800959060~87.8846735427GHz;87.9019159743~87.9036859939GHz;87.9098505447~87.9134821365GHz;87.9345697829~87.9421076247GHz,24:97.6581522825~97.6674296263GHz;97.7343241575~97.7968241575GHz;97.8690897825~97.8832499388GHz;98.0272929075~98.0897929075GHz;98.1537577513~98.1981913450GHz;98.2538554075~98.4882304075GHz;98.5810038450~98.6513163450GHz;98.7191874388~98.7284647825GHz;98.7455546263~98.8026835325GHz;98.9203593138~99.0014140013GHz;99.0595194700~99.1923319700GHz;99.3402811888~99.3544413450GHz;99.3671366575~99.3827616575GHz;99.3871561888~99.3954569700GHz;99.4022929075~99.4247538450GHz;99.4599100950~99.4994608763GHz,26:99.5482811888~99.5560936888GHz;99.5673241575~99.6073632200GHz;99.6713280638~99.6889061888GHz;99.6996483763~99.7133202513GHz;99.7328515013~99.8065819700GHz;99.8178124388~99.8266015013GHz;99.8641991575~99.8998436888GHz;99.9120507200~99.9227929075GHz;99.9345116575~99.9374413450GHz;99.9564843138~99.9735741575GHz;99.9984765013~100.0018944700GHz;100.1112694700~100.1224999388GHz;100.1268944700~100.1405663450GHz;100.1688866575~100.1884179075GHz;100.2138085325~100.2235741575GHz;100.2308983763~100.2499413450GHz;100.2645897825~100.2689843138GHz;100.2797265013~100.2870507200GHz;100.3060936888~100.3119530638GHz;100.3178124388~100.3246483763GHz;100.3270897825~100.3368554075GHz;100.3529686888~100.3993554075GHz;100.4227929075~100.4354882200GHz;100.4662499388~100.4769921263GHz;100.5170311888~100.5253319700GHz;100.5316796263~100.5375390013GHz;100.6557030638~100.6679100950GHz;100.6840233763~100.7001366575GHz;100.7177147825~100.7421288450GHz;100.7479882200~100.7514061888GHz;100.7528710325~100.7601952513GHz;100.7670311888~100.7709374388GHz;100.7797265013~100.7865624388GHz;100.7914452513~100.7963280638GHz;100.7987694700~100.8031640013GHz;100.8129296263~100.8178124388GHz;100.8197655638~100.8261132200GHz;100.8295311888~100.8363671263GHz;100.8417382200~100.8573632200GHz;100.8705468138~100.8895897825GHz;100.8949608763~100.8988671263GHz;100.9096093138~100.9227929075GHz;100.9276757200~100.9349999388GHz;100.9433007200~100.9638085325GHz;100.9755272825~100.9804100950GHz;101.0067772825~101.0233788450GHz;101.0370507200~101.0399804075GHz;101.0433983763~101.0468163450GHz;101.0546288450~101.0770897825GHz;101.0829491575~101.0961327513GHz;101.1102929075~101.1185936888GHz;101.1547265013~101.1600975950GHz;101.1688866575~101.1869530638GHz;101.1908593138~101.2016015013GHz;101.2118554075~101.2328515013GHz;101.2509179075~101.2680077513GHz;101.2938866575~101.2987694700GHz;101.3139061888~101.3432030638GHz;101.3598046263~101.3954491575GHz;101.4042382200~101.4144921263GHz",
+          "16:85.9388423577~86.0089107170GHz;86.1683345452~86.2020259514GHz;86.2784419670~86.2845454827GHz;86.3585200920~86.4329829827GHz,18:86.6390376702~86.6466060295GHz;86.6510005608~86.6522212639GHz;86.6578364983~86.6697993889GHz;86.6856685295~86.6890864983GHz;86.7674556389~86.7825923577GHz;86.8819575920~87.0052486077GHz;87.0355220452~87.0404048577GHz;87.1048579827~87.1263423577GHz,20:89.1445546464~89.1476064042GHz;89.1825795488~89.1852650956GHz;89.2027821855~89.2056203202GHz,22:87.8800587968~87.8846364335GHz;87.9018788652~87.9036488847GHz;87.9098134355~87.9134450273GHz;87.9345326738~87.9420705156GHz,24:97.6581105647~97.6673879084GHz;97.7342824397~97.7967824397GHz;97.8690480647~97.8832082209GHz;98.0272511897~98.0902394709GHz;98.1537160334~98.1981496272GHz;98.2538136897~98.4881886897GHz;98.5809621272~98.6512746272GHz;98.7191457209~98.7284230647GHz;98.7455129084~98.8026418147GHz;98.9203175959~99.0013722834GHz;99.0594777522~99.1922902522GHz;99.3402394709~99.3543996272GHz;99.3670949397~99.3827199397GHz;99.3876027522~99.3954152522GHz;99.4027394709~99.4247121272GHz;99.4603566584~99.4994191584GHz,26:99.5482394709~99.5560519709GHz;99.5672824397~99.6073215022GHz;99.6712863459~99.6888644709GHz;99.6996066584~99.7132785334GHz;99.7328097834~99.8065402522GHz;99.8177707209~99.8265597834GHz;99.8641574397~99.9002902522GHz;99.9120090022~99.9232394709GHz;99.9344699397~99.9378879084GHz;99.9564425959~99.9740207209GHz;99.9984347834~100.0023410334GHz;100.1112277522~100.1224582209GHz;100.1268527522~100.1405246272GHz;100.1688449397~100.1883761897GHz;100.2137668147~100.2235324397GHz;100.2308566584~100.2498996272GHz;100.2645480647~100.2689425959GHz;100.2796847834~100.2870090022GHz;100.3060519709~100.3119113459GHz;100.3177707209~100.3246066584GHz;100.3270480647~100.3368136897GHz;100.3529269709~100.3993136897GHz;100.4227511897~100.4354465022GHz;100.4662082209~100.4769504084GHz;100.5169894709~100.5252902522GHz;100.5316379084~100.5374972834GHz;100.6556613459~100.6678683772GHz;100.6839816584~100.7000949397GHz;100.7176730647~100.7420871272GHz;100.7479465022~100.7513644709GHz;100.7528293147~100.7601535334GHz;100.7669894709~100.7708957209GHz;100.7796847834~100.7865207209GHz;100.7914035334~100.7962863459GHz;100.7987277522~100.8031222834GHz;100.8128879084~100.8177707209GHz;100.8197238459~100.8260715022GHz;100.8294894709~100.8363254084GHz;100.8416965022~100.8573215022GHz;100.8705050959~100.8895480647GHz;100.8949191584~100.8988254084GHz;100.9095675959~100.9227511897GHz;100.9276340022~100.9349582209GHz;100.9432590022~100.9637668147GHz;100.9754855647~100.9803683772GHz;101.0067355647~101.0233371272GHz;101.0370090022~101.0399386897GHz;101.0433566584~101.0467746272GHz;101.0545871272~101.0770480647GHz;101.0829074397~101.0960910334GHz;101.1102511897~101.1185519709GHz;101.1546847834~101.1600558772GHz;101.1688449397~101.1869113459GHz;101.1908175959~101.2015597834GHz;101.2118136897~101.2328097834GHz;101.2508761897~101.2679660334GHz;101.2943332209~101.2987277522GHz;101.3143527522~101.3431613459GHz;101.3602511897~101.3954074397GHz;101.4046847834~101.4144504084GHz",
+          "16:85.9388446941~86.0089130535GHz;86.1683368816~86.2020282879GHz;86.2784443035~86.2845478191GHz;86.3585224285~86.4329853191GHz,18:86.6390400066~86.6466083660GHz;86.6510028973~86.6522236004GHz;86.6578388348~86.6698017254GHz;86.6856708660~86.6890888348GHz;86.7674579754~86.7823505535GHz;86.8819599285~87.0052509441GHz;87.0355243816~87.0404071941GHz;87.1048603191~87.1263446941GHz,20:89.1445570369~89.1476087947GHz;89.1825819392~89.1852674861GHz;89.2027845759~89.2056227107GHz,22:87.8800306697~87.8846388240GHz;87.9018812556~87.9036512752GHz;87.9098158259~87.9134474177GHz;87.9345350642~87.9420729060GHz,24:97.6581132520~97.6673905957GHz;97.7342851270~97.7967851270GHz;97.8690507520~97.8832109082GHz;98.0272538770~98.0897538770GHz;98.1537187207~98.1981523145GHz;98.2538163770~98.4881913770GHz;98.5809648145~98.6512773145GHz;98.7191484082~98.7284257520GHz;98.7455155957~98.8026445020GHz;98.9203202832~99.0013749707GHz;99.0594804395~99.1922929395GHz;99.3402421582~99.3544023145GHz;99.3670976270~99.3827226270GHz;99.3871171582~99.3954179395GHz;99.4022538770~99.4247148145GHz;99.4598710645~99.4994218457GHz,26:99.5482421582~99.5560546582GHz;99.5672851270~99.6073241895GHz;99.6712890332~99.6888671582GHz;99.6996093457~99.7132812207GHz;99.7328124707~99.8065429395GHz;99.8177734082~99.8265624707GHz;99.8641601270~99.8998046582GHz;99.9120116895~99.9227538770GHz;99.9344726270~99.9374023145GHz;99.9564452832~99.9735351270GHz;99.9984374707~100.0018554395GHz;100.1112304395~100.1224609082GHz;100.1268554395~100.1405273145GHz;100.1688476270~100.1883788770GHz;100.2137695020~100.2235351270GHz;100.2308593457~100.2499023145GHz;100.2645507520~100.2689452832GHz;100.2796874707~100.2870116895GHz;100.3060546582~100.3119140332GHz;100.3177734082~100.3246093457GHz;100.3270507520~100.3368163770GHz;100.3529296582~100.3993163770GHz;100.4227538770~100.4354491895GHz;100.4662109082~100.4769530957GHz;100.5169921582~100.5252929395GHz;100.5316405957~100.5374999707GHz;100.6556640332~100.6678710645GHz;100.6839843457~100.7000976270GHz;100.7176757520~100.7420898145GHz;100.7479491895~100.7513671582GHz;100.7528320020~100.7601562207GHz;100.7669921582~100.7708984082GHz;100.7796874707~100.7865234082GHz;100.7914062207~100.7962890332GHz;100.7987304395~100.8031249707GHz;100.8128905957~100.8177734082GHz;100.8197265332~100.8260741895GHz;100.8294921582~100.8363280957GHz;100.8416991895~100.8573241895GHz;100.8705077832~100.8895507520GHz;100.8949218457~100.8988280957GHz;100.9095702832~100.9227538770GHz;100.9276366895~100.9349609082GHz;100.9432616895~100.9637695020GHz;100.9754882520~100.9803710645GHz;101.0067382520~101.0233398145GHz;101.0370116895~101.0399413770GHz;101.0433593457~101.0467773145GHz;101.0545898145~101.0770507520GHz;101.0829101270~101.0960937207GHz;101.1102538770~101.1185546582GHz;101.1546874707~101.1600585645GHz;101.1688476270~101.1869140332GHz;101.1908202832~101.2015624707GHz;101.2118163770~101.2328124707GHz;101.2508788770~101.2679687207GHz;101.2938476270~101.2987304395GHz;101.3138671582~101.3431640332GHz;101.3597655957~101.3954101270GHz;101.4041991895~101.4144530957GHz",
+          "16:85.9388062992~86.0088746586GHz;86.1682984867~86.2019898930GHz;86.2784059086~86.2845094242GHz;86.3584840336~86.4329469242GHz,18:86.6390016117~86.6465699711GHz;86.6509645024~86.6521852055GHz;86.6578004399~86.6697633305GHz;86.6856324711~86.6890504399GHz;86.7674195805~86.7823121586GHz;86.8819215336~87.0052125492GHz;87.0354859867~87.0403687992GHz;87.1048219242~87.1263062992GHz,20:89.1445177547~89.1475695125GHz;89.1825426571~89.1852282040GHz;89.2027452938~89.2055834286GHz,22:87.8800219051~87.8845995418GHz;87.9018419735~87.9036119930GHz;87.9097765438~87.9134081356GHz;87.9344957821~87.9420336239GHz,24:97.6580690913~97.6673464350GHz;97.7342409663~97.7967409663GHz;97.8690065913~97.8831667475GHz;98.0272097163~98.0897097163GHz;98.1536745600~98.1981081538GHz;98.2537722163~98.4881472163GHz;98.5809206538~98.6512331538GHz;98.7191042475~98.7283815913GHz;98.7454714350~98.8026003413GHz;98.9202761225~99.0013308100GHz;99.0594362788~99.1922487788GHz;99.3401979975~99.3543581538GHz;99.3670534663~99.3826784663GHz;99.3870729975~99.3953737788GHz;99.4022097163~99.4246706538GHz;99.4598269038~99.4993776850GHz,26:99.5481979975~99.5560104975GHz;99.5672409663~99.6072800288GHz;99.6712448725~99.6888229975GHz;99.6995651850~99.7132370600GHz;99.7327683100~99.8064987788GHz;99.8177292475~99.8265183100GHz;99.8641159663~99.8997604975GHz;99.9119675288~99.9227097163GHz;99.9344284663~99.9373581538GHz;99.9564011225~99.9734909663GHz;99.9983933100~100.0018112788GHz;100.1111862788~100.1224167475GHz;100.1268112788~100.1404831538GHz;100.1688034663~100.1883347163GHz;100.2137253413~100.2234909663GHz;100.2308151850~100.2498581538GHz;100.2645065913~100.2689011225GHz;100.2796433100~100.2869675288GHz;100.3060104975~100.3118698725GHz;100.3177292475~100.3245651850GHz;100.3270065913~100.3367722163GHz;100.3528854975~100.3992722163GHz;100.4227097163~100.4354050288GHz;100.4661667475~100.4769089350GHz;100.5169479975~100.5252487788GHz;100.5315964350~100.5374558100GHz;100.6556198725~100.6678269038GHz;100.6839401850~100.7000534663GHz;100.7176315913~100.7420456538GHz;100.7479050288~100.7513229975GHz;100.7527878413~100.7601120600GHz;100.7669479975~100.7708542475GHz;100.7796433100~100.7864792475GHz;100.7913620600~100.7962448725GHz;100.7986862788~100.8030808100GHz;100.8128464350~100.8177292475GHz;100.8196823725~100.8260300288GHz;100.8294479975~100.8362839350GHz;100.8416550288~100.8572800288GHz;100.8704636225~100.8895065913GHz;100.8948776850~100.8987839350GHz;100.9095261225~100.9227097163GHz;100.9275925288~100.9349167475GHz;100.9432175288~100.9637253413GHz;100.9754440913~100.9803269038GHz;101.0066940913~101.0232956538GHz;101.0369675288~101.0398972163GHz;101.0433151850~101.0467331538GHz;101.0545456538~101.0770065913GHz;101.0828659663~101.0960495600GHz;101.1102097163~101.1185104975GHz;101.1546433100~101.1600144038GHz;101.1688034663~101.1868698725GHz;101.1907761225~101.2015183100GHz;101.2117722163~101.2327683100GHz;101.2508347163~101.2679245600GHz;101.2938034663~101.2986862788GHz;101.3138229975~101.3431198725GHz;101.3597214350~101.3953659663GHz;101.4041550288~101.4144089350GHz"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X15a0_X108.s36_0.Sgr_A_star_sci.spw16_18_20_22_24_26.cont.I.iter1",
+        "imsize": [
+          300,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:32.0332 -028.52.55.020",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "mfs",
+        "reffreq": "",
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": false,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "mtmfs",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggs",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 1000000,
+        "gain": 0.1,
+        "threshold": "0.00851Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    },
+    "mous": "uid://A001/X15a0/X108",
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220921T104218"
   },
   "Sgr_A_st_x_03_TM1": {
     "tclean_cube_pars": {
@@ -32603,7 +33458,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X12a",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220607T131221"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220607T131221"
   },
   "Sgr_A_st_q_03_TM1": {
     "tclean_cube_pars": {
@@ -33289,7 +34144,1440 @@
       }
     },
     "mous": "uid://A001/X15a0/X100",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220524T145309"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220524T145309"
+  },
+  "Sgr_A_st_k_03_TM1": {
+    "tclean_cube_pars": {
+      "spw25": {
+        "vis": [
+          "uid___A002_Xf99bb0_Xf742_target.ms",
+          "uid___A002_Xfda0c7_Xacb5_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "25",
+          "25"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_Xdc.s38_0.Sgr_A_star_sci.spw25.cube.I.iter1",
+        "imsize": [
+          1440,
+          1440
+        ],
+        "cell": [
+          "0.3arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:47.5721 -028.36.37.150",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 956,
+        "start": "85.9579699840GHz",
+        "width": "0.4883096MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 50000000,
+        "gain": 0.1,
+        "threshold": "0.0203Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.5,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw27": {
+        "vis": [
+          "uid___A002_Xf99bb0_Xf742_target.ms",
+          "uid___A002_Xfda0c7_Xacb5_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "27",
+          "27"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_Xdc.s38_0.Sgr_A_star_sci.spw27.cube.I.iter1",
+        "imsize": [
+          1440,
+          1440
+        ],
+        "cell": [
+          "0.3arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:47.5721 -028.36.37.150",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 956,
+        "start": "86.6579798350GHz",
+        "width": "0.4883096MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 6000000,
+        "gain": 0.1,
+        "threshold": "0.0122Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.5,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw29": {
+        "vis": [
+          "uid___A002_Xf99bb0_Xf742_target.ms",
+          "uid___A002_Xfda0c7_Xacb5_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "29",
+          "29"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_Xdc.s38_0.Sgr_A_star_sci.spw29.cube.I.iter1",
+        "imsize": [
+          1440,
+          1440
+        ],
+        "cell": [
+          "0.3arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:47.5721 -028.36.37.150",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 954,
+        "start": "89.1505814142GHz",
+        "width": "0.0610388MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 8000000,
+        "gain": 0.1,
+        "threshold": "0.0213Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.5,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw31": {
+        "vis": [
+          "uid___A002_Xf99bb0_Xf742_target.ms",
+          "uid___A002_Xfda0c7_Xacb5_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "31",
+          "31"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_Xdc.s38_0.Sgr_A_star_sci.spw31.cube.I.iter1",
+        "imsize": [
+          1440,
+          1440
+        ],
+        "cell": [
+          "0.3arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:47.5721 -028.36.37.150",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 956,
+        "start": "87.8872484514GHz",
+        "width": "0.0610388MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 7000000,
+        "gain": 0.1,
+        "threshold": "0.0213Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.5,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw33": {
+        "vis": [
+          "uid___A002_Xf99bb0_Xf742_target.ms",
+          "uid___A002_Xfda0c7_Xacb5_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "33",
+          "33"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_Xdc.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
+        "imsize": [
+          1440,
+          1440
+        ],
+        "cell": [
+          "0.3arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:47.5721 -028.36.37.150",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 1916,
+        "start": "97.6581445929GHz",
+        "width": "0.9766192MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 10000000,
+        "gain": 0.1,
+        "threshold": "0.00963Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.5,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw35": {
+        "vis": [
+          "uid___A002_Xf99bb0_Xf742_target.ms",
+          "uid___A002_Xfda0c7_Xacb5_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "35",
+          "35"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_Xdc.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imsize": [
+          1440,
+          1440
+        ],
+        "cell": [
+          "0.3arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:47.5721 -028.36.37.150",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 1916,
+        "start": "99.5537201304GHz",
+        "width": "0.9766192MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 8000000,
+        "gain": 0.1,
+        "threshold": "0.0103Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.5,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    },
+    "tclean_cont_pars": {
+      "aggregate": {
+        "vis": [
+          "uid___A002_Xf99bb0_Xf742_target.ms",
+          "uid___A002_Xfda0c7_Xacb5_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "25:85.9753026150~85.9784764431GHz;85.9914158962~85.9945897243GHz;86.0163182400~86.0214451931GHz;86.0412205837~86.0443944118GHz;86.0563573025~86.0639256618GHz;86.0802830837~86.0844334743GHz;86.0915135525~86.1015233181GHz;86.1305760525~86.1332615993GHz;86.1344823025~86.1361912868GHz;86.1457127712~86.1513280056GHz;86.1549901150~86.1566990993GHz;86.1691502712~86.1708592556GHz;86.3722752712~86.3949803493GHz,27:86.6689671658~86.6794652126GHz;86.7788304470~86.7954320095GHz;86.8039769314~86.8047093533GHz;86.9255589626~86.9394749783GHz;86.9514378689~86.9902562283GHz;87.0080784939~87.0342015408GHz,29:89.1567395559~89.1576856008GHz;89.1874402395~89.1885083547GHz;89.1908582082~89.1933301321GHz;89.2075818411~89.2148755422GHz,31:87.8937390676~87.8956616750GHz;87.9139417043~87.9206250539GHz;87.9284070364~87.9512647024GHz,33:97.7374985919~97.9069321856GHz;98.1066392169~98.8073228106GHz;98.9464829669~99.2370103106GHz;99.4069321856~99.5270493731GHz,35:99.5675689044~99.5827056231GHz;99.5949126544~99.6129790606GHz;99.6505767169~99.6559478106GHz;99.6749907794~99.6974517169GHz;99.7135649981~99.7335845294GHz;99.7594634356~99.7853423419GHz;99.8014556231~99.8322173419GHz;99.8727446856~99.9249907794GHz;99.9381743731~99.9425689044GHz;99.9557524981~99.9796782794GHz;100.1080962481~100.1154204669GHz;100.1227446856~100.1505767169GHz;100.1588774981~100.1652251544GHz;100.2018462481~100.2755767169GHz;100.2916899981~100.2990142169GHz;100.3287993731~100.3615142169GHz;100.3756743731~100.3927642169GHz;100.4030181231~100.4328032794GHz;100.4411040606~100.4494048419GHz;100.5289946856~100.5558501544GHz;100.6715728106~100.6759673419GHz;100.7282134356~100.7579985919GHz;100.7975493731~100.9171782794GHz;100.9440337481~100.9533110919GHz;100.9860259356~100.9923735919GHz;101.0680571856~101.1007720294GHz;101.1686431231~101.2443267169GHz;101.2731353106~101.2863189044GHz;101.3082915606~101.3947173419GHz",
+          "25:85.9642316572~85.9674054854GHz;85.9803449385~85.9835187666GHz;86.0052472822~86.0103742354GHz;86.0301496260~86.0333234541GHz;86.0452863447~86.0528547041GHz;86.0692121260~86.0733625166GHz;86.0804425947~86.0904523604GHz;86.1195050947~86.1221906416GHz;86.1234113447~86.1251203291GHz;86.1346418135~86.1402570479GHz;86.1439191572~86.1456281416GHz;86.1580793135~86.1597882979GHz;86.3612043135~86.3839093916GHz,27:86.6578962080~86.6683942549GHz;86.7677594893~86.7841169111GHz;86.7926618330~86.7933942549GHz;86.9142438643~86.9281598799GHz;86.9401227705~86.9789411299GHz;86.9967633955~87.0228864424GHz,29:89.1453212104~89.1462672554GHz;89.1760218940~89.1770900093GHz;89.1794398628~89.1819117866GHz;89.1961634956~89.2034571968GHz,31:87.8824733100~87.8843959175GHz;87.9026759468~87.9093592964GHz;87.9171412788~87.9399989448GHz,33:97.7247650944~97.8946869694GHz;98.0939057194~98.7945893131GHz;98.9342377506~99.2242768131GHz;99.3941986881~99.5143158756GHz,35:99.5548354069~99.5699721256GHz;99.5821791569~99.6002455631GHz;99.6378432194~99.6432143131GHz;99.6622572819~99.6842299381GHz;99.7003432194~99.7203627506GHz;99.7462416569~99.7721205631GHz;99.7882338444~99.8189955631GHz;99.8595229069~99.9117690006GHz;99.9249525944~99.9293471256GHz;99.9425307194~99.9664565006GHz;100.0948744694~100.1021986881GHz;100.1095229069~100.1373549381GHz;100.1456557194~100.1520033756GHz;100.1886244694~100.2623549381GHz;100.2784682194~100.2857924381GHz;100.3155775944~100.3482924381GHz;100.3624525944~100.3795424381GHz;100.3897963444~100.4195815006GHz;100.4278822819~100.4361830631GHz;100.5157729069~100.5426283756GHz;100.6583510319~100.6627455631GHz;100.7149916569~100.7447768131GHz;100.7843275944~100.9039565006GHz;100.9308119694~100.9400893131GHz;100.9728041569~100.9791518131GHz;101.0548354069~101.0875502506GHz;101.1554213444~101.2311049381GHz;101.2599135319~101.2730971256GHz;101.2950697819~101.3814955631GHz"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X15a0_Xdc.s36_0.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.iter1",
+        "imsize": [
+          1440,
+          1440
+        ],
+        "cell": [
+          "0.3arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:47.5721 -028.36.37.150",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "mfs",
+        "reffreq": "",
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": false,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "mtmfs",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggs",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 10000000,
+        "gain": 0.1,
+        "threshold": "0.000249Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    },
+    "mous": "uid://A001/X15a0/Xdc",
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220920T174925"
+  },
+  "Sgr_A_st_ah_03_TM1": {
+    "tclean_cube_pars": {
+      "spw25": {
+        "vis": [
+          "uid___A002_Xfddca6_Xe2c_target.ms",
+          "uid___A002_Xfddca6_X174f_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "25",
+          "25"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X166.s38_0.Sgr_A_star_sci.spw25.cube.I.iter1",
+        "imsize": [
+          2160,
+          2160
+        ],
+        "cell": [
+          "0.2arcsec"
+        ],
+        "phasecenter": "ICRS 17:48:26.7837 -028.19.57.073",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 956,
+        "start": "85.9579336827GHz",
+        "width": "0.4883105MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 40000000,
+        "gain": 0.1,
+        "threshold": "0.0159Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw27": {
+        "vis": [
+          "uid___A002_Xfddca6_Xe2c_target.ms",
+          "uid___A002_Xfddca6_X174f_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "27",
+          "27"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X166.s38_0.Sgr_A_star_sci.spw27.cube.I.iter1",
+        "imsize": [
+          2160,
+          2160
+        ],
+        "cell": [
+          "0.2arcsec"
+        ],
+        "phasecenter": "ICRS 17:48:26.7837 -028.19.57.073",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 957,
+        "start": "86.6579875262GHz",
+        "width": "0.4883105MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 20000000,
+        "gain": 0.1,
+        "threshold": "0.00933Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw29": {
+        "vis": [
+          "uid___A002_Xfddca6_Xe2c_target.ms",
+          "uid___A002_Xfddca6_X174f_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "29",
+          "29"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X166.s38_0.Sgr_A_star_sci.spw29.cube.I.iter1",
+        "imsize": [
+          2160,
+          2160
+        ],
+        "cell": [
+          "0.2arcsec"
+        ],
+        "phasecenter": "ICRS 17:48:26.7837 -028.19.57.073",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 956,
+        "start": "89.1505615015GHz",
+        "width": "0.0610389MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 10000000,
+        "gain": 0.1,
+        "threshold": "0.025Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw31": {
+        "vis": [
+          "uid___A002_Xfddca6_Xe2c_target.ms",
+          "uid___A002_Xfddca6_X174f_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "31",
+          "31"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X166.s38_0.Sgr_A_star_sci.spw31.cube.I.iter1",
+        "imsize": [
+          2160,
+          2160
+        ],
+        "cell": [
+          "0.2arcsec"
+        ],
+        "phasecenter": "ICRS 17:48:26.7837 -028.19.57.073",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 957,
+        "start": "87.8871501770GHz",
+        "width": "0.0610389MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 20000000,
+        "gain": 0.1,
+        "threshold": "0.0169Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw35": {
+        "vis": [
+          "uid___A002_Xfddca6_Xe2c_target.ms",
+          "uid___A002_Xfddca6_X174f_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "35",
+          "35"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X15a0_X166.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imsize": [
+          2160,
+          2160
+        ],
+        "cell": [
+          "0.2arcsec"
+        ],
+        "phasecenter": "ICRS 17:48:26.7837 -028.19.57.073",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 1916,
+        "start": "99.5537135646GHz",
+        "width": "0.9766209MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 20000000,
+        "gain": 0.1,
+        "threshold": "0.0106Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    },
+    "tclean_cont_pars": {
+      "aggregate": {
+        "vis": [
+          "uid___A002_Xfddca6_Xe2c_target.ms",
+          "uid___A002_Xfddca6_X174f_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "25:85.9582234554~86.0043660335GHz;86.0988484554~86.1020222835GHz;86.1691609554~86.1928425960GHz;86.2218953304~86.2240925960GHz;86.2428914242~86.2802449398GHz;86.3776570492~86.4174519710GHz,27:86.6660481625~86.6697102718GHz;86.7026692562~86.7073079281GHz;86.8804036312~86.9094563656GHz;86.9219075375~86.9797688656GHz;87.0322591000~87.0451985531GHz;87.0849934750~87.1037923031GHz,29:89.1787382804~89.1804167472GHz;89.1887480460~89.1965910636GHz;89.1984526358~89.2015959464GHz,31:87.8822600089~87.8838164054GHz;87.9347807608~87.9398161612GHz,33:97.6708829806~97.8871915743GHz;98.1415861056~98.7465665743GHz;99.0165861056~99.1147306368GHz;99.3554532931~99.5112150118GHz,35:99.5566173556~99.5756603243GHz;99.5829845431~99.5893321993GHz;99.7050548556~99.7250743868GHz;99.7646251681~99.7787853243GHz;99.7861095431~99.7944103243GHz;99.8007579806~99.8207775118GHz;99.8573986056~99.8764415743GHz;99.8935314181~99.9213634493GHz;99.9579845431~99.9867931368GHz;100.1113048556~100.1489025118GHz;100.1562267306~100.1645275118GHz;100.1952892306~100.2240978243GHz;100.2411876681~100.2592540743GHz;100.3202892306~100.3510509493GHz;100.3671642306~100.4321056368GHz;100.5292736056~100.5346446993GHz;100.5409923556~100.5444103243GHz;100.6855236056~100.6977306368GHz;100.7099376681~100.7406993868GHz;100.7587657931~100.7631603243GHz;100.7743907931~100.7797618868GHz;100.8202892306~100.8989025118GHz;100.9218517306~100.9252696993GHz;100.9462657931~100.9731212618GHz;101.0331798556~101.0512462618GHz;101.0575939181~101.0815196993GHz;101.1396251681~101.1440196993GHz;101.1728282931~101.1928478243GHz;101.2040782931~101.2319103243GHz;101.2382579806~101.2416759493GHz;101.2939220431~101.3100353243GHz;101.3329845431~101.3617931368GHz;101.3730236056~101.3793712618GHz;101.3847423556~101.3949962618GHz;101.4052501681~101.4096446993GHz",
+          "25:85.9581923280~86.0043349062GHz;86.0988173280~86.1019911562GHz;86.1691298280~86.1928114687GHz;86.2218642030~86.2240614687GHz;86.2428602968~86.2802138124GHz;86.3776259218~86.4174208437GHz,27:86.6660170351~86.6696791444GHz;86.7026381288~86.7072768007GHz;86.8803725038~86.9094252382GHz;86.9218764101~86.9797377382GHz;87.0322279726~87.0451674257GHz;87.0849623476~87.1037611757GHz,29:89.1787064337~89.1803849005GHz;89.1887161993~89.1965592169GHz;89.1984207891~89.2015640997GHz,31:87.8822586798~87.8837845587GHz;87.9347489141~87.9397843145GHz,33:97.6708471787~97.8871557725GHz;98.1415503037~98.7465307725GHz;99.0165503037~99.1146948350GHz;99.3554174912~99.5111792100GHz,35:99.5565815537~99.5756245225GHz;99.5829487412~99.5892963975GHz;99.7050190537~99.7250385850GHz;99.7645893662~99.7787495225GHz;99.7860737412~99.7943745225GHz;99.8007221787~99.8207417100GHz;99.8573628037~99.8764057725GHz;99.8934956162~99.9213276475GHz;99.9579487412~99.9867573350GHz;100.1112690537~100.1488667100GHz;100.1561909287~100.1644917100GHz;100.1952534287~100.2240620225GHz;100.2411518662~100.2592182725GHz;100.3202534287~100.3510151475GHz;100.3671284287~100.4320698350GHz;100.5292378037~100.5346088975GHz;100.5409565537~100.5443745225GHz;100.6854878037~100.6976948350GHz;100.7099018662~100.7406635850GHz;100.7587299912~100.7631245225GHz;100.7743549912~100.7797260850GHz;100.8202534287~100.8988667100GHz;100.9218159287~100.9252338975GHz;100.9462299912~100.9730854600GHz;101.0331440537~101.0512104600GHz;101.0575581162~101.0814838975GHz;101.1395893662~101.1439838975GHz;101.1727924912~101.1928120225GHz;101.2040424912~101.2318745225GHz;101.2382221787~101.2416401475GHz;101.2938862412~101.3099995225GHz;101.3329487412~101.3617573350GHz;101.3729878037~101.3793354600GHz;101.3847065537~101.3949604600GHz;101.4052143662~101.4096088975GHz"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&"
+        ],
+        "scan": [
+          "6,9,12,15,18",
+          "6,9,12,15,18"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X15a0_X166.s36_0.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.iter1",
+        "imsize": [
+          2160,
+          2160
+        ],
+        "cell": [
+          "0.2arcsec"
+        ],
+        "phasecenter": "ICRS 17:48:26.7837 -028.19.57.073",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "mfs",
+        "reffreq": "",
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": false,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "mtmfs",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggs",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 100000000,
+        "gain": 0.1,
+        "threshold": "0.000397Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    },
+    "mous": "uid://A001/X15a0/X166",
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220914T134955"
   },
   "Sgr_A_st_ak_03_TM1": {
     "tclean_cube_pars": {
@@ -34060,7 +36348,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X178",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220325T162843"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220325T162843"
   },
   "Sgr_A_st_h_03_TM1": {
     "tclean_cube_pars": {
@@ -34722,7 +37010,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xca",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220522T194503"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220522T194503"
   },
   "Sgr_A_st_c_03_7M": {
     "tclean_cube_pars": {
@@ -35605,7 +37893,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xae",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20211206T141110"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20211206T141110"
   },
   "Sgr_A_st_ar_updated_03_7M": {
     "tclean_cube_pars": {
@@ -36460,7 +38748,7 @@
       }
     },
     "mous": "uid://A001/X15b4/X4f",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220726T085548"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220726T085548"
   },
   "Sgr_A_st_aq_03_TM1": {
     "tclean_cube_pars": {
@@ -37231,7 +39519,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X19c",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220701T230103"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220701T230103"
   },
   "Sgr_A_st_as_03_7M": {
     "tclean_cube_pars": {
@@ -38114,7 +40402,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X1aa",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220718T161819"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220718T161819"
   },
   "Sgr_A_st_ac_03_7M": {
     "tclean_cube_pars": {
@@ -38885,7 +41173,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X14a",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220824T225738"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220824T225738"
   },
   "Sgr_A_st_i_03_7M": {
     "tclean_cube_pars": {
@@ -39628,7 +41916,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xd2",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220405T084252"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220405T084252"
   },
   "Sgr_A_st_z_03_7M": {
     "tclean_cube_pars": {
@@ -40483,7 +42771,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X138",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20211111T204702"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20211111T204702"
   },
   "Sgr_A_st_ak_03_7M": {
     "tclean_cube_pars": {
@@ -41282,7 +43570,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X17a",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20211029T161149"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20211029T161149"
   },
   "Sgr_A_st_an_03_TM1": {
     "tclean_cube_pars": {
@@ -41944,7 +44232,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X18a",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220531T143828"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220531T143828"
   },
   "Sgr_A_st_aj_03_7M": {
     "tclean_cube_pars": {
@@ -42827,7 +45115,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X174",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220106T145454"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220106T145454"
   },
   "Sgr_A_st_w_03_TM1": {
     "tclean_cube_pars": {
@@ -43489,7 +45777,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X124",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220601T233805"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220601T233805"
   },
   "Sgr_A_st_u_03_TM1": {
     "tclean_cube_pars": {
@@ -44232,7 +46520,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X118",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220908T120124"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220908T120124"
   },
   "Sgr_A_st_a_03_7M": {
     "tclean_cube_pars": {
@@ -45031,7 +47319,7 @@
       }
     },
     "mous": "uid://A001/X1590/X30ac",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220830T154207"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220830T154207"
   },
   "Sgr_A_st_m_03_TM1_updated": {
     "tclean_cube_pars": {
@@ -45693,7 +47981,7 @@
       }
     },
     "mous": "uid://A001/X15b4/X41",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220602T193603"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220602T193603"
   },
   "Sgr_A_st_n_03_TM1": {
     "tclean_cube_pars": {
@@ -46436,7 +48724,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xee",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220909T000204"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220909T000204"
   },
   "Sgr_A_st_w_03_7M": {
     "tclean_cube_pars": {
@@ -47291,7 +49579,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X126",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220531T093455"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220531T093455"
   },
   "Sgr_A_st_b_03_7M": {
     "tclean_cube_pars": {
@@ -48118,7 +50406,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xa8",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220401T112636"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220401T112636"
   },
   "Sgr_A_st_e_updated_03_7M": {
     "tclean_cube_pars": {
@@ -48973,7 +51261,7 @@
       }
     },
     "mous": "uid://A001/X15b4/X39",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220720T105558"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220720T105558"
   },
   "Sgr_A_st_j_03_7M": {
     "tclean_cube_pars": {
@@ -49828,7 +52116,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xd8",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220818T143941"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220818T143941"
   },
   "Sgr_A_st_ah_03_7M": {
     "tclean_cube_pars": {
@@ -50655,7 +52943,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X168",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220909T091225"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220909T091225"
   },
   "Sgr_A_st_i_updated_03_7M": {
     "tclean_cube_pars": {
@@ -51566,7 +53854,7 @@
       }
     },
     "mous": "uid://A001/X15b4/Xc5",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220822T143129"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220822T143129"
   },
   "Sgr_A_st_j_03_TM1_updated": {
     "tclean_cube_pars": {
@@ -52228,7 +54516,7 @@
       }
     },
     "mous": "uid://A001/X15b4/X3d",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220607T205832"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220607T205832"
   },
   "Sgr_A_st_aj_03_7M_updated": {
     "tclean_cube_pars": {
@@ -53083,7 +55371,7 @@
       }
     },
     "mous": "uid://A001/X15b4/X47",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220523T160649"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220523T160649"
   },
   "Sgr_A_st_y_03_TM1": {
     "tclean_cube_pars": {
@@ -53769,7 +56057,778 @@
       }
     },
     "mous": "uid://A001/X15a0/X130",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220222T173600"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220222T173600"
+  },
+  "Sgr_A_st_a_03_TM1": {
+    "tclean_cube_pars": {
+      "spw25": {
+        "vis": [
+          "uid___A002_Xfdf45f_X4f4_target.ms",
+          "uid___A002_Xfdf45f_X38ff_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "25",
+          "25"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15",
+          "6,9,12,15"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X1590_X30aa.s38_0.Sgr_A_star_sci.spw25.cube.I.iter1",
+        "imsize": [
+          1600,
+          1350
+        ],
+        "cell": [
+          "0.33arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:04.6936 -028.47.24.043",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 956,
+        "start": "85.9550670357GHz",
+        "width": "0.4883114MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 20000000,
+        "gain": 0.1,
+        "threshold": "0.0123Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw27": {
+        "vis": [
+          "uid___A002_Xfdf45f_X4f4_target.ms",
+          "uid___A002_Xfdf45f_X38ff_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "27",
+          "27"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15",
+          "6,9,12,15"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X1590_X30aa.s38_0.Sgr_A_star_sci.spw27.cube.I.iter1",
+        "imsize": [
+          1600,
+          1350
+        ],
+        "cell": [
+          "0.33arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:04.6936 -028.47.24.043",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 956,
+        "start": "86.6551220882GHz",
+        "width": "0.4883114MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 10000000,
+        "gain": 0.1,
+        "threshold": "0.00612Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw29": {
+        "vis": [
+          "uid___A002_Xfdf45f_X4f4_target.ms",
+          "uid___A002_Xfdf45f_X38ff_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "29",
+          "29"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15",
+          "6,9,12,15"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X1590_X30aa.s38_0.Sgr_A_star_sci.spw29.cube.I.iter1",
+        "imsize": [
+          1600,
+          1350
+        ],
+        "cell": [
+          "0.33arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:04.6936 -028.47.24.043",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 956,
+        "start": "89.1476983947GHz",
+        "width": "0.0610391MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 10000000,
+        "gain": 0.1,
+        "threshold": "0.0248Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw31": {
+        "vis": [
+          "uid___A002_Xfdf45f_X4f4_target.ms",
+          "uid___A002_Xfdf45f_X38ff_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "31",
+          "31"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15",
+          "6,9,12,15"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X1590_X30aa.s38_0.Sgr_A_star_sci.spw31.cube.I.iter1",
+        "imsize": [
+          1600,
+          1350
+        ],
+        "cell": [
+          "0.33arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:04.6936 -028.47.24.043",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 956,
+        "start": "87.8842848883GHz",
+        "width": "0.0610391MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 8000000,
+        "gain": 0.1,
+        "threshold": "0.0168Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw33": {
+        "vis": [
+          "uid___A002_Xfdf45f_X4f4_target.ms",
+          "uid___A002_Xfdf45f_X38ff_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "33",
+          "33"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15",
+          "6,9,12,15"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X1590_X30aa.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
+        "imsize": [
+          1600,
+          1350
+        ],
+        "cell": [
+          "0.33arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:04.6936 -028.47.24.043",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 1916,
+        "start": "97.6552415560GHz",
+        "width": "0.9766227MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 10000000,
+        "gain": 0.1,
+        "threshold": "0.00744Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw35": {
+        "vis": [
+          "uid___A002_Xfdf45f_X4f4_target.ms",
+          "uid___A002_Xfdf45f_X38ff_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "35",
+          "35"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15",
+          "6,9,12,15"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "corrected",
+        "imagename": "uid___A001_X1590_X30aa.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1",
+        "imsize": [
+          1600,
+          1350
+        ],
+        "cell": [
+          "0.33arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:04.6936 -028.47.24.043",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 1916,
+        "start": "99.5508575735GHz",
+        "width": "0.9766227MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 10000000,
+        "gain": 0.1,
+        "threshold": "0.00789Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 7.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    },
+    "tclean_cont_pars": {
+      "aggregate": {
+        "vis": [
+          "uid___A002_Xfdf45f_X4f4_target.ms",
+          "uid___A002_Xfdf45f_X38ff_target.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "25:85.9532242906~86.1683121812GHz;86.3692399156~86.4109879625GHz,27:86.6957169664~86.6993790758GHz;86.7347794664~86.7384415758GHz;86.7621232164~86.7735978258GHz;86.8636857164~86.8683243883GHz;86.8978654039~86.9532853258GHz;86.9979630601~87.0416642320GHz;87.1000138414~87.1114884508GHz,29:89.1661070285~89.1817015109GHz;89.1874082980~89.1926878391GHz;89.1990660129~89.2000120578GHz,31:87.9000242648~87.9252012668GHz;87.9298094211~87.9370420871GHz,33:97.7010225679~97.7112764742GHz;97.7811006929~97.7952608492GHz;97.8191866304~97.8313936617GHz;97.8670381929~97.8782686617GHz;98.0174288179~98.0218233492GHz;98.0311006929~98.0423311617GHz;98.0769991304~98.0833467867GHz;98.1043428804~98.1097139742GHz;98.1189913179~98.1243624117GHz;98.1561006929~98.1624483492GHz;98.1853975679~98.2063936617GHz;98.2332491304~98.2483858492GHz;98.2928194429~98.2981905367GHz;98.3269991304~98.3440889742GHz;98.3562960054~98.3811983492GHz;98.4090303804~98.4349092867GHz;98.4842256929~98.4993624117GHz;98.5359835054~98.5599092867GHz;98.5916475679~98.6077608492GHz;98.6258272554~98.6302217867GHz;98.6951631929~98.7249483492GHz;98.7654756929~98.7747530367GHz;98.7889131929~98.7962374117GHz;98.8943819429~98.8997530367GHz;98.9070772554~98.9231905367GHz;98.9393038179~98.9563936617GHz;98.9646944429~98.9915499117GHz;99.0027803804~99.0296358492GHz;99.0477022554~99.0589327242GHz;99.1160616304~99.1204561617GHz;99.1297335054~99.1429170992GHz;99.1619600679~99.1790499117GHz;99.1902803804~99.2044405367GHz;99.2234835054~99.2337374117GHz;99.3133272554~99.3206514742GHz;99.3475069429~99.3616670992GHz;99.3758272554~99.4114717867GHz;99.4217256929~99.4329561617GHz;99.4871553804~99.4915499117GHz;99.4978975679~99.5159639742GHz,35:99.5603897554~99.5696670992GHz;99.5818741304~99.5891983492GHz;99.6541397554~99.6595108492GHz;99.7224991304~99.7268936617GHz;99.7644913179~99.7806045992GHz;99.8025772554~99.8079483492GHz;99.8455460054~99.8977920992GHz;99.9402725679~99.9573624117GHz;100.1141006929~100.1448624117GHz;100.1932022554~100.1975967867GHz;100.2185928804~100.2249405367GHz;100.2371475679~100.2493545992GHz;100.2752335054~100.2815811617GHz;100.3084366304~100.3157608492GHz;100.3230850679~100.3391983492GHz;100.3660538179~100.3831436617GHz;101.0769913179~101.0862686617GHz;101.1170303804~101.1272842867GHz;101.1394913179~101.1458389742GHz;101.1531631929~101.1643936617GHz;101.2742569429~101.2825577242GHz;101.3308975679~101.3479874117GHz;101.3543350679~101.3606827242GHz;101.3777725679~101.3880264742GHz",
+          "25:85.9532171754~86.1683050660GHz;86.3692328004~86.4109808473GHz,27:86.6957098512~86.6993719606GHz;86.7347723512~86.7384344606GHz;86.7621161012~86.7735907106GHz;86.8636786012~86.8683172731GHz;86.8978582887~86.9532782106GHz;86.9979559449~87.0416571168GHz;87.1000067262~87.1114813356GHz,29:89.1660997489~89.1816942313GHz;89.1874010184~89.1926805594GHz;89.1990587332~89.2000047782GHz,31:87.9000169852~87.9251939871GHz;87.9298021414~87.9370348075GHz,33:97.7010143842~97.7112682904GHz;97.7810925092~97.7952526654GHz;97.8191784467~97.8313854779GHz;97.8670300092~97.8782604779GHz;98.0174206342~98.0218151654GHz;98.0310925092~98.0423229779GHz;98.0769909467~98.0833386029GHz;98.1043346967~98.1097057904GHz;98.1189831342~98.1243542279GHz;98.1560925092~98.1624401654GHz;98.1853893842~98.2063854779GHz;98.2332409467~98.2483776654GHz;98.2928112592~98.2981823529GHz;98.3269909467~98.3440807904GHz;98.3562878217~98.3811901654GHz;98.4090221967~98.4349011029GHz;98.4842175092~98.4993542279GHz;98.5359753217~98.5599011029GHz;98.5916393842~98.6077526654GHz;98.6258190717~98.6302136029GHz;98.6951550092~98.7249401654GHz;98.7654675092~98.7747448529GHz;98.7889050092~98.7962292279GHz;98.8943737592~98.8997448529GHz;98.9070690717~98.9231823529GHz;98.9392956342~98.9563854779GHz;98.9646862592~98.9915417279GHz;99.0027721967~99.0296276654GHz;99.0476940717~99.0589245404GHz;99.1160534467~99.1204479779GHz;99.1297253217~99.1429089154GHz;99.1619518842~99.1790417279GHz;99.1902721967~99.2044323529GHz;99.2234753217~99.2337292279GHz;99.3133190717~99.3206432904GHz;99.3474987592~99.3616589154GHz;99.3758190717~99.4114636029GHz;99.4217175092~99.4329479779GHz;99.4871471967~99.4915417279GHz;99.4978893842~99.5159557904GHz,35:99.5603815717~99.5696589154GHz;99.5818659467~99.5891901654GHz;99.6541315717~99.6595026654GHz;99.7224909467~99.7268854779GHz;99.7644831342~99.7805964154GHz;99.8025690717~99.8079401654GHz;99.8455378217~99.8977839154GHz;99.9402643842~99.9573542279GHz;100.1140925092~100.1448542279GHz;100.1931940717~100.1975886029GHz;100.2185846967~100.2249323529GHz;100.2371393842~100.2493464154GHz;100.2752253217~100.2815729779GHz;100.3084284467~100.3157526654GHz;100.3230768842~100.3391901654GHz;100.3660456342~100.3831354779GHz;101.0769831342~101.0862604779GHz;101.1170221967~101.1272761029GHz;101.1394831342~101.1458307904GHz;101.1531550092~101.1643854779GHz;101.2742487592~101.2825495404GHz;101.3308893842~101.3479792279GHz;101.3543268842~101.3606745404GHz;101.3777643842~101.3880182904GHz"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44&",
+          "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45&"
+        ],
+        "scan": [
+          "6,9,12,15",
+          "6,9,12,15"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X1590_X30aa.s36_0.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.iter1",
+        "imsize": [
+          1600,
+          1350
+        ],
+        "cell": [
+          "0.33arcsec"
+        ],
+        "phasecenter": "ICRS 17:45:04.6936 -028.47.24.043",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "mfs",
+        "reffreq": "",
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": false,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "mtmfs",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggs",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 5000000,
+        "gain": 0.1,
+        "threshold": "0.000163Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    },
+    "mous": "uid://A001/X1590/X30aa",
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220923T200933"
   },
   "Sgr_A_st_p_03_TM1": {
     "tclean_cube_pars": {
@@ -54431,7 +57490,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xfa",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220621T183538"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220621T183538"
   },
   "Sgr_A_st_as_03_TM1": {
     "tclean_cube_pars": {
@@ -55093,7 +58152,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X1a8",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220608T153159"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220608T153159"
   },
   "Sgr_A_st_y_03_7M": {
     "tclean_cube_pars": {
@@ -55892,7 +58951,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X132",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20211025T160604"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20211025T160604"
   },
   "Sgr_A_st_g_03_TM1": {
     "tclean_cube_pars": {
@@ -56663,7 +59722,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xc4",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220607T145537"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220607T145537"
   },
   "Sgr_A_st_ap_03_7M": {
     "tclean_cube_pars": {
@@ -57518,7 +60577,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X198",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220622T172446"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220622T172446"
   },
   "Sgr_A_st_al_03_7M": {
     "tclean_cube_pars": {
@@ -58317,7 +61376,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X180",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220527T210152"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220527T210152"
   },
   "Sgr_A_st_ab_03_TM1": {
     "tclean_cube_pars": {
@@ -58979,7 +62038,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X142",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220530T124105"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220530T124105"
   },
   "Sgr_A_st_ad_03_7M": {
     "tclean_cube_pars": {
@@ -59806,7 +62865,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X150",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20211026T174549"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20211026T174549"
   },
   "Sgr_A_st_i_03_TM1": {
     "tclean_cube_pars": {
@@ -60577,7 +63636,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xd0",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220610T111245"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220610T111245"
   },
   "Sgr_A_st_t_03_TM1": {
     "tclean_cube_pars": {
@@ -61239,7 +64298,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X112",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220510T173804"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220510T173804"
   },
   "Sgr_A_st_m_03_7M": {
     "tclean_cube_pars": {
@@ -62150,7 +65209,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xea",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220121T143024"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220121T143024"
   },
   "Sgr_A_st_l_03_7M": {
     "tclean_cube_pars": {
@@ -63033,7 +66092,7 @@
       }
     },
     "mous": "uid://A001/X15a0/Xe4",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220621T101528"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220621T101528"
   },
   "Sgr_A_st_ar_03_TM1": {
     "tclean_cube_pars": {
@@ -63695,7 +66754,7 @@
       }
     },
     "mous": "uid://A001/X15a0/X1a2",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220601T152527"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220601T152527"
   },
   "Sgr_A_st_v_03_7M": {
     "tclean_cube_pars": {
@@ -64466,6 +67525,861 @@
       }
     },
     "mous": "uid://A001/X15a0/X120",
-    "pipeline_run": "/orange/adamginsburg/ACES/data/2021.1.00172.L/weblogs/pipeline-20220902T152335"
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220902T152335"
+  },
+  "Sgr_A_st_af_03_7M": {
+    "tclean_cube_pars": {
+      "spw16": {
+        "vis": [
+          "uid___A002_Xfdf45f_Xa9e6_targets_line.ms",
+          "uid___A002_Xfe3986_X2a8_targets_line.ms",
+          "uid___A002_Xfe3986_X1260_targets_line.ms",
+          "uid___A002_Xfe3986_X97ab_targets_line.ms",
+          "uid___A002_Xfe62c1_X9faa_targets_line.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "16",
+          "16",
+          "16",
+          "16",
+          "16"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X15a0_X15c.s38_0.Sgr_A_star_sci.spw16.cube.I.iter1",
+        "imsize": [
+          270,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:21.1326 -028.53.33.873",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 2042,
+        "start": "85.9507627900GHz",
+        "width": "0.2441665MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 399999,
+        "gain": 0.1,
+        "threshold": "0.155Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw18": {
+        "vis": [
+          "uid___A002_Xfdf45f_Xa9e6_targets_line.ms",
+          "uid___A002_Xfe3986_X2a8_targets_line.ms",
+          "uid___A002_Xfe3986_X1260_targets_line.ms",
+          "uid___A002_Xfe3986_X97ab_targets_line.ms",
+          "uid___A002_Xfe62c1_X9faa_targets_line.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "18",
+          "18",
+          "18",
+          "18",
+          "18"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X15a0_X15c.s38_0.Sgr_A_star_sci.spw18.cube.I.iter1",
+        "imsize": [
+          270,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:21.1326 -028.53.33.873",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 2042,
+        "start": "86.6500258347GHz",
+        "width": "0.2441666MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 799999,
+        "gain": 0.1,
+        "threshold": "0.159Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw20": {
+        "vis": [
+          "uid___A002_Xfdf45f_Xa9e6_targets_line.ms",
+          "uid___A002_Xfe3986_X2a8_targets_line.ms",
+          "uid___A002_Xfe3986_X1260_targets_line.ms",
+          "uid___A002_Xfe3986_X97ab_targets_line.ms",
+          "uid___A002_Xfe62c1_X9faa_targets_line.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "20",
+          "20",
+          "20",
+          "20",
+          "20"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X15a0_X15c.s38_0.Sgr_A_star_sci.spw20.cube.I.iter1",
+        "imsize": [
+          270,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:21.1326 -028.53.33.873",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 2042,
+        "start": "89.1575423845GHz",
+        "width": "0.0305303MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 499999,
+        "gain": 0.1,
+        "threshold": "0.455Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw22": {
+        "vis": [
+          "uid___A002_Xfdf45f_Xa9e6_targets_line.ms",
+          "uid___A002_Xfe3986_X2a8_targets_line.ms",
+          "uid___A002_Xfe3986_X1260_targets_line.ms",
+          "uid___A002_Xfe3986_X97ab_targets_line.ms",
+          "uid___A002_Xfe62c1_X9faa_targets_line.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "22",
+          "22",
+          "22",
+          "22",
+          "22"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X15a0_X15c.s38_0.Sgr_A_star_sci.spw22.cube.I.iter1",
+        "imsize": [
+          270,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:21.1326 -028.53.33.873",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 2042,
+        "start": "87.8940347045GHz",
+        "width": "0.0305302MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 499999,
+        "gain": 0.1,
+        "threshold": "0.402Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw24": {
+        "vis": [
+          "uid___A002_Xfdf45f_Xa9e6_targets_line.ms",
+          "uid___A002_Xfe3986_X2a8_targets_line.ms",
+          "uid___A002_Xfe3986_X1260_targets_line.ms",
+          "uid___A002_Xfe3986_X97ab_targets_line.ms",
+          "uid___A002_Xfe62c1_X9faa_targets_line.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "24",
+          "24",
+          "24",
+          "24",
+          "24"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X15a0_X15c.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1",
+        "imsize": [
+          270,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:21.1326 -028.53.33.873",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 3834,
+        "start": "97.6662216501GHz",
+        "width": "0.4883186MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 1000000,
+        "gain": 0.1,
+        "threshold": "0.156Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      },
+      "spw26": {
+        "vis": [
+          "uid___A002_Xfdf45f_Xa9e6_targets_line.ms",
+          "uid___A002_Xfe3986_X2a8_targets_line.ms",
+          "uid___A002_Xfe3986_X1260_targets_line.ms",
+          "uid___A002_Xfe3986_X97ab_targets_line.ms",
+          "uid___A002_Xfe62c1_X9faa_targets_line.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "26",
+          "26",
+          "26",
+          "26",
+          "26"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X15a0_X15c.s38_0.Sgr_A_star_sci.spw26.cube.I.iter1",
+        "imsize": [
+          270,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:21.1326 -028.53.33.873",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "cube",
+        "reffreq": "",
+        "nchan": 3834,
+        "start": "99.5618417430GHz",
+        "width": "0.4883187MHz",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 1000000,
+        "gain": 0.1,
+        "threshold": "0.177Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    },
+    "tclean_cont_pars": {
+      "aggregate": {
+        "vis": [
+          "uid___A002_Xfdf45f_Xa9e6_targets.ms",
+          "uid___A002_Xfe3986_X2a8_targets.ms",
+          "uid___A002_Xfe3986_X1260_targets.ms",
+          "uid___A002_Xfe3986_X97ab_targets.ms",
+          "uid___A002_Xfe62c1_X9faa_targets.ms"
+        ],
+        "selectdata": true,
+        "field": "Sgr_A_star",
+        "spw": [
+          "16:85.9504849601~85.9534146476GHz;85.9585416007~85.9595181632GHz;85.9609830070~85.9639126945GHz;85.9668423820~85.9707486320GHz;85.9829556632~85.9917447257GHz;86.0117642570~86.0132291007GHz;86.0593716788~86.0613248038GHz;86.0964810538~86.0984341788GHz;86.1025845695~86.1045376945GHz;86.1121060538~86.1177212882GHz;86.1228482413~86.1267544913GHz;86.1279751945~86.1294400382GHz;86.1306607413~86.1345669913GHz;86.1357876945~86.1370083976GHz;86.1406705070~86.1445767570GHz;86.1521451163~86.1540982413GHz;86.1567837882~86.1589810538GHz;86.1811978507~86.1846158195GHz;86.2686001945~86.2717740226GHz;86.2754361320~86.2771451163GHz;86.2786099601~86.2795865226GHz;86.2908169913~86.2930142570GHz;86.3491666007~86.3503873038GHz;86.3518521476~86.3542935538GHz;86.3640591788~86.3647916007GHz;86.3738248038~86.3779751945GHz;86.3801724601~86.3918912101GHz;86.3943326163~86.4014126945GHz;86.4031216788~86.4048306632GHz;86.4092251945~86.4187466788GHz;86.4268033195~86.4280240226GHz;86.4370572257~86.4412076163GHz,18:86.6826626945~86.6846158195GHz;86.7017056632~86.7102505851GHz;86.7170865226~86.7178189445GHz;86.7600552726~86.7629849601GHz;86.7666470695~86.7683560538GHz;86.7722623038~86.7812955070GHz;86.7859341788~86.7866666007GHz;86.8694302726~86.8730923820GHz;86.8806607413~86.8828580070GHz;86.8843228507~86.8850552726GHz;86.9055630851~86.9084927726GHz;86.9160611320~86.9189908195GHz;86.9209439445~86.9241177726GHz;86.9280240226~86.9294888663GHz;86.9338833976~86.9353482413GHz;86.9390103507~86.9473111320GHz;86.9495083976~86.9592740226GHz;86.9614712882~86.9641568351GHz;86.9675748038~86.9739224601GHz;86.9785611320~86.9805142570GHz;86.9836880851~86.9880826163GHz;86.9907681632~87.0029751945GHz;87.0273892570~87.0312955070GHz;87.0442349601~87.0471646476GHz;87.0535123038~87.0559537101GHz;87.1072232413~87.1103970695GHz;87.1272427726~87.1289517570GHz;87.1328580070~87.1360318351GHz;87.1377408195~87.1394498038GHz,20:89.1966312919~89.2015141044GHz;89.2054203544~89.2066715751GHz;89.2124088798~89.2142094169GHz,22:87.8887699638~87.8936832939GHz;87.9297855888~87.9507206474GHz,24:97.7473785265~97.8347808702GHz;97.8552886827~97.8601714952GHz;97.9285308702~97.9309722765GHz;98.0305816515~98.0779449327GHz;98.1155425890~98.1370269640GHz;98.1931793077~98.2092925890GHz;98.2332183702~98.2756988390GHz;98.3225738390~98.3460113390GHz;98.3635894640~98.3645660265GHz;98.4304839952~98.4548980577GHz;98.5252105577~98.5471832140GHz;98.6140777452~98.6184722765GHz;98.6248199327~98.6350738390GHz;98.6458160265~98.6487457140GHz;98.6604644640~98.6712066515GHz;98.6985504015~98.7112457140GHz;98.7507964952~98.7737457140GHz;98.8020660265~98.8162261827GHz;99.0286285265~99.0574371202GHz;99.0813629015~99.0930816515GHz;99.1228668077~99.1331207140GHz;99.1472808702~99.2102691515GHz;99.2385894640~99.2488433702GHz;99.3489410265~99.3513824327GHz;99.4026519640~99.4280425890GHz;99.4475738390~99.4490386827GHz;99.4710113390~99.4783355577GHz;99.5120269640~99.5276519640GHz,26:99.5564527452~99.5686597765GHz;99.5784254015~99.6169996202GHz;99.6863355577~99.6921949327GHz;99.7044019640~99.7136793077GHz;99.7654371202~99.7927808702GHz;99.7996168077~99.8035230577GHz;99.8079175890~99.8137769640GHz;99.8181714952~99.8254957140GHz;99.8630933702~99.8816480577GHz;99.8870191515~99.9021558702GHz;100.0252027452~100.0276441515GHz;100.0989332140~100.1038160265GHz;100.2468824327~100.2600660265GHz;100.3308668077~100.3601636827GHz;100.3801832140~100.4041089952GHz;100.4207105577~100.4265699327GHz;100.4461011827~100.4529371202GHz;100.5369214952~100.5398511827GHz;100.6296949327~100.6326246202GHz;100.6970777452~100.7102613390GHz;100.7190504015~100.7410230577GHz;100.7478589952~100.7586011827GHz;100.7683668077~100.7712964952GHz;100.7961988390~100.7996168077GHz;100.8167066515~100.8333082140GHz;100.8401441515~100.8674879015GHz;100.8748121202~100.8787183702GHz;100.8836011827~100.8919019640GHz;100.9045972765~100.9309644640GHz;100.9558668077~100.9690504015GHz;101.0354566515~101.0437574327GHz;101.0540113390~101.0588941515GHz;101.0686597765~101.0867261827GHz;101.0955152452~101.1038160265GHz;101.1379957140~101.1414136827GHz;101.1809644640~101.2044019640GHz;101.2117261827~101.2185621202GHz;101.2214918077~101.2253980577GHz;101.2283277452~101.2327222765GHz;101.2366285265~101.2415113390GHz;101.2434644640~101.2483472765GHz;101.4163160265~101.4226636827GHz",
+          "16:85.9503869621~85.9533166496GHz;85.9584436027~85.9594201652GHz;85.9608850090~85.9638146965GHz;85.9667443840~85.9706506340GHz;85.9828576652~85.9916467277GHz;86.0116662590~86.0131311027GHz;86.0592736808~86.0612268058GHz;86.0963830558~86.0983361808GHz;86.1024865715~86.1044396965GHz;86.1120080558~86.1176232902GHz;86.1227502433~86.1266564933GHz;86.1278771965~86.1293420402GHz;86.1305627433~86.1344689933GHz;86.1356896965~86.1369103996GHz;86.1405725090~86.1444787590GHz;86.1520471183~86.1540002433GHz;86.1566857902~86.1586389152GHz;86.1810998527~86.1845178215GHz;86.2685021965~86.2716760246GHz;86.2753381340~86.2770471183GHz;86.2785119621~86.2794885246GHz;86.2907189933~86.2929162590GHz;86.3490686027~86.3502893058GHz;86.3517541496~86.3541955558GHz;86.3639611808~86.3646936027GHz;86.3737268058~86.3778771965GHz;86.3800744621~86.3917932121GHz;86.3942346183~86.4013146965GHz;86.4030236808~86.4047326652GHz;86.4091271965~86.4186486808GHz;86.4267053215~86.4279260246GHz;86.4369592277~86.4411096183GHz,18:86.6825646965~86.6845178215GHz;86.7016076652~86.7101525871GHz;86.7169885246~86.7177209465GHz;86.7599572746~86.7628869621GHz;86.7665490715~86.7682580558GHz;86.7721643058~86.7811975090GHz;86.7858361808~86.7865686027GHz;86.8693322746~86.8729943840GHz;86.8805627433~86.8827600090GHz;86.8842248527~86.8849572746GHz;86.9054650871~86.9083947746GHz;86.9159631340~86.9188928215GHz;86.9208459465~86.9240197746GHz;86.9279260246~86.9293908683GHz;86.9337853996~86.9352502433GHz;86.9389123527~86.9472131340GHz;86.9494103996~86.9591760246GHz;86.9613732902~86.9640588371GHz;86.9674768058~86.9738244621GHz;86.9784631340~86.9804162590GHz;86.9835900871~86.9879846183GHz;86.9906701652~87.0028771965GHz;87.0272912590~87.0311975090GHz;87.0441369621~87.0470666496GHz;87.0534143058~87.0558557121GHz;87.1071252433~87.1102990715GHz;87.1271447746~87.1288537590GHz;87.1327600090~87.1359338371GHz;87.1376428215~87.1393518058GHz,20:89.1965310296~89.2014138421GHz;89.2053200921~89.2065713128GHz;89.2123086175~89.2141091546GHz,22:87.8886391839~87.8935830315GHz;87.9296853264~87.9506203850GHz,24:97.7472658135~97.8346681572GHz;97.8551759697~97.8600587822GHz;97.9284181572~97.9308595635GHz;98.0304689385~98.0778322197GHz;98.1154298760~98.1369142510GHz;98.1930665947~98.2091798760GHz;98.2331056572~98.2755861260GHz;98.3224611260~98.3458986260GHz;98.3634767510~98.3644533135GHz;98.4303712822~98.4547853447GHz;98.5250978447~98.5470705010GHz;98.6139650322~98.6183595635GHz;98.6247072197~98.6349611260GHz;98.6457033135~98.6486330010GHz;98.6603517510~98.6710939385GHz;98.6984376885~98.7111330010GHz;98.7506837822~98.7736330010GHz;98.8019533135~98.8161134697GHz;99.0285158135~99.0573244072GHz;99.0812501885~99.0929689385GHz;99.1227540947~99.1330080010GHz;99.1471681572~99.2101564385GHz;99.2384767510~99.2487306572GHz;99.3488283135~99.3512697197GHz;99.4025392510~99.4279298760GHz;99.4474611260~99.4489259697GHz;99.4708986260~99.4782228447GHz;99.5119142510~99.5275392510GHz,26:99.5563400322~99.5685470635GHz;99.5783126885~99.6168869072GHz;99.6862228447~99.6920822197GHz;99.7042892510~99.7135665947GHz;99.7653244072~99.7926681572GHz;99.7995040947~99.8034103447GHz;99.8078048760~99.8136642510GHz;99.8180587822~99.8253830010GHz;99.8629806572~99.8815353447GHz;99.8869064385~99.9020431572GHz;100.0250900322~100.0275314385GHz;100.0988205010~100.1037033135GHz;100.2467697197~100.2594650322GHz;100.3307540947~100.3600509697GHz;100.3800705010~100.4039962822GHz;100.4205978447~100.4264572197GHz;100.4459884697~100.4528244072GHz;100.5368087822~100.5397384697GHz;100.6295822197~100.6325119072GHz;100.6969650322~100.7101486260GHz;100.7189376885~100.7409103447GHz;100.7477462822~100.7584884697GHz;100.7682540947~100.7711837822GHz;100.7960861260~100.7995040947GHz;100.8165939385~100.8331955010GHz;100.8400314385~100.8673751885GHz;100.8746994072~100.8786056572GHz;100.8834884697~100.8917892510GHz;100.9044845635~100.9308517510GHz;100.9557540947~100.9689376885GHz;101.0353439385~101.0436447197GHz;101.0538986260~101.0587814385GHz;101.0685470635~101.0866134697GHz;101.0954025322~101.1037033135GHz;101.1378830010~101.1413009697GHz;101.1808517510~101.2042892510GHz;101.2116134697~101.2184494072GHz;101.2213790947~101.2252853447GHz;101.2282150322~101.2326095635GHz;101.2365158135~101.2413986260GHz;101.2433517510~101.2482345635GHz;101.4162033135~101.4225509697GHz",
+          "16:85.9503231421~85.9532528296GHz;85.9583797827~85.9593563452GHz;85.9608211890~85.9637508765GHz;85.9666805640~85.9705868140GHz;85.9827938452~85.9915829077GHz;86.0116024390~86.0130672827GHz;86.0592098609~86.0611629859GHz;86.0963192359~86.0985165015GHz;86.1024227515~86.1046200171GHz;86.1119442359~86.1178036109GHz;86.1226864234~86.1268368140GHz;86.1278133765~86.1295223609GHz;86.1304989234~86.1346493140GHz;86.1356258765~86.1370907202GHz;86.1405086890~86.1446590796GHz;86.1519832984~86.1541805640GHz;86.1566219702~86.1588192359GHz;86.1810360327~86.1844540015GHz;86.2684383765~86.2716122046GHz;86.2752743140~86.2769832984GHz;86.2784481421~86.2794247046GHz;86.2906551734~86.2928524390GHz;86.3490047827~86.3502254859GHz;86.3516903296~86.3541317359GHz;86.3638973609~86.3646297827GHz;86.3736629859~86.3778133765GHz;86.3800106421~86.3917293921GHz;86.3941707984~86.4012508765GHz;86.4029598609~86.4046688452GHz;86.4090633765~86.4185848609GHz;86.4268856421~86.4278622046GHz;86.4371395484~86.4410457984GHz,18:86.6825008765~86.6844540015GHz;86.7015438452~86.7100887671GHz;86.7169247046~86.7176571265GHz;86.7598934546~86.7628231421GHz;86.7664852515~86.7681942359GHz;86.7721004859~86.7811336890GHz;86.7857723609~86.7865047827GHz;86.8692684546~86.8729305640GHz;86.8804989234~86.8826961890GHz;86.8841610327~86.8848934546GHz;86.9054012671~86.9083309546GHz;86.9158993140~86.9188290015GHz;86.9207821265~86.9239559546GHz;86.9278622046~86.9293270484GHz;86.9337215796~86.9351864234GHz;86.9388485327~86.9471493140GHz;86.9493465796~86.9591122046GHz;86.9613094702~86.9639950171GHz;86.9674129859~86.9737606421GHz;86.9783993140~86.9803524390GHz;86.9835262671~86.9879207984GHz;86.9906063452~87.0028133765GHz;87.0272274390~87.0311336890GHz;87.0440731421~87.0470028296GHz;87.0533504859~87.0557918921GHz;87.1070614234~87.1102352515GHz;87.1273250952~87.1287899390GHz;87.1329403296~87.1358700171GHz;87.1378231421~87.1392879859GHz,20:89.1964657349~89.2013485474GHz;89.2052547974~89.2065060181GHz;89.2122738404~89.2140438599GHz,22:87.8886044068~87.8935177369GHz;87.9296200318~87.9505550904GHz,24:97.7471924105~97.8345947543GHz;97.8551025668~97.8599853793GHz;97.9283447543~97.9307861605GHz;98.0303955355~98.0777588168GHz;98.1153564730~98.1368408480GHz;98.1929931918~98.2095947543GHz;98.2330322543~98.2760010043GHz;98.3223877230~98.3463135043GHz;98.3634033480~98.3648681918GHz;98.4302978793~98.4552002230GHz;98.5250244418~98.5469970980GHz;98.6138916293~98.6182861605GHz;98.6246338168~98.6348877230GHz;98.6456299105~98.6485595980GHz;98.6602783480~98.6710205355GHz;98.6983642855~98.7110595980GHz;98.7506103793~98.7735595980GHz;98.8018799105~98.8160400668GHz;99.0284424105~99.0572510043GHz;99.0811767855~99.0928955355GHz;99.1226806918~99.1329345980GHz;99.1470947543~99.2100830355GHz;99.2384033480~99.2486572543GHz;99.3487549105~99.3511963168GHz;99.4029541293~99.4278564730GHz;99.4478760043~99.4488525668GHz;99.4713135043~99.4781494418GHz;99.5123291293~99.5274658480GHz,26:99.5562666293~99.5684736605GHz;99.5782392855~99.6168135043GHz;99.6861494418~99.6920088168GHz;99.7042158480~99.7134931918GHz;99.7652510043~99.7925947543GHz;99.7994306918~99.8033369418GHz;99.8077314730~99.8135908480GHz;99.8179853793~99.8253095980GHz;99.8629072543~99.8814619418GHz;99.8868330355~99.9019697543GHz;100.0250166293~100.0274580355GHz;100.0987470980~100.1041181918GHz;100.2466963168~100.2598799105GHz;100.3306806918~100.3599775668GHz;100.3799970980~100.4039228793GHz;100.4205244418~100.4263838168GHz;100.4459150668~100.4527510043GHz;100.5367353793~100.5396650668GHz;100.6295088168~100.6324385043GHz;100.6968916293~100.7100752230GHz;100.7188642855~100.7408369418GHz;100.7476728793~100.7584150668GHz;100.7681806918~100.7711103793GHz;100.7960127230~100.7994306918GHz;100.8165205355~100.8331220980GHz;100.8399580355~100.8673017855GHz;100.8746260043~100.8785322543GHz;100.8834150668~100.8917158480GHz;100.9044111605~100.9307783480GHz;100.9556806918~100.9688642855GHz;101.0352705355~101.0435713168GHz;101.0538252230~101.0587080355GHz;101.0684736605~101.0865400668GHz;101.0953291293~101.1036299105GHz;101.1378095980~101.1412275668GHz;101.1807783480~101.2042158480GHz;101.2115400668~101.2183760043GHz;101.2213056918~101.2252119418GHz;101.2281416293~101.2325361605GHz;101.2364424105~101.2413252230GHz;101.2432783480~101.2481611605GHz;101.4166181918~101.4224775668GHz",
+          "16:85.9503430486~85.9532727361GHz;85.9583996892~85.9593762517GHz;85.9608410954~85.9637707829GHz;85.9667004704~85.9706067204GHz;85.9828137517~85.9916028142GHz;86.0116223454~86.0130871892GHz;86.0592297673~86.0611828923GHz;86.0963391423~86.0982922673GHz;86.1024426579~86.1043957829GHz;86.1119641423~86.1175793767GHz;86.1227063298~86.1266125798GHz;86.1278332829~86.1292981267GHz;86.1305188298~86.1344250798GHz;86.1356457829~86.1368664861GHz;86.1405285954~86.1444348454GHz;86.1520032048~86.1539563298GHz;86.1566418767~86.1585950017GHz;86.1810559392~86.1842297673GHz;86.2684582829~86.2716321111GHz;86.2752942204~86.2770032048GHz;86.2784680486~86.2794446111GHz;86.2906750798~86.2928723454GHz;86.3490246892~86.3502453923GHz;86.3517102361~86.3541516423GHz;86.3639172673~86.3646496892GHz;86.3736828923~86.3778332829GHz;86.3800305486~86.3917492986GHz;86.3941907048~86.4012707829GHz;86.4029797673~86.4046887517GHz;86.4090832829~86.4186047673GHz;86.4266614079~86.4278821111GHz;86.4369153142~86.4410657048GHz,18:86.6825207829~86.6844739079GHz;86.7015637517~86.7101086736GHz;86.7169446111~86.7176770329GHz;86.7599133611~86.7628430486GHz;86.7665051579~86.7682141423GHz;86.7721203923~86.7811535954GHz;86.7857922673~86.7865246892GHz;86.8692883611~86.8727063298GHz;86.8805188298~86.8824719548GHz;86.8841809392~86.8846692204GHz;86.9054211736~86.9083508611GHz;86.9159192204~86.9188489079GHz;86.9208020329~86.9239758611GHz;86.9278821111~86.9293469548GHz;86.9337414861~86.9352063298GHz;86.9388684392~86.9471692204GHz;86.9493664861~86.9591321111GHz;86.9613293767~86.9640149236GHz;86.9674328923~86.9737805486GHz;86.9784192204~86.9803723454GHz;86.9835461736~86.9879407048GHz;86.9906262517~87.0028332829GHz;87.0272473454~87.0311535954GHz;87.0440930486~87.0470227361GHz;87.0533703923~87.0558117986GHz;87.1070813298~87.1102551579GHz;87.1271008611~87.1288098454GHz;87.1327160954~87.1358899236GHz;87.1375989079~87.1393078923GHz,20:89.1964861013~89.2013689138GHz;89.2052751638~89.2065263845GHz;89.2122636892~89.2140642263GHz,22:87.8885942556~87.8935381033GHz;87.9296403982~87.9505754568GHz,24:97.7472153060~97.8346176498GHz;97.8551254623~97.8600082748GHz;97.9283676498~97.9308090560GHz;98.0304184310~98.0777817123GHz;98.1153793685~98.1368637435GHz;98.1930160873~98.2091293685GHz;98.2330551498~98.2755356185GHz;98.3224106185~98.3458481185GHz;98.3634262435~98.3644028060GHz;98.4303207748~98.4547348373GHz;98.5250473373~98.5470199935GHz;98.6139145248~98.6183090560GHz;98.6246567123~98.6349106185GHz;98.6456528060~98.6485824935GHz;98.6603012435~98.6710434310GHz;98.6983871810~98.7110824935GHz;98.7506332748~98.7735824935GHz;98.8019028060~98.8160629623GHz;99.0284653060~99.0572738998GHz;99.0811996810~99.0929184310GHz;99.1227035873~99.1329574935GHz;99.1471176498~99.2101059310GHz;99.2384262435~99.2486801498GHz;99.3487778060~99.3512192123GHz;99.4024887435~99.4278793685GHz;99.4474106185~99.4488754623GHz;99.4708481185~99.4781723373GHz;99.5118637435~99.5274887435GHz,26:99.5562895248~99.5684965560GHz;99.5782621810~99.6168363998GHz;99.6861723373~99.6920317123GHz;99.7042387435~99.7135160873GHz;99.7652738998~99.7926176498GHz;99.7994535873~99.8033598373GHz;99.8077543685~99.8136137435GHz;99.8180082748~99.8253324935GHz;99.8629301498~99.8814848373GHz;99.8868559310~99.9019926498GHz;100.0250395248~100.0274809310GHz;100.0987699935~100.1036528060GHz;100.2467192123~100.2594145248GHz;100.3307035873~100.3595121810GHz;100.3800199935~100.4039457748GHz;100.4205473373~100.4264067123GHz;100.4459379623~100.4527738998GHz;100.5367582748~100.5396879623GHz;100.6295317123~100.6324613998GHz;100.6969145248~100.7100981185GHz;100.7188871810~100.7408598373GHz;100.7476957748~100.7584379623GHz;100.7682035873~100.7711332748GHz;100.7960356185~100.7994535873GHz;100.8165434310~100.8331449935GHz;100.8399809310~100.8673246810GHz;100.8746488998~100.8785551498GHz;100.8834379623~100.8917387435GHz;100.9044340560~100.9308012435GHz;100.9557035873~100.9688871810GHz;101.0352934310~101.0435942123GHz;101.0538481185~101.0587309310GHz;101.0684965560~101.0865629623GHz;101.0953520248~101.1036528060GHz;101.1378324935~101.1412504623GHz;101.1808012435~101.2042387435GHz;101.2115629623~101.2183988998GHz;101.2213285873~101.2252348373GHz;101.2281645248~101.2325590560GHz;101.2364653060~101.2413481185GHz;101.2433012435~101.2481840560GHz;101.4161528060~101.4225004623GHz",
+          "16:85.9502547070~85.9531843945GHz;85.9583113477~85.9592879102GHz;85.9607527539~85.9636824414GHz;85.9666121289~85.9705183789GHz;85.9827254102~85.9915144727GHz;86.0115340039~86.0129988477GHz;86.0591414258~86.0610945508GHz;86.0962508008~86.0982039258GHz;86.1023543164~86.1043074414GHz;86.1118758008~86.1174910352GHz;86.1226179883~86.1265242383GHz;86.1277449414~86.1292097852GHz;86.1304304883~86.1343367383GHz;86.1355574414~86.1367781445GHz;86.1404402539~86.1443465039GHz;86.1519148633~86.1538679883GHz;86.1565535352~86.1585066602GHz;86.1809675977~86.1841414258GHz;86.2683699414~86.2715437695GHz;86.2752058789~86.2769148633GHz;86.2783797070~86.2793562695GHz;86.2905867383~86.2927840039GHz;86.3489363477~86.3501570508GHz;86.3516218945~86.3540633008GHz;86.3638289258~86.3645613477GHz;86.3735945508~86.3777449414GHz;86.3799422070~86.3916609570GHz;86.3941023633~86.4011824414GHz;86.4028914258~86.4046004102GHz;86.4089949414~86.4185164258GHz;86.4265730664~86.4277937695GHz;86.4368269727~86.4409773633GHz,18:86.6824324414~86.6843855664GHz;86.7014754102~86.7100203320GHz;86.7168562695~86.7175886914GHz;86.7598250195~86.7627547070GHz;86.7664168164~86.7681258008GHz;86.7720320508~86.7810652539GHz;86.7857039258~86.7864363477GHz;86.8692000195~86.8726179883GHz;86.8804304883~86.8823836133GHz;86.8840925977~86.8845808789GHz;86.9053328320~86.9082625195GHz;86.9158308789~86.9187605664GHz;86.9207136914~86.9238875195GHz;86.9277937695~86.9292586133GHz;86.9336531445~86.9351179883GHz;86.9387800977~86.9470808789GHz;86.9492781445~86.9590437695GHz;86.9612410352~86.9639265820GHz;86.9673445508~86.9736922070GHz;86.9783308789~86.9802840039GHz;86.9834578320~86.9878523633GHz;86.9905379102~87.0027449414GHz;87.0271590039~87.0310652539GHz;87.0440047070~87.0469343945GHz;87.0532820508~87.0557234570GHz;87.1069929883~87.1101668164GHz;87.1270125195~87.1287215039GHz;87.1326277539~87.1358015820GHz;87.1375105664~87.1392195508GHz,20:89.1963957186~89.2012785311GHz;89.2051847811~89.2064360018GHz;89.2121733065~89.2139738436GHz,22:87.8885343905~87.8934477205GHz;87.9295500155~87.9504850741GHz,24:97.7471136995~97.8345160433GHz;97.8550238558~97.8599066683GHz;97.9282660433~97.9307074495GHz;98.0303168245~98.0776801058GHz;98.1152777620~98.1367621370GHz;98.1929144808~98.2090277620GHz;98.2329535433~98.2754340120GHz;98.3223090120~98.3457465120GHz;98.3633246370~98.3643011995GHz;98.4302191683~98.4546332308GHz;98.5249457308~98.5469183870GHz;98.6138129183~98.6182074495GHz;98.6245551058~98.6348090120GHz;98.6455511995~98.6484808870GHz;98.6601996370~98.6709418245GHz;98.6982855745~98.7109808870GHz;98.7505316683~98.7734808870GHz;98.8018011995~98.8159613558GHz;99.0283636995~99.0571722933GHz;99.0810980745~99.0928168245GHz;99.1226019808~99.1328558870GHz;99.1470160433~99.2100043245GHz;99.2383246370~99.2485785433GHz;99.3486761995~99.3511176058GHz;99.4023871370~99.4277777620GHz;99.4473090120~99.4487738558GHz;99.4707465120~99.4780707308GHz;99.5117621370~99.5273871370GHz,26:99.5561879183~99.5683949495GHz;99.5781605745~99.6167347933GHz;99.6860707308~99.6919301058GHz;99.7041371370~99.7134144808GHz;99.7651722933~99.7925160433GHz;99.7993519808~99.8032582308GHz;99.8076527620~99.8135121370GHz;99.8179066683~99.8252308870GHz;99.8628285433~99.8813832308GHz;99.8867543245~99.9018910433GHz;100.0249379183~100.0273793245GHz;100.0986683870~100.1035511995GHz;100.2466176058~100.2593129183GHz;100.3306019808~100.3594105745GHz;100.3799183870~100.4033558870GHz;100.4204457308~100.4258168245GHz;100.4458363558~100.4521840120GHz;100.5366566683~100.5395863558GHz;100.6294301058~100.6323597933GHz;100.6968129183~100.7099965120GHz;100.7187855745~100.7407582308GHz;100.7475941683~100.7583363558GHz;100.7681019808~100.7710316683GHz;100.7959340120~100.7993519808GHz;100.8164418245~100.8330433870GHz;100.8398793245~100.8672230745GHz;100.8745472933~100.8784535433GHz;100.8833363558~100.8916371370GHz;100.9043324495~100.9306996370GHz;100.9556019808~100.9687855745GHz;101.0351918245~101.0434926058GHz;101.0537465120~101.0586293245GHz;101.0683949495~101.0864613558GHz;101.0952504183~101.1035511995GHz;101.1377308870~101.1411488558GHz;101.1806996370~101.2041371370GHz;101.2114613558~101.2182972933GHz;101.2212269808~101.2251332308GHz;101.2280629183~101.2324574495GHz;101.2363636995~101.2412465120GHz;101.2431996370~101.2480824495GHz;101.4160511995~101.4223988558GHz"
+        ],
+        "timerange": "",
+        "uvrange": "",
+        "antenna": [
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&",
+          "0,1,2,3,4,5,6,7,8,9,10&"
+        ],
+        "scan": [
+          "7,10,13,16,19",
+          "7,10,13,16,19",
+          "6,9,12,15,18",
+          "7,10,13,16,19",
+          "7,10,13,16,19"
+        ],
+        "observation": "",
+        "intent": "OBSERVE_TARGET#ON_SOURCE",
+        "datacolumn": "data",
+        "imagename": "uid___A001_X15a0_X15c.s36_0.Sgr_A_star_sci.spw16_18_20_22_24_26.cont.I.iter1",
+        "imsize": [
+          270,
+          320
+        ],
+        "cell": [
+          "1.9arcsec"
+        ],
+        "phasecenter": "ICRS 17:46:21.1326 -028.53.33.873",
+        "stokes": "I",
+        "projection": "SIN",
+        "startmodel": "",
+        "specmode": "mfs",
+        "reffreq": "",
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": false,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "mtmfs",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggs",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 799999,
+        "gain": 0.1,
+        "threshold": "0.00413Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 1.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 1.25,
+        "noisethreshold": 5.0,
+        "lownoisethreshold": 2.0,
+        "negativethreshold": 0.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.1,
+        "cutthreshold": 0.01,
+        "growiterations": 75,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    },
+    "mous": "uid://A001/X15a0/X15c",
+    "pipeline_run": "/orange/adamginsburg/ACES//data/2021.1.00172.L/weblogs/pipeline-20220929T125257"
   }
 }
