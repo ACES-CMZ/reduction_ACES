@@ -75,7 +75,7 @@ export RUNONCE=True
 # Extract casaplotms
 mkdir /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
 cd /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
-/orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.6/site-packages/casaplotms/__bin__/casaplotms-x86_64.AppImage --appimage-extract
+/orange/adamginsburg/casa/${CASAVERSION}/lib/py/lib/python3.*/site-packages/casaplotms/__bin__/casaplotms-x86_64.AppImage --appimage-extract
 ln -sf $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /home/adamginsburg/bin/plotmsAppRun
 #cp -r $SLURM_TMPDIR/casaplotms/squashfs-root/AppRun /orange/adamginsburg/casa/${CASAVERSION}/hacked-plotms
 #export PLOTMSPATH=/home/adamginsburg/bin/plotmsAppRun
