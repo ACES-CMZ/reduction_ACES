@@ -36,9 +36,9 @@ if __name__ == "__main__":
                 print(f"Adding {key}")
                 spw33pars = commands[key]['tclean_cube_pars']['spw35']
                 spw33pars['imagename'] = spw33pars['imagename'].replace('35', '33')
-                spw33pars['nchan'] = nchan
-                spw33pars['start'] = start
-                spw33pars['width'] = chwid
+                spw33pars['nchan'] = -1
+                spw33pars['start'] = ""
+                spw33pars['width'] = ""
                 spw33pars['threshold'] = '0.01Jy'
                 spw33pars['spw'] = [x.replace('35', '33') for x in spw33pars['spw']]
                 if key in override_commands:
@@ -48,9 +48,9 @@ if __name__ == "__main__":
             elif commands[key]['tclean_cube_pars']['spw33']['nchan'] < 3800:
                 print(f"Modifying {key}")
                 spw33pars = {}
-                spw33pars['nchan'] = nchan
-                spw33pars['start'] = start
-                spw33pars['width'] = chwid
+                spw33pars['nchan'] = -1
+                spw33pars['start'] = ""
+                spw33pars['width'] = ""
                 spw33pars['threshold'] = '0.01Jy'
                 if key in override_commands:
                     override_commands[key]['tclean_cube_pars']['spw33'] = spw33pars
