@@ -319,6 +319,31 @@
   },
   "Sgr_A_st_ad_03_TM1": {
     "tclean_cube_pars": {
+      "spw25": {
+        "nchan": 1914,
+        "width": "0.24412815MHz",
+        "threshold": "0.011Jy"
+      },
+      "spw27": {
+        "nchan": 1914,
+        "width": "0.2441282MHz",
+        "threshold": "0.0065Jy"
+      },
+      "spw29": {
+        "nchan": 1914,
+        "width": "0.030519MHz",
+        "threshold": "0.0188Jy"
+      },
+      "spw31": {
+        "nchan": 1914,
+        "width": "0.03051895MHz",
+        "threshold": "0.0126Jy"
+      },
+      "spw35": {
+        "nchan": 3834,
+        "width": "0.48825175MHz",
+        "threshold": "0.0056Jy"
+      },
       "spw33": {
         "nchan": 3836,
         "start": "97.6660537907GHz",
