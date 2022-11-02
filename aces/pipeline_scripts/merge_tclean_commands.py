@@ -1,4 +1,5 @@
 import json
+from astropy import log
 import os
 from aces.pipeline_scripts import generate_aggregate_high_commands
 from aces import conf
