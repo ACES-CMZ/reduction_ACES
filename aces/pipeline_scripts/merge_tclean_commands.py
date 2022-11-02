@@ -47,6 +47,10 @@ for sbname, allpars in aggregate_high_commands.items():
 
 
 for sbname, allpars in override_commands.items():
+    if sbname not in commands:
+        log.warning(f"SB {sbname} was not in the default tclean commands; using override only")
+        commands[sbname] = allpars
+        continue
     for partype, replacements in allpars.items():
         for spwsel, tcpars in replacements.items():
             if spwsel in commands[sbname][partype]:
