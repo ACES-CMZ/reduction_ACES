@@ -3075,5 +3075,26 @@
         "threshold": "0.01Jy"
       }
     }
+  },
+  "Sgr_A_st_af_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 1.5
+      }
+    }
+  },
+  "Sgr_A_st_r_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 1.5
+      }
+    }
+  },
+  "Sgr_A_st_i_updated_03_7M": {
+    "tclean_cube_pars": {
+      "spw26": {
+        "cyclefactor": 1.5
+      }
+    }
   }
 }
