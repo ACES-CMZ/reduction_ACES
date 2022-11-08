@@ -64,7 +64,7 @@ def main(num_workers=None):
         import dask
 
         mem_mb = int(os.getenv('SLURM_MEM_PER_NODE'))
-        print("Threads was set", flush=True)
+        print(f"Threads was set to {threads}", flush=True)
 
         try:
             nthreads = int(threads)
@@ -74,6 +74,7 @@ def main(num_workers=None):
                 num_workers = nthreads
                 scheduler = 'threads'
 
+            # the cluster approach turned out to be very inefficient
             elif False:
                 print(f"nthreads = {nthreads} > 1, so starting a LocalCluster with memory limit {memlimit}", flush=True)
                 #scheduler = 'threads'
@@ -126,6 +127,7 @@ def main(num_workers=None):
                       ['mod' + x for x in 'min max std sum mean'.split()] + ['epsilon'])
 
     colnames = colnames_apriori + colnames_fromheader + colnames_stats
+    # sanity check to make sure I didn't mis-count things above
     assert len(colnames) == 49
 
     def try_qty(x):
@@ -353,7 +355,7 @@ def main(num_workers=None):
                         u.Quantity(restfreq, u.Hz), u.Quantity(minfreq, u.Hz), u.Quantity(maxfreq, u.Hz)] +
                        [history[key] if key in history else '' for key in colnames_fromheader] +
                        [min, max, std, sum, mean] +
-                       u.Quantity([min, max, std, sum, mean]).to(u.K, jtok_equiv) +
+                       list(map(lambda x: u.Quantity(x).to(u.K, jtok_equiv), [min, max, std, sum, mean])) +
                        [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean] +
                        [modmin, modmax, modstd, modsum, modmean, epsilon])
                 assert len(row) == len(colnames)
