@@ -311,7 +311,7 @@ def main(num_workers=None):
                     dt("Doing low-signal cube mad-std")
                     # we got warnings that this was making large chunks.  Not sure there's an alternative here?
                     #with dask.config.set(**{'array.slicing.split_large_chunks': True}): # try to split more
-                    with dask.config.set(**{'array.slicing.split_large_chunks': False}): # silence warning
+                    with dask.config.set(**{'array.slicing.split_large_chunks': False}):  # silence warning
                         flatdata = noiseest_cube.with_mask(lowsignal[:, None, None]).flattened()
                     dt("Loaded flatdata")
                     lowmadstd = mad_std(flatdata)
