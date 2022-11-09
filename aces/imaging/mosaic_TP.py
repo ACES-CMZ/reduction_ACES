@@ -30,7 +30,7 @@ basepath = conf.basepath
 
 def cube_mosaicing():
 
-    for spw in (17, 19, 21, 23, 25, 27):
+    for spw in (17, 19, 21, 23, 25, 27)[::-1]:
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw{spw}.cube.I.sd.fits')
 
         # cube0 = SpectralCube.read(filelist[0])
