@@ -143,7 +143,7 @@ def main(num_workers=None):
         tbl.write(tbldir / 'cube_stats.ipac', format='ascii.ipac', overwrite=True)
         tbl.write(tbldir / 'cube_stats.html', format='ascii.html', overwrite=True)
         tbl.write(tbldir / 'cube_stats.tex', overwrite=True)
-        tbl.write(tbldir / 'cube_stats.js.html', format='jsviewer')
+        tbl.write(tbldir / 'cube_stats.js.html', format='jsviewer', overwrite=True)
         return tbl
 
     if os.getenv('START_FROM_CACHED') == 'False':
@@ -309,7 +309,10 @@ def main(num_workers=None):
                     lowsum = stats['sum']
                     lowmean = stats['mean']
                     dt("Doing low-signal cube mad-std")
-                    flatdata = noiseest_cube.with_mask(lowsignal[:, None, None]).flattened()
+                    # we got warnings that this was making large chunks.  Not sure there's an alternative here?
+                    #with dask.config.set(**{'array.slicing.split_large_chunks': True}): # try to split more
+                    with dask.config.set(**{'array.slicing.split_large_chunks': False}): # silence warning
+                        flatdata = noiseest_cube.with_mask(lowsignal[:, None, None]).flattened()
                     dt("Loaded flatdata")
                     lowmadstd = mad_std(flatdata)
                     dt("Done low-signal cube mad-std")
@@ -358,7 +361,7 @@ def main(num_workers=None):
                        list(map(lambda x: u.Quantity(x).to(u.K, jtok_equiv), [min, max, std, sum, mean])) +
                        [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean] +
                        [modmin, modmax, modstd, modsum, modmean, epsilon])
-                assert len(row) == len(colnames)
+                assert len(row) == len(colnames) == 49
                 rows.append(row)
 
                 cache_stats_file.write(" ".join(map(str, row)) + "\n")
