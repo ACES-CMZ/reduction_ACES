@@ -36,7 +36,7 @@ for i in range(len(sb_names)):
                       spw        = spws_12m,  # noqa: E221, E251
                       field      = 'Sgr_A_star',  # noqa: E221, E251
                       outputvis  = workdir + '/' + sb_names['Region'][i] + '/' + re.sub(r'^.*?uid___A002', 'uid___A002', visfile).strip('.ms') + '_split.ms',  # noqa: E221, E251
-                      datacolumn = 'corrected')
+                      datacolumn = 'corrected')  # noqa: E251
 
         for visfile in visfiles_7m:
             if not os.path.exists(workdir + '/' + sb_names['Region'][i] + '/' + re.sub(r'^.*?uid___A002', 'uid___A002', visfile).strip('.ms') + '_split.ms'):
@@ -44,7 +44,7 @@ for i in range(len(sb_names)):
                       spw        = spws_7m,  # noqa: E221, E251
                       field      = 'Sgr_A_star',  # noqa: E221, E251
                       outputvis  = workdir + '/' + sb_names['Region'][i] + '/' + re.sub(r'^.*?uid___A002', 'uid___A002', visfile).strip('.ms') + '_split.ms',  # noqa: E221, E251
-                      datacolumn = 'corrected')
+                      datacolumn = 'corrected')  # noqa: E251
 
 # Concatenate MSes into a single MS containing only 12 SPWs (6x12m, 6x7m)
         if not os.path.exists(workdir + '/' + sb_names['Region'][i] + '/' + sb_names['Region'][i] + '_12m_7m.concat.ms'):
@@ -54,7 +54,7 @@ for i in range(len(sb_names)):
 
 # Grab 12m cleaning parameters for HNCO SPW > override specific params > clean!
     if (os.path.exists(workdir + '/' + sb_names['Region'][i] + '/' + sb_names['Region'][i] + '_12m_7m.concat.ms') and
-        not os.path.exists(workdir + '/' + sb_names['Region'][i] + '/' + sb_names['Region'][i] + '_12m_7m.HNCO.clean.image')):
+            not os.path.exists(workdir + '/' + sb_names['Region'][i] + '/' + sb_names['Region'][i] + '_12m_7m.HNCO.clean.image')):
         hnco_pars                = tclean_commands[sb_names['Reg_original_12m'][i]]['tclean_cube_pars']['spw31']  # noqa: E221
         hnco_pars['vis']         = workdir + '/' + sb_names['Region'][i] + '/' + sb_names['Region'][i] + '_12m_7m.concat.ms'  # noqa: E221
         hnco_pars['spw']         = '3, 9'  # noqa: E221
