@@ -25,8 +25,8 @@ with open(f"{rootdir}/aces/pipeline_scripts/default_tclean_commands.json", "r") 
 # Grab all region names and MOUS IDs from .json file
 id_12m = []
 reg12m = []
-id_7m  = []
-reg7m  = []
+id_7m  = [] # noqa: E221
+reg7m  = [] # noqa: E221
 for col in df.columns:
     if 'TM1' in col:
         reg12m.append(col)
@@ -40,13 +40,13 @@ sb_names_12m = pd.DataFrame(
     {'Region': reg12m,
      'Reg_original_12m': reg12m,
      'twelve_m_ID': id_12m,
-    })
+    }) # noqa: E124
 
 sb_names_7m = pd.DataFrame(
     {'Region': reg7m,
      'Reg_original_7m': reg7m,
      'seven_m_ID': id_7m
-    })
+    }) # noqa: E124
 
 # Discard repeated regions (i.e. those with wrong freq shift)
 updated_12m = [s for s in sb_names_12m['Region'] if "updated" in s]
@@ -62,7 +62,7 @@ sb_7m = sb_names_7m[~sb_names_7m['Region'].isin(updated_7m)]
 # Tidy up region names, merge DFs on region name, and export as CSV
 sb_12m['Region'] = sb_12m['Region'].str.replace('_updated', '')
 sb_12m['Region'] = sb_12m['Region'].str.replace('_03_TM1', '')
-sb_7m['Region']  = sb_7m['Region'].str.replace('_updated', '')
-sb_7m['Region']  = sb_7m['Region'].str.replace('_03_7M', '')
-sb_names         = pd.merge(sb_12m, sb_7m, on='Region', how='outer').dropna().sort_values('Region')
-sb_names.to_csv(workdir+'/'+'aces_SB_names.csv', index=False)
+sb_7m['Region']  = sb_7m['Region'].str.replace('_updated', '') # noqa: E221
+sb_7m['Region']  = sb_7m['Region'].str.replace('_03_7M', '') # noqa: E221
+sb_names         = pd.merge(sb_12m, sb_7m, on='Region', how='outer').dropna().sort_values('Region') # noqa: E221
+sb_names.to_csv(workdir+'/'+'aces_SB_names.csv', index=False) # noqa: E226
