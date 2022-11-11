@@ -31,7 +31,7 @@ then = time.time()
 def dt(message=""):
     global then
     now = time.time()
-    print(f"Elapsed: {now-then}.  {message}", flush=True)
+    print(f"Elapsed: {now-then:0.1g}.  {message}", flush=True)
     then = now
 
 
