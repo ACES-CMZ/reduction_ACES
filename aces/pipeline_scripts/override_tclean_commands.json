@@ -3196,14 +3196,14 @@
         "threshold": "0.01Jy"
       },
       "spw33": {
-        "nchan": 3832,
-        "width": "488238.8Hz",
+        "nchan": -1,
+        "width": "",
         "threshold": "0.01Jy",
         "cyclefactor": 3
       },
       "spw35": {
-        "nchan": 3832,
-        "width": "488238.8Hz",
+        "nchan": -1,
+        "width": "",
         "threshold": "0.01Jy"
       }
     }
