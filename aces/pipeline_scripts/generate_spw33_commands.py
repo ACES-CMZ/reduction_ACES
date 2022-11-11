@@ -10,7 +10,7 @@ from aces.pipeline_scripts.merge_tclean_commands import commands
 #from aces import conf
 #rootdir = os.path.join(conf.basepath, "reduction_ACES")
 
-if __name__ == "__main__":
+def main():
 
     #if os.getenv('ACES_ROOTDIR') is not None:
     #    log.warning(f"Overridding default rootdir={rootdir} with rootdir={os.environ['ACES_ROOTDIR']}")
@@ -61,3 +61,6 @@ if __name__ == "__main__":
 
     with open(f"{pipedir}/override_tclean_commands.json", "w") as fh:
         json.dump(override_commands, fh, indent=2)
+
+if __name__ == "__main__":
+    main()
