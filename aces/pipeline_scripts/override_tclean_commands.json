@@ -3357,10 +3357,34 @@
   "Sgr_A_st_u_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
-        "threshold": "0.01Jy"
+        "nchan": 3834,
+        "width": "488312.55Hz",
+        "threshold": "0.011Jy"
+      },
+      "spw25": {
+        "nchan": 1914,
+        "width": "244158.5Hz",
+        "threshold": "0.024Jy"
+      },
+      "spw27": {
+        "nchan": 1914,
+        "width": "244158.5Hz",
+        "threshold": "0.014Jy"
+      },
+      "spw29": {
+        "nchan": 1914,
+        "width": "30522.6Hz",
+        "threshold": "0.025Jy"
+      },
+      "spw31": {
+        "nchan": 1914,
+        "width": "30522.6Hz",
+        "threshold": "0.038Jy"
+      },
+      "spw35": {
+        "nchan": 3834,
+        "width": "488312.6Hz",
+        "threshold": "0.012Jy"
       }
     }
   },
@@ -3510,10 +3534,46 @@
   "Sgr_A_st_k_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
-        "threshold": "0.01Jy"
+        "nchan": 3832,
+        "width": "488309.6Hz",
+        "threshold": "0.014Jy",
+        "cell": "0.18arcsec",
+        "imsize": [2400,2400]
+      },
+      "spw25": {
+        "nchan": 1912,
+        "width": "244154.8Hz",
+        "threshold": "0.028Jy",
+        "cell": "0.18arcsec",
+        "imsize": [2400,2400]
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "244154.8Hz",
+        "threshold": "0.017Jy",
+        "cell": "0.18arcsec",
+        "imsize": [2400,2400]
+      },
+      "spw29": {
+        "nchan": 1908,
+        "width": "30519.4Hz",
+        "threshold": "0.03Jy",
+        "cell": "0.18arcsec",
+        "imsize": [2400,2400]
+      },
+      "spw31": {
+        "nchan": 1912,
+        "width": "30519.4Hz",
+        "threshold": "0.03Jy",
+        "cell": "0.18arcsec",
+        "imsize": [2400,2400]
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "488309.6Hz",
+        "threshold": "0.014Jy",
+        "cell": "0.18arcsec",
+        "imsize": [2400,2400]
       }
     }
   },
@@ -3627,6 +3687,31 @@
         "calcpsf": false,
         "psfcutoff": 0.35,
         "parallel": true
+      },
+      "spw25": {
+        "nchan": 1912,
+        "width": "244155.25Hz",
+        "threshold": "0.022Jy"
+      },
+      "spw27": {
+        "nchan": 1914,
+        "width": "244155.25Hz",
+        "threshold": "0.013Jy"
+      },
+      "spw29": {
+        "nchan": 1912,
+        "width": "30519.45Hz",
+        "threshold": "0.035Jy"
+      },
+      "spw31": {
+        "nchan": 1914,
+        "width": "30519.45Hz",
+        "threshold": "0.024Jy"
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "488310.45Hz",
+        "threshold": "0.015Jy"
       }
     }
   },
