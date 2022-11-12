@@ -31,7 +31,7 @@ then = time.time()
 def dt(message=""):
     global then
     now = time.time()
-    print(f"Elapsed: {now-then}.  {message}", flush=True)
+    print(f"Elapsed: {now-then:0.1g}.  {message}", flush=True)
     then = now
 
 
@@ -64,7 +64,7 @@ def main(num_workers=None):
         import dask
 
         mem_mb = int(os.getenv('SLURM_MEM_PER_NODE'))
-        print("Threads was set", flush=True)
+        print(f"Threads was set to {threads}", flush=True)
 
         try:
             nthreads = int(threads)
@@ -74,6 +74,7 @@ def main(num_workers=None):
                 num_workers = nthreads
                 scheduler = 'threads'
 
+            # the cluster approach turned out to be very inefficient
             elif False:
                 print(f"nthreads = {nthreads} > 1, so starting a LocalCluster with memory limit {memlimit}", flush=True)
                 #scheduler = 'threads'
@@ -126,6 +127,7 @@ def main(num_workers=None):
                       ['mod' + x for x in 'min max std sum mean'.split()] + ['epsilon'])
 
     colnames = colnames_apriori + colnames_fromheader + colnames_stats
+    # sanity check to make sure I didn't mis-count things above
     assert len(colnames) == 49
 
     def try_qty(x):
@@ -141,7 +143,7 @@ def main(num_workers=None):
         tbl.write(tbldir / 'cube_stats.ipac', format='ascii.ipac', overwrite=True)
         tbl.write(tbldir / 'cube_stats.html', format='ascii.html', overwrite=True)
         tbl.write(tbldir / 'cube_stats.tex', overwrite=True)
-        tbl.write(tbldir / 'cube_stats.js.html', format='jsviewer')
+        tbl.write(tbldir / 'cube_stats.js.html', format='jsviewer', overwrite=True)
         return tbl
 
     if os.getenv('START_FROM_CACHED') == 'False':
@@ -307,7 +309,10 @@ def main(num_workers=None):
                     lowsum = stats['sum']
                     lowmean = stats['mean']
                     dt("Doing low-signal cube mad-std")
-                    flatdata = noiseest_cube.with_mask(lowsignal[:, None, None]).flattened()
+                    # we got warnings that this was making large chunks.  Not sure there's an alternative here?
+                    #with dask.config.set(**{'array.slicing.split_large_chunks': True}): # try to split more
+                    with dask.config.set(**{'array.slicing.split_large_chunks': False}):  # silence warning
+                        flatdata = noiseest_cube.with_mask(lowsignal[:, None, None]).flattened()
                     dt("Loaded flatdata")
                     lowmadstd = mad_std(flatdata)
                     dt("Done low-signal cube mad-std")
@@ -343,7 +348,11 @@ def main(num_workers=None):
                 del modstats
 
                 if os.path.exists(psffn):
-                    (residual_peak, peakloc_as, frac, epsilon, firstnull, r_sidelobe, _) = get_psf_secondpeak(psffn, specslice=slice(cube.shape[0] // 2, cube.shape[0] // 2 + 1))
+                    try:
+                        (residual_peak, peakloc_as, frac, epsilon, firstnull, r_sidelobe, _) = get_psf_secondpeak(psffn, specslice=slice(cube.shape[0] // 2, cube.shape[0] // 2 + 1))
+                    except Exception as ex:
+                        print(f"get_psf_secondpeak failed with {ex} for file {psffn}")
+                        continue
 
                 del cube
 
@@ -353,10 +362,10 @@ def main(num_workers=None):
                         u.Quantity(restfreq, u.Hz), u.Quantity(minfreq, u.Hz), u.Quantity(maxfreq, u.Hz)] +
                        [history[key] if key in history else '' for key in colnames_fromheader] +
                        [min, max, std, sum, mean] +
-                       u.Quantity([min, max, std, sum, mean]).to(u.K, jtok_equiv) +
+                       list(map(lambda x: u.Quantity(x).to(u.K, jtok_equiv), [min, max, std, sum, mean])) +
                        [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean] +
                        [modmin, modmax, modstd, modsum, modmean, epsilon])
-                assert len(row) == len(colnames)
+                assert len(row) == len(colnames) == 49
                 rows.append(row)
 
                 cache_stats_file.write(" ".join(map(str, row)) + "\n")

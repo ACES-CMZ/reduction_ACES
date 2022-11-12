@@ -1,4 +1,5 @@
 import numpy as np
+import time
 import warnings
 import json
 from astropy.table import Table, Column
@@ -29,6 +30,16 @@ warnings.filterwarnings('ignore', category=wcs.FITSFixedWarning, append=True)
 warnings.filterwarnings('ignore', category=BeamWarning, append=True)
 warnings.filterwarnings('ignore', category=StokesWarning, append=True)
 np.seterr(all='ignore')
+
+global then
+then = time.time()
+
+
+def dt(message=""):
+    global then
+    now = time.time()
+    print(f"Elapsed: {now-then:0.1g}.  {message}", flush=True)
+    then = now
 
 
 def get_requested_sens():

@@ -625,9 +625,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -736,9 +736,9 @@
   "Sgr_A_st_ao_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "threshold": "0.01Jy"
       },
       "spw35": {
@@ -818,9 +818,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3835,
-        "start": "97.6672350480GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -894,34 +894,34 @@
   "Sgr_A_st_ad_03_TM1": {
     "tclean_cube_pars": {
       "spw25": {
-        "nchan": 1914,
-        "width": "0.24412815MHz",
+        "nchan": -1,
+        "width": "",
         "threshold": "0.011Jy"
       },
       "spw27": {
-        "nchan": 1914,
-        "width": "0.2441282MHz",
+        "nchan": -1,
+        "width": "",
         "threshold": "0.0065Jy"
       },
       "spw29": {
-        "nchan": 1914,
-        "width": "0.030519MHz",
+        "nchan": -1,
+        "width": "",
         "threshold": "0.0188Jy"
       },
       "spw31": {
-        "nchan": 1914,
-        "width": "0.03051895MHz",
+        "nchan": -1,
+        "width": "",
         "threshold": "0.0126Jy"
       },
       "spw35": {
-        "nchan": 3834,
-        "width": "0.48825175MHz",
+        "nchan": -1,
+        "width": "",
         "threshold": "0.0056Jy"
       },
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "threshold": "0.01Jy"
       }
     }
@@ -966,9 +966,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1042,9 +1042,9 @@
   "Sgr_A_st_ag_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "threshold": "0.01Jy"
       }
     }
@@ -1089,9 +1089,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1202,9 +1202,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1315,9 +1315,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1428,9 +1428,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1545,9 +1545,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1658,9 +1658,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1771,9 +1771,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1884,9 +1884,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1997,9 +1997,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -2110,9 +2110,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -2248,9 +2248,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -2324,9 +2324,9 @@
   "Sgr_A_st_g_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "threshold": "0.01Jy"
       }
     }
@@ -2371,9 +2371,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -2484,9 +2484,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -2597,9 +2597,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -2722,8 +2722,8 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
+        "nchan": -1,
+        "start": "",
         "width": "488246Hz",
         "outframe": "LSRK",
         "veltype": "radio",
@@ -2835,9 +2835,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -2959,9 +2959,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -3035,9 +3035,9 @@
   "Sgr_A_st_aq_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "threshold": "0.01Jy"
       }
     }
@@ -3100,8 +3100,8 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
+        "nchan": -1,
+        "start": "",
         "width": "488246Hz",
         "outframe": "LSRK",
         "veltype": "radio",
@@ -3196,14 +3196,14 @@
         "threshold": "0.01Jy"
       },
       "spw33": {
-        "nchan": 3832,
-        "width": "488238.8Hz",
+        "nchan": -1,
+        "width": "",
         "threshold": "0.01Jy",
         "cyclefactor": 3
       },
       "spw35": {
-        "nchan": 3832,
-        "width": "488238.8Hz",
+        "nchan": -1,
+        "width": "",
         "threshold": "0.01Jy"
       }
     }
@@ -3342,15 +3342,15 @@
   "Sgr_A_st_v_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
+        "nchan": -1,
+        "start": "",
         "width": "488310Hz",
         "threshold": "0.01Jy"
       },
       "spw35": {
-        "nchan": 3836,
-        "start": "99.5533154972GHz",
-        "width": "4883141Hz"
+        "nchan": -1,
+        "start": "",
+        "width": ""
       }
     }
   },
@@ -3391,9 +3391,9 @@
   "Sgr_A_st_n_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "threshold": "0.01Jy"
       }
     }
@@ -3401,9 +3401,9 @@
   "Sgr_A_st_d_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "threshold": "0.01Jy"
       }
     }
@@ -3448,9 +3448,9 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -3524,9 +3524,9 @@
   "Sgr_A_st_aa_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "threshold": "0.01Jy"
       }
     }
@@ -3718,9 +3718,9 @@
   "Sgr_A_st_a_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "threshold": "0.01Jy"
       }
     }
@@ -3728,9 +3728,9 @@
   "Sgr_A_st_r_03_TM1": {
     "tclean_cube_pars": {
       "spw33": {
-        "nchan": 3836,
-        "start": "97.6660537907GHz",
-        "width": "488244Hz",
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "threshold": "0.01Jy"
       }
     }

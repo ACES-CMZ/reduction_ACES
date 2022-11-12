@@ -10,7 +10,8 @@ from aces.pipeline_scripts.merge_tclean_commands import commands
 #from aces import conf
 #rootdir = os.path.join(conf.basepath, "reduction_ACES")
 
-if __name__ == "__main__":
+
+def main():
 
     #if os.getenv('ACES_ROOTDIR') is not None:
     #    log.warning(f"Overridding default rootdir={rootdir} with rootdir={os.environ['ACES_ROOTDIR']}")
@@ -18,17 +19,17 @@ if __name__ == "__main__":
 
     pipedir = os.path.dirname(__file__)
 
-    with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
-        default_commands = json.load(fh)
+    # with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
+    #     default_commands = json.load(fh)
 
     with open(f"{pipedir}/override_tclean_commands.json", "r") as fh:
         override_commands = json.load(fh)
 
-    ncmds = (len(override_commands))
+    ncmds = (len(commands))
 
-    chwid = '488244Hz'
-    nchan = 3836
-    start = "97.6660537907GHz"
+    #chwid = '488244Hz'
+    #nchan = 3836
+    #start = "97.6660537907GHz"
 
     for key in commands:
         if 'TM' in key:
@@ -61,3 +62,7 @@ if __name__ == "__main__":
 
     with open(f"{pipedir}/override_tclean_commands.json", "w") as fh:
         json.dump(override_commands, fh, indent=2)
+
+
+if __name__ == "__main__":
+    main()
