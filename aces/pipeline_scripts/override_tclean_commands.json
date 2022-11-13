@@ -1045,7 +1045,33 @@
         "nchan": -1,
         "start": "",
         "width": "",
-        "threshold": "0.01Jy"
+        "threshold": "0.012Jy",
+        "cyclefactor": 2.0
+      },
+      "spw25": {
+        "nchan": 1912,
+        "width": "244119.6Hz",
+        "threshold": "0.015Jy"
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "244119.6Hz",
+        "threshold": "0.015Jy"
+      },
+      "spw29": {
+        "nchan": 1910,
+        "width": "30515Hz",
+        "threshold": "0.04Jy"
+      },
+      "spw31": {
+        "nchan": 1910,
+        "width": "30515Hz",
+        "threshold": "0.028Jy"
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "488239.15Hz",
+        "threshold": "0.013Jy"
       }
     }
   },
