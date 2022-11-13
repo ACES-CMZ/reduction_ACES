@@ -51,14 +51,16 @@ def main():
     for pipeline_base in glob.glob(f'{weblog_dir}/pipeline*'):
         sbname, max_baseline = get_human_readable_name(pipeline_base, verbose=False)
         # DEBUG tool - uncomment as needed
-        # if '_ac_' not in sbname:
+        # if '_al_' not in sbname:
+        #     print(".", end="")
         #     continue
+        # print()
         namedict = get_uid_and_name(f"{pipeline_base}/html/t1-1.html")
         mous = namedict['Observing Unit Set Status']
         sbname = namedict['Scheduling Block Name']
         pipeline_run = glob.glob(f"{pipeline_base}/html/stage*")
 
-        if len(pipeline_run) < 30:
+        if len(pipeline_run) < 26:
             log.info(f"Skipping pipeline {pipeline_base} from mous {mous} sb {sbname}"
                      f"because it only had {len(pipeline_run)} stages and was therefore likely a rerun.")
             continue
@@ -152,11 +154,14 @@ def main():
         }
 
         # DEBUG tool.  Uncomment as needed
-        #if '_ac_' in sbname and 'TM1' in sbname:
-        #    globals().update(locals())
-        #    return all_cubepars
+        # if '_al_' in sbname and 'TM1' in sbname:
+        #     globals().update(locals())
+        #     return all_cubepars
 
     with open(f'{rootdir}/reduction_ACES/aces/pipeline_scripts/default_tclean_commands.json', 'w') as tcfh:
         json.dump(all_cubepars, tcfh, indent=2)
 
     globals().update(locals())
+
+if __name__ == "__main__":
+    main()
