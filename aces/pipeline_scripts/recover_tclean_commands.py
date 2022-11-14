@@ -150,7 +150,7 @@ def main():
             'tclean_cube_pars': cubepars,
             'tclean_cont_pars': contpars,
             'mous': mous,
-            'pipeline_run': pipeline_base,
+            'pipeline_run': pipeline_base.replace('//', '/'),
         }
 
         # DEBUG tool.  Uncomment as needed
