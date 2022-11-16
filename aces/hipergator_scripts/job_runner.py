@@ -45,6 +45,7 @@ def main():
 
     verbose = '--verbose' in sys.argv
     debug = '--debug' in sys.argv
+    check_syntax = '--check-syntax' in sys.argv
 
     if debug:
         log.setLevel('DEBUG')
@@ -136,15 +137,16 @@ def main():
                         log.debug(f"imtype is {imtype} and spw is {spw}.  SKIPPING because it's an MFS single-window")
                         continue
 
-                    # check syntax
-                    flake = subprocess.run(['/orange/adamginsburg/miniconda3/envs/python39/bin/flake8',
-                                            '--select=E999',
-                                            scriptname],
-                                           check=True)
-                    if flake.returncode == 0:
-                        log.debug(flake.stdout)
-                    else:
-                        raise SyntaxError(flake.stdout)
+                    if check_syntax:
+                        # check syntax
+                        flake = subprocess.run(['/orange/adamginsburg/miniconda3/envs/python39/bin/flake8',
+                                                '--select=E999',
+                                                scriptname],
+                                            check=True)
+                        if flake.returncode == 0:
+                            log.debug(flake.stdout)
+                        else:
+                            raise SyntaxError(flake.stdout)
 
                     os.environ['SCRIPTNAME'] = scriptname
 
