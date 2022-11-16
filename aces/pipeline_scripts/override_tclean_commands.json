@@ -1646,6 +1646,31 @@
   },
   "Sgr_A_st_h_03_TM1": {
     "tclean_cube_pars": {
+      "spw25": {
+        "nchan": 1912,
+        "width": "0.2441219MHz",
+        "threshold": "0.0122Jy"
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "0.2441219MHz",
+        "threshold": "0.0074Jy"
+      },
+      "spw29": {
+        "nchan": 1912,
+        "width": "0.0305153MHz",
+        "threshold": "0.01987Jy"
+      },
+      "spw31": {
+        "nchan": 1912,
+        "width": "0.0305153MHz",
+        "threshold": "0.01322Jy"
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.48824375MHz",
+        "threshold": "0.00632Jy"
+      },
       "spw33": {
         "vis": [
           "uid___A002_Xf934b1_X30dd_target.ms",
@@ -1729,7 +1754,7 @@
         "threshold": "0.01Jy",
         "nsigma": 0.0,
         "cycleniter": -1,
-        "cyclefactor": 1.0,
+        "cyclefactor": 2.0,
         "minpsffraction": 0.05,
         "maxpsffraction": 0.8,
         "interactive": 0,
