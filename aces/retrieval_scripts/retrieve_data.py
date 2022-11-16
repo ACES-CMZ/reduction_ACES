@@ -22,7 +22,7 @@ def main():
             alma.archive_url = server_url
             alma.dataarchive_url = server_url
             alma.cache_location = Alma.cache_location = '.'
-            alma.login(username)
+            alma.login(username, auth_urls=['almascience.nrao.edu', 'almascience.eso.org', 'asa.alma.cl', 'rh-cas.alma.cl'])
             print(f"Logged in as {username}", flush=True)
 
             results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None)
