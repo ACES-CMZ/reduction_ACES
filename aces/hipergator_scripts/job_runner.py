@@ -142,7 +142,7 @@ def main():
                         flake = subprocess.run(['/orange/adamginsburg/miniconda3/envs/python39/bin/flake8',
                                                 '--select=E999',
                                                 scriptname],
-                                            check=True)
+                                               check=True)
                         if flake.returncode == 0:
                             log.debug(flake.stdout)
                         else:
