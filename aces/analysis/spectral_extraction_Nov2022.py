@@ -30,7 +30,7 @@ if __name__ == "__main__":
         product_dir = product_dict[regname]
         reg = regions_dict[regname]
 
-        cubefns = glob.glob(f'{product_dir}/product/*Sgr_A_star*.cube.I.pbcor.fits')
+        cubefns = glob.glob(f'{product_dir}/calibrated/working/*Sgr_A_star*.cube.I.pbcor.fits')
 
         for fn in cubefns:
             cube = SpectralCube.read(fn).subcube_from_regions([reg])
