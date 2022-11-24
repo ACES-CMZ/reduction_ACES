@@ -1,46 +1,46 @@
-Proposal ID Obs ID alternative name velocity offset 12m MOUS ID 7m MOUS ID TP MOUS ID TP MOUS ID2
-cmz01 a - 40 X1590_X30aa X1590_X30ac X1590_X30ae 
-cmz02 b SgrB2 40 X15a0_Xa6 X15b4_X37 X15a0_Xaa 
-cmz03 c - 0 X15a0_Xac X15a0_Xae X15a0_Xb0 
-cmz04 d - 30 X15a0_Xb2 X15a0_Xb4 X15a0_Xb6 
-cmz05 e - -30 X15a0_Xb8 X15b4_X39 X15a0_Xbc 
-cmz06 f - 0 - -  
-cmz07 g - 30 X15a0_Xc4 X15a0_Xc6 X15a0_Xc8 
-cmz08 h - 0 X15a0_Xca X15a0_Xcc X15a0_Xce 
-cmz09 i - 30 X15a0_Xd0 X15b4_Xc5 X15a0_Xd4 
-cmz10 j - 30 X15b4_X3d X15a0_Xd8 X15a0_Xda 
-cmz11 k - 30 X15a0_Xdc X15a0_Xde X15a0_Xe0 
-cmz12 l - 0 X15a0_Xe2 X15a0_Xe4 X15a0_Xe6 
-cmz13 m - 30 X15b4_X41 X15b4_X43 X15b4_X45 X15a0_Xec
-cmz14 n - 30 X15a0_Xee X15a0_Xf0 X15a0_Xf2 
-cmz15 o - 0 - X15a0_Xf6 X15a0_Xf8 
-cmz16 p - 0 X15a0_Xfa X15a0_Xfc X15a0_Xfe 
-cmz17 q - 0 X15a0_X100 X15a0_X102 X15a0_X104 
-cmz18 r - 30 X15a0_X106 X15a0_X108 X15a0_X10a 
-cmz19 s - 0 X15a0_X10c X15a0_X10e X15a0_X110 
-cmz20 t - 0 X15a0_X112 X15a0_X114 X15a0_X116 
-cmz21 u - 30 X15a0_X118 X15a0_X11a X15a0_X11c 
-cmz22 v - 30 X15a0_X11e X15a0_X120 X15a0_X122 
-cmz23 w - 30 X15a0_X124 X15a0_X126 X15a0_X128 
-cmz24 x - 0 X15a0_X12a X15a0_X12c X15a0_X12e 
-cmz25 y - 0 X15a0_X130 X15a0_X132 X15a0_X134 
-cmz26 z - 40 X15a0_X136 X15a9_X12d3 X15a0_X13a 
-cmz27 aa - 0 X15a0_X13c X15a0_X13e X15a0_X140 
-cmz28 ab - 0 X15a0_X142 X15a0_X144 X15a0_X146 
-cmz29 ac - 0 X15a0_X148 X15a0_X14a X15a0_X14c 
-cmz30 ad - 0 X15a0_X14e X15a0_X150 X15a0_X152 
-cmz31 ae - 0 X15a0_X154 X15a0_X156 X15a0_X158 
-cmz32 af - 0 - X15a0_X15c X15a0_X15e 
-cmz33 ag - 0 X15a0_X160 X15a0_X162 X15a0_X164 
-cmz34 ah - 30 X15a0_X166 X15a0_X168 X15a0_X16a 
-cmz35 ai - 0 X15a0_X16c X15a0_X16e X15a0_X170 
-cmz36 aj - -30 X15a0_X172 X15b4_X47 X15b4_X49 X15a0_X176
-cmz37 ak - 30 X15b4_X4b X15a9_X12d5 X15b4_X4d X15a0_X17c
-cmz38 al - 0 - X15a0_X180 X15a0_X182 
-cmz39 am - 30 - - X15a0_X188 
-cmz40 an - 30 X15a0_X18a X15a0_X18c X15a0_X18e 
-cmz41 ao brick 0 X15a0_X190 X15a0_X192 X15a0_X194 
-cmz42 ap - 0 X15a0_X196 X15a0_X198 X15a0_X19a 
-cmz43 aq - 0 X15a0_X19c X15a0_X19e X15a0_X1a0 
-cmz44 ar - 40 X15a0_X1a2 X15b4_X4f  
-cmz45 as - 0 X15a0_X1a8 X15a0_X1aa  
+Proposal ID	Obs ID	alternative name	velocity offset	12m MOUS ID	7m MOUS ID	TP MOUS ID	TP MOUS ID2
+cmz01	a	-	40	X1590_X30aa	X1590_X30ac	X1590_X30ae	
+cmz02	b	SgrB2	40	X15a0_Xa6	X15b4_X37	X15a0_Xaa	-
+cmz03	c	-	0	X15a0_Xac	X15a0_Xae	X15a0_Xb0	-
+cmz04	d	-	30	X15a0_Xb2	X15a0_Xb4	X15a0_Xb6	-
+cmz05	e	-	-30	X15a0_Xb8	X15b4_X39	X15a0_Xbc	-
+cmz06	f	-	0	-	-	-	-
+cmz07	g	-	30	X15a0_Xc4	X15a0_Xc6	X15a0_Xc8	-
+cmz08	h	-	0	X15a0_Xca	X15a0_Xcc	X15a0_Xce	-
+cmz09	i	-	30	X15a0_Xd0	X15b4_Xc5	X15a0_Xd4	-
+cmz10	j	-	30	X15b4_X3d	X15a0_Xd8	X15a0_Xda	-
+cmz11	k	-	30	X15a0_Xdc	X15a0_Xde	X15a0_Xe0	-
+cmz12	l	-	0	X15a0_Xe2	X15a0_Xe4	X15a0_Xe6	-
+cmz13	m	-	30	X15b4_X41	X15b4_X43	X15b4_X45	X15a0_Xec
+cmz14	n	-	30	X15a0_Xee	X15a0_Xf0	X15a0_Xf2	-
+cmz15	o	-	0	-	X15a0_Xf6	X15a0_Xf8	-
+cmz16	p	-	0	X15a0_Xfa	X15a0_Xfc	X15a0_Xfe	-
+cmz17	q	-	0	X15a0_X100	X15a0_X102	X15a0_X104	-
+cmz18	r	-	30	X15a0_X106	X15a0_X108	X15a0_X10a	-
+cmz19	s	-	0	X15a0_X10c	X15a0_X10e	X15a0_X110	-
+cmz20	t	-	0	X15a0_X112	X15a0_X114	X15a0_X116	-
+cmz21	u	-	30	X15a0_X118	X15a0_X11a	X15a0_X11c	-
+cmz22	v	-	30	X15a0_X11e	X15a0_X120	X15a0_X122	-
+cmz23	w	-	30	X15a0_X124	X15a0_X126	X15a0_X128	-
+cmz24	x	-	0	X15a0_X12a	X15a0_X12c	X15a0_X12e	-
+cmz25	y	-	0	X15a0_X130	X15a0_X132	X15a0_X134	-
+cmz26	z	-	40	X15a0_X136	X15a9_X12d3	X15a0_X13a	-
+cmz27	aa	-	0	X15a0_X13c	X15a0_X13e	X15a0_X140	-
+cmz28	ab	-	0	X15a0_X142	X15a0_X144	X15a0_X146	-
+cmz29	ac	-	0	X15a0_X148	X15a0_X14a	X15a0_X14c	-
+cmz30	ad	-	0	X15a0_X14e	X15a0_X150	X15a0_X152	-
+cmz31	ae	-	0	X15a0_X154	X15a0_X156	X15a0_X158	-
+cmz32	af	-	0	-	X15a0_X15c	X15a0_X15e	-
+cmz33	ag	-	0	X15a0_X160	X15a0_X162	X15a0_X164	-
+cmz34	ah	-	30	X15a0_X166	X15a0_X168	X15a0_X16a	-
+cmz35	ai	-	0	X15a0_X16c	X15a0_X16e	X15a0_X170	-
+cmz36	aj	-	-30	X15a0_X172	X15b4_X47	X15b4_X49	X15a0_X176
+cmz37	ak	-	30	X15b4_X4b	X15a9_X12d5	X15b4_X4d	X15a0_X17c
+cmz38	al	-	0	-	X15a0_X180	X15a0_X182	-
+cmz39	am	-	30	-	-	X15a0_X188	-
+cmz40	an	-	30	X15a0_X18a	X15a0_X18c	X15a0_X18e	-
+cmz41	ao	brick	0	X15a0_X190	X15a0_X192	X15a0_X194	-
+cmz42	ap	-	0	X15a0_X196	X15a0_X198	X15a0_X19a	-
+cmz43	aq	-	0	X15a0_X19c	X15a0_X19e	X15a0_X1a0	-
+cmz44	ar	-	40	X15a0_X1a2	X15b4_X4f	-	-
+cmz45	as	-	0	X15a0_X1a8	X15a0_X1aa	-	-
