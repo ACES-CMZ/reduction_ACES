@@ -254,9 +254,9 @@ def imstats(fn, reg=None):
         cube = SpectralCube.read(fn, format='casa_image')
         data = cube[0].value
         ww = cube.wcs
-        
+
         # lots of work to get CASA version
-        metatb = Table.read(fn+"/logtable")
+        metatb = Table.read(f"{fn}/logtable")
         hist = metatb['MESSAGE']
         history = {x.split(":")[0]: ":".join(x.split(": ")[1:])
                    for x in hist if ':' in x and 'ICRS' not in x}
