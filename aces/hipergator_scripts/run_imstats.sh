@@ -12,6 +12,7 @@
 #SBATCH --account=adamginsburg
 pwd; hostname; date
 
+export WORK_DIR="/orange/adamginsburg/ACES/reduction_ACES/"
 export WORK_DIR="/blue/adamginsburg/adamginsburg/ACES/workdir"
 
 module load git
@@ -44,4 +45,6 @@ export DASK_THREADS=$SLURM_NTASKS
 
 env
 
-/orange/adamginsburg/miniconda3/envs/python39/bin/aces_cube_stats_grid
+/orange/adamginsburg/miniconda3/envs/python39/bin/aces_imstats
+#${IPYTHON} -c "from aces.analysis import
+#${IPYTHON} ${SCRIPT_DIR}/cube_stats_grid.py
