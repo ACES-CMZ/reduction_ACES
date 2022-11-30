@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-type=NONE          # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=adamginsburg@ufl.edu     # Where to send mail
-#SBATCH --ntasks=32
+#SBATCH --ntasks=64
 #SBATCH --nodes=1
-#SBATCH --mem=128gb                     # Job memory request
+#SBATCH --mem=256gb                     # Job memory request
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
 #SBATCH --output=cube_stats_grid_ACES_%j.log
 #SBATCH --export=ALL
