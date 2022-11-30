@@ -249,10 +249,20 @@ def imstats(fn, reg=None):
         fh = fits.open(fn)
         data = fh[0].data
         ww = wcs.WCS(fh[0].header)
+        casaversion = fh[0].header['ORIGIN']
     except IsADirectoryError:
         cube = SpectralCube.read(fn, format='casa_image')
         data = cube[0].value
         ww = cube.wcs
+        
+        # lots of work to get CASA version
+        metatb = Table.read(fn+"/logtable")
+        messages = metatb['MESSAGE']
+        history = {x.split(":")[0]: ":".join(x.split(": ")[1:])
+                    for x in hist if ':' in x and 'ICRS' not in x}
+        history.update({x.split("=")[0]: x.split("=")[1].lstrip()
+                        for x in hist if '=' in x})
+        casaversion = history['version']
 
     mad = mad_std(data, ignore_nan=True)
     peak = np.nanmax(data)
