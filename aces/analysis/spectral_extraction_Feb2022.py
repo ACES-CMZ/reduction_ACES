@@ -6,7 +6,7 @@ import glob
 from spectral_cube import SpectralCube
 from spectral_cube import wcs_utils
 
-from .. import conf
+from aces import conf
 basepath = conf.basepath
 
 

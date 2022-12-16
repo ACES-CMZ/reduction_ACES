@@ -120,7 +120,8 @@ def main(dryrun=False):
             mses = (glob.glob(f'{calibrated_dir}/*.ms') +
                     glob.glob(f'{calibrated_dir}/*.ms.split.cal'))
         pipeline_run = os.path.exists(calibrated_dir) and len(mses) > 0
-        pipeline_links = [x.replace("/orange/adamginsburg/web/secure/", "https://data.rc.ufl.edu/secure/adamginsburg/")
+        pipeline_links = [x.replace("/orange/adamginsburg/web/secure/",
+                                    "https://data.rc.ufl.edu/secure/adamginsburg/")
                           for x in glob.glob(f"/orange/adamginsburg/web/secure/ACES/weblogs-reimaging/member.{mous}/pipeline*/html/t1-4.html")]
 
         product_dir = f'{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.{gous}/member.{mous}/product'
@@ -151,7 +152,7 @@ def main(dryrun=False):
         # New weblogs were discovered September 2, 2022.  Don't know what they are yet.
         extra_weblogs = [x.rstrip("/") for x in glob.glob(f'/orange/adamginsburg/web/secure/ACES/weblogs/humanreadable/{new_sb.strip().replace(" ", "_")}*/')
                          if os.path.basename(x.rstrip('/')) != new_sb.strip().replace(" ", "_")]
-        extra_weblog_urls = [f"{humanreadable_url}/{os.path.basename(xtra)}" for xtra in extra_weblogs]
+        extra_weblog_urls = [f"{humanreadable_url}/{os.path.basename(xtra)}/html/" for xtra in extra_weblogs]
         if any(extra_weblog_urls):
             extra_weblog_line = "\n   * " + ", ".join([f"[Extra Weblog {os.path.basename(xtra)} -> {os.path.basename(os.path.realpath(xtra))}]({url})"
                                                        for xtra, url in zip(extra_weblogs, extra_weblog_urls)])

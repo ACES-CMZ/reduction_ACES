@@ -120,7 +120,7 @@ def main(num_workers=None):
 
     colnames_apriori = ['Field', 'Config', 'spw', 'suffix', 'filename', 'bmaj', 'bmin', 'bpa', 'wcs_restfreq', 'minfreq', 'maxfreq']
     colnames_fromheader = ['imsize', 'cell', 'threshold', 'niter', 'pblimit', 'pbmask', 'restfreq', 'nchan',
-                           'width', 'start', 'chanchunks', 'deconvolver', 'weighting', 'robust', 'git_version', 'git_date', ]
+                           'width', 'start', 'chanchunks', 'deconvolver', 'weighting', 'robust', 'git_version', 'git_date', 'version']
     colnames_stats = ('min max std sum mean'.split() +
                       'min_K max_K std_K sum_K mean_K'.split() +
                       'lowmin lowmax lowstd lowmadstd lowsum lowmean'.split() +
@@ -128,7 +128,7 @@ def main(num_workers=None):
 
     colnames = colnames_apriori + colnames_fromheader + colnames_stats
     # sanity check to make sure I didn't mis-count things above
-    assert len(colnames) == 49
+    assert len(colnames) == 50
 
     def try_qty(x):
         try:
