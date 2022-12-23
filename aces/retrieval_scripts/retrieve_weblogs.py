@@ -27,7 +27,7 @@ def main(username=None):
     alma.archive_url = 'https://almascience.eso.org'
     alma.dataarchive_url = 'https://almascience.eso.org'
 
-    alma.login(username)
+    alma.login(username, auth_urls=['almascience.nrao.edu', 'almascience.eso.org', 'asa.alma.cl', 'rh-cas.alma.cl'])
     print(f"Logged in as {username}.  Performing weblog query.", flush=True)
 
     results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None)
