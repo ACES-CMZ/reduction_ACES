@@ -1471,6 +1471,19 @@
       }
     }
   },
+  "Sgr_A_st_ag_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 3
+      },
+      "spw20": {
+        "niter": 500000
+      },
+      "spw22": {
+        "niter": 500000
+      }
+    }
+  },
   "Sgr_A_st_p_03_7M": {
     "tclean_cube_pars": {
       "spw24": {
