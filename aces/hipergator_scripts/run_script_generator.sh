@@ -52,10 +52,15 @@ export TEMPORARY_WORKING_DIRECTORY="/blue/adamginsburg/adamginsburg/ACES/workdir
 
 env
 
+echo "Recovering tclean commands"
 ${PYPATH}/aces_recover_tclean_commands || exit 1
+echo "Writing tclean scripts"
 ${PYPATH}/aces_write_tclean_scripts || exit 1
+echo "Calling job running"
 ${PYPATH}/aces_job_runner --verbose=True || exit 1
+echo "Linking repipeline weblogs"
 ${PYPATH}/aces_link_repipeline_weblogs || exit 1
+echo "Done!"
 
 # || exit 1 should quit if any task fails
 #${IPYTHON} ${ACES_ROOTDIR}/pipeline_scripts/recover_tclean_commands.py || exit 1
