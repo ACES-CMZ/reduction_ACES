@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH --mail-type=NONE          # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=adamginsburg@ufl.edu     # Where to send mail
-#SBATCH --ntasks=64
+#SBATCH --ntasks=32
 #SBATCH --nodes=1
-#SBATCH --mem=256gb                     # Job memory request
+#SBATCH --mem=128gb                     # Job memory request
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --output=cube_stats_grid_ACES_%j.log
+#SBATCH --output=imstats_ACES_%j.log
 #SBATCH --export=ALL
-#SBATCH --job-name=cube_stats_grid_ACES
+#SBATCH --job-name=imstats_ACES
 #SBATCH --qos=adamginsburg-b
 #SBATCH --account=adamginsburg
 pwd; hostname; date
@@ -44,4 +44,4 @@ export DASK_THREADS=$SLURM_NTASKS
 
 env
 
-/orange/adamginsburg/miniconda3/envs/python39/bin/aces_cube_stats_grid
+/orange/adamginsburg/miniconda3/envs/python39/bin/aces_imstats

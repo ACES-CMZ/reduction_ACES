@@ -25,7 +25,8 @@ def main():
     with open(f"{pipedir}/override_tclean_commands.json", "r") as fh:
         override_commands = json.load(fh)
 
-    ncmds = (len(commands))
+    # check to make sure we only net increase # of commands
+    ncmds = (len(override_commands))
 
     #chwid = '488244Hz'
     #nchan = 3836
@@ -46,7 +47,7 @@ def main():
                     override_commands[key]['tclean_cube_pars']['spw33'] = spw33pars
                 else:
                     override_commands[key] = {'tclean_cube_pars': {'spw33': spw33pars}}
-            elif commands[key]['tclean_cube_pars']['spw33']['nchan'] < 3800:
+            elif ('nchan' not in commands[key]['tclean_cube_pars']['spw33']) or commands[key]['tclean_cube_pars']['spw33']['nchan'] < 3800:
                 print(f"Modifying {key}")
                 spw33pars = {}
                 spw33pars['nchan'] = -1
@@ -57,6 +58,9 @@ def main():
                     override_commands[key]['tclean_cube_pars']['spw33'] = spw33pars
                 else:
                     override_commands[key] = {'tclean_cube_pars': {'spw33': spw33pars}}
+            else:
+                # should be OK; already has spw33?
+                pass
 
     assert len(override_commands) >= ncmds
 

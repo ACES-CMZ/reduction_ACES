@@ -6,7 +6,7 @@ import glob
 from spectral_cube import SpectralCube
 from spectral_cube import wcs_utils
 
-from .. import conf
+from aces import conf
 basepath = conf.basepath
 
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         product_dir = product_dict[regname]
         reg = regions_dict[regname]
 
-        cubefns = glob.glob(f'{product_dir}/calibrated/working/*Sgr_A_star*.cube.I.pbcor.fits')
+        cubefns = glob.glob(f'{product_dir}/calibrated/working/*Sgr_A_star*.cube.I.iter1.image.pbcor.fits')
 
         for fn in cubefns:
             cube = SpectralCube.read(fn).subcube_from_regions([reg])
