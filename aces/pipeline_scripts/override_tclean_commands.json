@@ -2015,5 +2015,46 @@
         "parallel": true
       }
     }
+  },
+  "Sgr_A_st_f_03_TM1": {
+    "tclean_cube_pars": {
+      "spw25": {
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "threshold": "0.03Jy"
+      },
+      "spw27": {
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "threshold": "0.019Jy"
+      },
+      "spw29": {
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "threshold": "0.06Jy"
+      },
+      "spw31": {
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "threshold": "0.046Jy"
+      },
+      "spw33": {
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "threshold": "0.02Jy",
+        "cyclefactor": 1.5
+      },
+      "spw35": {
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "threshold": "0.016Jy"
+      }
+    }
   }
 }
