@@ -2069,5 +2069,12 @@
         "threshold": "0.016Jy"
       }
     }
+  },
+    "Sgr_A_st_h_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 4
+      }
+    }
   }
 }
