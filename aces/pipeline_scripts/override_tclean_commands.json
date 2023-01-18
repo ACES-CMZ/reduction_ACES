@@ -2069,5 +2069,13 @@
         "threshold": "0.016Jy"
       }
     }
+  },
+    "Sgr_A_st_h_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "imagename": "uid___A001_X15a0_Xcc.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1.reclean",
+        "cyclefactor": 4
+      }
+    }
   }
 }
