@@ -6,7 +6,7 @@
 #SBATCH --mem=128gb                     # Job memory request
 #SBATCH --nodes=1                     # Job memory request
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --output=run_inplace_mpi_%j.log   # Standard output and error log
+#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/run_inplace_mpi_%j.log   # Standard output and error log
 #SBATCH --qos=adamginsburg-b
 #SBATCH --account=adamginsburg
 

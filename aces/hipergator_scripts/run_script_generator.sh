@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --mem=4gb                     # Job memory request
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --output=make_ACES_scripts_%j.log
+#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/make_ACES_scripts_%j.log
 #SBATCH --export=ALL
 #SBATCH --job-name=make_ACES_scripts
 #SBATCH --qos=adamginsburg-b

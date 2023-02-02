@@ -56,7 +56,7 @@ def main():
     mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
     mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
 
-    sacct = subprocess.check_output(['sacct',
+    sacct = subprocess.check_output(['/opt/slurm/bin/sacct',
                                      '--format=JobID,JobName%45,Account%15,QOS%17,State,Priority%8,ReqMem%8,CPUTime%15,Elapsed%15,Timelimit%15,NodeList%20'])
     tbl = ascii.read(sacct.decode().split("\n"))
 
