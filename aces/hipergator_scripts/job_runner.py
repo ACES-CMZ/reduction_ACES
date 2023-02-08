@@ -254,7 +254,7 @@ def main():
                     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
 
-                    cmd = f'sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} --mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} --qos={qos} --export=ALL  {runcmd}'
+                    cmd = f'/opt/slurm/bin/sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} --mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} --qos={qos} --export=ALL  {runcmd}'
 
                     if '--dry-run' in sys.argv:
                         if verbose:
