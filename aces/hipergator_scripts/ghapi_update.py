@@ -150,16 +150,18 @@ def main(dryrun=False):
         humanreadable_url = "https://data.rc.ufl.edu/secure/adamginsburg/ACES/weblogs/humanreadable"
 
         # New weblogs were discovered September 2, 2022.  Don't know what they are yet.
-        extra_weblogs = [x.rstrip("/") for x in glob.glob(f'/orange/adamginsburg/web/secure/ACES/weblogs/humanreadable/{new_sb.strip().replace(" ", "_")}*/')
+        sb_url_name = new_sb.strip().replace(" ", "_")
+        extra_weblogs = [x.rstrip("/") for x in glob.glob(f'/orange/adamginsburg/web/secure/ACES/weblogs/humanreadable/{sb_url_name}*/')
                          if os.path.basename(x.rstrip('/')) != new_sb.strip().replace(" ", "_")]
         extra_weblog_urls = [f"{humanreadable_url}/{os.path.basename(xtra)}/html/" for xtra in extra_weblogs]
         if any(extra_weblog_urls):
             extra_weblog_line = "\n   * " + ", ".join([f"[Extra Weblog {os.path.basename(xtra)} -> {os.path.basename(os.path.realpath(xtra))}]({url})"
                                                        for xtra, url in zip(extra_weblogs, extra_weblog_urls)])
+            weblog_url = f'{humanreadable_url}/{sb_url_name}_0/html/'
         else:
+            weblog_url = f'{humanreadable_url}/{sb_url_name}/html/'
             extra_weblog_line = ""
 
-        weblog_url = f'{humanreadable_url}/{new_sb.strip().replace(" ","_")}/html/'
         print(f"Operating on sb={new_sb}, oid={new_oid}, dl={downloaded}, delivered={delivered}, url={weblog_url}, weblognames={new_sb in weblog_names}."
               f"  pipeline_run={pipeline_run}.  "
               "Extra weblogs=" + ",".join([f"{os.path.basename(xtra)} -> {os.path.basename(os.path.realpath(xtra))}" for xtra in extra_weblogs])
