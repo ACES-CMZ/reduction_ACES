@@ -734,6 +734,82 @@
       }
     }
   },
+  "Sgr_A_st_ai_03_TM1": {
+    "tclean_cube_pars": {
+      "spw33": {
+        "nchan": -1,
+        "start": "",
+        "width": "",
+        "outframe": "LSRK",
+        "veltype": "radio",
+        "restfreq": [],
+        "interpolation": "linear",
+        "perchanweightdensity": true,
+        "gridder": "mosaic",
+        "facets": 1,
+        "psfphasecenter": "",
+        "wprojplanes": 1,
+        "vptable": "",
+        "mosweight": true,
+        "aterm": true,
+        "psterm": false,
+        "wbawp": true,
+        "conjbeams": false,
+        "cfcache": "",
+        "usepointing": false,
+        "computepastep": 360.0,
+        "rotatepastep": 360.0,
+        "pointingoffsetsigdev": [],
+        "pblimit": 0.2,
+        "normtype": "flatnoise",
+        "deconvolver": "hogbom",
+        "scales": [],
+        "nterms": 2,
+        "smallscalebias": 0.0,
+        "restoration": true,
+        "restoringbeam": "common",
+        "pbcor": true,
+        "outlierfile": "",
+        "weighting": "briggsbwtaper",
+        "robust": 0.5,
+        "noise": "1.0Jy",
+        "npixels": 0,
+        "uvtaper": [
+          ""
+        ],
+        "niter": 20000000,
+        "gain": 0.1,
+        "threshold": "0.01Jy",
+        "nsigma": 0.0,
+        "cycleniter": -1,
+        "cyclefactor": 2.0,
+        "minpsffraction": 0.05,
+        "maxpsffraction": 0.8,
+        "interactive": 0,
+        "usemask": "auto-multithresh",
+        "mask": "",
+        "pbmask": 0.0,
+        "sidelobethreshold": 2.0,
+        "noisethreshold": 4.25,
+        "lownoisethreshold": 1.5,
+        "negativethreshold": 15.0,
+        "smoothfactor": 1.0,
+        "minbeamfrac": 0.3,
+        "cutthreshold": 0.01,
+        "growiterations": 50,
+        "dogrowprune": true,
+        "minpercentchange": 1.0,
+        "verbose": false,
+        "fastnoise": false,
+        "restart": true,
+        "savemodel": "none",
+        "calcres": false,
+        "calcpsf": false,
+        "psfcutoff": 0.35,
+        "parallel": true
+      }
+    }
+  },
   "Sgr_A_st_h_03_TM1": {
     "tclean_cube_pars": {
       "spw25": {
@@ -1826,12 +1902,55 @@
     }
   },
   "Sgr_A_st_a_03_TM1": {
+    "tclean_cont_pars": {
+      "aggregate": {
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      }
+    },
     "tclean_cube_pars": {
       "spw33": {
         "nchan": -1,
         "start": "",
         "width": "",
-        "threshold": "0.01Jy"
+        "threshold": "0.01Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      },
+      "spw25": {
+        "nchan": 1912,
+        "width": "0.2441557MHz",
+        "threshold": "0.0087Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "0.2441557MHz",
+        "threshold": "0.00433Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      },
+      "spw29": {
+        "nchan": 1912,
+        "width": "0.03051955MHz",
+        "threshold": "0.0175Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      },
+      "spw31": {
+        "nchan": 1912,
+        "width": "0.03051955MHz",
+        "threshold": "0.0119Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.48831135MHz",
+        "threshold": "0.00558Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
       }
     }
   },
