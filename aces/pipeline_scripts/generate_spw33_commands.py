@@ -47,7 +47,10 @@ def main():
                     override_commands[key]['tclean_cube_pars']['spw33'] = spw33pars
                 else:
                     override_commands[key] = {'tclean_cube_pars': {'spw33': spw33pars}}
-            elif ('nchan' not in commands[key]['tclean_cube_pars']['spw33']) or ((commands[key]['tclean_cube_pars']['spw33']['nchan'] < 3800) and (commands[key]['tclean_cube_pars']['spw33']['nchan'] > 0)):
+            elif (('nchan' not in commands[key]['tclean_cube_pars']['spw33']) or
+                    ((commands[key]['tclean_cube_pars']['spw33']['nchan'] < 3800) and
+                     (commands[key]['tclean_cube_pars']['spw33']['nchan'] > 0))
+                  ):
                 print(f"Modifying {key}")
                 spw33pars = {}
                 spw33pars['nchan'] = -1

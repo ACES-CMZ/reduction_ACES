@@ -95,8 +95,8 @@ def continuum(header):
                                      f'{basepath}/mosaics/7m_continuum_commonbeam_circular_mosaic.fits')
     fits.PrimaryHDU(data=feath.real,
                     header=fits.get_header(f'{basepath}/mosaics/12m_continuum_commonbeam_circular_mosaic.fits')
-                   ).writeto(f'{basepath}/mosaics/feather_7m12m_continuum_commonbeam_circular_mosaic.fits',
-                             overwrite=True)
+                    ).writeto(f'{basepath}/mosaics/feather_7m12m_continuum_commonbeam_circular_mosaic.fits',
+                              overwrite=True)
 
 
 def reimaged(header):
