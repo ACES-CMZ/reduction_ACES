@@ -1763,12 +1763,55 @@
     }
   },
   "Sgr_A_st_a_03_TM1": {
+    "tclean_cont_pars": {
+      "aggregate": {
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      }
+    },
     "tclean_cube_pars": {
       "spw33": {
         "nchan": -1,
         "start": "",
         "width": "",
-        "threshold": "0.01Jy"
+        "threshold": "0.01Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      },
+      "spw25": {
+        "nchan": 1912,
+        "width": "0.2441557MHz",
+        "threshold": "0.0087Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "0.2441557MHz",
+        "threshold": "0.00433Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      },
+      "spw29": {
+        "nchan": 1912,
+        "width": "0.03051955MHz",
+        "threshold": "0.0175Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      },
+      "spw31": {
+        "nchan": 1912,
+        "width": "0.03051955MHz",
+        "threshold": "0.0119Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.48831135MHz",
+        "threshold": "0.00558Jy",
+        "cell": "0.2arcsec",
+        "imsize": [2670,2250]
       }
     }
   },
