@@ -30,6 +30,10 @@ dataroot = f'{basepath}/data/2021.1.00172.L'
 global then
 then = time.time()
 
+# number of columns in the table.  This has to be checked globally because any
+# edits to the underlying table will result in inconsistencies & crashes.
+# i.e., any time we add or remove a column from the table, we need to make sure
+# this number specifies the number of columns
 NCOLS = 50
 
 
