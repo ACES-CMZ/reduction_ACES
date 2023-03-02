@@ -30,6 +30,8 @@ dataroot = f'{basepath}/data/2021.1.00172.L'
 global then
 then = time.time()
 
+NCOLS = 50
+
 
 def dt(message=""):
     global then
@@ -37,7 +39,6 @@ def dt(message=""):
     print(f"Elapsed: {now-then:0.1g}.  {message}", flush=True)
     then = now
 
-NCOLS = 50
 
 def main(num_workers=None):
 
