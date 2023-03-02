@@ -365,7 +365,7 @@ def main(num_workers=None):
                        list(map(lambda x: u.Quantity(x).to(u.K, jtok_equiv), [min, max, std, sum, mean])) +
                        [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean] +
                        [modmin, modmax, modstd, modsum, modmean, epsilon])
-                assert len(row) == len(colnames) == 49
+                assert len(row) == len(colnames) == 50
                 rows.append(row)
 
                 cache_stats_file.write(" ".join(map(str, row)) + "\n")
