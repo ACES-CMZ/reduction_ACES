@@ -1,9 +1,12 @@
 import glob
+import shutil
 import regions
 
 import os
 import time
 import numpy as np
+import warnings
+import datetime
 from astropy import units as u
 from astropy.stats import mad_std
 from astropy.table import Table
@@ -34,6 +37,7 @@ def dt(message=""):
     print(f"Elapsed: {now-then:0.1g}.  {message}", flush=True)
     then = now
 
+NCOLS = 50
 
 def main(num_workers=None):
 
@@ -128,7 +132,7 @@ def main(num_workers=None):
 
     colnames = colnames_apriori + colnames_fromheader + colnames_stats
     # sanity check to make sure I didn't mis-count things above
-    assert len(colnames) == 50
+    assert len(colnames) == NCOLS
 
     def try_qty(x):
         try:
@@ -155,10 +159,16 @@ def main(num_workers=None):
     if start_from_cached and os.path.exists(tbldir / 'cube_stats.ecsv'):
         tbl = Table.read(tbldir / 'cube_stats.ecsv')
         print(tbl)
-        rows = [[tbl[cn].quantity[ii]
-                 if tbl[cn].unit not in (None, u.dimensionless_unscaled)
-                 else tbl[cn][ii] for cn in tbl.colnames]
-                for ii in range(len(tbl))]
+        if len(tbl.colnames) != NCOLS:
+            warnings.warn("Cached file is BAD!  Moving it.")
+            shutil.move(tbldir / 'cube_stats.ecsv',
+                        tbldir / f'cube_stats_{datetime.datetime.now().isoformat()}.ecsv')
+            rows = []
+        else:
+            rows = [[tbl[cn].quantity[ii]
+                     if tbl[cn].unit not in (None, u.dimensionless_unscaled)
+                     else tbl[cn][ii] for cn in tbl.colnames]
+                    for ii in range(len(tbl))]
     else:
         rows = []
 
@@ -365,11 +375,12 @@ def main(num_workers=None):
                        list(map(lambda x: u.Quantity(x).to(u.K, jtok_equiv), [min, max, std, sum, mean])) +
                        [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean] +
                        [modmin, modmax, modstd, modsum, modmean, epsilon])
-                assert len(row) == len(colnames) == 50
+                assert len(row) == len(colnames) == NCOLS
                 rows.append(row)
 
                 cache_stats_file.write(" ".join(map(str, row)) + "\n")
                 cache_stats_file.flush()
+                print(f'len(rows): {len(rows)}, len(colnames): {len(colnames)}')
                 tbl = save_tbl(rows, colnames)
 
     cache_stats_file.close()
