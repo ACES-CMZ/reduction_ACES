@@ -90,6 +90,7 @@ def main():
                     print(f"{os.getcwd()} {sbname} {mous} {partype} {spwsel} {field} {config}: ", end=" ")
                     if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
                         tcpars['vis'] = [x.replace("_targets", "") for x in tcpars["vis"]]
+                        tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
                         tcpars['datacolumn'] = 'corrected'
 
                     # Nov 10, 2022: try removing "_lines" from files:
