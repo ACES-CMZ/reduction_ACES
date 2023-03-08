@@ -1,5 +1,6 @@
 """
-This will create (or overwrite) existing tclean commands with label 'aggregate_high' and therefore should not be run automatically.
+This will create (or overwrite) existing tclean commands with label
+'aggregate_high' and therefore should not be run automatically.
 
 (actually this should run automatically)
 """
@@ -32,7 +33,8 @@ def main():
 
     ncmds = (len(aggregate_high_commands))
 
-    log.debug(f"There are {len(aggregate_high_commands)} aggregate_high commands and {len(commands)} commands.")
+    log.debug(f"There are {len(aggregate_high_commands)} "
+              f"aggregate_high commands and {len(commands)} commands.")
 
     for key in commands:
         if 'TM' in key:

@@ -15,6 +15,7 @@ from multiprocessing import Process, Pool
 import numpy as np
 
 from aces import conf
+import uvcombine
 
 basepath = conf.basepath
 
@@ -89,6 +90,13 @@ def continuum(header):
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
                 )
+
+    feath = uvcombine.feather_simple(f'{basepath}/mosaics/12m_continuum_commonbeam_circular_mosaic.fits',
+                                     f'{basepath}/mosaics/7m_continuum_commonbeam_circular_mosaic.fits')
+    fits.PrimaryHDU(data=feath.real,
+                    header=fits.get_header(f'{basepath}/mosaics/12m_continuum_commonbeam_circular_mosaic.fits')
+                    ).writeto(f'{basepath}/mosaics/feather_7m12m_continuum_commonbeam_circular_mosaic.fits',
+                              overwrite=True)
 
 
 def reimaged(header):

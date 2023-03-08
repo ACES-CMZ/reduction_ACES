@@ -43,11 +43,14 @@ def main():
                 spw33pars['width'] = ""
                 spw33pars['threshold'] = '0.01Jy'
                 spw33pars['spw'] = [x.replace('35', '33') for x in spw33pars['spw']]
-                if key in override_commands:
+                if key in override_commands and 'tclean_cube_pars' in override_commands[key]:
                     override_commands[key]['tclean_cube_pars']['spw33'] = spw33pars
                 else:
                     override_commands[key] = {'tclean_cube_pars': {'spw33': spw33pars}}
-            elif ('nchan' not in commands[key]['tclean_cube_pars']['spw33']) or commands[key]['tclean_cube_pars']['spw33']['nchan'] < 3800:
+            elif (('nchan' not in commands[key]['tclean_cube_pars']['spw33']) or
+                    ((commands[key]['tclean_cube_pars']['spw33']['nchan'] < 3800) and
+                     (commands[key]['tclean_cube_pars']['spw33']['nchan'] > 0))
+                  ):
                 print(f"Modifying {key}")
                 spw33pars = {}
                 spw33pars['nchan'] = -1

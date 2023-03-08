@@ -66,10 +66,19 @@ def main():
         import tarfile
         for fn in data:
             if fn.endswith('.tar'):
-                print(f"Extracting {fn}")
+                print(f"Extracting {fn}.  ", end='')
+                count_extracted = 0
+                count_skipped = 0
                 with tarfile.TarFile(fn) as tf:
                     for member in tf.getmembers():
                         if not os.path.exists(member.name):
                             tf.extract(member)
+                            count_extracted += 1
+                            print(".", end='')
+                        else:
+                            count_skipped += 1
+                print(f"Finished extracting {fn}.  Extracted {count_extracted} and skipped {count_skipped}")
 
     globals().update(locals())
+
+    print("Completed data retrieval")

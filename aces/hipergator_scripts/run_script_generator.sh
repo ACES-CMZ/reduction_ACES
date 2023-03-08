@@ -40,8 +40,6 @@ echo $LOGFILENAME
 
 export NO_PROGRESSBAR='True'
 export ENVIRON='BATCH'
-export JOBNAME=cube_stats_grid_ACES
-export jobname=$JOBNAME
 
 # TODO: get this from ntasks?
 #export DASK_THREADS=8

@@ -26,10 +26,24 @@ def main():
     print("7m Continuum")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*16_18_20_22*cont.I.tt0.pbcor.fits')
     hdus = [read_as_2d(fn) for fn in filelist]
+
+    weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*16_18_20_22*I.pb.tt0.fits')
+    assert len(weightfiles) == len(filelist)
+    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+    print(flush=True)
+
     make_mosaic(hdus, name='continuum', norm_kwargs=dict(stretch='asinh',
                 max_cut=0.2, min_cut=-0.025), cbar_unit='Jy/beam', array='7m',
+                weights=wthdus,
                 target_header=header,
                 basepath=basepath)
+    make_mosaic(hdus, name='continuum_commonbeam_circular',
+                commonbeam='circular',
+                weights=wthdus,
+                cbar_unit='Jy/beam', array='7m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=0.2, min_cut=-0.025),
+                target_header=header,
+                )
 
     print("7m HCO+")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw20.cube.I.pbcor.fits')
