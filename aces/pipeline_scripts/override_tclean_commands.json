@@ -2179,10 +2179,17 @@
       }
     }
   },
-    "Sgr_A_st_h_03_7M": {
+  "Sgr_A_st_h_03_7M": {
     "tclean_cube_pars": {
       "spw24": {
         "cyclefactor": 4
+      }
+    }
+  },
+  "Sgr_A_st_o_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 3.5
       }
     }
   }
