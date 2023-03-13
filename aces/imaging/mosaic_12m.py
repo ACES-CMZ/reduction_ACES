@@ -13,6 +13,7 @@ from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0, 
 # from functools import partial
 from multiprocessing import Process, Pool
 import numpy as np
+from spectral_cube.cube_utils import mosaic_cubes
 
 from aces import conf
 import uvcombine
@@ -252,3 +253,10 @@ def cs21(header):
     make_mosaic(hdus, name='cs21_m0', cbar_unit='K km/s',
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
+
+def cube_mosaicing():
+    
+    for spw in (27, 29, 31, 33, 35, 25)[::-1]:
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}.cube.I.iter1.image')
+        result = mosaic_cubes([SpectralCube.read(fn) for fn in filelist],
+                              combine_header_kwargs=dict(frame='galactic'))
