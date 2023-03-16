@@ -3,20 +3,35 @@ After running this, symlink to web via:
 ln -s /orange/adamginsburg/ACES/mosaics/*m0_mosaic*png /orange/adamginsburg/web/secure/ACES/mosaics/lines/
 ln -s /orange/adamginsburg/ACES/mosaics/*max_mosaic*png /orange/adamginsburg/web/secure/ACES/mosaics/lines/
 """
+import shutil
 import glob
 import radio_beam
+import os
 from astropy import units as u
 from astropy.io import fits
 from astropy import log
+from astropy.wcs import WCS
 from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0, all_lines
 # import os
 # from functools import partial
 from multiprocessing import Process, Pool
+import multiprocessing
 import numpy as np
 from spectral_cube.cube_utils import mosaic_cubes
+import dask
+from functools import partial
 
 from aces import conf
 import uvcombine
+
+# from dask.distributed import Client
+# client = Client(processes=True, n_workers=1, threads_per_worker=16)
+# print(client)
+# dask.config.set(scheduler=client)
+if os.getenv('NO_PROGRESSBAR') is None and not (os.getenv('ENVIRON') == 'BATCH'):
+    from dask.diagnostics import ProgressBar
+    pbar = ProgressBar(minimum=20) # don't show pbar <5s
+    pbar.register()
 
 basepath = conf.basepath
 
@@ -254,9 +269,179 @@ def cs21(header):
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
 
-def cube_mosaicing():
-    
-    for spw in (27, 29, 31, 33, 35, 25)[::-1]:
-        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}.cube.I.iter1.image')
-        result = mosaic_cubes([SpectralCube.read(fn) for fn in filelist],
-                              combine_header_kwargs=dict(frame='galactic'))
+
+import multiprocessing.pool as mpp
+
+
+def istarmap(self, func, iterable, chunksize=1):
+    """starmap-version of imap
+    """
+    self._check_running()
+    if chunksize < 1:
+        raise ValueError(
+            "Chunksize must be 1+, not {0:n}".format(
+                chunksize))
+
+    task_batches = mpp.Pool._get_tasks(func, iterable, chunksize)
+    result = mpp.IMapIterator(self)
+    self._taskqueue.put(
+        (
+            self._guarded_task_generation(result._job,
+                                          mpp.starmapstar,
+                                          task_batches),
+            result._set_length
+        ))
+    return (item for chunk in result for item in chunk)
+
+
+mpp.Pool.istarmap = istarmap
+
+from itertools import repeat
+
+
+
+def apply_kwargs(fn, kwargs):
+    return fn(**kwargs)
+
+def starstarmap_with_kwargs(pool, fn, kwargs_iter):
+    args_for_starmap = zip(repeat(fn), kwargs_iter)
+    return pool.istarmap(apply_kwargs, args_for_starmap)
+
+def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
+    """
+    This takes too long as a full cube, so we have to do it slice-by-slice
+    """
+    from spectral_cube import SpectralCube
+    from tqdm import tqdm
+
+    print("Listing files", flush=True)
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor')
+    if test:
+        filelist = filelist[:16]
+    header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
+    header['NAXIS'] = 3
+    header['CDELT3'] = 1.4844932
+    header['CUNIT3'] = 'km/s'
+    header['CRVAL3'] = 0
+    header['NAXIS3'] = 3 if test else int(np.ceil(300 / header['CDELT3']))
+    header['CRPIX3'] = header['NAXIS3']//2
+    header['CTYPE3'] = 'VRAD'
+    header['RESTFRQ'] = 97.98095330e9
+    header['SPECSYS'] = 'LSRK'
+
+    print("Converting spectral units", flush=True)
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        cubes = [SpectralCube.read(fn, format='casa_image', use_dask=True).with_spectral_unit(u.km/u.s,
+                                                          velocity_convention='radio',
+                                                          rest_value=97.98095330*u.GHz)
+                 for fn in filelist]
+        weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
+                        .with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=97.98095330*u.GHz)
+                       )
+                        for fn in filelist]
+
+    # flag out wild outliers
+    # there are 2 as of writing
+    print("Filtering out cubes with sketchy beams", flush=True)
+    ok = [cube for cube in cubes if cube.beam.major < 2.4*u.arcsec]
+    cubes = [cube for k, cube in zip(ok, cubes) if k]
+    weightcubes = [cube for k, cube in zip(ok, weightcubes) if k]
+
+    beams = radio_beam.Beams(beams=[cube.beam for cube in cubes])
+    commonbeam = beams.common_beam()
+    header.update(commonbeam.to_header_keywords())
+
+    ww = WCS(header)
+    wws = ww.spectral
+
+    if channels == 'all':
+        channels = range(header['NAXIS3'])
+    if True:
+        pbar = tqdm(channels, desc='Channels (mosaic)') if verbose else channels
+        for chan in pbar:
+            theader = header.copy()
+            theader['NAXIS3'] = 1
+            theader['CRPIX3'] = 1
+            theader['CRVAL3'] = wws.pixel_to_world(chan).to(u.km/u.s).value
+
+            if verbose:
+                pbar.set_description(f'Channel {chan}')
+
+            chanfn = f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/CS21_CubeMosaic_channel{chan}.fits'
+            if os.path.exists(f'/orange/adamginsburg/ACES/mosaics/CS21_Channels/{os.path.basename(chanfn)}'):
+                print(f"Skipping completed channel {chan}", flush=True)
+            else:
+                print(f"Starting mosaic_cubes for channel {chan}", flush=True)
+                result = mosaic_cubes(cubes,
+                                      target_header=theader,
+                                      commonbeam=commonbeam,
+                                      weights=weightcubes,
+                                      spectral_block_size=None,
+                                      output_file=chanfn,
+                                      method='channel',
+                                      verbose=verbose
+                                     )
+                shutil.move(chanfn, '/orange/adamginsburg/ACES/mosaics/CS21_Channels/')
+
+    if False:
+        print("Assembling headers")
+        # pool.map version:
+        theaders = [header.copy() for ii in channels]
+        for chan, theader in enumerate(theaders):
+            theader.update({'NAXIS3': 1, 'CRPIX3': 1, 'CRVAL': wws.pixel_to_world(chan).to(u.km/u.s).value})
+
+        print("Spinning up the pool")
+        pool = MyPool(processes=int(os.getenv("SLURM_NPROCS")) if os.getenv('SLURM_NPROCS') else None)
+        print(f"Pool has {pool._processes} jobs")
+        #pool.map(partial(mosaic_cubes_kwargs, commonbeam=commonbeam, spectral_block_size=None, method='channel', verbose=False),
+        #         [{'cubes':cubes, 'target_header': th, 'output_file': f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/CS21_CubeMosaic_channel{chan}.fits'}
+        #          for chan, th in enumerate(theaders)]
+        #         )
+        rslt = starstarmap_with_kwargs(pool,
+                                       partial(mosaic_cubes, commonbeam=commonbeam, spectral_block_size=None, method='channel', verbose=test),
+                                       [{'cubes':cubes, 'target_header': th, 'output_file': f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/CS21_CubeMosaic_channel{chan}.fits'} for chan, th in enumerate(theaders)]
+                                      )
+        for _ in tqdm(rslt, total=len(theaders), desc='starmap'):
+            pass
+
+        # Why use pool.imap then pool.wait?  for tqdm.
+        pool.wait()
+        pool.close()
+        pool.join()
+
+    for chan in channels:
+        chanfn = f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/CS21_CubeMosaic_channel{chan}.fits'
+        if os.path.exists(chanfn):
+            shutil.move(chanfn, '/orange/adamginsburg/ACES/mosaics/CS21_Channels/')
+
+
+    output_file = '/orange/adamginsburg/ACES/mosaics/CS21_CubeMosaic.fits'
+    if not os.path.exists(output_file):
+        # https://docs.astropy.org/en/stable/generated/examples/io/skip_create-large-fits.html#sphx-glr-generated-examples-io-skip-create-large-fits-py
+        hdu = fits.PrimaryHDU(data=np.ones([5,5,5], dtype=dtype),
+                              header=target_header
+                             )
+        for kwd in ('NAXIS1', 'NAXIS2', 'NAXIS3'):
+            hdu.header[kwd] = target_header[kwd]
+
+        target_header.tofile(output_file, overwrite=True)
+        with open(output_file, 'rb+') as fobj:
+            fobj.seek(len(target_header.tostring()) +
+                      (np.prod(shape_opt) * np.abs(target_header['BITPIX']//8)) - 1)
+            fobj.write(b'\0')
+
+    hdu = fits.open(output_file, mode='update', overwrite=True)
+    output_array = hdu[0].data
+    hdu.flush() # make sure the header gets written right
+
+    pbar = tqdm(channels, desc='Channels')
+    for chan in pbar:
+        #chanfn = f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/CS21_CubeMosaic_channel{chan}.fits'
+        chanfn = f'/orange/adamginsburg/ACES/mosaics/CS21_Channels/CS21_CubeMosaic_channel{chan}.fits'
+        if os.path.exists(chanfn):
+            pbar.set_description('Channels (filling)'
+            output_array[chan] = fits.getdata(chanfn)
+            pbar.set_description('Channels (flushing)'
+            hdu.flush()
