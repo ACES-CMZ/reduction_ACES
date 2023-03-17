@@ -441,7 +441,7 @@ def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
         #chanfn = f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/CS21_CubeMosaic_channel{chan}.fits'
         chanfn = f'/orange/adamginsburg/ACES/mosaics/CS21_Channels/CS21_CubeMosaic_channel{chan}.fits'
         if os.path.exists(chanfn):
-            pbar.set_description('Channels (filling)'
+            pbar.set_description('Channels (filling)')
             output_array[chan] = fits.getdata(chanfn)
-            pbar.set_description('Channels (flushing)'
+            pbar.set_description('Channels (flushing)')
             hdu.flush()
