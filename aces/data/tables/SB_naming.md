@@ -1,4 +1,5 @@
 Proposal ID | Obs ID | alternative name | velocity offset | 12m MOUS ID | issue | 7m MOUS ID | issue | TP MOUS ID | issue | TP MOUS ID2 | issue
+-- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | --
 cmz01 | a | - | 40 | X1590_X30aa | #242 | X1590_X30ac | #214 | X1590_X30ae | #215 |  | 
 cmz02 | b | Sgr B2 | 40 | X15a0_Xa6 | #150 | X15b4_X37 | #162 | X15a0_Xaa | #252 | - | 
 cmz03 | c | - | 0 | X15a0_Xac | #256 | X15a0_Xae | #14 | X15a0_Xb0 | #175 | - | 
