@@ -1,6 +1,6 @@
 Proposal ID	Obs ID	alternative name	velocity offset	12m MOUS ID	  issue   7m MOUS ID	  issue   TP MOUS ID	issue   TP MOUS ID2   issue
 cmz01	a	-	40	X1590_X30aa	  #242    X1590_X30ac	  #214    X1590_X30ae   #215  -	
-cmz02	b	SgrB2	40	X15a0_Xa6	#150  X15b4_X37	#162  X15a0_Xaa	#252  -
+cmz02	b	SgrB2	40	X15a0_Xa6	#150  	X15b4_X37			#162  	X15a0_Xaa			#252  -
 cmz03	c	-	0	X15a0_Xac	#256  X15a0_Xae	#14 X15a0_Xb0	#175  -
 cmz04	d	-	30	X15a0_Xb2	#247  X15a0_Xb4	#228  X15a0_Xb6	#227  -
 cmz05	e	-	-30	X15a0_Xb8	#147  X15b4_X39	#168  X15a0_Xbc	#285  -
