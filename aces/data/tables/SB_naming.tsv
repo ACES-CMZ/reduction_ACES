@@ -1,46 +1,46 @@
-Proposal ID	Obs ID	alternative name	velocity offset	12m MOUS ID	7m MOUS ID	TP MOUS ID	TP MOUS ID2
-cmz01	a	-	40	X1590_X30aa	X1590_X30ac	X1590_X30ae	
-cmz02	b	SgrB2	40	X15a0_Xa6	X15b4_X37	X15a0_Xaa	-
-cmz03	c	-	0	X15a0_Xac	X15a0_Xae	X15a0_Xb0	-
-cmz04	d	-	30	X15a0_Xb2	X15a0_Xb4	X15a0_Xb6	-
-cmz05	e	-	-30	X15a0_Xb8	X15b4_X39	X15a0_Xbc	-
+Proposal ID	Obs ID	alternative name	velocity offset	12m MOUS ID	issue 7m MOUS ID	issue TP MOUS ID	issue TP MOUS ID2 issue
+cmz01	a	-	40	X1590_X30aa	#242  X1590_X30ac	#214  X1590_X30ae #215  -	
+cmz02	b	SgrB2	40	X15a0_Xa6	#150  X15b4_X37	#162  X15a0_Xaa	#252  -
+cmz03	c	-	0	X15a0_Xac	#256  X15a0_Xae	#14 X15a0_Xb0	#175  -
+cmz04	d	-	30	X15a0_Xb2	#247  X15a0_Xb4	#228  X15a0_Xb6	#227  -
+cmz05	e	-	-30	X15a0_Xb8	#147  X15b4_X39	#168  X15a0_Xbc	#285  -
 cmz06	f	-	0	-	-	-	-
-cmz07	g	-	30	X15a0_Xc4	X15a0_Xc6	X15a0_Xc8	-
-cmz08	h	-	0	X15a0_Xca	X15a0_Xcc	X15a0_Xce	-
-cmz09	i	-	30	X15a0_Xd0	X15b4_Xc5	X15a0_Xd4	-
-cmz10	j	-	30	X15b4_X3d	X15a0_Xd8	X15a0_Xda	-
-cmz11	k	-	30	X15a0_Xdc	X15a0_Xde	X15a0_Xe0	-
-cmz12	l	-	0	X15a0_Xe2	X15a0_Xe4	X15a0_Xe6	-
-cmz13	m	-	30	X15b4_X41	X15b4_X43	X15b4_X45	X15a0_Xec
-cmz14	n	-	30	X15a0_Xee	X15a0_Xf0	X15a0_Xf2	-
-cmz15	o	-	0	-	X15a0_Xf6	X15a0_Xf8	-
-cmz16	p	-	0	X15a0_Xfa	X15a0_Xfc	X15a0_Xfe	-
-cmz17	q	-	0	X15a0_X100	X15a0_X102	X15a0_X104	-
-cmz18	r	-	30	X15a0_X106	X15a0_X108	X15a0_X10a	-
-cmz19	s	-	0	X15a0_X10c	X15a0_X10e	X15a0_X110	-
-cmz20	t	-	0	X15a0_X112	X15a0_X114	X15a0_X116	-
-cmz21	u	-	30	X15a0_X118	X15a0_X11a	X15a0_X11c	-
-cmz22	v	-	30	X15a0_X11e	X15a0_X120	X15a0_X122	-
-cmz23	w	-	30	X15a0_X124	X15a0_X126	X15a0_X128	-
-cmz24	x	-	0	X15a0_X12a	X15a0_X12c	X15a0_X12e	-
-cmz25	y	-	0	X15a0_X130	X15a0_X132	X15a0_X134	-
-cmz26	z	-	40	X15a0_X136	X15a9_X12d3	X15a0_X13a	-
-cmz27	aa	-	0	X15a0_X13c	X15a0_X13e	X15a0_X140	-
-cmz28	ab	-	0	X15a0_X142	X15a0_X144	X15a0_X146	-
-cmz29	ac	-	0	X15a0_X148	X15a0_X14a	X15a0_X14c	-
-cmz30	ad	-	0	X15a0_X14e	X15a0_X150	X15a0_X152	-
-cmz31	ae	-	0	X15a0_X154	X15a0_X156	X15a0_X158	-
-cmz32	af	-	0	-	X15a0_X15c	X15a0_X15e	-
-cmz33	ag	-	0	X15a0_X160	X15a0_X162	X15a0_X164	-
-cmz34	ah	-	30	X15a0_X166	X15a0_X168	X15a0_X16a	-
-cmz35	ai	-	0	X15a0_X16c	X15a0_X16e	X15a0_X170	-
-cmz36	aj	-	-30	X15a0_X172	X15b4_X47	X15b4_X49	X15a0_X176
-cmz37	ak	-	30	X15b4_X4b	X15a9_X12d5	X15b4_X4d	X15a0_X17c
-cmz38	al	-	0	-	X15a0_X180	X15a0_X182	-
-cmz39	am	-	30	-	-	X15a0_X188	-
-cmz40	an	-	30	X15a0_X18a	X15a0_X18c	X15a0_X18e	-
-cmz41	ao	brick	0	X15a0_X190	X15a0_X192	X15a0_X194	-
-cmz42	ap	-	0	X15a0_X196	X15a0_X198	X15a0_X19a	-
-cmz43	aq	sgra*	0	X15a0_X19c	X15a0_X19e	X15a0_X1a0	-
-cmz44	ar	-	40	X15a0_X1a2	X15b4_X4f	-	-
-cmz45	as	-	0	X15a0_X1a8	X15a0_X1aa	-	-
+cmz07	g	-	30	X15a0_Xc4	#134  X15a0_Xc6	#161  X15a0_Xc8	#197  -
+cmz08	h	-	0	X15a0_Xca	#142  X15a0_Xcc	#151  X15a0_Xce	#177  -
+cmz09	i	-	30	X15a0_Xd0	#138  X15b4_Xc5	#191  X15a0_Xd4	#187  -
+cmz10	j	-	30	X15b4_X3d	#117  X15a0_Xd8	#181  X15a0_Xda	#32 -
+cmz11	k	-	30	X15a0_Xdc	#152  X15a0_Xde	#182  X15a0_Xe0	#193  -
+cmz12	l	-	0	X15a0_Xe2	#137  X15a0_Xe4	#153  X15a0_Xe6	#224  -
+cmz13	m	-	30	X15b4_X41	#118  X15b4_X43	#110  X15b4_X45	#170  X15a0_Xec #36
+cmz14	n	-	30	X15a0_Xee	#231  X15a0_Xf0	#225  X15a0_Xf2	#226  -
+cmz15	o	-	0	-	X15a0_Xf6	#257  X15a0_Xf8	#278  -
+cmz16	p	-	0	X15a0_Xfa	#149  X15a0_Xfc	#148  X15a0_Xfe	#183-
+cmz17	q	-	0	X15a0_X100	#109  X15a0_X102	#171  X15a0_X104	#284  -
+cmz18	r	-	30	X15a0_X106	#263  X15a0_X108	#240  X15a0_X10a	#246  -
+cmz19	s	-	0	X15a0_X10c	#264  X15a0_X10e	#243  X15a0_X110	#262  -
+cmz20	t	-	0	X15a0_X112	#113  X15a0_X114	#8  X15a0_X116	#172  -
+cmz21	u	-	30	X15a0_X118	#241  X15a0_X11a	#216  X15a0_X11c	#217  -
+cmz22	v	-	30	X15a0_X11e	#235  X15a0_X120	#218  X15a0_X122	#219  -
+cmz23	w	-	30	X15a0_X124	#124  X15a0_X126	#144  X15a0_X128	#173  -
+cmz24	x	-	0	X15a0_X12a	#125  X15a0_X12c	#135  X15a0_X12e	#164  -
+cmz25	y	-	0	X15a0_X130	#40 X15a0_X132	#4  X15a0_X134	#27 -
+cmz26	z	-	40	X15a0_X136	#131  X15a9_X12d3	#115  X15a0_X13a	#236  -
+cmz27	aa	-	0	X15a0_X13c	#251  X15a0_X13e	#237  X15a0_X140	#229  -
+cmz28	ab	-	0	X15a0_X142	#129  X15a0_X144	#141  X15a0_X146	#167  -
+cmz29	ac	-	0	X15a0_X148	#232  X15a0_X14a	#220  X15a0_X14c	#221  -
+cmz30	ad	-	0	X15a0_X14e	#28 X15a0_X150	#5  X15a0_X152	#25 -
+cmz31	ae	-	0	X15a0_X154	#132  X15a0_X156	#186  X15a0_X158	#180  -
+cmz32	af	-	0	-	X15a0_X15c	#244  X15a0_X15e	#271  -
+cmz33	ag	-	0	X15a0_X160	#136  X15a0_X162	#174  X15a0_X164	#190  -
+cmz34	ah	-	30	X15a0_X166	#238  X15a0_X168	#230  X15a0_X16a	#233  -
+cmz35	ai	-	0	X15a0_X16c	#130  X15a0_X16e	#143  X15a0_X170	#169  -
+cmz36	aj	-	-30	X15a0_X172	#123  X15b4_X47	#119  X15b4_X49	#239  X15a0_X176  #26
+cmz37	ak	-	30	X15b4_X4b	#120 X15a9_X12d5	#116  X15b4_X4d	#121  X15a0_X17c  #13
+cmz38	al	-	0	-	X15a0_X180	#139  X15a0_X182	#166  -
+cmz39	am	-	30	-	-	X15a0_X188	#245  -
+cmz40	an	-	30	X15a0_X18a	#133  X15a0_X18c	#222  X15a0_X18e	#184  -
+cmz41	ao	brick	0	X15a0_X190	#41 X15a0_X192	#6  X15a0_X194	#29 -
+cmz42	ap	-	0	X15a0_X196	#43 X15a0_X198	#158  X15a0_X19a	#30 -
+cmz43	aq	sgra*	0	X15a0_X19c	#140  X15a0_X19e	#33 X15a0_X1a0	#223  -
+cmz44	ar	-	40	X15a0_X1a2	#114  X15b4_X4f	#159  -	-
+cmz45	as	-	0	X15a0_X1a8	#145  X15a0_X1aa	#165  -	-
