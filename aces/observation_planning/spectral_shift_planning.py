@@ -6,6 +6,7 @@ from astropy.table import Table
 from astropy.io import fits
 import regions
 from spectral_cube.spectral_cube import _regionlist_to_single_region
+from aces.conf import basepath
 
 if __name__ == "__main__":
     # NOTE: only works on hipergator b/c of paths
@@ -14,7 +15,7 @@ if __name__ == "__main__":
     hcopcube = SpectralCube.read('/orange/adamginsburg/cmz/mopra/CMZ_3mm_HCO+.fits')
     hncocube = SpectralCube.read('/orange/adamginsburg/cmz/mopra/CMZ_3mm_HNCO.fits')
 
-    tbl = Table.read('../SB_naming.tsv', format='ascii.csv', delimiter='\t')
+    tbl = Table.read('{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
 
     vwidth = 102.585 * 2048 * u.m / u.s
 

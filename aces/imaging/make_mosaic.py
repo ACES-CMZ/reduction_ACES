@@ -209,7 +209,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.set_zorder(back)
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgrid.png', bbox_inches='tight')
 
-    tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.tsv', format='ascii.csv', delimiter='\t')
+    tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
 
     log.info("Computing overlap regions")
     # create a list of composite regions for labeling purposes
