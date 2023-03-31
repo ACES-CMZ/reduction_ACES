@@ -204,7 +204,7 @@ def hcop(header):
     hdus = [get_peak(fn).hdu for fn in filelist]
     print(flush=True)
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw29.mfs.I.pb.fits.gz')
-    wthdus = [read_as_2d(fn, minval=0.7) for fn in weightfiles]
+    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='hcop_max', cbar_unit='K', array='12m', basepath=basepath,
                 weights=wthdus,
@@ -225,7 +225,7 @@ def hnco(header):
     hdus = [get_peak(fn, suffix='_hnco').hdu for fn in filelist]
     print(flush=True)
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw31.mfs.I.pb.fits.gz')
-    wthdus = [read_as_2d(fn, minval=0.7) for fn in weightfiles]
+    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='hnco_max', basepath=basepath, array='12m',
                 target_header=header,
