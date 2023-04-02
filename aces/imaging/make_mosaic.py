@@ -296,17 +296,17 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
                                     **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
                                        'rest_value': restf},
                                     suffix=f'_{line}',
-                                   ),
+                                    ),
                             filelist,
-                           )
+                            )
             hdus = [x.hdu for x in hdus]
             if use_weights:
                 wthdus = pool.map(partial(get_peak,
                                           **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
                                              'rest_value': restf},
                                           suffix=f'_{line}',
-                                          threshold=0.5, # pb limit
-                                         ),
+                                          threshold=0.5,  # pb limit
+                                          ),
                                   weightfiles)
                 wthdus = [x.hdu for x in wthdus]
         else:
@@ -316,8 +316,8 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             if use_weights:
                 wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
                                    rest_value=restf, suffix=f'_{line}',
-                                   threshold=0.5, # pb limit
-                                  ).hdu for fn in weightfiles]
+                                   threshold=0.5,  # pb limit
+                                   ).hdu for fn in weightfiles]
                 print(flush=True)
 
         if parallel:

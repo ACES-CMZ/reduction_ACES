@@ -157,14 +157,18 @@ def main():
                                     outputvis='{rename(vis)}'
                                     if not os.path.exists(outputvis):
                                         try:
+                                            logprint("Splitting {vis} with defaults")
                                             split(vis='{vis}',
                                                 outputvis=outputvis,
                                                 field='Sgr_A_star',
                                                 spw={spw})
                                             if not os.path.exists(outputvis):
                                                 raise ValueError("Did not split")
+                                            else:
+                                                logprint("Splitting {vis} with default (CORRECTED) was successful")
                                         except Exception as ex:
                                             logprint(ex)
+                                            logprint("Splitting {vis} with datacolumn='data'")
                                             split(vis='{vis}',
                                                 outputvis=outputvis,
                                                 field='Sgr_A_star',

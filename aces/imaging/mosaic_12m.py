@@ -20,6 +20,8 @@ import numpy as np
 from spectral_cube.cube_utils import mosaic_cubes
 import dask
 from functools import partial
+import multiprocessing.pool as mpp
+from itertools import repeat
 
 from aces import conf
 import uvcombine
@@ -30,7 +32,7 @@ import uvcombine
 # dask.config.set(scheduler=client)
 if os.getenv('NO_PROGRESSBAR') is None and not (os.getenv('ENVIRON') == 'BATCH'):
     from dask.diagnostics import ProgressBar
-    pbar = ProgressBar(minimum=20) # don't show pbar <5s
+    pbar = ProgressBar(minimum=20)  # don't show pbar <5s
     pbar.register()
 
 basepath = conf.basepath
@@ -270,9 +272,6 @@ def cs21(header):
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
 
 
-import multiprocessing.pool as mpp
-
-
 def istarmap(self, func, iterable, chunksize=1):
     """starmap-version of imap
     """
@@ -296,16 +295,15 @@ def istarmap(self, func, iterable, chunksize=1):
 
 mpp.Pool.istarmap = istarmap
 
-from itertools import repeat
-
-
 
 def apply_kwargs(fn, kwargs):
     return fn(**kwargs)
 
+
 def starstarmap_with_kwargs(pool, fn, kwargs_iter):
     args_for_starmap = zip(repeat(fn), kwargs_iter)
     return pool.istarmap(apply_kwargs, args_for_starmap)
+
 
 def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
     """
@@ -324,7 +322,7 @@ def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
     header['CUNIT3'] = 'km/s'
     header['CRVAL3'] = 0
     header['NAXIS3'] = 3 if test else int(np.ceil(300 / header['CDELT3']))
-    header['CRPIX3'] = header['NAXIS3']//2
+    header['CRPIX3'] = header['NAXIS3'] // 2
     header['CTYPE3'] = 'VRAD'
     header['RESTFRQ'] = 97.98095330e9
     header['SPECSYS'] = 'LSRK'
@@ -333,14 +331,15 @@ def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
     import warnings
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        cubes = [SpectralCube.read(fn, format='casa_image', use_dask=True).with_spectral_unit(u.km/u.s,
-                                                          velocity_convention='radio',
-                                                          rest_value=97.98095330*u.GHz)
+        cubes = [SpectralCube.read(fn,
+                                   format='casa_image',
+                                   use_dask=True).with_spectral_unit(u.km/u.s,
+                                                                     velocity_convention='radio',
+                                                                     rest_value=97.98095330*u.GHz)
                  for fn in filelist]
         weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
                         .with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=97.98095330*u.GHz)
-                       )
-                        for fn in filelist]
+                        ) for fn in filelist]
 
     # flag out wild outliers
     # there are 2 as of writing
@@ -382,9 +381,11 @@ def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
                                       output_file=chanfn,
                                       method='channel',
                                       verbose=verbose
-                                     )
+                                      )
                 shutil.move(chanfn, '/orange/adamginsburg/ACES/mosaics/CS21_Channels/')
 
+    """
+    # Failed experiment; MyPool needs to get restored for this to be considered
     if False:
         print("Assembling headers")
         # pool.map version:
@@ -401,7 +402,9 @@ def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
         #         )
         rslt = starstarmap_with_kwargs(pool,
                                        partial(mosaic_cubes, commonbeam=commonbeam, spectral_block_size=None, method='channel', verbose=test),
-                                       [{'cubes':cubes, 'target_header': th, 'output_file': f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/CS21_CubeMosaic_channel{chan}.fits'} for chan, th in enumerate(theaders)]
+                                       [{'cubes':cubes, 'target_header': th,
+                                       'output_file': f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/CS21_CubeMosaic_channel{chan}.fits'}
+                                       for chan, th in enumerate(theaders)]
                                       )
         for _ in tqdm(rslt, total=len(theaders), desc='starmap'):
             pass
@@ -410,31 +413,33 @@ def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
         pool.wait()
         pool.close()
         pool.join()
+    """
 
     for chan in channels:
         chanfn = f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/CS21_CubeMosaic_channel{chan}.fits'
         if os.path.exists(chanfn):
             shutil.move(chanfn, '/orange/adamginsburg/ACES/mosaics/CS21_Channels/')
 
-
     output_file = '/orange/adamginsburg/ACES/mosaics/CS21_CubeMosaic.fits'
     if not os.path.exists(output_file):
         # https://docs.astropy.org/en/stable/generated/examples/io/skip_create-large-fits.html#sphx-glr-generated-examples-io-skip-create-large-fits-py
-        hdu = fits.PrimaryHDU(data=np.ones([5,5,5], dtype=dtype),
-                              header=target_header
-                             )
+        hdu = fits.PrimaryHDU(data=np.ones([5, 5, 5], dtype=float),
+                              header=theader,
+                              )
         for kwd in ('NAXIS1', 'NAXIS2', 'NAXIS3'):
-            hdu.header[kwd] = target_header[kwd]
+            hdu.header[kwd] = theader[kwd]
 
-        target_header.tofile(output_file, overwrite=True)
+        shape_opt = theader['NAXIS3'], theader['NAXIS2'], theader['NAXIS1']
+
+        theader.tofile(output_file, overwrite=True)
         with open(output_file, 'rb+') as fobj:
-            fobj.seek(len(target_header.tostring()) +
-                      (np.prod(shape_opt) * np.abs(target_header['BITPIX']//8)) - 1)
+            fobj.seek(len(theader.tostring()) +
+                      (np.prod(shape_opt) * np.abs(theader['BITPIX']//8)) - 1)
             fobj.write(b'\0')
 
     hdu = fits.open(output_file, mode='update', overwrite=True)
     output_array = hdu[0].data
-    hdu.flush() # make sure the header gets written right
+    hdu.flush()  # make sure the header gets written right
 
     pbar = tqdm(channels, desc='Channels')
     for chan in pbar:
