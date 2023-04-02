@@ -333,18 +333,18 @@ def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
         warnings.simplefilter('ignore')
         cubes = [SpectralCube.read(fn,
                                    format='casa_image',
-                                   use_dask=True).with_spectral_unit(u.km/u.s,
+                                   use_dask=True).with_spectral_unit(u.km / u.s,
                                                                      velocity_convention='radio',
-                                                                     rest_value=97.98095330*u.GHz)
+                                                                     rest_value=97.98095330 * u.GHz)
                  for fn in filelist]
         weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
-                        .with_spectral_unit(u.km/u.s, velocity_convention='radio', rest_value=97.98095330*u.GHz)
+                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=97.98095330 * u.GHz)
                         ) for fn in filelist]
 
     # flag out wild outliers
     # there are 2 as of writing
     print("Filtering out cubes with sketchy beams", flush=True)
-    ok = [cube for cube in cubes if cube.beam.major < 2.4*u.arcsec]
+    ok = [cube for cube in cubes if cube.beam.major < 2.4 * u.arcsec]
     cubes = [cube for k, cube in zip(ok, cubes) if k]
     weightcubes = [cube for k, cube in zip(ok, weightcubes) if k]
 
@@ -363,7 +363,7 @@ def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
             theader = header.copy()
             theader['NAXIS3'] = 1
             theader['CRPIX3'] = 1
-            theader['CRVAL3'] = wws.pixel_to_world(chan).to(u.km/u.s).value
+            theader['CRVAL3'] = wws.pixel_to_world(chan).to(u.km / u.s).value
 
             if verbose:
                 pbar.set_description(f'Channel {chan}')
@@ -373,15 +373,15 @@ def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
                 print(f"Skipping completed channel {chan}", flush=True)
             else:
                 print(f"Starting mosaic_cubes for channel {chan}", flush=True)
-                result = mosaic_cubes(cubes,
-                                      target_header=theader,
-                                      commonbeam=commonbeam,
-                                      weights=weightcubes,
-                                      spectral_block_size=None,
-                                      output_file=chanfn,
-                                      method='channel',
-                                      verbose=verbose
-                                      )
+                mosaic_cubes(cubes,
+                             target_header=theader,
+                             commonbeam=commonbeam,
+                             weights=weightcubes,
+                             spectral_block_size=None,
+                             output_file=chanfn,
+                             method='channel',
+                             verbose=verbose
+                             )
                 shutil.move(chanfn, '/orange/adamginsburg/ACES/mosaics/CS21_Channels/')
 
     """
@@ -434,7 +434,7 @@ def cs21_cube_mosaicing(test=False, verbose=True, channels='all'):
         theader.tofile(output_file, overwrite=True)
         with open(output_file, 'rb+') as fobj:
             fobj.seek(len(theader.tostring()) +
-                      (np.prod(shape_opt) * np.abs(theader['BITPIX']//8)) - 1)
+                      (np.prod(shape_opt) * np.abs(theader['BITPIX'] // 8)) - 1)
             fobj.write(b'\0')
 
     hdu = fits.open(output_file, mode='update', overwrite=True)
