@@ -6,7 +6,9 @@ from astropy.table import Table
 from astropy.io import fits
 import regions
 from spectral_cube.spectral_cube import _regionlist_to_single_region
-from aces.conf import basepath
+from aces import conf
+
+basepath = conf.basepath
 
 if __name__ == "__main__":
     # NOTE: only works on hipergator b/c of paths
