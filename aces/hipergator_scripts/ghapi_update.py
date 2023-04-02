@@ -35,7 +35,7 @@ def main(dryrun=False):
     uid_re = re.compile("uid://A[0-9]*/X[a-z0-9]*/X[a-z0-9]*")
 
     # example: Sgr_A_st_ak_03_7M
-    sb_re = re.compile('Sgr_A_st_([a-z]*)(_[a-z]*)?_03_(7M|12M|TP|TM1|TM2).*')
+    sb_re = re.compile('Sgr_A_st_(?P<field>[a-z]*)(_[a-z]*)?_03(_updated)?_(?P<array>7M|12M|TP|TM1|TM2).*')
 
     sb_searches = [sb_re.search(issue.title) for issue in issues]
     issue_sb_names = [search.group() for search in sb_searches if search]
@@ -169,7 +169,7 @@ def main(dryrun=False):
         sb_status[new_sb] = {'downloaded': downloaded,
                              'delivered': delivered,
                              'weblog_url': weblog_url}
-        array = sb_re.search(new_sb).groups()[2]
+        array = sb_re.search(new_sb).group('array')
         # not used; may be 'updated'
         # extraname = sb_re.search(new_sb).groups()[1]
 

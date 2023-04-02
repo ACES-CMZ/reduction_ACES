@@ -57,12 +57,15 @@ def read_as_2d(fn, minval=None):
         return fits.HDUList([cube[0].hdu])
 
 
-def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
+def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
+             threshold=None):
     print(".", end='', flush=True)
     outfn = fn.replace(".fits", "") + f"{suffix}_max.fits"
     if os.path.exists(outfn):
         hdu = fits.open(outfn)
         proj = Projection.from_hdu(hdu)
+        if threshold is not None:
+            proj[proj < threshold] = 0
         return proj
     else:
         ft = 'fits' if fn.endswith(".fits") else "casa_image"
@@ -76,6 +79,8 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
                 mx = cube.max(axis=0).to(u.K)
         if save_file:
             mx.hdu.writeto(outfn)
+        if threshold is not None:
+            mx[mx.value < threshold] = 0
         return mx
 
 
@@ -209,7 +214,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.set_zorder(back)
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgrid.png', bbox_inches='tight')
 
-    tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.tsv', format='ascii.csv', delimiter='\t')
+    tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
 
     log.info("Computing overlap regions")
     # create a list of composite regions for labeling purposes
@@ -287,16 +292,32 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
 
         if parallel:
             pool = Pool()
-            hdus = pool.map(partial(get_peak, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}, suffix=f'_{line}'), filelist)
+            hdus = pool.map(partial(get_peak,
+                                    **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
+                                       'rest_value': restf},
+                                    suffix=f'_{line}',
+                                    ),
+                            filelist,
+                            )
             hdus = [x.hdu for x in hdus]
             if use_weights:
-                wthdus = pool.map(partial(get_peak, **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, 'rest_value': restf}, suffix=f'_{line}'), weightfiles)
+                wthdus = pool.map(partial(get_peak,
+                                          **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
+                                             'rest_value': restf},
+                                          suffix=f'_{line}',
+                                          threshold=0.5,  # pb limit
+                                          ),
+                                  weightfiles)
                 wthdus = [x.hdu for x in wthdus]
         else:
-            hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf, suffix=f'_{line}').hdu for fn in filelist]
+            hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
+                             rest_value=restf, suffix=f'_{line}').hdu for fn in filelist]
             print(flush=True)
             if use_weights:
-                wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s}, rest_value=restf, suffix=f'_{line}').hdu for fn in weightfiles]
+                wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
+                                   rest_value=restf, suffix=f'_{line}',
+                                   threshold=0.5,  # pb limit
+                                   ).hdu for fn in weightfiles]
                 print(flush=True)
 
         if parallel:

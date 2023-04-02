@@ -692,8 +692,8 @@
         "threshold": "0.0056Jy"
       },
       "spw33": {
-        "nchan": -1,
-        "start": "",
+        "nchan": 3835,
+        "start": "97.6665GHz",
         "width": "",
         "threshold": "0.01Jy"
       }
@@ -3735,8 +3735,8 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": -1,
-        "start": "",
+        "nchan": 3835,
+        "start": "97.6543GHz",
         "width": "",
         "outframe": "LSRK",
         "veltype": "radio",

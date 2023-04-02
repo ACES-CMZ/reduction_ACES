@@ -90,6 +90,7 @@ def main():
                     print(f"{os.getcwd()} {sbname} {mous} {partype} {spwsel} {field} {config}: ", end=" ")
                     if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
                         tcpars['vis'] = [x.replace("_targets", "") for x in tcpars["vis"]]
+                        tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
                         tcpars['datacolumn'] = 'corrected'
 
                     # Nov 10, 2022: try removing "_lines" from files:
@@ -156,14 +157,18 @@ def main():
                                     outputvis='{rename(vis)}'
                                     if not os.path.exists(outputvis):
                                         try:
+                                            logprint("Splitting {vis} with defaults")
                                             split(vis='{vis}',
                                                 outputvis=outputvis,
                                                 field='Sgr_A_star',
                                                 spw={spw})
                                             if not os.path.exists(outputvis):
                                                 raise ValueError("Did not split")
+                                            else:
+                                                logprint("Splitting {vis} with default (CORRECTED) was successful")
                                         except Exception as ex:
                                             logprint(ex)
+                                            logprint("Splitting {vis} with datacolumn='data'")
                                             split(vis='{vis}',
                                                 outputvis=outputvis,
                                                 field='Sgr_A_star',

@@ -23,8 +23,10 @@ parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': T
               'member.uid___A001_X15a0_X142': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # ditto
               'member.uid___A001_X15a0_Xca': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # field ag: MPI crash
               'member.uid___A001_X15a0_X160': {'mem': 128, 'ntasks': 1, 'mpi': False, },
-              'member.uid___A001_X15a0_X1a8': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # spw33 OOMs; try MPI?
+              'member.uid___A001_X15a0_X1a8': {'mem': 256, 'ntasks': 8, 'mpi': True, },  # write lock frozen spw33 OOMs; try MPI?
               'member.uid___A001_X15a0_Xa6': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # spw33 is taking for-ev-er; try MPI?  created backup first: backup_20221108_beforempi/
+              'member.uid___A001_X15a0_X190': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ao: same as above, too long
+              'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
               }
 newpars = parameters.copy()
 
