@@ -3811,7 +3811,7 @@
   "Sgr_A_st_o_03_7M": {
     "tclean_cube_pars": {
       "spw24": {
-        "cyclefactor": 3.5
+        "cyclefactor": 4.0
       }
     }
   }
