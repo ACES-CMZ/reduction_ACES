@@ -61,11 +61,12 @@ for i in range(len(sb_names)):
         hnco_pars['imagename']   = workdir + '/' + sb_names['Region'][i] + '/' + sb_names['Region'][i] + '_12m_7m.HNCO.clean'
         hnco_pars['calcpsf']     = True
         hnco_pars['calcres']     = True
-        hnco_pars['cyclefactor'] = 1.5
+        hnco_pars['cyclefactor'] = 2.5
         hnco_pars['antenna']     = ''
         hnco_pars['scan']        = ''
-        if hnco_pars['nchan'] < 1000:
-            hnco_pars['nchan']   = hnco_pars['nchan'] * 2
-            hnco_pars['width']   = str(float(re.sub('MHz', '', hnco_pars['width'])) / 2.0) + 'MHz'
+        hnco_pars['width']       = ''
+        hnco_pars['nchan']       = -1
+        hnco_pars['start']       = ''
+
 
         tclean(**hnco_pars)
