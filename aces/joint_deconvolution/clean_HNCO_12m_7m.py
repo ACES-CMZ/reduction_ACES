@@ -67,6 +67,4 @@ for i in range(len(sb_names)):
         hnco_pars['width']       = ''
         hnco_pars['nchan']       = -1
         hnco_pars['start']       = ''
-
-
         tclean(**hnco_pars)
