@@ -206,7 +206,7 @@ def main():
 
                     with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
                         fh.write("import os, shutil, glob\n")
-                        fh.write(textwrap.dedent("""
+                        fh.write(textwrap.dedent(f"""
                                  try:
                                      from taskinit import casalog
                                  except ImportError:
@@ -221,6 +221,9 @@ def main():
                                      parallel = int(mpi_ntasks) > 1
                                  else:
                                      parallel = False
+
+                                 if not os.path.exists("{tempdir_name}"):
+                                     os.mkdir("{tempdir_name}")
 
                                  """))
                         fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
