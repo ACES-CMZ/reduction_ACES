@@ -3814,5 +3814,12 @@
         "cyclefactor": 4.0
       }
     }
+  },
+    "Sgr_A_st_y_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 2.0
+      }
+    }
   }
 }
