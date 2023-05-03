@@ -484,10 +484,10 @@ def sio21_cube_mosaicing(test=False, verbose=True, channels='all'):
                                    format='casa_image',
                                    use_dask=True).with_spectral_unit(u.km / u.s,
                                                                      velocity_convention='radio',
-                                                                     rest_value=restfrq*u.Hz)
+                                                                     rest_value=restfrq * u.Hz)
                  for fn in filelist]
         weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
-                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=restfrq*u.Hz)
+                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=restfrq * u.Hz)
                         ) for fn in filelist]
 
     # flag out wild outliers
@@ -532,7 +532,6 @@ def sio21_cube_mosaicing(test=False, verbose=True, channels='all'):
                              verbose=verbose
                              )
                 shutil.move(chanfn, '/orange/adamginsburg/ACES/mosaics/SiO21_Channels/')
-
 
     for chan in channels:
         chanfn = f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/SiO21_CubeMosaic_channel{chan}.fits'
@@ -603,10 +602,10 @@ def hnco_cube_mosaicing(test=False, verbose=True, channels='all'):
                                    format='casa_image',
                                    use_dask=True).with_spectral_unit(u.km / u.s,
                                                                      velocity_convention='radio',
-                                                                     rest_value=restfrq*u.Hz)
+                                                                     rest_value=restfrq * u.Hz)
                  for fn in filelist]
         weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
-                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=restfrq*u.Hz)
+                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=restfrq * u.Hz)
                         ) for fn in filelist]
 
     # flag out wild outliers
@@ -651,7 +650,6 @@ def hnco_cube_mosaicing(test=False, verbose=True, channels='all'):
                              verbose=verbose
                              )
                 shutil.move(chanfn, '/orange/adamginsburg/ACES/mosaics/HNCO_Channels/')
-
 
     for chan in channels:
         chanfn = f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/HNCO_CubeMosaic_channel{chan}.fits'
