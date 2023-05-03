@@ -550,6 +550,24 @@
       }
     }
   },
+  "Sgr_A_st_d_03_7M": {
+    "tclean_cube_pars": {
+      "spw18": {
+        "imagename":  "uid___A001_X15a0_Xb4.Sgr_A_star_sci.spw18.cube.I.iter2.reclean",
+        "cyclefactor": 2.0,
+        "niter": 20000000
+      }
+    }
+  },
+  "Sgr_A_st_d_03_7M": {
+    "tclean_cube_pars": {
+      "spw22": {
+        "imagename":  "uid___A001_X15a0_Xb4.Sgr_A_star_sci.spw24.cube.I.iter2.reclean",
+        "cyclefactor": 2.0,
+        "niter": 20000000
+      }
+    }
+  },
   "Sgr_A_st_ap_03_7M": {
     "tclean_cube_pars": {
       "spw24": {
@@ -2241,7 +2259,7 @@
         "threshold": "0.01Jy",
         "nsigma": 0.0,
         "cycleniter": -1,
-        "cyclefactor": 1.0,
+        "cyclefactor": 3.0,
         "minpsffraction": 0.05,
         "maxpsffraction": 0.8,
         "interactive": 0,
@@ -3812,6 +3830,13 @@
     "tclean_cube_pars": {
       "spw24": {
         "cyclefactor": 4.0
+      }
+    }
+  },
+    "Sgr_A_st_y_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 2.0
       }
     }
   }
