@@ -570,3 +570,122 @@ def sio21_cube_mosaicing(test=False, verbose=True, channels='all'):
             output_array[chan] = fits.getdata(chanfn)
             pbar.set_description('Channels (flushing)')
             hdu.flush()
+
+
+def hnco_cube_mosaicing(test=False, verbose=True, channels='all'):
+    """
+    This takes too long as a full cube, so we have to do it slice-by-slice
+    """
+    from spectral_cube import SpectralCube
+    from tqdm import tqdm
+
+    print("Listing files", flush=True)
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw31.cube.I.iter1.image.pbcor')
+    if test:
+        filelist = filelist[:16]
+    header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
+    header['NAXIS'] = 3
+    header['CDELT3'] = 0.21
+    header['CUNIT3'] = 'km/s'
+    header['CRVAL3'] = 0
+    header['NAXIS3'] = 3 if test else int(np.ceil(250 / header['CDELT3']))
+    header['CRPIX3'] = header['NAXIS3'] // 2
+    header['CTYPE3'] = 'VRAD'
+    restfrq = 87.925238e9
+    header['RESTFRQ'] = restfrq
+    header['SPECSYS'] = 'LSRK'
+
+    print("Converting spectral units", flush=True)
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        cubes = [SpectralCube.read(fn,
+                                   format='casa_image',
+                                   use_dask=True).with_spectral_unit(u.km / u.s,
+                                                                     velocity_convention='radio',
+                                                                     rest_value=restfrq*u.Hz)
+                 for fn in filelist]
+        weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
+                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=restfrq*u.Hz)
+                        ) for fn in filelist]
+
+    # flag out wild outliers
+    # there are 2 as of writing
+    print("Filtering out cubes with sketchy beams", flush=True)
+    ok = [cube for cube in cubes if cube.beam.major < 2.4 * u.arcsec]
+    cubes = [cube for k, cube in zip(ok, cubes) if k]
+    weightcubes = [cube for k, cube in zip(ok, weightcubes) if k]
+
+    beams = radio_beam.Beams(beams=[cube.beam for cube in cubes])
+    commonbeam = beams.common_beam()
+    header.update(commonbeam.to_header_keywords())
+
+    ww = WCS(header)
+    wws = ww.spectral
+
+    if channels == 'all':
+        channels = range(header['NAXIS3'])
+    if True:
+        pbar = tqdm(channels, desc='Channels (mosaic)') if verbose else channels
+        for chan in pbar:
+            theader = header.copy()
+            theader['NAXIS3'] = 1
+            theader['CRPIX3'] = 1
+            theader['CRVAL3'] = wws.pixel_to_world(chan).to(u.km / u.s).value
+
+            if verbose:
+                pbar.set_description(f'Channel {chan}')
+
+            chanfn = f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/HNCO_CubeMosaic_channel{chan}.fits'
+            if os.path.exists(f'/orange/adamginsburg/ACES/mosaics/HNCO_Channels/{os.path.basename(chanfn)}'):
+                print(f"Skipping completed channel {chan}", flush=True)
+            else:
+                print(f"Starting mosaic_cubes for channel {chan}", flush=True)
+                mosaic_cubes(cubes,
+                             target_header=theader,
+                             commonbeam=commonbeam,
+                             weights=weightcubes,
+                             spectral_block_size=None,
+                             output_file=chanfn,
+                             method='channel',
+                             verbose=verbose
+                             )
+                shutil.move(chanfn, '/orange/adamginsburg/ACES/mosaics/HNCO_Channels/')
+
+
+    for chan in channels:
+        chanfn = f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/HNCO_CubeMosaic_channel{chan}.fits'
+        if os.path.exists(chanfn):
+            shutil.move(chanfn, '/orange/adamginsburg/ACES/mosaics/HNCO_Channels/')
+
+    output_file = '/orange/adamginsburg/ACES/mosaics/HNCO_CubeMosaic.fits'
+    output_file = '/blue/adamginsburg/adamginsburg/ACES/workdir/HNCO_CubeMosaic.fits'
+    if not os.path.exists(output_file):
+        # https://docs.astropy.org/en/stable/generated/examples/io/skip_create-large-fits.html#sphx-glr-generated-examples-io-skip-create-large-fits-py
+        hdu = fits.PrimaryHDU(data=np.ones([5, 5, 5], dtype=float),
+                              header=header,
+                              )
+        for kwd in ('NAXIS1', 'NAXIS2', 'NAXIS3'):
+            hdu.header[kwd] = header[kwd]
+
+        shape_opt = header['NAXIS3'], header['NAXIS2'], header['NAXIS1']
+
+        header.tofile(output_file, overwrite=True)
+        with open(output_file, 'rb+') as fobj:
+            fobj.seek(len(header.tostring()) +
+                      (np.prod(shape_opt) * np.abs(header['BITPIX'] // 8)) - 1)
+            fobj.write(b'\0')
+
+    hdu = fits.open(output_file, mode='update', overwrite=True)
+    output_array = hdu[0].data
+    hdu.flush()  # make sure the header gets written right
+
+    pbar = tqdm(channels, desc='Channels')
+    for chan in pbar:
+        #chanfn = f'/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/HNCO_CubeMosaic_channel{chan}.fits'
+        chanfn = f'/orange/adamginsburg/ACES/mosaics/HNCO_Channels/HNCO_CubeMosaic_channel{chan}.fits'
+        if os.path.exists(chanfn):
+            pbar.set_description('Channels (filling)')
+            output_array[chan] = fits.getdata(chanfn)
+            pbar.set_description('Channels (flushing)')
+            hdu.flush()
