@@ -611,7 +611,7 @@ def hnco_cube_mosaicing(test=False, verbose=True, channels='all'):
     # flag out wild outliers
     # there are 2 as of writing
     print("Filtering out cubes with sketchy beams", flush=True)
-    ok = [cube for cube in cubes if cube.beam.major < 2.4 * u.arcsec]
+    ok = [cube for cube in cubes if cube.beam.major < 3.2 * u.arcsec]
     cubes = [cube for k, cube in zip(ok, cubes) if k]
     weightcubes = [cube for k, cube in zip(ok, weightcubes) if k]
 
