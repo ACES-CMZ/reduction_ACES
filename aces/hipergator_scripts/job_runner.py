@@ -23,9 +23,10 @@ parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': T
               'member.uid___A001_X15a0_X142': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # ditto
               'member.uid___A001_X15a0_Xca': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # field ag: MPI crash
               'member.uid___A001_X15a0_X160': {'mem': 128, 'ntasks': 1, 'mpi': False, },
-              'member.uid___A001_X15a0_X1a8': {'mem': 256, 'ntasks': 8, 'mpi': True, },  # write lock frozen spw33 OOMs; try MPI?
+              'member.uid___A001_X15a0_X1a2': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field ar: timeout
+              'member.uid___A001_X15a0_X1a8': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # write lock frozen spw33 OOMs; try MPI?.  MPI write-locks everything.
               'member.uid___A001_X15a0_Xa6': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # spw33 is taking for-ev-er; try MPI?  created backup first: backup_20221108_beforempi/
-              'member.uid___A001_X15a0_X190': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ao: same as above, too long
+              'member.uid___A001_X15a0_X190': {'mem': 256, 'ntasks': 1, 'mpi': False, 'burst': False},  # ao: same as above, too long.  But, MPI fails with writelock. NON-MPI also fails!?
               'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
               }
 newpars = parameters.copy()
@@ -77,6 +78,12 @@ def main():
     for mous, spwpars in parameters.items():
         mousname = mous.split('.')[1]
 
+        if 'burst' in parameters:
+            if not parameters.pop('burst'):
+                qos_ = qos.strip('-b')
+        else:
+            qos_ = qos
+
         if mousname not in mousmap_:
             log.error(f"mousname {mousname}  (from {mous}) is not in the mousmap.")
             continue
@@ -127,7 +134,12 @@ def main():
                             if any(glob.glob(scriptname_glob)):
                                 scriptname = glob.glob(scriptname_glob)[0]
                             else:
-                                print(f"ERROR: script {scriptname} does not exist!  This may indicate that `write_tclean_scripts` has not been run or the pipeline hasn't finished.")
+                                if '7M' in scriptname:
+                                    # April 22, 2023: I don't think I ever made aggregate high scripts
+                                    # for the 7m data?  So the error message is erroneous / not useful
+                                    continue
+                                else:
+                                    print(f"ERROR: script {scriptname} does not exist!  This may indicate that `write_tclean_scripts` has not been run or the pipeline hasn't finished.")
                                 if mousname in 'member.uid___A001_X15b4_X3d':
                                     raise ValueError("The script definitely _does_ exist.")
                                 continue
@@ -258,7 +270,7 @@ def main():
 
                     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} '
                            f'--mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} '
-                           f'--qos={qos} --export=ALL  {runcmd}')
+                           f'--qos={qos_} --export=ALL  {runcmd}')
 
                     if '--dry-run' in sys.argv:
                         if verbose:
