@@ -2,7 +2,6 @@
 #SBATCH --mail-type=NONE          # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=adamginsburg@ufl.edu     # Where to send mail
 #SBATCH --nodes=1
-#SBATCH --time=96:00:00               # Time limit hrs:min:sec
 #SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/run_simple_%j.log   # Standard output and error log
 
 # https://stackoverflow.com/a/2853811/814354
