@@ -244,6 +244,7 @@ def main():
 
                     tempdir_name = f'{field}_{spw}_{imtype}_{config}_{mousname[6:].replace("/", "_")}'
                     assert any(x in tempdir_name for x in ('7M', 'TM1', 'TP'))
+
                     # it is safe to remove things beyond here because at this point we're committed
                     # to re-running
                     if '--dry-run' not in sys.argv:
@@ -258,7 +259,6 @@ def main():
                                     print(f"Removing {ff}")
                                     shutil.rmtree(ff)
 
-                        tempdir_name = f'{field}_{spw}_{imtype}{contsub_suffix}'
                         print(f"Removing files matching '{workdir}/{tempdir_name}/IMAGING_WEIGHT.*'")
                         old_tempfiles = (glob.glob(f'{workdir}/{tempdir_name}/IMAGING_WEIGHT*') +
                                          glob.glob(f'{workdir}/{tempdir_name}/TempLattice*'))

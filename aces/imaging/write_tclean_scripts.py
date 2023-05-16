@@ -108,14 +108,14 @@ def main():
 
                     # use full path for vis
                     tcpars['vis'] = [os.path.realpath(x) for x in tcpars["vis"]]
+
                     # but use *relative* path for imagename so we can run this in temp directories
+                    orig_dirname = os.path.dirname(tcpars['imagename'])
                     tcpars['imagename'] = os.path.basename(tcpars['imagename'])
                     print(f"tcpars['imagename'] = {tcpars['imagename']}")
 
-                    dirname = orig_dirname = os.path.dirname(tcpars['imagename'])
-                    if dirname in ('/', ''):
-                        dirname = '.'
-
+                    # dirname is a bit redundant now
+                    dirname = '.'
 
                     imtype = tcpars['specmode']
 
@@ -209,31 +209,31 @@ def main():
                                      if os.path.realpath(fn) == os.path.realpath(target):
                                         print("Skipping copy - source = destination")
                                      else:
-                                         if os.path.exists(target):
-                                             logprint(f'Removing {{target}} because it exists')
-                                             assert 'iter1' in f'{savedir_name}/{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
-                                             shutil.rmtree(f'{dirname}/{{os.path.basename(fn)}}')
                                          if fn.endswith('.fits'):
                                              shutil.copy(fn, target)
                                          else:
-                                             shutil.copytree(fn, target)
-
+                                             if os.path.exists(target):
+                                                 logprint(f'Removing {{target}} because it exists')
+                                                 assert 'iter1' in f'{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
+                                                 shutil.rmtree(target)
+                                             shutil.copytree(fn, target)\n\n
                              """)
 
-                        cleanupcmds = textwrap.dedent(
-                             f"""import glob
-                             flist = glob.glob('{dirname}/{os.path.basename(tcpars['imagename'])}.*')
+                        cleanupcmds = (textwrap.dedent(
+                             f"""
+                             import glob
+                             flist = glob.glob('{workingpath}/{os.path.basename(tcpars['imagename'])}.*')
                              for fn in flist:
-                                 logprint(f'Moving {{fn}} to {dirname}')
-                                 if os.path.exists(f'{dirname}/{{os.path.basename(fn)}}'):
-                                     logprint(f'Removing {dirname}/{{os.path.basename(fn)}} because it exists')
-                                     assert 'iter1' in f'{dirname}/{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
+                                 logprint(f'Moving {{fn}} to {workingpath}')
+                                 target = f'{workingpath}/{{os.path.basename(fn)}}'
+                                 if os.path.exists(target):
+                                     logprint(f'Removing {{target}} because it exists')
+                                     assert 'iter1' in target  # sanity check - don't remove important directories!
                                      if fn.endswith('.fits'):
-                                         os.remove(f'{dirname}/{{os.path.basename(fn)}}')
+                                         os.remove(target)
                                      else:
-                                         shutil.rmtree(f'{dirname}/{{os.path.basename(fn)}}')
-                                 shutil.move(fn, '{dirname}/')
-                             """ +
+                                         shutil.rmtree(target)
+                                 shutil.move(fn, '{workingpath}/')\n\n""") +
                              "\n".join([f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']])
                         )
                         # use local name instead
@@ -270,6 +270,8 @@ def main():
                                      os.mkdir(tempdir_name)
                                  os.chdir(tempdir_name)
 
+                                 logprint(f"Temporary directory used is {{tempdir_name}}")
+
                                  """))
                         fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
 
@@ -287,7 +289,7 @@ def main():
                             elif key not in ('calcpsf', 'calcres', 'nmajor'):
                                 fh.write(f"       {key}={repr(val)},\n")
                             else:
-                                if key in ('calcpsf', 'calcres', 'nmajor'):
+                                if key in ('calcpsf', 'calcres', 'nmajor', 'interactive'):
                                     pass
                                 else:
                                     raise ValueError(f"ERROR: encountered invalid / overridden tclean kwarg {key}:{val}")
@@ -296,7 +298,7 @@ def main():
                         threshold = float(tcpars['threshold'].strip(string.ascii_letters))
 
                         # first major cycle
-                        fh.write(f"ret = tclean(nmajor=1, calcpsf=calcpsf, **tclean_pars)\n\n")
+                        fh.write(f"ret = tclean(nmajor=1, calcpsf=calcpsf, interactive=0, **tclean_pars)\n\n")
 
                         # remaining major cycles
                         fh.write(textwrap.dedent(f"""
@@ -306,12 +308,11 @@ def main():
                                      nmajors += 1
                                      ret = tclean(nmajor=1,
                                                   calcpsf=False,
-                                                  calcres=False,
+                                                  interactive=0,
+                                                  calcres=True, # sadly must always calcres, even when redundant
                                                   **tclean_pars)
-                                     savedata()
-
-                                 """
-                                                )
+                                     savedata()\n
+                                 """)
                                 )
 
                         expected_imname = (os.path.basename(tcpars['imagename']) +
