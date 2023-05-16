@@ -198,8 +198,7 @@ def main():
                         # all 'vis' must be renamed because of their new locations
                         tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
 
-                        savecmds = "\n".join(
-                            textwrap.dedent(
+                        savecmds = textwrap.dedent(
                              f"""
                              import glob
                              def savedata():
@@ -207,21 +206,21 @@ def main():
                                  for fn in flist:
                                      logprint(f'Copying {{fn}} to {savedir_name}')
                                      target = f'{savedir_name}/{{os.path.basename(fn)}}'
-                                     if os.path.exists(target):
-                                         logprint(f'Removing {{target}} because it exists')
-                                         assert 'iter1' in f'{savedir_name}/{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
-                                         shutil.rmtree(f'{dirname}/{{os.path.basename(fn)}}')
-                                     if fn.endswith('.fits'):
-                                         shutil.copy(fn, '{dirname}/')
+                                     if os.path.realpath(fn) == os.path.realpath(target):
+                                        print("Skipping copy - source = destination")
                                      else:
-                                         shutil.copytree(fn, '{dirname}/')
+                                         if os.path.exists(target):
+                                             logprint(f'Removing {{target}} because it exists')
+                                             assert 'iter1' in f'{savedir_name}/{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
+                                             shutil.rmtree(f'{dirname}/{{os.path.basename(fn)}}')
+                                         if fn.endswith('.fits'):
+                                             shutil.copy(fn, target)
+                                         else:
+                                             shutil.copytree(fn, target)
 
-                             """
-                            )
-                        )
+                             """)
 
-                        cleanupcmds = "\n".join(
-                            textwrap.dedent(
+                        cleanupcmds = textwrap.dedent(
                              f"""import glob
                              flist = glob.glob('{dirname}/{os.path.basename(tcpars['imagename'])}.*')
                              for fn in flist:
@@ -234,9 +233,8 @@ def main():
                                      else:
                                          shutil.rmtree(f'{dirname}/{{os.path.basename(fn)}}')
                                  shutil.move(fn, '{dirname}/')
-                             ]""" +
-                            [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]
-                            )
+                             """ +
+                             "\n".join([f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']])
                         )
                         # use local name instead
                         #tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
@@ -266,7 +264,7 @@ def main():
                                  if tempdir_name is None:
                                      # this is grabbed from write_tclean_scripts
                                      tempdir_name = "{tempdir_name}"
-                                 savedir_name = {savedir_name}
+                                 savedir_name = '{savedir_name}'
 
                                  if not os.path.exists(tempdir_name):
                                      os.mkdir(tempdir_name)
