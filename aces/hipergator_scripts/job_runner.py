@@ -192,6 +192,8 @@ def main():
                         print(f"spw={spw}, imtype={imtype}, spwpars={spwpars}, imstatus={imstatus}")
 
                     workdir = conf.workpath
+                    # TODO: configure job_runner & write_tclean_scripts to work with SLURM_TMPDIR as the working directory?
+                    # workdir = "SLURM_TMPDIR"
                     jobname = f"{field}_{config}_{spw}_{imtype}"
 
                     match = tbl['JobName'] == jobname
@@ -279,6 +281,9 @@ def main():
 
                     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
+
+                    # start the script from within the appropriate workdir
+                    os.chdir(f'{workdir}/{tempdir_name}')
 
                     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} '
                            f'--mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} '

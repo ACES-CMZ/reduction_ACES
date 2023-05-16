@@ -17,6 +17,7 @@ import os
 import glob
 import shutil
 import textwrap
+import string
 from aces import conf
 from aces.pipeline_scripts.merge_tclean_commands import commands
 
@@ -61,7 +62,7 @@ def main():
                 }
 
     # these aren't really user-configurable
-    tcpars_override = {'calcpsf': True, 'calcres': True, }
+    tcpars_override = {'calcpsf': True, }
 
     for sbname, allpars in commands.items():
         mous_ = allpars['mous']
@@ -105,27 +106,39 @@ def main():
                         continue
                     tcpars.update(tcpars_override)
 
-                    # try using full path?
+                    # use full path for vis
                     tcpars['vis'] = [os.path.realpath(x) for x in tcpars["vis"]]
-                    tcpars['imagename'] = os.path.realpath(tcpars['imagename'])
+                    # but use *relative* path for imagename so we can run this in temp directories
+                    tcpars['imagename'] = os.path.basename(tcpars['imagename'])
+                    print(f"tcpars['imagename'] = {tcpars['imagename']}")
 
-                    if temp_workdir:
-                        imtype = tcpars['specmode']
-                        tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}_{config}_{mous}'
-                        assert any(x in tempdir_name for x in ('7M', 'TM1', 'TP'))
+                    dirname = orig_dirname = os.path.dirname(tcpars['imagename'])
+                    if dirname in ('/', ''):
+                        dirname = '.'
 
-                        if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
-                            os.mkdir(tempdir_name)
+
+                    imtype = tcpars['specmode']
+
+                    tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}_{config}_{mous}'
+
+                    if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
+                        os.mkdir(tempdir_name)
+
+                    # save directory is same as tempdir unless SLURM_TMPDIR is used
+                    savedir_name = tempdir_name
 
                     # check for PSF
-                    expected_psfname = os.path.join(tempdir_name if temp_workdir else os.path.dirname(tcpars['imagename']),
+                    expected_psfname = os.path.join(tempdir_name if temp_workdir else dirname,
                                                     os.path.basename(tcpars['imagename']) +
                                                     ('.psf.tt0' if tcpars['specmode'] == 'mfs' else '.psf')
                                                     )
                     check_psf_exists = textwrap.dedent(f"""
                                             # if the PSF exists, don't re-calculate it
                                             calcpsf = not os.path.exists('{expected_psfname}')
-                                                \n\n""")
+
+                                            if not os.path.exists('{os.path.basename(expected_psfname)}') and not calcpsf:
+                                                shutil.copytree(expected_psfname, '{os.path.basename(expected_psfname)}')
+                                            \n\n""")
                     # this is overridden below tcpars['calcpsf'] = 'calcpsf'
 
                     if temp_workdir:
@@ -185,29 +198,54 @@ def main():
                         # all 'vis' must be renamed because of their new locations
                         tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
 
-                        cleanupcmds = "\n".join(
-                            ["import glob",
-                             f"flist = glob.glob('{tempdir_name}/{os.path.basename(tcpars['imagename'])}.*')",
-                             "for fn in flist:",
-                             f"    logprint(f'Moving {{fn}} to {os.path.dirname(tcpars['imagename'])}')",
-                             f"    if os.path.exists(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}'):",
-                             f"        logprint(f'Removing {os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}} because it exists')",
-                             f"        assert 'iter1' in f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}'",  # sanity check - don't remove important directories!
-                             "        if fn.endswith('.fits'):",
-                             f"            os.remove(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}')",
-                             "        else:",
-                             f"            shutil.rmtree(f'{os.path.dirname(tcpars['imagename'])}/{{os.path.basename(fn)}}')",
-                             f"    shutil.move(fn, '{os.path.dirname(tcpars['imagename'])}/')",
-                             ] +
-                            [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]
+                        savecmds = "\n".join(
+                            textwrap.dedent(
+                             f"""
+                             import glob
+                             def savedata():
+                                 flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
+                                 for fn in flist:
+                                     logprint(f'Copying {{fn}} to {savedir_name}')
+                                     target = f'{savedir_name}/{{os.path.basename(fn)}}'
+                                     if os.path.exists(target):
+                                         logprint(f'Removing {{target}} because it exists')
+                                         assert 'iter1' in f'{savedir_name}/{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
+                                         shutil.rmtree(f'{dirname}/{{os.path.basename(fn)}}')
+                                     if fn.endswith('.fits'):
+                                         shutil.copy(fn, '{dirname}/')
+                                     else:
+                                         shutil.copytree(fn, '{dirname}/')
+
+                             """
+                            )
                         )
-                        tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
+
+                        cleanupcmds = "\n".join(
+                            textwrap.dedent(
+                             f"""import glob
+                             flist = glob.glob('{dirname}/{os.path.basename(tcpars['imagename'])}.*')
+                             for fn in flist:
+                                 logprint(f'Moving {{fn}} to {dirname}')
+                                 if os.path.exists(f'{dirname}/{{os.path.basename(fn)}}'):
+                                     logprint(f'Removing {dirname}/{{os.path.basename(fn)}} because it exists')
+                                     assert 'iter1' in f'{dirname}/{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
+                                     if fn.endswith('.fits'):
+                                         os.remove(f'{dirname}/{{os.path.basename(fn)}}')
+                                     else:
+                                         shutil.rmtree(f'{dirname}/{{os.path.basename(fn)}}')
+                                 shutil.move(fn, '{dirname}/')
+                             ]""" +
+                            [f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']]
+                            )
+                        )
+                        # use local name instead
+                        #tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
 
                     print(f"Creating script for {partype} tclean in {workingpath} for sb {sbname} ")
                     # with kwargs: \n{tcpars}")
 
                     with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
-                        fh.write("import os, shutil, glob\n")
+                        fh.write("import os, shutil, glob, string\n")
                         fh.write(textwrap.dedent(f"""
                                  try:
                                      from taskinit import casalog
@@ -224,27 +262,66 @@ def main():
                                  else:
                                      parallel = False
 
-                                 if not os.path.exists("{tempdir_name}"):
-                                     os.mkdir("{tempdir_name}")
+                                 tempdir_name = os.getenv("SLURM_TMPDIR")
+                                 if tempdir_name is None:
+                                     # this is grabbed from write_tclean_scripts
+                                     tempdir_name = "{tempdir_name}"
+                                 savedir_name = {savedir_name}
+
+                                 if not os.path.exists(tempdir_name):
+                                     os.mkdir(tempdir_name)
+                                 os.chdir(tempdir_name)
 
                                  """))
                         fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
+
+                        # tclean
                         if temp_workdir:
                             fh.write("".join(splitcmd))
                             fh.write("\n\n")
                         fh.write(check_psf_exists)
-                        fh.write("tclean(\n")
+                        print(f"tcpars['imagename'] = {tcpars['imagename']}")
+                        fh.write(savecmds)
+                        fh.write("tclean_pars = dict(\n")
                         for key, val in tcpars.items():
-                            if key in ('parallel', 'calcpsf'):
+                            if key in ('parallel', ):
                                 fh.write(f"       {key}={key},\n")
-                            else:
+                            elif key not in ('calcpsf', 'calcres', 'nmajor'):
                                 fh.write(f"       {key}={repr(val)},\n")
+                            else:
+                                if key in ('calcpsf', 'calcres', 'nmajor'):
+                                    pass
+                                else:
+                                    raise ValueError(f"ERROR: encountered invalid / overridden tclean kwarg {key}:{val}")
                         fh.write(")\n\n\n")
 
-                        expected_imname = os.path.join(tempdir_name,
-                                                       os.path.basename(tcpars['imagename']) +
-                                                       ('.image.tt0.pbcor' if tcpars['specmode'] == 'mfs' else '.image.pbcor')
-                                                       )
+                        threshold = float(tcpars['threshold'].strip(string.ascii_letters))
+
+                        # first major cycle
+                        fh.write(f"ret = tclean(nmajor=1, calcpsf=calcpsf, **tclean_pars)\n\n")
+
+                        # remaining major cycles
+                        fh.write(textwrap.dedent(f"""
+                                 nmajors = 1
+                                 while float(ret['peakRes'].strip(string.ascii_letters)) > {threshold}:
+                                     print(f"{{nmajors}}: Residual={{ret['PeakRes']}} > threshold {threshold}")
+                                     nmajors += 1
+                                     ret = tclean(nmajor=1,
+                                                  calcpsf=False,
+                                                  calcres=False,
+                                                  **tclean_pars)
+                                     savedata()
+
+                                 """
+                                                )
+                                )
+
+                        expected_imname = (os.path.basename(tcpars['imagename']) +
+                                           ('.image.tt0.pbcor'
+                                            if tcpars['specmode'] == 'mfs'
+                                            else '.image.pbcor')
+                                          )
+
                         check_exists = textwrap.dedent(f"""
                                               if not os.path.exists('{expected_imname}'):
                                                   raise IOError('Expected output file {expected_imname} does not exist.')
@@ -290,6 +367,9 @@ def main():
                                     shutil.rmtree(f'{imname}.{suffix}')
                                 elif exists_wild[suffix]:
                                     print(f"DRY: Removing existing files with suffix {suffix}: ", glob.glob(f"{imname_wild}.{suffix}"))
+
+                    # reset imagename back to original
+                    tcpars['imagename'] = os.path.join(orig_dirname, os.path.basename(tcpars['imagename']))
         else:
             print(f"Did not find mous {mous}")
 
