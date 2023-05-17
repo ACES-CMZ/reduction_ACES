@@ -33,6 +33,7 @@ export ACES_ROOTDIR="/orange/adamginsburg/ACES/reduction_ACES/"
 CASAVERSION=casa-6.2.1-7-pipeline-2021.2.0.128
 CASAVERSION=casa-6.4.3-2-pipeline-2021.3.0.17
 CASAVERSION=casa-6.4.4-31-py3.8
+CASAVERSION=casa-6.4.1-12-pipeline-2022.2.0.68
 export CASAPATH=/orange/adamginsburg/casa/${CASAVERSION}
 export MPICASA=${CASAPATH}/bin/mpicasa
 export CASA=${CASAPATH}/bin/casa
