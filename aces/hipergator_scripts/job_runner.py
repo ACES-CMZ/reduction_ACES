@@ -282,8 +282,8 @@ def main():
                     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
 
-                    # start the script from within the appropriate workdir
-                    os.chdir(f'{workdir}/{tempdir_name}')
+                    # DONT start the script from within the appropriate workdir: it puts the log in the wrong place?
+                    #os.chdir(f'{workdir}/{tempdir_name}')
 
                     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} '
                            f'--mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} '

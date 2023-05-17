@@ -62,7 +62,7 @@ def main():
                 }
 
     # these aren't really user-configurable
-    tcpars_override = {'calcpsf': True, }
+    tcpars_override = {'calcpsf': True, 'interactive': 0 }
 
     for sbname, allpars in commands.items():
         mous_ = allpars['mous']
@@ -137,7 +137,7 @@ def main():
                                             calcpsf = not os.path.exists('{expected_psfname}')
 
                                             if not os.path.exists('{os.path.basename(expected_psfname)}') and not calcpsf:
-                                                shutil.copytree(expected_psfname, '{os.path.basename(expected_psfname)}')
+                                                shutil.copytree('{expected_psfname}', '{os.path.basename(expected_psfname)}')
                                             \n\n""")
                     # this is overridden below tcpars['calcpsf'] = 'calcpsf'
 
@@ -286,7 +286,7 @@ def main():
                         for key, val in tcpars.items():
                             if key in ('parallel', ):
                                 fh.write(f"       {key}={key},\n")
-                            elif key not in ('calcpsf', 'calcres', 'nmajor'):
+                            elif key not in ('calcpsf', 'calcres', 'nmajor', 'interactive'):
                                 fh.write(f"       {key}={repr(val)},\n")
                             else:
                                 if key in ('calcpsf', 'calcres', 'nmajor', 'interactive'):
