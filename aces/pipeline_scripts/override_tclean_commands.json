@@ -3839,5 +3839,33 @@
         "cyclefactor": 2.0
       }
     }
+  },
+    "Sgr_A_st_aq_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 2.0
+      }
+    }
+  },
+    "Sgr_A_st_aj_03_7M_updated": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 2.0
+      }
+    }
+  },
+    "Sgr_A_st_s_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 3.0
+      }
+    }
+  },
+    "Sgr_A_st_aa_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 2.0
+      }
+    }
   }
 }
