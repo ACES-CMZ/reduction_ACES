@@ -200,6 +200,7 @@ def main():
 
                         savecmds = textwrap.dedent(
                              f"""
+                             import numpy as np
                              import glob
                              def savedata():
                                  flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
@@ -298,17 +299,30 @@ def main():
                         threshold = float(tcpars['threshold'].strip(string.ascii_letters))
 
                         # first major cycle
-                        fh.write(f"ret = tclean(nmajor=1, calcpsf=calcpsf, interactive=0, **tclean_pars)\n\n")
+                        fh.write(f"ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
+                        fh.write(textwrap.dedent("""
+                                     peakres = 0
+                                     for val1 in ret['summaryminor'].values():
+                                         for val2 in val1.values():
+                                             for val3 in val2.values():
+                                                 peakres = max([peakres, np.max(val3['peakRes'])])
+                                                 """))
 
                         # remaining major cycles
                         fh.write(textwrap.dedent(f"""
                                  nmajors = 1
-                                 while float(ret['peakRes'].strip(string.ascii_letters)) > {threshold}:
-                                     print(f"{{nmajors}}: Residual={{ret['PeakRes']}} > threshold {threshold}")
+                                 while peakres > {threshold}:
+                                     peakres = 0
+                                     for val1 in ret['summaryminor'].values():
+                                         for val2 in val1.values():
+                                             for val3 in val2.values():
+                                                 peakres = max([peakres, val3['peakRes']])
+                                     print(f"{{nmajors}}: Residual={{peakres}} > threshold {threshold}")
                                      nmajors += 1
                                      ret = tclean(nmajor=1,
                                                   calcpsf=False,
-                                                  interactive=0,
+                                                  interactive=False,
+                                                  fullsummary=True,
                                                   calcres=True, # sadly must always calcres, even when redundant
                                                   **tclean_pars)
                                      savedata()\n
