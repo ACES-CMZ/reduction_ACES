@@ -62,7 +62,7 @@ def main():
                 }
 
     # these aren't really user-configurable
-    tcpars_override = {'calcpsf': True, 'interactive': 0 }
+    tcpars_override = {'calcpsf': True, 'interactive': 0}
 
     for sbname, allpars in commands.items():
         mous_ = allpars['mous']
@@ -199,43 +199,43 @@ def main():
                         tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
 
                         savecmds = textwrap.dedent(
-                             f"""
-                             import numpy as np
-                             import glob
-                             def savedata():
-                                 flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
-                                 for fn in flist:
-                                     logprint(f'Copying {{fn}} to {savedir_name}')
-                                     target = f'{savedir_name}/{{os.path.basename(fn)}}'
-                                     if os.path.realpath(fn) == os.path.realpath(target):
-                                        print("Skipping copy - source = destination")
-                                     else:
-                                         if fn.endswith('.fits'):
-                                             shutil.copy(fn, target)
-                                         else:
-                                             if os.path.exists(target):
-                                                 logprint(f'Removing {{target}} because it exists')
-                                                 assert 'iter1' in f'{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
-                                                 shutil.rmtree(target)
-                                             shutil.copytree(fn, target)\n\n
-                             """)
+                            f"""
+                            import numpy as np
+                            import glob
+                            def savedata():
+                                flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
+                                for fn in flist:
+                                    logprint(f'Copying {{fn}} to {savedir_name}')
+                                    target = f'{savedir_name}/{{os.path.basename(fn)}}'
+                                    if os.path.realpath(fn) == os.path.realpath(target):
+                                       print("Skipping copy - source = destination")
+                                    else:
+                                        if fn.endswith('.fits'):
+                                            shutil.copy(fn, target)
+                                        else:
+                                            if os.path.exists(target):
+                                                logprint(f'Removing {{target}} because it exists')
+                                                assert 'iter1' in f'{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
+                                                shutil.rmtree(target)
+                                            shutil.copytree(fn, target)\n\n
+                            """)
 
                         cleanupcmds = (textwrap.dedent(
-                             f"""
-                             import glob
-                             flist = glob.glob('{workingpath}/{os.path.basename(tcpars['imagename'])}.*')
-                             for fn in flist:
-                                 logprint(f'Moving {{fn}} to {workingpath}')
-                                 target = f'{workingpath}/{{os.path.basename(fn)}}'
-                                 if os.path.exists(target):
-                                     logprint(f'Removing {{target}} because it exists')
-                                     assert 'iter1' in target  # sanity check - don't remove important directories!
-                                     if fn.endswith('.fits'):
-                                         os.remove(target)
-                                     else:
-                                         shutil.rmtree(target)
-                                 shutil.move(fn, '{workingpath}/')\n\n""") +
-                             "\n".join([f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']])
+                           f"""
+                           import glob
+                           flist = glob.glob('{workingpath}/{os.path.basename(tcpars['imagename'])}.*')
+                           for fn in flist:
+                               logprint(f'Moving {{fn}} to {workingpath}')
+                               target = f'{workingpath}/{{os.path.basename(fn)}}'
+                               if os.path.exists(target):
+                                   logprint(f'Removing {{target}} because it exists')
+                                   assert 'iter1' in target  # sanity check - don't remove important directories!
+                                   if fn.endswith('.fits'):
+                                       os.remove(target)
+                                   else:
+                                       shutil.rmtree(target)
+                               shutil.move(fn, '{workingpath}/')\n\n""") +
+                           "\n".join([f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']])
                         )
                         # use local name instead
                         #tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
@@ -299,7 +299,7 @@ def main():
                         threshold = float(tcpars['threshold'].strip(string.ascii_letters))
 
                         # first major cycle
-                        fh.write(f"ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
+                        fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
                         fh.write(textwrap.dedent("""
                                      peakres = 0
                                      for val1 in ret['summaryminor'].values():
