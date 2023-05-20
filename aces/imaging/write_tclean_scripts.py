@@ -62,7 +62,7 @@ def main():
                 }
 
     # these aren't really user-configurable
-    tcpars_override = {'calcpsf': True, 'interactive': 0}
+    tcpars_override = {'calcpsf': True, 'interactive': 0, 'usemask': 'pb'}
 
     for sbname, allpars in commands.items():
         mous_ = allpars['mous']
@@ -299,7 +299,7 @@ def main():
                         threshold = float(tcpars['threshold'].strip(string.ascii_letters))
 
                         # first major cycle
-                        fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, usemask='pb', interactive=False, **tclean_pars)\n\n")
+                        fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
                         fh.write(textwrap.dedent("""
                                      peakres = 0
                                      for val1 in ret['summaryminor'].values():
@@ -322,7 +322,6 @@ def main():
                                      ret = tclean(nmajor=1,
                                                   calcpsf=False,
                                                   interactive=False,
-                                                  usemask='pb',
                                                   fullsummary=True,
                                                   calcres=True, # sadly must always calcres, even when redundant
                                                   **tclean_pars)
