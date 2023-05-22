@@ -201,6 +201,7 @@ def main():
                         savecmds = textwrap.dedent(
                             f"""
                             import numpy as np
+                            import frocc
                             import glob
                             def savedata():
                                 flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
@@ -298,6 +299,7 @@ def main():
 
                         threshold = float(tcpars['threshold'].strip(string.ascii_letters))
 
+                        fh.write('logprint(f"tclean parameters: {tclean_pars}")\n\n')
                         # first major cycle
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
                         fh.write(textwrap.dedent("""
