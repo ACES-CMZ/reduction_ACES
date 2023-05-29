@@ -1,14 +1,17 @@
+import os
 import textwrap
+import datetime
 from astropy import units as u
 import subprocess
 
-def parallel_clean_slurm(nchan, imagename, start=0, width=1, nchan_per=4,
+def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          ntasks=4, mem_per_cpu='4gb', jobname='array_clean',
                          account='astronomy-dept', qos='astronomy-dept-b',
                          jobtime='96:00:00',
                          CASAVERSION = 'casa-6.5.5-21-py3.8',
                          field='Sgr_A_star',
                          workdir='/blue/adamginsburg/adamginsburg/ACES/workdir',
+                         dry=False,
                          #savedir='/blue/adamginsburg/adamginsburg/ACES/workdir',
                          **kwargs):
 
@@ -25,8 +28,6 @@ def parallel_clean_slurm(nchan, imagename, start=0, width=1, nchan_per=4,
 
     tclean_kwargs = {'nchan': nchan_per,}
     tclean_kwargs.update(**kwargs)
-
-    spw = tclean_kwargs[spw]
 
     splitcmd = textwrap.dedent(
         f"""
@@ -60,7 +61,8 @@ def parallel_clean_slurm(nchan, imagename, start=0, width=1, nchan_per=4,
                               """)
 
     script = textwrap.dedent(
-        f"""import os
+        f"""
+        import os
         os.chdir('{workdir}')
         tclean_kwargs = {kwargs}
     """)
@@ -85,31 +87,48 @@ def parallel_clean_slurm(nchan, imagename, start=0, width=1, nchan_per=4,
 
     script += splitcmd
 
-    script += "tclean(**tclean_kwargs)\n"
+    script += textwrap.dedent(f"""
+    tclean_kwargs['vis'] = [rename_vis(vis) for vis in tclean_kwargs['vis']]
+    print(tclean_kwargs['vis'])
 
-    scriptname = imagename+"_parallel_script.py"
+    tclean(**tclean_kwargs)\n""")
+
+    scriptname = os.path.join(workdir, imagename+"_parallel_script.py")
     with open(scriptname, 'w') as fh:
         fh.write(script)
 
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
     LOGFILENAME = f"casa_log_line_{jobname}_{now}.log"
 
-    runcmd = (f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
+    runcmd = ("#!/bin/bash\n"
+              f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
               f' --nologger --nogui '
               f' --logfile={LOGFILENAME} '
               f' -c "execfile(\'{scriptname}\')"')
 
+    slurmcmd = imagename+"_slurm_cmd.sh"
+    with open(slurmcmd, 'w') as fh:
+        fh.write(runcmd)
+
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
            f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log --job-name={jobname} --account={account} '
            f'--array=0-{NARRAY} '
-           f'--qos={qos} --export=ALL --time={jobtime} --wrap "{runcmd}"')
+           f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd}')
 
-    sbatch = subprocess.check_output(cmd.split())
+    if dry:
+        print(cmd.split())
+        jobid = 'PLACEHOLDER'
+    else:
+        print(cmd.split())
+        sbatch = subprocess.check_output(cmd.split())
+        jobid = sbatch.decode().split()[-1]
+        print(f'{sbatch.decode()} with jobname={jobname}')
 
 
-    mergescriptname = imagename+"_merge_script.py"
+    mergescriptname = os.path.join(workdir, imagename+"_merge_script.py")
     mergescript = textwrap.dedent(
-        f"""import glob, os
+        f"""
+        import glob, os
         os.chdir('{workdir}')
         ia.imageconcat(outfile=os.path.basename('{imagename}.image',)
                        infiles=sorted(glob.glob(os.path.basename('{imagename}.[0-9]*.image'))),
@@ -122,13 +141,24 @@ def parallel_clean_slurm(nchan, imagename, start=0, width=1, nchan_per=4,
 
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
     LOGFILENAME = f"casa_log_line_{jobname}_merge_{now}.log"
-    runcmd = (f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
-              f' --nologger --nogui '
-              f' --logfile={LOGFILENAME} '
-              f' -c "execfile(\'{mergescriptname}\')"')
+    runcmd_merge = ("#!/bin/bash\n"
+                    f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
+                    f' --nologger --nogui '
+                    f' --logfile={LOGFILENAME} '
+                    f' -c "execfile(\'{mergescriptname}\')"')
+
+    slurmcmd_merge = imagename+"_slurm_cmd_merge.sh"
+    with open(slurmcmd_merge, 'w') as fh:
+        fh.write(runcmd_merge)
 
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks*4} '
            f'--mem-per-cpu={mem_per_cpu} --output={jobname}_merge_%j_%A_%a.log --job-name={jobname}_merge --account={account} '
-           f'--qos={qos} --export=ALL --time={jobtime}_merge --wrap "{runcmd}"')
+           f'--dependency=afterok:{jobid} '
+           f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd_merge}')
 
-    sbatch = subprocess.check_output(cmd.split())
+    if dry:
+        print(cmd.split())
+    else:
+        print(cmd.split())
+        sbatch = subprocess.check_output(cmd.split())
+        print(f'{sbatch.decode()} with jobname={jobname}_merge')

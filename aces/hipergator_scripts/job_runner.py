@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import json
+import copy
 import glob
 import shutil
 import subprocess
@@ -9,6 +10,8 @@ from astropy.io import ascii
 import sys
 from astropy import log
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
+from aces.imaging.parallel_tclean import parallel_clean_slurm
+from aces.pipeline_scripts.merge_tclean_commands import commands
 from aces import conf
 
 basepath = conf.basepath
@@ -60,6 +63,12 @@ def main():
 
     mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
     mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
+
+    datadir = f'{conf.basepath}/data/'
+
+    projcode = os.getenv('PROJCODE') or '2021.1.00172.L'
+    sous = os.getenv('SOUS') or 'A001_X1590_X30a8'
+    gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
 
     sacct = subprocess.check_output(['/opt/slurm/bin/sacct',
                                      '--format=JobID,JobName%45,Account%15,QOS%17,State,Priority%8,ReqMem%8,CPUTime%15,Elapsed%15,Timelimit%15,NodeList%20'])
@@ -285,19 +294,52 @@ def main():
                     # DONT start the script from within the appropriate workdir: it puts the log in the wrong place?
                     #os.chdir(f'{workdir}/{tempdir_name}')
 
-                    cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} '
-                           f'--mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} '
-                           f'--qos={qos_} --export=ALL --time={jobtime} {runcmd}')
 
-                    if '--dry-run' in sys.argv:
-                        if verbose:
-                            print(cmd)
-                            print()
-                        # print(subprocess.check_output('env').decode())
-                        # raise
+                    if imtype == 'cube' and 'aggregate' not in spw:
+                        datapath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mous}/calibrated/working'
+                        tcpars = copy.copy(commands[sbname]['tclean_cube_pars'][spw])
+                        tcpars['vis'] = [os.path.join(datapath, os.path.basename(vis))
+                                         for vis in tcpars['vis']]
+                        print(tcpars['nchan'], tcpars['spw'], tcpars['start'], tcpars['width'], )
+                        # HACK: if start is specified but width isn't, unspecify start
+                        if tcpars['width'] == "" and 'Hz' in tcpars['start']:
+                            tcpars['start'] = 0
+                        spwnum = int(tcpars.pop('spw')[0]) if isinstance(tcpars['spw'], list) else int(tcpars.pop('spw'))
+                        # HACK: force to a high number (3880 > 3840)
+                        parallel_clean_slurm(nchan=tcpars.pop('nchan') or 3880,
+                                             imagename=os.path.basename(tcpars.pop('imagename')),
+                                             spw=spwnum,
+                                             # HACKISH: 3840 is not guaranteed to include edges
+                                             # so we round up
+                                             start=tcpars.pop('start') or 0,
+                                             width=tcpars.pop('width') or 1,
+                                             field=tcpars.pop('field'),
+                                             jobname=jobname,
+                                             workdir=f'{workdir}/{tempdir_name}',
+                                             qos=qos_,
+                                             account=account,
+                                             jobtime=jobtime,
+                                             dry=False,
+                                             **tcpars
+                                            )
                     else:
-                        sbatch = subprocess.check_output(cmd.split())
+                        print(f"imtype={imtype}, non-parallel mode")
 
-                        print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
+                        #cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} '
+                        #       f'--mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} '
+                        #       f'--qos={qos_} --export=ALL --time={jobtime} {runcmd}')
+
+                        #if '--dry-run' in sys.argv:
+                        #    if verbose:
+                        #        print(cmd)
+                        #        print()
+                        #    # print(subprocess.check_output('env').decode())
+                        #    # raise
+                        #else:
+                        #    sbatch = subprocess.check_output(cmd.split())
+
+                        #    print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
+                    #DEBUG
+                    return
 
     globals().update(locals())
