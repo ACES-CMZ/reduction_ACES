@@ -201,7 +201,6 @@ def main():
                         savecmds = textwrap.dedent(
                             f"""
                             import numpy as np
-                            import frocc
                             import glob
                             def savedata():
                                 flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
