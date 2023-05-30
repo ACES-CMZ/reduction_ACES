@@ -67,6 +67,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         os.chdir('{workdir}')
         tclean_kwargs = {kwargs}
         nchan_per = {nchan_per}
+        width = {width}
     """)
 
     if hasunit:
