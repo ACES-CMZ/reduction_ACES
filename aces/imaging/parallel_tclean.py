@@ -25,6 +25,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         width = u.Quantity(width).to(u.GHz).value
 
     NARRAY = nchan // nchan_per
+    assert NARRAY > 1
 
     tclean_kwargs = {'nchan': nchan_per,}
     tclean_kwargs.update(**kwargs)

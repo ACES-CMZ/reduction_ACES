@@ -306,7 +306,10 @@ def main():
                             tcpars['start'] = 0
                         spwnum = int(tcpars.pop('spw')[0]) if isinstance(tcpars['spw'], list) else int(tcpars.pop('spw'))
                         # HACK: force to a high number (3880 > 3840)
-                        parallel_clean_slurm(nchan=tcpars.pop('nchan') or 3880,
+                        nchan = tcpars.pop('nchan') or 3880,
+                        if nchan < 1:
+                            nchan = 3880
+                        parallel_clean_slurm(nchan=nchan,
                                              imagename=os.path.basename(tcpars.pop('imagename')),
                                              spw=spwnum,
                                              # HACKISH: 3840 is not guaranteed to include edges
@@ -340,6 +343,6 @@ def main():
 
                         #    print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
                     #DEBUG
-                    return
+                    #return
 
     globals().update(locals())
