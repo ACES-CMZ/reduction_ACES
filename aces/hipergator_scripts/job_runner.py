@@ -306,7 +306,7 @@ def main():
                             tcpars['start'] = 0
                         spwnum = int(tcpars.pop('spw')[0]) if isinstance(tcpars['spw'], list) else int(tcpars.pop('spw'))
                         # HACK: force to a high number (3880 > 3840)
-                        nchan = tcpars.pop('nchan') or 3880,
+                        nchan = int(tcpars.pop('nchan') or 3880)
                         if nchan < 1:
                             nchan = 3880
                         parallel_clean_slurm(nchan=nchan,

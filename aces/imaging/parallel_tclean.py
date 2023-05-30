@@ -81,7 +81,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         script += textwrap.dedent(f"""
         startchan = start = int(os.getenv('SLURM_ARRAY_TASK_ID')) * {nchan_per} * {width} + {start}
         tclean_kwargs['start'] = start
-        tclean_kwargs['width'] = width
+        tclean_kwargs['width'] = {width}
         tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{start:04d}}.{{nchan_per:03d}}")
         splitspw = spw
         """)
