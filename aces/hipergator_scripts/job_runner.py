@@ -296,17 +296,20 @@ def main():
 
 
                     if imtype == 'cube' and 'aggregate' not in spw:
-                        datapath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mous}/calibrated/working'
+                        datapath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mousname[6:]}/calibrated/working'
                         tcpars = copy.copy(commands[sbname]['tclean_cube_pars'][spw])
                         tcpars['vis'] = [os.path.join(datapath, os.path.basename(vis))
                                          for vis in tcpars['vis']]
+                        for vis in tcpars['vis']:
+                            assert os.path.exists(vis)
                         print(tcpars['nchan'], tcpars['spw'], tcpars['start'], tcpars['width'], )
                         # HACK: if start is specified but width isn't, unspecify start
                         if tcpars['width'] == "" and 'Hz' in tcpars['start']:
                             tcpars['start'] = 0
                         spwnum = int(tcpars.pop('spw')[0]) if isinstance(tcpars['spw'], list) else int(tcpars.pop('spw'))
                         # HACK: force to a high number (3880 > 3840)
-                        nchan = int(tcpars.pop('nchan') or 3880)
+                        nchan = int((tcpars.pop('nchan')[0] if isinstance(tcpars['nchan'], list) else int(tcpars.pop('nchan')))
+                                    or 3880)
                         if nchan < 1:
                             nchan = 3880
                         parallel_clean_slurm(nchan=nchan,
