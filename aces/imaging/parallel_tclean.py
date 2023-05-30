@@ -66,6 +66,14 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         import os
         os.chdir('{workdir}')
         tclean_kwargs = {kwargs}
+        width = {width}
+        nchan_per = {nchan_per}
+
+
+        def logprint(x):
+            print(x, flush=True)
+            casalog.post(str(x), origin='parallel_tclean')
+
     """)
 
     if hasunit:
