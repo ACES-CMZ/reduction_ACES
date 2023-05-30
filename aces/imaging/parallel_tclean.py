@@ -72,7 +72,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         script += textwrap.dedent(f"""
         start = int(os.getenv('SLURM_ARRAY_TASK_ID')) * {nchan_per} * {width} + {start}
         tclean_kwargs['start'] = f'{{start}}GHz'
-        tclean_kwargs['width'] = f'{{width}}GHz'
+        tclean_kwargs['width'] = f'{width}GHz'
         startchan = int(os.getenv('SLURM_ARRAY_TASK_ID')) * {nchan_per}
         tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{startchan:04d}}.{{nchan_per:03d}}")
         splitspw = f'{spw}:{{start-width}}GHz~{{start+width*(nchan_per+1)}}GHz'
