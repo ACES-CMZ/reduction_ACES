@@ -32,15 +32,11 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     splitcmd = textwrap.dedent(
         f"""
-            def logprint(x):
-                print(x, flush=True)
-                casalog.post(str(x), origin='parallel_tclean')
-
             # to be called AFTER tclean_kwargs are set
             def rename_vis(x):
                 return os.path.join("{workdir}",
                                     os.path.basename(x).replace('.ms',
-                                                                f'_spw{spw}_ch{{startchan}}+{nchan_per}.ms'))
+                                                                f'_spw{spw}_ch{{startchan}}+{{nchan_per}}.ms'))
 
             for vis in {tclean_kwargs['vis']}:
                 outputvis=f'{{rename_vis(vis)}}'
@@ -50,7 +46,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                         split(vis=vis,
                             outputvis=outputvis,
                             field='{field}',
-                            spw={{splitspw}})
+                            spw=splitspw)
                         if not os.path.exists(outputvis):
                             raise ValueError("Did not split")
                         else:
@@ -62,7 +58,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                               outputvis=outputvis,
                               field='{field}',
                               datacolumn='data',
-                              spw={{splitspw}})\n
+                              spw=splitspw)\n
                               """)
 
     script = textwrap.dedent(
@@ -70,25 +66,23 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         import os
         os.chdir('{workdir}')
         tclean_kwargs = {kwargs}
-        nchan_per = {nchan_per}
-        width = {width}
     """)
 
     if hasunit:
         script += textwrap.dedent(f"""
         start = int(os.getenv('SLURM_ARRAY_TASK_ID')) * {nchan_per} * {width} + {start}
         tclean_kwargs['start'] = f'{{start}}GHz'
-        tclean_kwargs['width'] = f'{width}GHz'
+        tclean_kwargs['width'] = f'{{width}}GHz'
         startchan = int(os.getenv('SLURM_ARRAY_TASK_ID')) * {nchan_per}
-        tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{startchan:04d}}.{nchan_per:03d}")
+        tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{startchan:04d}}.{{nchan_per:03d}}")
         splitspw = f'{spw}:{{start-width}}GHz~{{start+width*(nchan_per+1)}}GHz'
         """)
     else:
         script += textwrap.dedent(f"""
         startchan = start = int(os.getenv('SLURM_ARRAY_TASK_ID')) * {nchan_per} * {width} + {start}
         tclean_kwargs['start'] = start
-        tclean_kwargs['width'] = {width}
-        tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{start:04d}}.{nchan_per:03d}")
+        tclean_kwargs['width'] = width
+        tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{start:04d}}.{{nchan_per:03d}}")
         splitspw = spw
         """)
 
@@ -96,7 +90,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     script += textwrap.dedent(f"""
     tclean_kwargs['vis'] = [rename_vis(vis) for vis in tclean_kwargs['vis']]
-    print(tclean_kwargs['vis'])
+    logprint(tclean_kwargs['vis'])
 
     tclean(**tclean_kwargs)\n""")
 

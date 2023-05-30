@@ -298,10 +298,14 @@ def main():
                     if imtype == 'cube' and 'aggregate' not in spw:
                         datapath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mousname[6:]}/calibrated/working'
                         tcpars = copy.copy(commands[sbname]['tclean_cube_pars'][spw])
-                        tcpars['vis'] = [os.path.join(datapath, os.path.basename(vis))
+                        tcpars['vis'] = [os.path.join(datapath, os.path.basename(vis)).replace("targets", "target")
                                          for vis in tcpars['vis']]
-                        for vis in tcpars['vis']:
-                            assert os.path.exists(vis)
+                        for ii, vis in enumerate(tcpars['vis']):
+                            try:
+                                assert os.path.exists(vis), vis
+                            except AssertionError:
+                                assert os.path.exists(vis.replace("_line", ""))
+                                tcpars['vis'][ii] = vis.replace("_line", "")
                         print(tcpars['nchan'], tcpars['spw'], tcpars['start'], tcpars['width'], )
                         # HACK: if start is specified but width isn't, unspecify start
                         if tcpars['width'] == "" and 'Hz' in tcpars['start']:
