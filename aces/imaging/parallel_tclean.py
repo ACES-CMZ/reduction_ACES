@@ -36,7 +36,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
             def rename_vis(x):
                 return os.path.join("{workdir}",
                                     os.path.basename(x).replace('.ms',
-                                                                f'_spw{spw}_ch{{startchan}}+{{nchan_per}}.ms'))
+                                                                f'_spw{spw}_ch{{startchan}}+{nchan_per}.ms'))
 
             for vis in {tclean_kwargs['vis']}:
                 outputvis=f'{{rename_vis(vis)}}'
@@ -66,6 +66,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         import os
         os.chdir('{workdir}')
         tclean_kwargs = {kwargs}
+        nchan_per = {nchan_per}
     """)
 
     if hasunit:
@@ -74,7 +75,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         tclean_kwargs['start'] = f'{{start}}GHz'
         tclean_kwargs['width'] = f'{width}GHz'
         startchan = int(os.getenv('SLURM_ARRAY_TASK_ID')) * {nchan_per}
-        tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{startchan:04d}}.{{nchan_per:03d}}")
+        tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{startchan:04d}}.{nchan_per:03d}")
         splitspw = f'{spw}:{{start-width}}GHz~{{start+width*(nchan_per+1)}}GHz'
         """)
     else:
@@ -82,7 +83,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         startchan = start = int(os.getenv('SLURM_ARRAY_TASK_ID')) * {nchan_per} * {width} + {start}
         tclean_kwargs['start'] = start
         tclean_kwargs['width'] = {width}
-        tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{start:04d}}.{{nchan_per:03d}}")
+        tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{start:04d}}.{nchan_per:03d}")
         splitspw = spw
         """)
 
