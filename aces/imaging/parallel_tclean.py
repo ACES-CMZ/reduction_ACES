@@ -32,6 +32,10 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     splitcmd = textwrap.dedent(
         f"""
+            def logprint(x):
+                print(x, flush=True)
+                casalog.post(x, origin='parallel_tclean')
+
             # to be called AFTER tclean_kwargs are set
             def rename_vis(x):
                 return os.path.join("{workdir}",
