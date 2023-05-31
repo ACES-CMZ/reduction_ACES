@@ -107,7 +107,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     tclean(**tclean_kwargs)\n""")
 
-    scriptname = os.path.join(workdir, f"{imagename}.{start:04d}.{nchan_per:03d}.parallel_script.py")
+    scriptname = os.path.join(workdir, f"{imagename}_parallel_script.py")
     with open(scriptname, 'w') as fh:
         fh.write(script)
 
