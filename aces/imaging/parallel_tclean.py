@@ -33,6 +33,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     del tclean_kwargs['interactive']
     del tclean_kwargs['parallel']
     assert 'interactive' not in tclean_kwargs
+    tclean_kwargs['calcres'] = True
+    tclean_kwargs['calcpsf'] = True
 
     splitcmd = textwrap.dedent(
         f"""
@@ -104,6 +106,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     tclean_kwargs['vis'] = [rename_vis(vis) for vis in tclean_kwargs['vis']]
     logprint(f'tclean_kwargs: {{tclean_kwargs}}')
     logprint(tclean_kwargs['vis'])
+    logprint(f"Cleaning with startchan={{startchan}}")
 
     tclean(**tclean_kwargs)\n""")
 
