@@ -8,7 +8,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          ntasks=4, mem_per_cpu='4gb', jobname='array_clean',
                          account='astronomy-dept', qos='astronomy-dept-b',
                          jobtime='96:00:00',
-                         CASAVERSION = 'casa-6.5.5-21-py3.8',
+                         CASAVERSION = 'casa-6.4.3-2-pipeline-2021.3.0.17', #'casa-6.5.5-21-py3.8',
                          field='Sgr_A_star',
                          workdir='/blue/adamginsburg/adamginsburg/ACES/workdir',
                          dry=False,
@@ -69,9 +69,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         f"""
         import os
         os.chdir('{workdir}')
-        tclean_kwargs = {kwargs}
-        assert 'interactive' not in tclean_kwargs
-        tclean_kwargs['interactive'] = False
+        tclean_kwargs = {tclean_kwargs}
         width = {width}
         nchan_per = {nchan_per}
 
@@ -116,9 +114,10 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     LOGFILENAME = f"casa_log_line_{jobname}_{now}.log"
 
     runcmd = ("#!/bin/bash\n"
+              f'LOGFILENAME="casa_log_line_{jobname}_{now}_${{SLURM_ARRAY_TASK_ID}}.log"\n'
               f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
-              f' --nologger --nogui '
-              f' --logfile={LOGFILENAME} '
+              ' --nologger --nogui '
+              ' --logfile=${LOGFILENAME} '
               f' -c "execfile(\'{scriptname}\')"')
 
     slurmcmd = imagename+"_slurm_cmd.sh"
