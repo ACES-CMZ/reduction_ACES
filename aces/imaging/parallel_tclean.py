@@ -111,10 +111,10 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         fh.write(script)
 
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
-    LOGFILENAME = f"casa_log_line_{jobname}_{now}.log"
+    #LOGFILENAME = f"casa_log_line_{jobname}_{now}.log"
 
     runcmd = ("#!/bin/bash\n"
-              f'LOGFILENAME="casa_log_line_{jobname}_{now}_${{SLURM_ARRAY_TASK_ID}}.log"\n'
+              f'LOGFILENAME="casa_log_line_{jobname}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
               f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
               ' --nologger --nogui '
               ' --logfile=${LOGFILENAME} '
