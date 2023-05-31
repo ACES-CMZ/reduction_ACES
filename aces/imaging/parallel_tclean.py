@@ -29,6 +29,10 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     tclean_kwargs = {'nchan': nchan_per,}
     tclean_kwargs.update(**kwargs)
+    # can't be zero, even though docs say it can be
+    del tclean_kwargs['interactive']
+    del tclean_kwargs['parallel']
+    assert 'interactive' not in tclean_kwargs
 
     splitcmd = textwrap.dedent(
         f"""
@@ -66,6 +70,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         import os
         os.chdir('{workdir}')
         tclean_kwargs = {kwargs}
+        assert 'interactive' not in tclean_kwargs
+        tclean_kwargs['interactive'] = False
         width = {width}
         nchan_per = {nchan_per}
 
