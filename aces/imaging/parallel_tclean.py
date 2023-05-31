@@ -95,18 +95,19 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         tclean_kwargs['start'] = start
         tclean_kwargs['width'] = width
         tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{start:04d}}.{{nchan_per:03d}}")
-        splitspw = spw
+        splitspw = {spw}
         """)
 
     script += splitcmd
 
     script += textwrap.dedent(f"""
     tclean_kwargs['vis'] = [rename_vis(vis) for vis in tclean_kwargs['vis']]
+    logprint(f'tclean_kwargs: {{tclean_kwargs}}')
     logprint(tclean_kwargs['vis'])
 
     tclean(**tclean_kwargs)\n""")
 
-    scriptname = os.path.join(workdir, imagename+"_parallel_script.py")
+    scriptname = os.path.join(workdir, f"{imagename}.{start:04d}.{nchan_per:03d}.parallel_script.py")
     with open(scriptname, 'w') as fh:
         fh.write(script)
 
