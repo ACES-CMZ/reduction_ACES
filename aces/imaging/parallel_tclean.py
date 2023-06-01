@@ -103,12 +103,16 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     script += splitcmd
 
     script += textwrap.dedent(f"""
-    tclean_kwargs['vis'] = [rename_vis(vis) for vis in tclean_kwargs['vis']]
-    logprint(f'tclean_kwargs: {{tclean_kwargs}}')
-    logprint(tclean_kwargs['vis'])
-    logprint(f"Cleaning with startchan={{startchan}}")
+    if os.path.exists(tclean_kwargs['imagename'] + ".image"):
+        logprint("Already done with startchan={{startchan}}")
+    else:
+        tclean_kwargs['vis'] = [rename_vis(vis) for vis in tclean_kwargs['vis']]
+        logprint(f'tclean_kwargs: {{tclean_kwargs}}')
+        logprint(tclean_kwargs['vis'])
+        logprint(f"Cleaning with startchan={{startchan}}")
 
-    tclean(**tclean_kwargs)\n""")
+        tclean(**tclean_kwargs)
+    """)
 
     scriptname = os.path.join(workdir, f"{imagename}_parallel_script.py")
     with open(scriptname, 'w') as fh:
@@ -148,9 +152,10 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         f"""
         import glob, os
         os.chdir('{workdir}')
-        ia.imageconcat(outfile=os.path.basename('{imagename}.image',)
-                       infiles=sorted(glob.glob(os.path.basename('{imagename}.[0-9]*.image'))),
-                       mode='c')
+        for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "sumwt"):
+            ia.imageconcat(outfile=os.path.basename(f'{imagename}.{{suffix}}',)
+                           infiles=sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}'))),
+                           mode='m')
         """)
 
     with open(mergescriptname, 'w') as fh:
