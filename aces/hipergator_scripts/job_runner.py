@@ -353,6 +353,6 @@ def main():
 
                         #    print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
                     #DEBUG
-                    return
+                    #return
 
     globals().update(locals())

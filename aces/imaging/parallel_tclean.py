@@ -158,16 +158,20 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     mergescript = textwrap.dedent(
         f"""
         import glob, os, shutil
-        savedir = {savedir}
+        savedir = '{savedir}'
         os.chdir('{workdir}')
         for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "sumwt"):
             outfile = os.path.basename(f'{imagename}.{{suffix}}')
+            infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
+            print(outfile, infiles)
             ia.imageconcat(outfile=outfile,
-                           infiles=sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}'))),
+                           infiles=infiles,
                            mode='m')
             if savedir and os.path.exists(savedir):
                 print(f"Moving {{outfile}} to {{savedir}}")
-                shutil.move(outfile, os.path.join(savedir, outfile))
+                shutil.move(outfile, savedir)
+            else:
+                print(f"Savedir {{savedir}} does not exist")
         """)
 
     with open(mergescriptname, 'w') as fh:
