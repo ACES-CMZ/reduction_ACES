@@ -332,6 +332,7 @@ def main():
                                              dry=False,
                                              ntasks=8,
                                              mem_per_cpu='4gb',
+                                             savedir=datapath,
                                              **tcpars
                                             )
                     else:
