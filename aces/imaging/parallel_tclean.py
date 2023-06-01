@@ -115,6 +115,9 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
         tclean(**tclean_kwargs)
 
+        if not os.path.exists(tclean_kwargs['imagename'] + ".image"):
+            raise ValueError(f"FAILURE: image {{tclean_kwargs['imagename']}}.image was not produced")
+
     # Cleanup stage
     for vis in tclean_kwargs['vis']:
         logprint(f"Removing visibility {{vis}}")
@@ -129,7 +132,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     #LOGFILENAME = f"casa_log_line_{jobname}_{now}.log"
 
     runcmd = ("#!/bin/bash\n"
-              f'LOGFILENAME="casa_log_line_{jobname}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
+              f'LOGFILENAME="casa_log_line_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
               f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
               ' --nologger --nogui '
               ' --logfile=${LOGFILENAME} '
@@ -160,10 +163,12 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         import glob, os, shutil
         savedir = '{savedir}'
         os.chdir('{workdir}')
-        for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "sumwt"):
+        for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask"):
             outfile = os.path.basename(f'{imagename}.{{suffix}}')
             infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
             print(outfile, infiles)
+            assert len(infiles) > 0, f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}"
+
             ia.imageconcat(outfile=outfile,
                            infiles=infiles,
                            mode='m')
