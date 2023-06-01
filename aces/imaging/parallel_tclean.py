@@ -12,7 +12,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          field='Sgr_A_star',
                          workdir='/blue/adamginsburg/adamginsburg/ACES/workdir',
                          dry=False,
-                         #savedir='/blue/adamginsburg/adamginsburg/ACES/workdir',
+                         savedir=None,
                          **kwargs):
 
     try:
@@ -69,7 +69,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     script = textwrap.dedent(
         f"""
-        import os
+        import os, shutil
         os.chdir('{workdir}')
         tclean_kwargs = {tclean_kwargs}
         width = {width}
@@ -103,15 +103,22 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     script += splitcmd
 
     script += textwrap.dedent(f"""
+    # rename the vises whether or not we image so cleanup will work
+    tclean_kwargs['vis'] = [rename_vis(vis) for vis in tclean_kwargs['vis']]
+
     if os.path.exists(tclean_kwargs['imagename'] + ".image"):
         logprint("Already done with startchan={{startchan}}")
     else:
-        tclean_kwargs['vis'] = [rename_vis(vis) for vis in tclean_kwargs['vis']]
         logprint(f'tclean_kwargs: {{tclean_kwargs}}')
         logprint(tclean_kwargs['vis'])
         logprint(f"Cleaning with startchan={{startchan}}")
 
         tclean(**tclean_kwargs)
+
+    # Cleanup stage
+    for vis in tclean_kwargs['vis']:
+        logprint(f"Removing visibility {{vis}}")
+        shutil.rmtree(vis)
     """)
 
     scriptname = os.path.join(workdir, f"{imagename}_parallel_script.py")
@@ -150,12 +157,17 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     mergescriptname = os.path.join(workdir, imagename+"_merge_script.py")
     mergescript = textwrap.dedent(
         f"""
-        import glob, os
+        import glob, os, shutil
+        savedir = {savedir}
         os.chdir('{workdir}')
         for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "sumwt"):
-            ia.imageconcat(outfile=os.path.basename(f'{imagename}.{{suffix}}',)
+            outfile = os.path.basename(f'{imagename}.{{suffix}}')
+            ia.imageconcat(outfile=outfile,
                            infiles=sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}'))),
                            mode='m')
+            if savedir and os.path.exists(savedir):
+                print(f"Moving {{outfile}} to {{savedir}}")
+                shutil.move(outfile, os.path.join(savedir, outfile))
         """)
 
     with open(mergescriptname, 'w') as fh:
