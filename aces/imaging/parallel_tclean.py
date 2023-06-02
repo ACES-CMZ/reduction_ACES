@@ -38,11 +38,12 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     splitcmd = textwrap.dedent(
         f"""
+
             # to be called AFTER tclean_kwargs are set
             def rename_vis(x):
                 return os.path.join("{workdir}",
                                     os.path.basename(x).replace('.ms',
-                                                                f'_spw{spw}_ch{{startchan}}+{{nchan_per}}.ms'))
+                                                                f'_spw{spw}.ms'))
 
             for vis in {tclean_kwargs['vis']}:
                 outputvis=f'{{rename_vis(vis)}}'
@@ -89,7 +90,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         tclean_kwargs['width'] = f'{{width}}GHz'
         startchan = int(os.getenv('SLURM_ARRAY_TASK_ID')) * {nchan_per}
         tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{startchan:04d}}.{{nchan_per:03d}}")
-        splitspw = f'{spw}:{{start-width}}GHz~{{start+width*(nchan_per+1)}}GHz'
+        #splitspw = f'{spw}:{{start-width}}GHz~{{start+width*(nchan_per+1)}}GHz'
+        splitspw = {spw}
         """)
     else:
         script += textwrap.dedent(f"""
@@ -103,8 +105,19 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     script += splitcmd
 
     script += textwrap.dedent(f"""
+
     # rename the vises whether or not we image so cleanup will work
     tclean_kwargs['vis'] = [rename_vis(vis) for vis in tclean_kwargs['vis']]
+
+    for vis in tclean_kwargs['vis']:
+        msmd.open(vis)
+        # assume spw=0
+        nchan_max = msmd.nchan(0)
+        msmd.close()
+
+    if start >= nchan_max:
+        logprint(f"Maximum number of channels is {{nchan_max}} and start={{start}}.  Quitting.")
+        sys.exit(0)
 
     if os.path.exists(tclean_kwargs['imagename'] + ".image"):
         logprint("Already done with startchan={{startchan}}")
@@ -163,18 +176,26 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         import glob, os, shutil
         savedir = '{savedir}'
         os.chdir('{workdir}')
-        for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask"):
+        for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
             outfile = os.path.basename(f'{imagename}.{{suffix}}')
             infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
             print(outfile, infiles)
-            assert len(infiles) > 0, f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}"
+            if suffix in ("image.pbcor", "sumwt"):
+                # these may not always exist
+                print(f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}")
+            else:
+                assert len(infiles) > 0, f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}"
 
             ia.imageconcat(outfile=outfile,
                            infiles=infiles,
                            mode='m')
             if savedir and os.path.exists(savedir):
                 print(f"Moving {{outfile}} to {{savedir}}")
-                shutil.move(outfile, savedir)
+                full_outfile = os.path.join(savedir, outfile)
+                if os.path.exists(full_outfile):
+                    print("Outfile {{full_outfile}} already exists.  Check what's up.")
+                else:
+                    shutil.move(outfile, savedir)
             else:
                 print(f"Savedir {{savedir}} does not exist")
         """)
