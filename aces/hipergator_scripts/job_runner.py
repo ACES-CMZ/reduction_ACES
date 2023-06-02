@@ -306,6 +306,10 @@ def main():
                             except AssertionError:
                                 assert os.path.exists(vis.replace("_line", ""))
                                 tcpars['vis'][ii] = vis.replace("_line", "")
+                        if 'nchan' not in tcpars:
+                            print(tcpars)
+                            print(sous, gous, mous)
+                            raise ValueError(f"{sous} {gous} {mous}")
                         print(tcpars['nchan'], tcpars['spw'], tcpars['start'], tcpars['width'], )
                         # HACK: if start is specified but width isn't, unspecify start
                         if tcpars['width'] == "" and 'Hz' in tcpars['start']:
