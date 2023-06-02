@@ -629,6 +629,11 @@
   "Sgr_A_st_d_03_7M": {
     "tclean_cube_pars": {
       "spw22": {
+        "imagename": "uid___A001_X15a0_Xb4.Sgr_A_star_sci.spw22.cube.I.iter2.reclean",
+        "cyclefactor": 2.0,
+        "niter": 20000000
+      },
+      "spw24": {
         "imagename": "uid___A001_X15a0_Xb4.Sgr_A_star_sci.spw24.cube.I.iter2.reclean",
         "cyclefactor": 2.0,
         "niter": 20000000
