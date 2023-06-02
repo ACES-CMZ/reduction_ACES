@@ -63,6 +63,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "nchan": -1,
+        "start": "",
+        "width": "",
         "spw": [
           "25",
           "25"
@@ -158,6 +160,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "nchan": -1,
+        "start": "",
+        "width": "",
         "spw": [
           "27",
           "27"
@@ -254,6 +258,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "nchan": -1,
+        "start": "",
+        "width": "",
         "spw": [
           "29",
           "29"
@@ -350,6 +356,8 @@
         "selectdata": true,
         "field": "Sgr_A_star",
         "nchan": -1,
+        "start": "",
+        "width": "",
         "spw": [
           "31",
           "31"
@@ -444,6 +452,8 @@
           "uid___A002_Xf8f6a9_X216b_target.ms"
         ],
         "nchan": -1,
+        "start": "",
+        "width": "",
         "selectdata": true,
         "field": "Sgr_A_star",
         "spw": [
@@ -549,6 +559,8 @@
         "datacolumn": "corrected",
         "imagename": "uid___A001_X15a0_X17e.s38_0.Sgr_A_star_sci.spw35.cube.I.manual.reclean",
         "nchan": -1,
+        "start": "",
+        "width": "",
         "imsize": [
           2304,
           3750
