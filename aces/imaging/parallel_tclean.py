@@ -167,15 +167,16 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                    f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                    ' --nologger --nogui '
                    ' --logfile=${LOGFILENAME} '
-                   f' -c "execfile(\'{scriptname}\')"')
+                   f' -c "execfile(\'{splitscriptname}\')"')
 
-    slurmsplitcmd = imagename+"_split_slurm_cmd.sh"
-    with open(slurmsplitcmd, 'w') as fh:
+    slurmsplitcmdsh = imagename+"_split_slurm_cmd.sh"
+    with open(slurmsplitcmdsh, 'w') as fh:
         fh.write(runsplitcmd)
 
-    cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
-           f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log --job-name={jobname} --account={account} '
-           f'--qos={qos} --export=ALL --time={jobtime} {slurmsplitcmd}')
+    slurmsplitcmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
+                     f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log'
+                     f'--job-name={jobname} --account={account} '
+                     f'--qos={qos} --export=ALL --time={jobtime} {slurmsplitcmdsh}')
 
 
     if dry:
