@@ -65,9 +65,21 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
         import sys
 
+        def test_valid(vis):
+            try:
+                msmd.open(vis)
+                nchan_max = msmd.nchan(0)
+                msmd.close()
+                return True
+            except RuntimeError as ex:
+                logprint(f"vis {{vis}} was invalid.  Removing.")
+                shutil.rmtree(vis)
+                return False
+
+
         for vis in {tclean_kwargs['vis']}:
             outputvis=f'{{rename_vis(vis)}}'
-            if not os.path.exists(outputvis):
+            if not os.path.exists(outputvis) or not test_valid(vis):
                 try:
                     logprint(f"Splitting {{vis}} with defaults")
                     split(vis=vis,
@@ -92,6 +104,12 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
             if not os.path.exists(outputvis):
                 # fail!
                 sys.exit(1)
+
+            # test that vis is valid
+            msmd.open(vis)
+            nchan_max = msmd.nchan(0)
+            msmd.close()
+
         """)
 
     script = textwrap.dedent(
@@ -105,6 +123,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
         """)
     script += logprint
+    script += "\nlogprint(f'Log file name is {os.getenv('LOGFILENAME')}')\n"
     script += rename_vis
     splitscript = script + splitcmd
 
@@ -164,6 +183,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     runsplitcmd = ("#!/bin/bash\n"
                    f'LOGFILENAME="casa_log_split_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
+                   'echo "Log file is $LOGFILENAME"\n'
                    f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                    ' --nologger --nogui '
                    ' --logfile=${LOGFILENAME} '
@@ -197,6 +217,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     runcmd = ("#!/bin/bash\n"
               f'LOGFILENAME="casa_log_line_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
+              'echo "Log file is $LOGFILENAME"\n'
               f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
               ' --nologger --nogui '
               ' --logfile=${LOGFILENAME} '
@@ -208,7 +229,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
            f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log '
-           f'--job-name={jobname} --account={account} '
+           f'--job-name={jobname}_%a --account={account} '
            f'--array=0-{NARRAY} '
            f'--dependency=afterok:{scriptjobid} '
            f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd}\n')
@@ -276,6 +297,7 @@ for vis in tclean_kwargs['vis']:
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
     LOGFILENAME = f"casa_log_line_{jobname}_merge_{now}.log"
     runcmd_merge = ("#!/bin/bash\n"
+                    f'echo "Log file is {LOGFILENAME}"\n'
                     f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                     f' --nologger --nogui '
                     f' --logfile={LOGFILENAME} '
