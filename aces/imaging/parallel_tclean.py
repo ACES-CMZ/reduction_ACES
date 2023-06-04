@@ -36,37 +36,59 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     tclean_kwargs['calcres'] = True
     tclean_kwargs['calcpsf'] = True
 
-    splitcmd = textwrap.dedent(
-        f"""
 
-            # to be called AFTER tclean_kwargs are set
+    # TODO:
+    # since we're no longer splitting out subsections of the MS, the split should only be done once
+    # and the split job should be a dependency of the tclean array job.
+    # In the current version, there is probably a race condition.
+
+    rename_vis = textwrap.dedent(f"""
             def rename_vis(x):
                 return os.path.join("{workdir}",
                                     os.path.basename(x).replace('.ms',
                                                                 f'_spw{spw}.ms'))
+                                 """)
+    logprint = textwrap.dedent("""
+        def logprint(x):
+            print(x, flush=True)
+            casalog.post(str(x), origin='parallel_tclean')
+                               """)
 
-            for vis in {tclean_kwargs['vis']}:
-                outputvis=f'{{rename_vis(vis)}}'
-                if not os.path.exists(outputvis):
-                    try:
-                        logprint(f"Splitting {{vis}} with defaults")
-                        split(vis=vis,
-                            outputvis=outputvis,
-                            field='{field}',
-                            spw=splitspw)
-                        if not os.path.exists(outputvis):
-                            raise ValueError("Did not split")
-                        else:
-                            logprint(f"Splitting {{vis}} with default (CORRECTED) was successful")
-                    except Exception as ex:
-                        logprint(ex)
-                        logprint(f"Splitting {{vis}} with datacolumn='data'")
-                        split(vis=vis,
-                              outputvis=outputvis,
-                              field='{field}',
-                              datacolumn='data',
-                              spw=splitspw)\n
-                              """)
+    splitcmd = textwrap.dedent(
+        f"""
+
+        # to be called AFTER tclean_kwargs are set
+
+        import sys
+
+        for vis in {tclean_kwargs['vis']}:
+            outputvis=f'{{rename_vis(vis)}}'
+            if not os.path.exists(outputvis):
+                try:
+                    logprint(f"Splitting {{vis}} with defaults")
+                    split(vis=vis,
+                        outputvis=outputvis,
+                        field='{field}',
+                        spw=splitspw)
+                    if not os.path.exists(outputvis):
+                        raise ValueError("Did not split")
+                    else:
+                        logprint(f"Splitting {{vis}} with default (CORRECTED) was successful")
+                except Exception as ex:
+                    logprint(f"Failed first attempt with exception {{ex}}")
+                    logprint(f"Splitting {{vis}} with datacolumn='data'")
+                    split(vis=vis,
+                          outputvis=outputvis,
+                          field='{field}',
+                          datacolumn='data',
+                          spw=splitspw)
+
+        for vis in {tclean_kwargs['vis']}:
+            outputvis=f'{{rename_vis(vis)}}'
+            if not os.path.exists(outputvis):
+                # fail!
+                sys.exit(1)
+        """)
 
     script = textwrap.dedent(
         f"""
@@ -77,9 +99,9 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         nchan_per = {nchan_per}
 
 
-        def logprint(x):
-            print(x, flush=True)
-            casalog.post(str(x), origin='parallel_tclean')
+        {logprint}
+
+        {rename_vis}
 
     """)
 
@@ -102,7 +124,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         splitspw = {spw}
         """)
 
-    script += splitcmd
+    splitscript = script + splitcmd
 
     script += textwrap.dedent(f"""
 
@@ -131,18 +153,46 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         if not os.path.exists(tclean_kwargs['imagename'] + ".image"):
             raise ValueError(f"FAILURE: image {{tclean_kwargs['imagename']}}.image was not produced")
 
-    # Cleanup stage
-    for vis in tclean_kwargs['vis']:
-        logprint(f"Removing visibility {{vis}}")
-        shutil.rmtree(vis)
     """)
+
+
+    splitscriptname = os.path.join(workdir, f"{imagename}_parallel_split_script.py")
+    with open(splitscriptname, 'w') as fh:
+        fh.write(splitscript)
+
+    now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+
+    runsplitcmd = ("#!/bin/bash\n"
+                   f'LOGFILENAME="casa_log_split_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
+                   f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
+                   ' --nologger --nogui '
+                   ' --logfile=${LOGFILENAME} '
+                   f' -c "execfile(\'{scriptname}\')"')
+
+    slurmsplitcmd = imagename+"_split_slurm_cmd.sh"
+    with open(slurmsplitcmd, 'w') as fh:
+        fh.write(runsplitcmd)
+
+    cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
+           f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log --job-name={jobname} --account={account} '
+           f'--qos={qos} --export=ALL --time={jobtime} {slurmsplitcmd}')
+
+
+    if dry:
+        print(slurmsplitcmd.split())
+        scriptjobid = 'PLACEHOLDER'
+    else:
+        print(slurmsplitcmd.split())
+        sbatch = subprocess.check_output(slurmsplitcmd.split())
+        scriptjobid = sbatch.decode().split()[-1]
+        print(f'Split: {sbatch.decode()} with jobname={jobname}')
+
 
     scriptname = os.path.join(workdir, f"{imagename}_parallel_script.py")
     with open(scriptname, 'w') as fh:
         fh.write(script)
 
-    now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
-    #LOGFILENAME = f"casa_log_line_{jobname}_{now}.log"
+
 
     runcmd = ("#!/bin/bash\n"
               f'LOGFILENAME="casa_log_line_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
@@ -158,6 +208,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
            f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log --job-name={jobname} --account={account} '
            f'--array=0-{NARRAY} '
+           f'--dependency=afterok:{scriptjobid} '
            f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd}')
 
     if dry:
@@ -198,6 +249,19 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                     shutil.move(outfile, savedir)
             else:
                 print(f"Savedir {{savedir}} does not exist")
+
+
+        # Cleanup stage
+
+        import os, shutil
+        os.chdir('{workdir}')
+        tclean_kwargs = {tclean_kwargs}
+
+        {rename_vis}
+
+        for vis in tclean_kwargs['vis']:
+            logprint(f"Removing visibility {{vis}}")
+            shutil.rmtree(vis)
         """)
 
     with open(mergescriptname, 'w') as fh:
