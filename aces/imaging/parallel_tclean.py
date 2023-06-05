@@ -80,7 +80,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
         for vis in {tclean_kwargs['vis']}:
             outputvis=f'{{rename_vis(vis)}}'
-            if not os.path.exists(outputvis) or not test_valid(vis):
+            if not os.path.exists(outputvis) or not test_valid(outputvis):
                 try:
                     logprint(f"Splitting {{vis}} with defaults")
                     split(vis=vis,
@@ -273,6 +273,12 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
     ia.imageconcat(outfile=outfile,
                    infiles=infiles,
                    mode='m')
+
+    exportfits(imagename=outfile,
+               fitsimage=outfile+".fits",
+               overwrite=True # don't want to crash here, and don't expect FITS files to be hanging around...
+               )
+
     if savedir and os.path.exists(savedir):
         print(f"Moving {{outfile}} to {{savedir}}")
         full_outfile = os.path.join(savedir, outfile)
@@ -280,8 +286,10 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
             print("Outfile {{full_outfile}} already exists.  Check what's up.")
         else:
             shutil.move(outfile, savedir)
+            shutil.move(outfile+".fits", savedir)
     else:
         print(f"Savedir {{savedir}} does not exist")
+
 
 
 # Cleanup stage
