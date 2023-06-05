@@ -205,7 +205,7 @@ def main():
                     # workdir = "SLURM_TMPDIR"
                     jobname = f"{field}_{config}_{spw}_{imtype}"
 
-                    match = tbl['JobName'] == jobname
+                    match = np.array([jobname in x for x in tbl['JobName']])
                     if any(match):
                         states = np.unique(tbl['State'][match])
                         if 'RUNNING' in states:
@@ -298,7 +298,8 @@ def main():
                     if imtype == 'cube' and 'aggregate' not in spw:
                         datapath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mousname[6:]}/calibrated/working'
                         tcpars = copy.copy(commands[sbname]['tclean_cube_pars'][spw])
-                        tcpars['vis'] = [os.path.join(datapath, os.path.basename(vis)).replace("targets", "target")
+                        tcpars['vis'] = [os.path.join(datapath,
+                                                      os.path.basename(vis)).replace("targets", "target")
                                          for vis in tcpars['vis']]
                         for ii, vis in enumerate(tcpars['vis']):
                             try:
@@ -335,6 +336,7 @@ def main():
                                              jobtime=jobtime,
                                              dry=False,
                                              ntasks=8,
+                                             #nchan_per=64, # 128 had a lot of OOM kills
                                              mem_per_cpu='4gb',
                                              savedir=datapath,
                                              **tcpars

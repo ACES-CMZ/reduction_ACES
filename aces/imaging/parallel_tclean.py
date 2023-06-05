@@ -73,6 +73,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                 return True
             except RuntimeError as ex:
                 logprint(f"vis {{vis}} was invalid.  Removing.")
+                assert 'orange' not in vis
                 shutil.rmtree(vis)
                 return False
 
@@ -123,7 +124,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
         """)
     script += logprint
-    script += "\nlogprint(f'Log file name is {os.getenv('LOGFILENAME')}')\n"
+    script += "\nlogprint(f'Log file name is {os.getenv(\"LOGFILENAME\")}')\n"
     script += rename_vis
     splitscript = script + splitcmd
 
@@ -182,7 +183,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
 
     runsplitcmd = ("#!/bin/bash\n"
-                   f'LOGFILENAME="casa_log_split_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
+                   f'LOGFILENAME="casa_log_split_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_JOB_ID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
                    'echo "Log file is $LOGFILENAME"\n'
                    f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                    ' --nologger --nogui '
@@ -195,7 +196,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     slurmsplitcmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
                      f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log '
-                     f'--job-name={jobname} --account={account} '
+                     f'--job-name={jobname}_split --account={account} '
                      f'--qos={qos} --export=ALL --time={jobtime} {slurmsplitcmdsh}\n')
 
 
@@ -229,7 +230,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
            f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log '
-           f'--job-name={jobname}_%a --account={account} '
+           f'--job-name={jobname}_arr --account={account} '
            f'--array=0-{NARRAY} '
            f'--dependency=afterok:{scriptjobid} '
            f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd}\n')
@@ -262,6 +263,13 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
     else:
         assert len(infiles) > 0, f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}"
 
+for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
+    outfile = os.path.basename(f'{imagename}.{{suffix}}')
+    infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
+    if len(infiles) == 0:
+        print(f"Skipped suffix {{suffix}}")
+        continue
+
     ia.imageconcat(outfile=outfile,
                    infiles=infiles,
                    mode='m')
@@ -286,7 +294,9 @@ tclean_kwargs = {tclean_kwargs}
 {rename_vis}
 
 for vis in tclean_kwargs['vis']:
+    vis = rename_vis(vis)
     logprint(f"Removing visibility {{vis}}")
+    assert 'orange' not in vis
     shutil.rmtree(vis)
 """)
 
@@ -294,13 +304,14 @@ for vis in tclean_kwargs['vis']:
         fh.write(mergescript)
 
 
-    now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
-    LOGFILENAME = f"casa_log_line_{jobname}_merge_{now}.log"
+    #now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+    #LOGFILENAME = f"casa_log_line_{jobname}_merge_{now}.log"
     runcmd_merge = ("#!/bin/bash\n"
-                    f'echo "Log file is {LOGFILENAME}"\n'
+                    f'LOGFILENAME="casa_log_merge_{jobname}_${{SLURM_JOBID}}_{now}.log"\n'
+                    'echo "Log file is $LOGFILENAME"\n'
                     f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                     f' --nologger --nogui '
-                    f' --logfile={LOGFILENAME} '
+                    f' --logfile=$LOGFILENAME '
                     f' -c "execfile(\'{mergescriptname}\')"')
 
     slurmcmd_merge = imagename+"_slurm_cmd_merge.sh"
