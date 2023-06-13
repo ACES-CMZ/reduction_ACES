@@ -273,7 +273,7 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
     if os.path.exists(outfile):
         backup_outfile = outfile+f".backup_{{now}}"
-        print(f"Found existing file {{outfile}}.  Moving to {{new_outfile}}")
+        print(f"Found existing file {{outfile}}.  Moving to {{backup_outfile}}")
         shutil.move(outfile, backup_outfile)
 
     ia.imageconcat(outfile=outfile,
