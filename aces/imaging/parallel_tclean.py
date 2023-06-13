@@ -275,8 +275,20 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
         backup_outfile = outfile+f".backup_{{now}}"
         print(f"Found existing file {{outfile}}.  Moving to {{backup_outfile}}")
         shutil.move(outfile, backup_outfile)
+    if os.path.exists(outfile+".move"):
+        backup_outfile = outfile+".move"+f".backup_{{now}}"
+        print(f"Found existing file {{outfile+'.move'}}.  Moving to {{backup_outfile}}")
+        shutil.move(outfile+".move", backup_outfile)
 
+    # reads much more efficiently, is consistent with other cubes
     ia.imageconcat(outfile=outfile,
+                   infiles=infiles,
+                   mode='p')
+
+
+    # consolidates the remainder into a single virtual cube
+    # (these files can be removed later)
+    ia.imageconcat(outfile=outfile+".move",
                    infiles=infiles,
                    mode='m')
 
