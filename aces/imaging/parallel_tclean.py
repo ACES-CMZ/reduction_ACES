@@ -80,7 +80,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
         for vis in {tclean_kwargs['vis']}:
             outputvis=f'{{rename_vis(vis)}}'
-            if not os.path.exists(outputvis) or not test_valid(output_vis):
+            if not os.path.exists(outputvis) or not test_valid(outputvis):
                 try:
                     logprint(f"Splitting {{vis}} with defaults")
                     split(vis=vis,
