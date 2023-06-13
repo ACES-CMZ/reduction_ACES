@@ -335,7 +335,7 @@ def main():
                                              account=account,
                                              jobtime=jobtime,
                                              dry=False,
-                                             ntasks=8,
+                                             ntasks=16,
                                              #nchan_per=64, # 128 had a lot of OOM kills
                                              mem_per_cpu='4gb',
                                              savedir=datapath,
