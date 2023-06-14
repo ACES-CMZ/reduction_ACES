@@ -1,12 +1,14 @@
 import os
 import pandas as pd
 
+
 # Function to check if files exist
 def check_files_exist(file_names):
     for file_name in file_names:
         if not os.path.exists(file_name):
             return False
     return True
+
 
 # Get environment variables
 ACES_ROOTDIR = os.getenv('ACES_ROOTDIR')
@@ -91,7 +93,7 @@ for i in range(len(sb_names)):
 
         # Regrid TP cube to 7m cube
         imregrid(imagename=tp_cube.replace('.fits', '.reframe') if os.path.isdir(tp_cube + '.reframe') else tp_cube, template=seven_m_cube_image, output=tp_cube.replace('.fits', '.regrid'))
-        
+
         # Regrid 12m pb cube to TP cube
         imregrid(imagename=twelve_m_pb, template=tp_cube.replace('.fits', '.regrid'), output=twelve_m_pb.replace('.fits', '.regrid'))
 
@@ -115,8 +117,12 @@ for i in range(len(sb_names)):
         feather(imagename=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_12M_feather.{molecule}.image'), highres=twelve_m_cube_image, lowres=tp_7m_cube + '.regrid')
 
         # Export feathered images to FITS
-        exportfits(imagename=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_feather.{molecule}.image'), fitsimage=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_feather.{molecule}.image.fits'), dropdeg=True)
-        exportfits(imagename=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_12M_feather.{molecule}.image'), fitsimage=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_12M_feather.{molecule}.image.fits'), dropdeg=True)
+        exportfits(imagename=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_feather.{molecule}.image'), 
+                   fitsimage=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_feather.{molecule}.image.fits'), 
+                   dropdeg=True)
+        exportfits(imagename=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_12M_feather.{molecule}.image'), 
+                   fitsimage=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_12M_feather.{molecule}.image.fits'), 
+                   dropdeg=True)
 
     else:
         print(f"One or more files do not exist for observation Sgr_A_st_{obs_id}. Skipping this one ...")
