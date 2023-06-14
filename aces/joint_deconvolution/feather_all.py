@@ -117,11 +117,11 @@ for i in range(len(sb_names)):
         feather(imagename=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_12M_feather.{molecule}.image'), highres=twelve_m_cube_image, lowres=tp_7m_cube + '.regrid')
 
         # Export feathered images to FITS
-        exportfits(imagename=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_feather.{molecule}.image'), 
-                   fitsimage=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_feather.{molecule}.image.fits'), 
+        exportfits(imagename=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_feather.{molecule}.image'),
+                   fitsimage=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_feather.{molecule}.image.fits'),
                    dropdeg=True)
-        exportfits(imagename=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_12M_feather.{molecule}.image'), 
-                   fitsimage=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_12M_feather.{molecule}.image.fits'), 
+        exportfits(imagename=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_12M_feather.{molecule}.image'),
+                   fitsimage=os.path.join(obs_dir, f'Sgr_A_st_{obs_id}.TP_7M_12M_feather.{molecule}.image.fits'),
                    dropdeg=True)
 
     else:
