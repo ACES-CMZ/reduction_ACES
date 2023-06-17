@@ -265,10 +265,15 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
 
 for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
-    infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
+    #infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
+    infiles = [f'{imagename}.{{start:04d}}.{nchan_per:03d}.{{suffix}}'
+               for start in range(0, {nchan}, {nchan_per})]
     if len(infiles) == 0:
         print(f"Skipped suffix {{suffix}}")
         continue
+    for fn in infiles:
+        if not os.path.exists(fn):
+            print(f"Failure: file {{fn}} did not exist")
 
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
     if os.path.exists(outfile):
