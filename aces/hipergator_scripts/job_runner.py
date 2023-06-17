@@ -337,7 +337,7 @@ def main():
                                              dry=False,
                                              ntasks=16,
                                              #nchan_per=64, # 128 had a lot of OOM kills
-                                             mem_per_cpu='4gb',
+                                             mem_per_cpu='8gb',
                                              savedir=datapath,
                                              **tcpars
                                             )
