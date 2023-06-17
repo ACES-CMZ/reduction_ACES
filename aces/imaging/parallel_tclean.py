@@ -305,6 +305,9 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
         else:
             shutil.move(outfile, savedir)
             shutil.move(outfile+".fits", savedir)
+
+            if not os.path.exists(full_outfile):
+                print(f"FAILURE: attempt to move {{outfile}} to {{savedir}} had no effect")
     else:
         print(f"Savedir {{savedir}} does not exist")
 
