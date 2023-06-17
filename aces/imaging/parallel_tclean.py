@@ -4,11 +4,12 @@ import datetime
 from astropy import units as u
 import subprocess
 
+
 def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          ntasks=4, mem_per_cpu='4gb', jobname='array_clean',
                          account='astronomy-dept', qos='astronomy-dept-b',
                          jobtime='96:00:00',
-                         CASAVERSION = 'casa-6.4.3-2-pipeline-2021.3.0.17', #'casa-6.5.5-21-py3.8',
+                         CASAVERSION='casa-6.4.3-2-pipeline-2021.3.0.17',
                          field='Sgr_A_star',
                          workdir='/blue/adamginsburg/adamginsburg/ACES/workdir',
                          dry=False,
@@ -27,7 +28,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     NARRAY = nchan // nchan_per
     assert NARRAY > 1
 
-    tclean_kwargs = {'nchan': nchan_per,}
+    tclean_kwargs = {'nchan': nchan_per, }
     tclean_kwargs.update(**kwargs)
     # can't be zero, even though docs say it can be
     del tclean_kwargs['interactive']
@@ -35,7 +36,6 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     assert 'interactive' not in tclean_kwargs
     tclean_kwargs['calcres'] = True
     tclean_kwargs['calcpsf'] = True
-
 
     # TODO:
     # since we're no longer splitting out subsections of the MS, the split should only be done once
@@ -190,7 +190,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                    ' --logfile=${LOGFILENAME} '
                    f' -c "execfile(\'{splitscriptname}\')"')
 
-    slurmsplitcmdsh = imagename+"_split_slurm_cmd.sh"
+    slurmsplitcmdsh = imagename + "_split_slurm_cmd.sh"
     with open(slurmsplitcmdsh, 'w') as fh:
         fh.write(runsplitcmd)
 
@@ -224,7 +224,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
               ' --logfile=${LOGFILENAME} '
               f' -c "execfile(\'{scriptname}\')"')
 
-    slurmcmd = imagename+"_slurm_cmd.sh"
+    slurmcmd = imagename + "_slurm_cmd.sh"
     with open(slurmcmd, 'w') as fh:
         fh.write(runcmd)
 
@@ -245,7 +245,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         print(f'{sbatch.decode()} with jobname={jobname}')
 
 
-    mergescriptname = os.path.join(workdir, imagename+"_merge_script.py")
+    mergescriptname = os.path.join(workdir, imagename + "_merge_script.py")
 
     # note the forced dedenting here because of {logprint} and {rename_vis}
     mergescript = textwrap.dedent(
@@ -347,7 +347,7 @@ for vis in tclean_kwargs['vis']:
                     f' --logfile=$LOGFILENAME '
                     f' -c "execfile(\'{mergescriptname}\')"')
 
-    slurmcmd_merge = imagename+"_slurm_cmd_merge.sh"
+    slurmcmd_merge = imagename + "_slurm_cmd_merge.sh"
     with open(slurmcmd_merge, 'w') as fh:
         fh.write(runcmd_merge)
 
