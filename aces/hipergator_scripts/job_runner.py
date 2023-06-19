@@ -362,7 +362,5 @@ def main():
                             sbatch = subprocess.check_output(cmd.split())
 
                             print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
-                    #DEBUG
-                    #return
 
     globals().update(locals())
