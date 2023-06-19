@@ -120,6 +120,7 @@ def main():
                     imtype = tcpars['specmode']
 
                     tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}_{config}_{mous}'
+                    assert any(x in tempdir_name for x in ('7M', 'TM1', 'TP'))
 
                     if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
                         os.mkdir(tempdir_name)

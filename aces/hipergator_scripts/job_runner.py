@@ -88,6 +88,9 @@ def main():
 
     for mous, spwpars in parameters.items():
         mousname = mous.split('.')[1]
+        # DEBUG
+        if not mousname.endswith('X37'):
+            continue
 
         jobtime = '96:00:00'
         if 'burst' in spwpars:
@@ -341,23 +344,24 @@ def main():
                                              savedir=datapath,
                                              **tcpars
                                             )
+                        print()
                     else:
                         print(f"imtype={imtype}, non-parallel mode")
 
-                        #cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} '
-                        #       f'--mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} '
-                        #       f'--qos={qos_} --export=ALL --time={jobtime} {runcmd}')
+                        cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} '
+                               f'--mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} '
+                               f'--qos={qos_} --export=ALL --time={jobtime} {runcmd}')
 
-                        #if '--dry-run' in sys.argv:
-                        #    if verbose:
-                        #        print(cmd)
-                        #        print()
-                        #    # print(subprocess.check_output('env').decode())
-                        #    # raise
-                        #else:
-                        #    sbatch = subprocess.check_output(cmd.split())
+                        if '--dry-run' in sys.argv:
+                            if verbose:
+                                print(cmd)
+                                print()
+                            # print(subprocess.check_output('env').decode())
+                            # raise
+                        else:
+                            sbatch = subprocess.check_output(cmd.split())
 
-                        #    print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
+                            print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
                     #DEBUG
                     #return
 
