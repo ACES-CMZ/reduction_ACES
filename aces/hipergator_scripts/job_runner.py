@@ -96,10 +96,9 @@ def main():
 
         sbname = mousmap_[mousname]
         field = sbname.split("_")[3]
-        if 'updated' in sbname:
-            config = sbname.split("_")[6]
-        else:
-            config = sbname.split("_")[5]
+        config = sbname.replace("_updated", "").split("_")[5]
+
+        assert config in ('7M', 'TM1', 'TP')
 
         do_contsub = bool(spwpars.get('do_contsub'))
         contsub_suffix = '.contsub' if do_contsub else ''
@@ -126,6 +125,7 @@ def main():
                 print(f"MOUS {mousname} is not downloaded/extracted (path={grouppath}/{mous}).")
                 continue
             for spw in imaging_status[mousname][config]:
+
                 for imtype in imaging_status[mousname][config][spw]:
                     log.debug(f"spw={spw} imtype={imtype}{'**************AGGREGATE**********' if 'aggregate' in imtype else ''}")
                     imstatus = imaging_status[mousname][config][spw][imtype]
@@ -137,15 +137,16 @@ def main():
                     except Exception:
                         spwname = spw
                     scriptname = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}_03_{config}_{spwname}.py'
-                    scriptname_glob = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}_03_{config}*_{spwname}.py'
+                    scriptname_glob = f'{calwork}/tclean_{cleantype}_pars_Sgr_A_st_{field}*_03_{config}*_{spwname}.py'
                     if (imtype == 'mfs' and 'aggregate' in spw) or imtype == 'cube':
                         if not os.path.exists(scriptname):
                             if any(glob.glob(scriptname_glob)):
                                 scriptname = glob.glob(scriptname_glob)[0]
                             else:
-                                if '7M' in scriptname:
+                                if '7M' in scriptname and imtype != 'cube':
                                     # April 22, 2023: I don't think I ever made aggregate high scripts
                                     # for the 7m data?  So the error message is erroneous / not useful
+                                    log.debug(f"Skipped {scriptname} b/c it's 7M aggregate")
                                     continue
                                 else:
                                     print(f"ERROR: script {scriptname} does not exist!  This may indicate that `write_tclean_scripts` has not been run or the pipeline hasn't finished.")
@@ -239,6 +240,9 @@ def main():
                     basename = f'{field}_{spw}_{imtype}{contsub_suffix}'
                     # basename = "{0}_{1}_spw{2}_{3}".format(field, band, spw, arrayname)
 
+
+                    tempdir_name = f'{field}_{spw}_{imtype}_{config}_{mousname[6:].replace("/", "_")}'
+                    assert any(x in tempdir_name for x in ('7M', 'TM1', 'TP'))
                     # it is safe to remove things beyond here because at this point we're committed
                     # to re-running
                     if '--dry-run' not in sys.argv:
