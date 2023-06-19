@@ -240,7 +240,6 @@ def main():
                     basename = f'{field}_{spw}_{imtype}{contsub_suffix}'
                     # basename = "{0}_{1}_spw{2}_{3}".format(field, band, spw, arrayname)
 
-
                     tempdir_name = f'{field}_{spw}_{imtype}_{config}_{mousname[6:].replace("/", "_")}'
                     assert any(x in tempdir_name for x in ('7M', 'TM1', 'TP'))
                     # it is safe to remove things beyond here because at this point we're committed
