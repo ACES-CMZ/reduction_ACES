@@ -3926,5 +3926,21 @@
         "cyclefactor": 3.0
       }
     }
+  },
+  "Sgr_A_st_p_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "imagename": "uid___A001_X15a0_Xfc.s38_0.Sgr_A_star_sci.spw24.cube.I.iter1.reclean",
+        "cyclefactor": 4.0,
+        "threshold": "0.32Jy"
+      }
+    }
+  },
+  "Sgr_A_st_x_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 3.0
+      }
+    }
   }
 }
