@@ -297,7 +297,6 @@ def main():
                     # DONT start the script from within the appropriate workdir: it puts the log in the wrong place?
                     #os.chdir(f'{workdir}/{tempdir_name}')
 
-
                     if imtype == 'cube' and 'aggregate' not in spw:
                         datapath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mousname[6:]}/calibrated/working'
                         tcpars = copy.copy(commands[sbname]['tclean_cube_pars'][spw])
@@ -320,7 +319,9 @@ def main():
                             tcpars['start'] = 0
                         spwnum = int(tcpars.pop('spw')[0]) if isinstance(tcpars['spw'], list) else int(tcpars.pop('spw'))
                         # HACK: force to a high number (3880 > 3840)
-                        nchan = int((tcpars.pop('nchan')[0] if isinstance(tcpars['nchan'], list) else int(tcpars.pop('nchan')))
+                        nchan = int((tcpars.pop('nchan')[0]
+                                     if isinstance(tcpars['nchan'], list)
+                                     else int(tcpars.pop('nchan')))
                                     or 3880)
                         if nchan < 1:
                             nchan = 3880
@@ -343,7 +344,7 @@ def main():
                                              mem_per_cpu='8gb',
                                              savedir=datapath,
                                              **tcpars
-                                            )
+                                             )
                         print()
                     else:
                         print(f"imtype={imtype}, non-parallel mode")

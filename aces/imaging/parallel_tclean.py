@@ -145,7 +145,6 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
             tclean_kwargs['imagename'] = os.path.basename(f"{imagename}.{{start:04d}}.{{nchan_per:03d}}")
             """)
 
-
     script += textwrap.dedent(f"""
 
         # rename the vises whether or not we image so cleanup will work
@@ -174,7 +173,6 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                 raise ValueError(f"FAILURE: image {{tclean_kwargs['imagename']}}.image was not produced")
 
         """)
-
 
     splitscriptname = os.path.join(workdir, f"{imagename}_parallel_split_script.py")
     with open(splitscriptname, 'w') as fh:

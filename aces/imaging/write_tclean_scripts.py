@@ -222,21 +222,21 @@ def main():
                             """)
 
                         cleanupcmds = (textwrap.dedent(
-                           f"""
-                           import glob
-                           flist = glob.glob('{workingpath}/{os.path.basename(tcpars['imagename'])}.*')
-                           for fn in flist:
-                               logprint(f'Moving {{fn}} to {workingpath}')
-                               target = f'{workingpath}/{{os.path.basename(fn)}}'
-                               if os.path.exists(target):
-                                   logprint(f'Removing {{target}} because it exists')
-                                   assert 'iter1' in target  # sanity check - don't remove important directories!
-                                   if fn.endswith('.fits'):
-                                       os.remove(target)
-                                   else:
-                                       shutil.rmtree(target)
-                               shutil.move(fn, '{workingpath}/')\n\n""") +
-                           "\n".join([f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']])
+                            f"""
+                            import glob
+                            flist = glob.glob('{workingpath}/{os.path.basename(tcpars['imagename'])}.*')
+                            for fn in flist:
+                                logprint(f'Moving {{fn}} to {workingpath}')
+                                target = f'{workingpath}/{{os.path.basename(fn)}}'
+                                if os.path.exists(target):
+                                    logprint(f'Removing {{target}} because it exists')
+                                    assert 'iter1' in target  # sanity check - don't remove important directories!
+                                    if fn.endswith('.fits'):
+                                        os.remove(target)
+                                    else:
+                                        shutil.rmtree(target)
+                                shutil.move(fn, '{workingpath}/')\n\n""") +
+                            "\n".join([f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']])
                         )
                         # use local name instead
                         #tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
@@ -328,14 +328,12 @@ def main():
                                                   calcres=True, # sadly must always calcres, even when redundant
                                                   **tclean_pars)
                                      savedata()\n
-                                 """)
-                                )
+                                 """))
 
                         expected_imname = (os.path.basename(tcpars['imagename']) +
                                            ('.image.tt0.pbcor'
                                             if tcpars['specmode'] == 'mfs'
-                                            else '.image.pbcor')
-                                          )
+                                            else '.image.pbcor'))
 
                         check_exists = textwrap.dedent(f"""
                                               if not os.path.exists('{expected_imname}'):
