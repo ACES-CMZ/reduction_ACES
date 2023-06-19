@@ -86,8 +86,9 @@ def main():
                     os.chdir(workingpath)
 
                     field = sbname.split("_")[3]
-                    config = sbname.split("_")[5]
+                    config = sbname.replace("_updated", "").split("_")[5]
                     print(f"{os.getcwd()} {sbname} {mous} {partype} {spwsel} {field} {config}: ", end=" ")
+                    assert config in ('7M', 'TM1', 'TP')
                     if not all(os.path.exists(x) for x in tcpars['vis']) and os.getenv('TRYDROPTARGET'):
                         tcpars['vis'] = [x.replace("_targets", "") for x in tcpars["vis"]]
                         tcpars['vis'] = [x.replace("_target", "") for x in tcpars["vis"]]
@@ -111,6 +112,7 @@ def main():
                     if temp_workdir:
                         imtype = tcpars['specmode']
                         tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}_{config}_{mous}'
+                        assert any(x in tempdir_name for x in ('7M', 'TM1', 'TP'))
 
                         if not os.path.exists(tempdir_name) or not os.path.isdir(tempdir_name):
                             os.mkdir(tempdir_name)
