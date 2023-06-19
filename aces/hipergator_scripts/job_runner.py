@@ -89,9 +89,6 @@ def main():
 
     for mous, spwpars in parameters.items():
         mousname = mous.split('.')[1]
-        # DEBUG
-        if not mousname.endswith('X37'):
-            continue
 
         jobtime = '96:00:00'
         if 'burst' in spwpars:
