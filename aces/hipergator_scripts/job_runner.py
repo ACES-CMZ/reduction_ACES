@@ -54,6 +54,7 @@ def main():
     verbose = '--verbose' in sys.argv
     debug = '--debug' in sys.argv
     check_syntax = '--check-syntax' in sys.argv
+    use_parallel = '--parallel' in sys.argv
 
     if debug:
         log.setLevel('DEBUG')
@@ -297,7 +298,7 @@ def main():
                     # DONT start the script from within the appropriate workdir: it puts the log in the wrong place?
                     #os.chdir(f'{workdir}/{tempdir_name}')
 
-                    if imtype == 'cube' and 'aggregate' not in spw:
+                    if imtype == 'cube' and 'aggregate' not in spw and use_parallel:
                         datapath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mousname[6:]}/calibrated/working'
                         tcpars = copy.copy(commands[sbname]['tclean_cube_pars'][spw])
                         tcpars['vis'] = [os.path.join(datapath,
