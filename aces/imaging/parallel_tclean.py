@@ -162,7 +162,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
             sys.exit(0)
 
         if os.path.exists(tclean_kwargs['imagename'] + ".image"):
-            logprint("Already done with startchan={{startchan}}")
+            logprint(f"Already done with startchan={{startchan}}")
         else:
             logprint(f'tclean_kwargs: {{tclean_kwargs}}')
             logprint(tclean_kwargs['vis'])
