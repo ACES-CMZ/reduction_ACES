@@ -96,7 +96,10 @@ def main():
 
         sbname = mousmap_[mousname]
         field = sbname.split("_")[3]
-        config = sbname.split("_")[5]
+        if 'updated' in sbname:
+            config = sbname.split("_")[6]
+        else:
+            config = sbname.split("_")[5]
 
         do_contsub = bool(spwpars.get('do_contsub'))
         contsub_suffix = '.contsub' if do_contsub else ''
