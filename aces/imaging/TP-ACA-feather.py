@@ -7,7 +7,7 @@
 templateIM='CS2-1-temlate-whole-band.image'
 
 import glob
-linename=glob.glob('*.image.pbcor')
+linename=glob.glob('*spw33*.image.pbcor')
 linewt=glob.glob('*.weight')
 
 
