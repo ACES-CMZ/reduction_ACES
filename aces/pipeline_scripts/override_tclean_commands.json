@@ -1819,7 +1819,8 @@
         "nchan": -1,
         "start": "",
         "width": "",
-        "threshold": "0.01Jy"
+        "threshold": "0.01Jy",
+	"cyclefactor": 3.0
       }
     }
   },
