@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import json
+import copy
 import glob
 import shutil
 import subprocess
@@ -9,6 +10,8 @@ from astropy.io import ascii
 import sys
 from astropy import log
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
+from aces.imaging.parallel_tclean import parallel_clean_slurm
+from aces.pipeline_scripts.merge_tclean_commands import commands
 from aces import conf
 
 basepath = conf.basepath
@@ -26,8 +29,8 @@ parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': T
               'member.uid___A001_X15a0_X1a2': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field ar: timeout
               'member.uid___A001_X15a0_X1a8': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # write lock frozen spw33 OOMs; try MPI?.  MPI write-locks everything.
               'member.uid___A001_X15a0_Xa6': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # spw33 is taking for-ev-er; try MPI?  created backup first: backup_20221108_beforempi/
-              'member.uid___A001_X15a0_X190': {'mem': 256, 'ntasks': 1, 'mpi': False,
-                                               'jobtime': '200:00:00', 'burst': False},  # ao: same as above, too long.  But, MPI fails with writelock. NON-MPI also fails!?
+              #'member.uid___A001_X15a0_X190': {'mem': 256, 'ntasks': 1, 'mpi': False,
+              #                                 'jobtime': '200:00:00', 'burst': False},  # ao: same as above, too long.  But, MPI fails with writelock. NON-MPI also fails!?
               'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
               'member.uid___A001_X15a0_Xd0': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field i spw35: timeout
               }
@@ -51,6 +54,7 @@ def main():
     verbose = '--verbose' in sys.argv
     debug = '--debug' in sys.argv
     check_syntax = '--check-syntax' in sys.argv
+    use_parallel = '--parallel' in sys.argv
 
     if debug:
         log.setLevel('DEBUG')
@@ -60,6 +64,12 @@ def main():
 
     mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
     mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
+
+    datadir = f'{conf.basepath}/data/'
+
+    projcode = os.getenv('PROJCODE') or '2021.1.00172.L'
+    sous = os.getenv('SOUS') or 'A001_X1590_X30a8'
+    gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
 
     sacct = subprocess.check_output(['/opt/slurm/bin/sacct',
                                      '--format=JobID,JobName%45,Account%15,QOS%17,State,Priority%8,ReqMem%8,CPUTime%15,Elapsed%15,Timelimit%15,NodeList%20'])
@@ -192,9 +202,11 @@ def main():
                         print(f"spw={spw}, imtype={imtype}, spwpars={spwpars}, imstatus={imstatus}")
 
                     workdir = conf.workpath
+                    # TODO: configure job_runner & write_tclean_scripts to work with SLURM_TMPDIR as the working directory?
+                    # workdir = "SLURM_TMPDIR"
                     jobname = f"{field}_{config}_{spw}_{imtype}"
 
-                    match = tbl['JobName'] == jobname
+                    match = np.array([jobname in x for x in tbl['JobName']])
                     if any(match):
                         states = np.unique(tbl['State'][match])
                         if 'RUNNING' in states:
@@ -242,6 +254,7 @@ def main():
 
                     tempdir_name = f'{field}_{spw}_{imtype}_{config}_{mousname[6:].replace("/", "_")}'
                     assert any(x in tempdir_name for x in ('7M', 'TM1', 'TP'))
+
                     # it is safe to remove things beyond here because at this point we're committed
                     # to re-running
                     if '--dry-run' not in sys.argv:
@@ -256,7 +269,6 @@ def main():
                                     print(f"Removing {ff}")
                                     shutil.rmtree(ff)
 
-                        tempdir_name = f'{field}_{spw}_{imtype}{contsub_suffix}'
                         print(f"Removing files matching '{workdir}/{tempdir_name}/IMAGING_WEIGHT.*'")
                         old_tempfiles = (glob.glob(f'{workdir}/{tempdir_name}/IMAGING_WEIGHT*') +
                                          glob.glob(f'{workdir}/{tempdir_name}/TempLattice*'))
@@ -280,19 +292,74 @@ def main():
                     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
 
-                    cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} '
-                           f'--mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} '
-                           f'--qos={qos_} --export=ALL --time={jobtime} {runcmd}')
+                    # DONT start the script from within the appropriate workdir: it puts the log in the wrong place?
+                    #os.chdir(f'{workdir}/{tempdir_name}')
 
-                    if '--dry-run' in sys.argv:
-                        if verbose:
-                            print(cmd)
-                            print()
-                        # print(subprocess.check_output('env').decode())
-                        # raise
+                    if imtype == 'cube' and 'aggregate' not in spw and use_parallel:
+                        datapath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mousname[6:]}/calibrated/working'
+                        tcpars = copy.copy(commands[sbname]['tclean_cube_pars'][spw])
+                        tcpars['vis'] = [os.path.join(datapath,
+                                                      os.path.basename(vis)).replace("targets", "target")
+                                         for vis in tcpars['vis']]
+                        for ii, vis in enumerate(tcpars['vis']):
+                            try:
+                                assert os.path.exists(vis), vis
+                            except AssertionError:
+                                assert os.path.exists(vis.replace("_line", ""))
+                                tcpars['vis'][ii] = vis.replace("_line", "")
+                        if 'nchan' not in tcpars:
+                            print(tcpars)
+                            print(sous, gous, mous)
+                            raise ValueError(f"{sous} {gous} {mous}")
+                        print(tcpars['nchan'], tcpars['spw'], tcpars['start'], tcpars['width'], )
+                        # HACK: if start is specified but width isn't, unspecify start
+                        if tcpars['width'] == "" and 'Hz' in tcpars['start']:
+                            tcpars['start'] = 0
+                        spwnum = int(tcpars.pop('spw')[0]) if isinstance(tcpars['spw'], list) else int(tcpars.pop('spw'))
+                        # HACK: force to a high number (3880 > 3840)
+                        nchan = int((tcpars.pop('nchan')[0]
+                                     if isinstance(tcpars['nchan'], list)
+                                     else int(tcpars.pop('nchan')))
+                                    or 3880)
+                        if nchan < 1:
+                            nchan = 3880
+                        parallel_clean_slurm(nchan=nchan,
+                                             imagename=os.path.basename(tcpars.pop('imagename')),
+                                             spw=spwnum,
+                                             # HACKISH: 3840 is not guaranteed to include edges
+                                             # so we round up
+                                             start=tcpars.pop('start') or 0,
+                                             width=tcpars.pop('width') or 1,
+                                             field=tcpars.pop('field'),
+                                             jobname=jobname,
+                                             workdir=f'{workdir}/{tempdir_name}',
+                                             qos=qos_,
+                                             account=account,
+                                             jobtime=jobtime,
+                                             dry=False,
+                                             ntasks=16,
+                                             #nchan_per=64, # 128 had a lot of OOM kills
+                                             mem_per_cpu='8gb',
+                                             savedir=datapath,
+                                             **tcpars
+                                             )
+                        print()
                     else:
-                        sbatch = subprocess.check_output(cmd.split())
+                        print(f"imtype={imtype}, non-parallel mode")
 
-                        print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
+                        cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} --cpus-per-task={cpus_per_task} '
+                               f'--mem={mem} --output={jobname}_%j.log --job-name={jobname} --account={account} '
+                               f'--qos={qos_} --export=ALL --time={jobtime} {runcmd}')
+
+                        if '--dry-run' in sys.argv:
+                            if verbose:
+                                print(cmd)
+                                print()
+                            # print(subprocess.check_output('env').decode())
+                            # raise
+                        else:
+                            sbatch = subprocess.check_output(cmd.split())
+
+                            print(f"Started sbatch job with jobid={sbatch.decode()} and parameters {spwpars} and script {scriptname}")
 
     globals().update(locals())
