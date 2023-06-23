@@ -30,7 +30,7 @@ CASAVERSION=casa-6.4.1-12-pipeline-2022.2.0.68
 # 6.4.1-12 above does not work - it just gives OOM errors for any operation
 CASAVERSION=casa-6.5.5-21-py3.8
 # none of the new versions work, maybe this one will?
-CASAVERSION=casa-6.2.1-7-pipeline-2021.2.0.128
+# Does not support nmajor? CASAVERSION=casa-6.2.1-7-pipeline-2021.2.0.128
 export CASAPATH=/orange/adamginsburg/casa/${CASAVERSION}
 export MPICASA=${CASAPATH}/bin/mpicasa
 export CASA=${CASAPATH}/bin/casa
