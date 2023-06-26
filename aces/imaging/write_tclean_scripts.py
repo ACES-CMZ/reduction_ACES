@@ -303,6 +303,8 @@ def main():
                         # first major cycle
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
                         fh.write(textwrap.dedent("""
+                                     print("ret=", ret)
+
                                      peakres = 0
                                      for val1 in ret['summaryminor'].values():
                                          for val2 in val1.values():
@@ -318,7 +320,7 @@ def main():
                                      for val1 in ret['summaryminor'].values():
                                          for val2 in val1.values():
                                              for val3 in val2.values():
-                                                 peakres = max([peakres, val3['peakRes']])
+                                                 peakres = max([peakres, np.max(val3['peakRes'])])
                                      print(f"{{nmajors}}: Residual={{peakres}} > threshold {threshold}")
                                      nmajors += 1
                                      ret = tclean(nmajor=1,
