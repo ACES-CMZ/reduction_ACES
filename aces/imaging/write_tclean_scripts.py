@@ -136,6 +136,7 @@ def main():
                     check_psf_exists = textwrap.dedent(f"""
                                             # if the PSF exists, don't re-calculate it
                                             calcpsf = not os.path.exists('{expected_psfname}')
+                                            print(f"calcpsf={{calcpsf}}.  psfname={expected_psfname}")
 
                                             if not os.path.exists('{os.path.basename(expected_psfname)}') and not calcpsf:
                                                 shutil.copytree('{expected_psfname}', '{os.path.basename(expected_psfname)}')
@@ -304,6 +305,8 @@ def main():
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
                         fh.write(textwrap.dedent("""
                                      print("ret=", ret)
+                                     if ret is False:
+                                        raise ValueError(f"tclean returned ret={ret}")
 
                                      peakres = 0
                                      for val1 in ret['summaryminor'].values():
