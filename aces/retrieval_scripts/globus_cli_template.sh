@@ -1,7 +1,7 @@
 #!/bin/bash
 # This is an example template for using the Globus CLI to transfer data from HPG to a local machine
 # This example is for transferring the 12m HNCO fits files, and uses the aces_SB_uids.csv file to get the list of SB uids
-# This is designed to work with a direcotry structure that directly mirrors the HPG directory structure
+# This is designed to work with a directory structure that directly mirrors the HPG directory structure
 
 # Define endpoint IDs and target paths
 hpg=insert_hpg_endpoint_id_here
