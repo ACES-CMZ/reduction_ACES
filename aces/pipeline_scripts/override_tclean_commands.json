@@ -692,6 +692,11 @@
         "lownoisethreshold": 1.75,
         "growiterations": 150
       }
+    },
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 3
+      }
     }
   },
   "Sgr_A_st_ar_03_7M": {
