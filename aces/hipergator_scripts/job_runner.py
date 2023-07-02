@@ -33,6 +33,7 @@ parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': T
               #                                 'jobtime': '200:00:00', 'burst': False},  # ao: same as above, too long.  But, MPI fails with writelock. NON-MPI also fails!?
               'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
               'member.uid___A001_X15a0_Xd0': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field i spw35: timeout
+              'member.uid___A001_X15a0_X17e': {'mem': 256, 'ntasks': 1, 'mpi': False, 'nchan_per': 16},  # field al: try to avoid having subcubes
               }
 newpars = parameters.copy()
 
@@ -338,7 +339,7 @@ def main():
                                              jobtime=jobtime,
                                              dry=False,
                                              ntasks=16,
-                                             #nchan_per=64, # 128 had a lot of OOM kills
+                                             nchan_per=spwpars['nchan_per'] if 'nchan_per' in spwpars else 128,  # 128 is default
                                              mem_per_cpu='8gb',
                                              savedir=datapath,
                                              **tcpars
