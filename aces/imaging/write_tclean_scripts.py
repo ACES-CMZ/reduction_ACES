@@ -136,7 +136,7 @@ def main():
                     check_psf_exists = textwrap.dedent(f"""
                                             # if the PSF exists, don't re-calculate it
                                             calcpsf = not os.path.exists('{expected_psfname}')
-                                            print(f"calcpsf={{calcpsf}}.  psfname={expected_psfname}")
+                                            logprint(f"calcpsf={{calcpsf}}.  psfname={expected_psfname}")
 
                                             if not os.path.exists('{os.path.basename(expected_psfname)}') and not calcpsf:
                                                 shutil.copytree('{expected_psfname}', '{os.path.basename(expected_psfname)}')
@@ -300,11 +300,14 @@ def main():
 
                         threshold = float(tcpars['threshold'].strip(string.ascii_letters))
 
-                        fh.write('logprint(f"tclean parameters: {tclean_pars}")\n\n')
+                        fh.write('tclean_default_pars = inp(tclean)\n')
+                        fh.write('logprint(f"tclean inp parameters: {tclean_default_pars}")\n')
+                        fh.write('logprint(f"tclean parameters: {tclean_pars}")\n')
+                        fh.write('logprint(f"calcpsf: {calcpsf}")\n\n')
                         # first major cycle
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
                         fh.write(textwrap.dedent("""
-                                     print("ret=", ret)
+                                     logprint("ret=", ret)
                                      if ret is False:
                                         raise ValueError(f"tclean returned ret={ret}")
 
@@ -324,7 +327,7 @@ def main():
                                          for val2 in val1.values():
                                              for val3 in val2.values():
                                                  peakres = max([peakres, np.max(val3['peakRes'])])
-                                     print(f"{{nmajors}}: Residual={{peakres}} > threshold {threshold}")
+                                     logprint(f"{{nmajors}}: Residual={{peakres}} > threshold {threshold}")
                                      nmajors += 1
                                      ret = tclean(nmajor=1,
                                                   calcpsf=False,
