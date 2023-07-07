@@ -307,7 +307,7 @@ def main():
                         # first major cycle
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
                         fh.write(textwrap.dedent("""
-                                     logprint("ret=", ret)
+                                     logprint(f"ret={ret}")
                                      if ret is False:
                                         raise ValueError(f"tclean returned ret={ret}")
 
