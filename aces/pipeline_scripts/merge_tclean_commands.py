@@ -23,7 +23,13 @@ def merge_aggregate(commands):
         aggregate_high_commands = json.load(fh)
 
     for sbname, allpars in aggregate_high_commands.items():
+        if sbname not in commands:
+            log.warning(f"SB {sbname} was not in the default tclean commands; using aggregate before override")
+            commands[sbname] = allpars
+            continue
         for partype, replacements in allpars.items():
+            if partype in ('manual QA', ):
+                continue
             for spwsel, tcpars in replacements.items():
                 if spwsel in commands[sbname][partype]:
                     # we're replacing/overriding arguments here
@@ -51,20 +57,25 @@ def merge_override(commands):
             commands[sbname] = allpars
             continue
         for partype, replacements in allpars.items():
-            for spwsel, tcpars in replacements.items():
-                if spwsel in commands[sbname][partype]:
-                    # we're replacing/overriding arguments here
-                    for key, val in tcpars.items():
-                        orig = commands[sbname][partype][spwsel][key]
+            if partype in ('manual QA', ):
+                continue
+            if partype not in commands[sbname]:
+                commands[sbname][partype] = replacements
+            else:
+                for spwsel, tcpars in replacements.items():
+                    if spwsel in commands[sbname][partype]:
+                        # we're replacing/overriding arguments here
+                        for key, val in tcpars.items():
+                            orig = commands[sbname][partype][spwsel][key]
+                            if verbose:
+                                print(f"{sbname} {partype} {spwsel}: {key}: {orig} -> {val}")
+                            commands[sbname][partype][spwsel][key] = val
+                    else:
+                        # but if a spw was totally skipped, we replace it
+                        # with the override version
                         if verbose:
-                            print(f"{sbname} {partype} {spwsel}: {key}: {orig} -> {val}")
-                        commands[sbname][partype][spwsel][key] = val
-                else:
-                    # but if a spw was totally skipped, we replace it
-                    # with the override version
-                    if verbose:
-                        print(f"SPW {spwsel} was skipped in {sbname} and is being replaced")
-                    commands[sbname][partype][spwsel] = tcpars
+                            print(f"SPW {spwsel} was skipped in {sbname} and is being replaced")
+                        commands[sbname][partype][spwsel] = tcpars
     return commands
 
 def main():
