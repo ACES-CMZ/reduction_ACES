@@ -207,9 +207,11 @@ def main():
                             def savedata():
                                 flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
                                 for fn in flist:
-                                    logprint(f'Copying {{fn}} to {savedir_name}')
+                                    realfn = os.path.realpath(fn)
+                                    realtarget = os.path.realpath(target)
+                                    logprint(f'Copying {{fn}} to {savedir_name} ({{realfn}} to {{realtarget}})')
                                     target = f'{savedir_name}/{{os.path.basename(fn)}}'
-                                    if os.path.realpath(fn) == os.path.realpath(target):
+                                    if realfn == realtarget:
                                        print("Skipping copy - source = destination")
                                     else:
                                         if fn.endswith('.fits'):
@@ -218,6 +220,7 @@ def main():
                                             if os.path.exists(target):
                                                 logprint(f'Removing {{target}} because it exists')
                                                 assert 'iter1' in f'{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
+                                                assert realtarget != realfn
                                                 shutil.rmtree(target)
                                             shutil.copytree(fn, target)\n\n
                             """)
@@ -225,7 +228,9 @@ def main():
                         cleanupcmds = (textwrap.dedent(
                             f"""
                             import glob
-                            flist = glob.glob('{workingpath}/{os.path.basename(tcpars['imagename'])}.*')
+                            # should be 'savedir_name', which is the path on blue that gets copied to from /tmp
+                            # workingpath is calibrated/working/ on /orange
+                            flist = glob.glob('{savedir_name}/{os.path.basename(tcpars['imagename'])}.*')
                             for fn in flist:
                                 logprint(f'Moving {{fn}} to {workingpath}')
                                 target = f'{workingpath}/{{os.path.basename(fn)}}'
@@ -307,7 +312,7 @@ def main():
                         # first major cycle
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
                         fh.write(textwrap.dedent("""
-                                     logprint(f"ret={ret}")
+                                     logprint("ret=", ret)
                                      if ret is False:
                                         raise ValueError(f"tclean returned ret={ret}")
 
