@@ -292,6 +292,7 @@ def main():
 
                     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
+                    os.environ['jobname'] = jobname
 
                     # DONT start the script from within the appropriate workdir: it puts the log in the wrong place?
                     #os.chdir(f'{workdir}/{tempdir_name}')

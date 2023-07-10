@@ -134,6 +134,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         if isinstance(commonbeam, str) and commonbeam == 'circular':
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
             cb = circbeam
+            if array == '12m':
+                assert cb.major < 3*u.arcsec
 
         log.info("Loading HDUs and projecting to common beam")
         prjs = [spectral_cube.Projection.from_hdu(hdul) for hdul in

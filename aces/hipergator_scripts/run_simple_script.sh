@@ -12,6 +12,11 @@ pwd; hostname; date
 echo "Memory=${MEM}"
 echo "job name = $jobname"
 
+if [ -z $jobname ]; then
+    export jobname=$SLURM_JOB_NAME
+    echo "job name = $jobname (set from SLURM_JOB_NAME=${SLURM_JOB_NAME}"
+fi
+
 #module load cuda/11.0.207
 module load intel/2020.0.166 openmpi/4.1.1 libfuse/3.10.4
 
