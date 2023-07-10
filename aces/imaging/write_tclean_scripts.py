@@ -19,7 +19,7 @@ import shutil
 import textwrap
 import string
 from aces import conf
-from aces.pipeline_scripts.merge_tclean_commands import commands
+from aces.pipeline_scripts.merge_tclean_commands import get_commands
 
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
@@ -63,6 +63,8 @@ def main():
 
     # these aren't really user-configurable
     tcpars_override = {'calcpsf': True, 'interactive': 0, 'usemask': 'pb'}
+
+    commands = get_commands()
 
     for sbname, allpars in commands.items():
         mous_ = allpars['mous']

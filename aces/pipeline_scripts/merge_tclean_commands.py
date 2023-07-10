@@ -1,10 +1,7 @@
 import json
 from astropy import log
 import os
-from aces.pipeline_scripts import generate_aggregate_high_commands
 from aces import conf
-
-generate_aggregate_high_commands.main()
 
 # old version
 # if os.getenv('ACES_ROOTDIR') is None:
@@ -17,53 +14,71 @@ if 'verbose' not in locals():
 
 pipedir = os.path.dirname(__file__)
 
-with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
-    default_commands = json.load(fh)
 
-with open(f"{pipedir}/aggregate_high_tclean_commands.json", "r") as fh:
-    aggregate_high_commands = json.load(fh)
+def merge_aggregate(commands):
+    from aces.pipeline_scripts import generate_aggregate_high_commands
+    generate_aggregate_high_commands.main()
 
-with open(f"{pipedir}/override_tclean_commands.json", "r") as fh:
-    override_commands = json.load(fh)
+    with open(f"{pipedir}/aggregate_high_tclean_commands.json", "r") as fh:
+        aggregate_high_commands = json.load(fh)
 
-commands = default_commands
-
-
-for sbname, allpars in aggregate_high_commands.items():
-    for partype, replacements in allpars.items():
-        for spwsel, tcpars in replacements.items():
-            if spwsel in commands[sbname][partype]:
-                # we're replacing/overriding arguments here
-                for key, val in tcpars.items():
-                    orig = commands[sbname][partype][spwsel][key]
+    for sbname, allpars in aggregate_high_commands.items():
+        for partype, replacements in allpars.items():
+            for spwsel, tcpars in replacements.items():
+                if spwsel in commands[sbname][partype]:
+                    # we're replacing/overriding arguments here
+                    for key, val in tcpars.items():
+                        orig = commands[sbname][partype][spwsel][key]
+                        if verbose:
+                            print(f"{sbname} {partype} {spwsel}: {key}: {orig} -> {val}")
+                        commands[sbname][partype][spwsel][key] = val
+                else:
+                    # but if a spw was totally skipped, we replace it
+                    # with the override version
                     if verbose:
-                        print(f"{sbname} {partype} {spwsel}: {key}: {orig} -> {val}")
-                    commands[sbname][partype][spwsel][key] = val
-            else:
-                # but if a spw was totally skipped, we replace it
-                # with the override version
-                if verbose:
-                    print(f"SPW {spwsel} was skipped in {sbname} and is being replaced")
-                commands[sbname][partype][spwsel] = tcpars
+                        print(f"SPW {spwsel} was skipped in {sbname} and is being replaced")
+                    commands[sbname][partype][spwsel] = tcpars
+    return commands
 
 
-for sbname, allpars in override_commands.items():
-    if sbname not in commands:
-        log.warning(f"SB {sbname} was not in the default tclean commands; using override only")
-        commands[sbname] = allpars
-        continue
-    for partype, replacements in allpars.items():
-        for spwsel, tcpars in replacements.items():
-            if spwsel in commands[sbname][partype]:
-                # we're replacing/overriding arguments here
-                for key, val in tcpars.items():
-                    orig = commands[sbname][partype][spwsel][key]
+def merge_override(commands):
+    with open(f"{pipedir}/override_tclean_commands.json", "r") as fh:
+        override_commands = json.load(fh)
+
+    for sbname, allpars in override_commands.items():
+        if sbname not in commands:
+            log.warning(f"SB {sbname} was not in the default tclean commands; using override only")
+            commands[sbname] = allpars
+            continue
+        for partype, replacements in allpars.items():
+            for spwsel, tcpars in replacements.items():
+                if spwsel in commands[sbname][partype]:
+                    # we're replacing/overriding arguments here
+                    for key, val in tcpars.items():
+                        orig = commands[sbname][partype][spwsel][key]
+                        if verbose:
+                            print(f"{sbname} {partype} {spwsel}: {key}: {orig} -> {val}")
+                        commands[sbname][partype][spwsel][key] = val
+                else:
+                    # but if a spw was totally skipped, we replace it
+                    # with the override version
                     if verbose:
-                        print(f"{sbname} {partype} {spwsel}: {key}: {orig} -> {val}")
-                    commands[sbname][partype][spwsel][key] = val
-            else:
-                # but if a spw was totally skipped, we replace it
-                # with the override version
-                if verbose:
-                    print(f"SPW {spwsel} was skipped in {sbname} and is being replaced")
-                commands[sbname][partype][spwsel] = tcpars
+                        print(f"SPW {spwsel} was skipped in {sbname} and is being replaced")
+                    commands[sbname][partype][spwsel] = tcpars
+    return commands
+
+def main():
+
+    with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
+        default_commands = json.load(fh)
+
+    commands = merge_aggregate(commands)
+    commands = merge_override(commands)
+
+    return commands
+
+def get_commands():
+    return main()
+
+if __name__ == "__main__":
+    commands = main()

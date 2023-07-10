@@ -21,7 +21,7 @@ from functools import reduce
 import operator
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from aces.pipeline_scripts.merge_tclean_commands import commands
+from aces.pipeline_scripts.merge_tclean_commands import get_commands
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from aces import conf
 basepath = conf.basepath
@@ -386,6 +386,7 @@ def parse_fn(fn):
     sbname = mousmap_[muid]
     region = sbname.split("_")[3]
 
+    commands = get_commands()
     robust = commands[sbname]['tclean_cont_pars']['aggregate']['robust']
 
     return {'region': region,

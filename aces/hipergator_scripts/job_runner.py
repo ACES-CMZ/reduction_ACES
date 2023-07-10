@@ -11,7 +11,7 @@ import sys
 from astropy import log
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from aces.imaging.parallel_tclean import parallel_clean_slurm
-from aces.pipeline_scripts.merge_tclean_commands import commands
+from aces.pipeline_scripts.merge_tclean_commands import get_commands
 from aces import conf
 
 basepath = conf.basepath
@@ -87,6 +87,8 @@ def main():
         account = 'astronomy-dept'
         qos = 'astronomy-dept-b'
     logpath = os.environ['LOGPATH'] = conf.logpath
+
+    commands = get_commands()
 
     for mous, spwpars in parameters.items():
         mousname = mous.split('.')[1]

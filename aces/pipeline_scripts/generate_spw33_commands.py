@@ -6,7 +6,7 @@ import json
 import os
 from astropy import log
 
-from aces.pipeline_scripts.merge_tclean_commands import commands
+from aces.pipeline_scripts.merge_tclean_commands import get_commands
 #from aces import conf
 #rootdir = os.path.join(conf.basepath, "reduction_ACES")
 
@@ -31,6 +31,8 @@ def main():
     #chwid = '488244Hz'
     #nchan = 3836
     #start = "97.6660537907GHz"
+
+    commands = get_commands()
 
     for key in commands:
         if 'TM' in key:
