@@ -72,7 +72,7 @@ def main():
     with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
         default_commands = json.load(fh)
 
-    commands = merge_aggregate(commands)
+    commands = merge_aggregate(default_commands)
     commands = merge_override(commands)
 
     return commands
