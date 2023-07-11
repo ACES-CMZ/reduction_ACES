@@ -126,6 +126,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         if beams is None:
             beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
                                             for hdul in twod_hdus])
+            if array == '12m':
+                for beam in beams:
+                    assert beam.major < 3*u.arcsec
         if isinstance(commonbeam, radio_beam.Beam):
             cb = commonbeam
         else:
