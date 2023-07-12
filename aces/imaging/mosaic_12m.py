@@ -142,7 +142,7 @@ def continuum(header):
 
 def reimaged(header):
     logprint("12m continuum reimaged")
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I.iter1.image.tt0.pbcor')
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I*image.tt0.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
     print("Read as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
@@ -167,6 +167,12 @@ def reimaged(header):
     make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                target_header=header,
+                )
+    print(flush=True)
+    make_mosaic(wthdus, name='primarybeam_coverage', weights=wthdus,
+                cbar_unit='PB Level', array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.001),
                 target_header=header,
                 )
 

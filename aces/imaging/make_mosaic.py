@@ -108,7 +108,7 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 weights=None,
                 target_header=None,
-                commonbeam=False,
+                commonbeam=None,
                 beams=None,
                 rest_value=None,
                 cbar_unit=None,
@@ -122,7 +122,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         target_wcs = wcs.WCS(target_header)
         shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
-    if commonbeam:
+    if commonbeam is not None:
         if beams is None:
             beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
                                             for hdul in twod_hdus])
