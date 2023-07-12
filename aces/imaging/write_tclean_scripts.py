@@ -210,9 +210,9 @@ def main():
                                 flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
                                 for fn in flist:
                                     realfn = os.path.realpath(fn)
+                                    target = f'{savedir_name}/{{os.path.basename(fn)}}'
                                     realtarget = os.path.realpath(target)
                                     logprint(f'Copying {{fn}} to {savedir_name} ({{realfn}} to {{realtarget}})')
-                                    target = f'{savedir_name}/{{os.path.basename(fn)}}'
                                     if realfn == realtarget:
                                        print("Skipping copy - source = destination")
                                     else:
