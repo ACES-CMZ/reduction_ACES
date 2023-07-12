@@ -133,7 +133,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                                             for hdul in twod_hdus])
             if array == '12m':
                 for beam in beams:
-                    assert beam.major < 3*u.arcsec
+                    assert beam.major < 3 * u.arcsec
         if isinstance(commonbeam, radio_beam.Beam):
             cb = commonbeam
         else:
@@ -143,7 +143,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
             cb = circbeam
             if array == '12m':
-                assert cb.major < 3*u.arcsec
+                assert cb.major < 3 * u.arcsec
 
         log.info("Loading HDUs and projecting to common beam")
         prjs = [spectral_cube.Projection.from_hdu(hdul) for hdul in

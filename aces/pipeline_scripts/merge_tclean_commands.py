@@ -78,6 +78,7 @@ def merge_override(commands):
                         commands[sbname][partype][spwsel] = tcpars
     return commands
 
+
 def main():
 
     with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
@@ -88,8 +89,10 @@ def main():
 
     return commands
 
+
 def get_commands():
     return main()
+
 
 if __name__ == "__main__":
     commands = main()

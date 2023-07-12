@@ -20,9 +20,9 @@ for root, dirs, files in os.walk(os.path.join(conf.basepath, grouppath)):
         if root.endswith(suffix) and any((dirname.endswith(suffix) for dirname in dirs)):
             toconcat = sorted([dirname for dirname in dirs if dirname.endswith(suffix)])
             print(f"Directory {root} appears to be a .move directory, containing dirs {toconcat}")
-            ia.imageconcat(outfile=root+".p",
+            ia.imageconcat(outfile=root + ".p",
                            infiles=[os.path.join(root, dirname)
                                     for dirname in toconcat],
                            mode='p')
-            shutil.move(root, root+".move")
-            shutil.move(root+".p", root)
+            shutil.move(root, root + ".move")
+            shutil.move(root + ".p", root)
