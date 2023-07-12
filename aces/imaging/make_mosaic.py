@@ -76,7 +76,12 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
             if cube.unit == u.dimensionless_unscaled:
                 mx = cube.max(axis=0)
             else:
-                mx = cube.max(axis=0).to(u.K)
+                if hasattr(cube, 'beam'):
+                    mx = cube.max(axis=0).to(u.K)
+                else:
+                    log.warn(f"File {fn} is a multi-beam cube.")
+                    beam = cube.beams.common_beam()
+                    mx = cube.max(axis=0).to(u.K, beam.jtok_equiv(cube.spectral_axis.mean()))
         if save_file:
             mx.hdu.writeto(outfn)
         if threshold is not None:
