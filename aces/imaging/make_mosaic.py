@@ -81,7 +81,7 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
                 else:
                     log.warn(f"File {fn} is a multi-beam cube.")
                     beam = cube.beams.common_beam()
-                    mx = cube.max(axis=0).to(u.K, beam.jtok_equiv(cube.spectral_axis.mean()))
+                    mx = cube.max(axis=0).to(u.K, beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean()))
         if save_file:
             mx.hdu.writeto(outfn)
         if threshold is not None:
@@ -181,7 +181,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                                             shape_out=shape_out,
                                             reproject_function=repr_function)
     header = target_wcs.to_header()
-    if commonbeam:
+    if commonbeam is not None:
         header.update(cb.to_header_keywords())
 
     outfile = f'{basepath}/mosaics/{array}_{name}_mosaic.fits'
@@ -272,7 +272,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')
 
-    if commonbeam:
+    if commonbeam is not None:
         return cb
 
 
