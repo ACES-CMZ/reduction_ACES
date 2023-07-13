@@ -14,6 +14,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          workdir='/blue/adamginsburg/adamginsburg/ACES/workdir',
                          dry=False,
                          savedir=None,
+                         remove_incomplete_psf=True,
+                         remove_incomplete_weight=True,
                          **kwargs):
 
     try:
@@ -162,15 +164,28 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
         if os.path.exists(tclean_kwargs['imagename'] + ".image"):
             logprint(f"Already done with startchan={{startchan}}")
-        else:
-            logprint(f'tclean_kwargs: {{tclean_kwargs}}')
-            logprint(tclean_kwargs['vis'])
-            logprint(f"Cleaning with startchan={{startchan}}")
+            sys.exit(0)
+        elif os.path.exists(tclean_kwargs['imagename'] + ".residual"):
+            raise ValueError(f"{{tclean_kwargs['imagename']}}.residual exists.  Current state unclear.")
+        elif os.path.exists(tclean_kwargs['imagename'] + ".psf"):
+            if remove_incomplete_psf:
+                shutil.rmtree(tclean_kwargs['imagename'] + ".psf")
+            else:
+                raise ValueError(f"{{tclean_kwargs['imagename']}}.psf exists.  Remove it before continuing.")
+        elif os.path.exists(tclean_kwargs['imagename'] + ".weight"):
+            if remove_incomplete_weight:
+                shutil.rmtree(tclean_kwargs['imagename'] + ".weight")
+            else:
+                raise ValueError(f"{{tclean_kwargs['imagename']}}.weight exists.  Remove it before continuing.")
 
-            tclean(**tclean_kwargs)
+        logprint(f'tclean_kwargs: {{tclean_kwargs}}')
+        logprint(tclean_kwargs['vis'])
+        logprint(f"Cleaning with startchan={{startchan}}")
 
-            if not os.path.exists(tclean_kwargs['imagename'] + ".image"):
-                raise ValueError(f"FAILURE: image {{tclean_kwargs['imagename']}}.image was not produced")
+        tclean(**tclean_kwargs)
+
+        if not os.path.exists(tclean_kwargs['imagename'] + ".image"):
+            raise ValueError(f"FAILURE: image {{tclean_kwargs['imagename']}}.image was not produced")
 
         """)
 

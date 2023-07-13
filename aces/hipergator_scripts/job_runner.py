@@ -11,7 +11,7 @@ import sys
 from astropy import log
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from aces.imaging.parallel_tclean import parallel_clean_slurm
-from aces.pipeline_scripts.merge_tclean_commands import commands
+from aces.pipeline_scripts.merge_tclean_commands import get_commands
 from aces import conf
 
 basepath = conf.basepath
@@ -33,6 +33,7 @@ parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': T
               #                                 'jobtime': '200:00:00', 'burst': False},  # ao: same as above, too long.  But, MPI fails with writelock. NON-MPI also fails!?
               'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
               'member.uid___A001_X15a0_Xd0': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field i spw35: timeout
+              'member.uid___A001_X15a0_X17e': {'mem': 256, 'ntasks': 1, 'mpi': False, 'nchan_per': 16},  # field al: try to avoid having subcubes
               }
 newpars = parameters.copy()
 
@@ -86,6 +87,8 @@ def main():
         account = 'astronomy-dept'
         qos = 'astronomy-dept-b'
     logpath = os.environ['LOGPATH'] = conf.logpath
+
+    commands = get_commands()
 
     for mous, spwpars in parameters.items():
         mousname = mous.split('.')[1]
@@ -291,6 +294,7 @@ def main():
 
                     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     os.environ['LOGFILENAME'] = f"{logpath}/casa_log_line_{jobname}_{now}.log"
+                    os.environ['jobname'] = jobname
 
                     # DONT start the script from within the appropriate workdir: it puts the log in the wrong place?
                     #os.chdir(f'{workdir}/{tempdir_name}')
@@ -338,7 +342,7 @@ def main():
                                              jobtime=jobtime,
                                              dry=False,
                                              ntasks=16,
-                                             #nchan_per=64, # 128 had a lot of OOM kills
+                                             nchan_per=spwpars['nchan_per'] if 'nchan_per' in spwpars else 128,  # 128 is default
                                              mem_per_cpu='8gb',
                                              savedir=datapath,
                                              **tcpars

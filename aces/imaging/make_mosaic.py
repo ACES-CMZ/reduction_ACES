@@ -76,7 +76,12 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
             if cube.unit == u.dimensionless_unscaled:
                 mx = cube.max(axis=0)
             else:
-                mx = cube.max(axis=0).to(u.K)
+                if hasattr(cube, 'beam'):
+                    mx = cube.max(axis=0).to(u.K)
+                else:
+                    log.warn(f"File {fn} is a multi-beam cube.")
+                    beam = cube.beams.common_beam()
+                    mx = cube.max(axis=0).to(u.K, beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean()))
         if save_file:
             mx.hdu.writeto(outfn)
         if threshold is not None:
@@ -108,7 +113,7 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 weights=None,
                 target_header=None,
-                commonbeam=False,
+                commonbeam=None,
                 beams=None,
                 rest_value=None,
                 cbar_unit=None,
@@ -122,10 +127,13 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         target_wcs = wcs.WCS(target_header)
         shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
-    if commonbeam:
+    if commonbeam is not None:
         if beams is None:
             beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
                                             for hdul in twod_hdus])
+            if array == '12m':
+                for beam in beams:
+                    assert beam.major < 3 * u.arcsec
         if isinstance(commonbeam, radio_beam.Beam):
             cb = commonbeam
         else:
@@ -134,6 +142,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         if isinstance(commonbeam, str) and commonbeam == 'circular':
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
             cb = circbeam
+            if array == '12m':
+                assert cb.major < 3 * u.arcsec
 
         log.info("Loading HDUs and projecting to common beam")
         prjs = [spectral_cube.Projection.from_hdu(hdul) for hdul in
@@ -171,7 +181,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                                             shape_out=shape_out,
                                             reproject_function=repr_function)
     header = target_wcs.to_header()
-    if commonbeam:
+    if commonbeam is not None:
         header.update(cb.to_header_keywords())
 
     outfile = f'{basepath}/mosaics/{array}_{name}_mosaic.fits'
@@ -262,7 +272,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
     fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')
 
-    if commonbeam:
+    if commonbeam is not None:
         return cb
 
 

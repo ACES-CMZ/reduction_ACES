@@ -19,7 +19,7 @@ import shutil
 import textwrap
 import string
 from aces import conf
-from aces.pipeline_scripts.merge_tclean_commands import commands
+from aces.pipeline_scripts.merge_tclean_commands import get_commands
 
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
@@ -63,6 +63,8 @@ def main():
 
     # these aren't really user-configurable
     tcpars_override = {'calcpsf': True, 'interactive': 0, 'usemask': 'pb'}
+
+    commands = get_commands()
 
     for sbname, allpars in commands.items():
         mous_ = allpars['mous']
@@ -136,6 +138,7 @@ def main():
                     check_psf_exists = textwrap.dedent(f"""
                                             # if the PSF exists, don't re-calculate it
                                             calcpsf = not os.path.exists('{expected_psfname}')
+                                            logprint(f"calcpsf={{calcpsf}}.  psfname={expected_psfname}")
 
                                             if not os.path.exists('{os.path.basename(expected_psfname)}') and not calcpsf:
                                                 shutil.copytree('{expected_psfname}', '{os.path.basename(expected_psfname)}')
@@ -206,9 +209,11 @@ def main():
                             def savedata():
                                 flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
                                 for fn in flist:
-                                    logprint(f'Copying {{fn}} to {savedir_name}')
+                                    realfn = os.path.realpath(fn)
                                     target = f'{savedir_name}/{{os.path.basename(fn)}}'
-                                    if os.path.realpath(fn) == os.path.realpath(target):
+                                    realtarget = os.path.realpath(target)
+                                    logprint(f'Copying {{fn}} to {savedir_name} ({{realfn}} to {{realtarget}})')
+                                    if realfn == realtarget:
                                        print("Skipping copy - source = destination")
                                     else:
                                         if fn.endswith('.fits'):
@@ -217,6 +222,7 @@ def main():
                                             if os.path.exists(target):
                                                 logprint(f'Removing {{target}} because it exists')
                                                 assert 'iter1' in f'{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
+                                                assert realtarget != realfn
                                                 shutil.rmtree(target)
                                             shutil.copytree(fn, target)\n\n
                             """)
@@ -224,7 +230,9 @@ def main():
                         cleanupcmds = (textwrap.dedent(
                             f"""
                             import glob
-                            flist = glob.glob('{workingpath}/{os.path.basename(tcpars['imagename'])}.*')
+                            # should be 'savedir_name', which is the path on blue that gets copied to from /tmp
+                            # workingpath is calibrated/working/ on /orange
+                            flist = glob.glob('{savedir_name}/{os.path.basename(tcpars['imagename'])}.*')
                             for fn in flist:
                                 logprint(f'Moving {{fn}} to {workingpath}')
                                 target = f'{workingpath}/{{os.path.basename(fn)}}'
@@ -299,10 +307,17 @@ def main():
 
                         threshold = float(tcpars['threshold'].strip(string.ascii_letters))
 
-                        fh.write('logprint(f"tclean parameters: {tclean_pars}")\n\n')
+                        fh.write('tclean_default_pars = inp(tclean)\n')
+                        fh.write('logprint(f"tclean inp parameters: {tclean_default_pars}")\n')
+                        fh.write('logprint(f"tclean parameters: {tclean_pars}")\n')
+                        fh.write('logprint(f"calcpsf: {calcpsf}")\n\n')
                         # first major cycle
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
                         fh.write(textwrap.dedent("""
+                                     logprint(f"ret={ret}")
+                                     if ret is False:
+                                        raise ValueError(f"tclean returned ret={ret}")
+
                                      peakres = 0
                                      for val1 in ret['summaryminor'].values():
                                          for val2 in val1.values():
@@ -318,8 +333,8 @@ def main():
                                      for val1 in ret['summaryminor'].values():
                                          for val2 in val1.values():
                                              for val3 in val2.values():
-                                                 peakres = max([peakres, val3['peakRes']])
-                                     print(f"{{nmajors}}: Residual={{peakres}} > threshold {threshold}")
+                                                 peakres = max([peakres, np.max(val3['peakRes'])])
+                                     logprint(f"{{nmajors}}: Residual={{peakres}} > threshold {threshold}")
                                      nmajors += 1
                                      ret = tclean(nmajor=1,
                                                   calcpsf=False,

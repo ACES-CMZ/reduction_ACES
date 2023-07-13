@@ -12,6 +12,11 @@ pwd; hostname; date
 echo "Memory=${MEM}"
 echo "job name = $jobname"
 
+if [ -z $jobname ]; then
+    export jobname=$SLURM_JOB_NAME
+    echo "job name = $jobname (set from SLURM_JOB_NAME=${SLURM_JOB_NAME}"
+fi
+
 #module load cuda/11.0.207
 module load intel/2020.0.166 openmpi/4.1.1 libfuse/3.10.4
 
@@ -29,8 +34,9 @@ CASAVERSION=casa-6.4.3-2-pipeline-2021.3.0.17
 CASAVERSION=casa-6.4.1-12-pipeline-2022.2.0.68
 # 6.4.1-12 above does not work - it just gives OOM errors for any operation
 CASAVERSION=casa-6.5.5-21-py3.8
+CASAVERSion=casa-6.5.7-1-py3.8.el7
 # none of the new versions work, maybe this one will?
-CASAVERSION=casa-6.2.1-7-pipeline-2021.2.0.128
+# Does not support nmajor? CASAVERSION=casa-6.2.1-7-pipeline-2021.2.0.128
 export CASAPATH=/orange/adamginsburg/casa/${CASAVERSION}
 export MPICASA=${CASAPATH}/bin/mpicasa
 export CASA=${CASAPATH}/bin/casa
@@ -68,7 +74,7 @@ pwd
 if [ ${mpi_ntasks} -gt 1 ]; then
     echo ${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
     ${MPICASA} -n ${mpi_ntasks} xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')" || exit 1
-else 
+else
     echo xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')"
     xvfb-run -d ${CASA} --logfile=${LOGFILENAME} --nogui --nologger --rcdir=$SLURM_TMPDIR -c "execfile('$SCRIPTNAME')" || exit 1
 fi

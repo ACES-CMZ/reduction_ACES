@@ -36,7 +36,10 @@ def main():
             obsids = np.unique(results['member_ous_uid'])
 
             # these obs IDs are broken - ALMA will index their data but they are not hosted
-            bad_obsids = [f'uid://A001/X15a0/{x}' for x in ('X174', 'X17c', 'Xea', 'X1a4', 'X134', 'X17c', 'X138', 'X17a')]
+            bad_obsids = [f'uid://A001/X15a0/{x}' for x in ('X174', 'X17c',
+                                                            'Xea', 'X1a4',
+                                                            'X17c',  # 'X134',
+                                                            'X138', 'X17a')]
 
             obsids = list(set(obsids) - set(bad_obsids))
 
