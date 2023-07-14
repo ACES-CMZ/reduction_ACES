@@ -81,7 +81,8 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
                 else:
                     log.warn(f"File {fn} is a multi-beam cube.")
                     beam = cube.beams.common_beam()
-                    mx = cube.max(axis=0).to(u.K, beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean()))
+                    equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
+                    mx = cube.max(axis=0).to(u.K, equivalencies=equiv)
         if save_file:
             mx.hdu.writeto(outfn)
         if threshold is not None:
@@ -103,8 +104,9 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
             cube = cube.spectral_slab(**slab_kwargs)
         with cube.use_dask_scheduler('threads'):
             moment0 = cube.moment0(axis=0)
+        equiv = cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
         moment0 = (moment0 * u.s / u.km).to(u.K,
-                                            equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km / u.s
+                                            equivalencies=equiv) * u.km / u.s
         if save_file:
             moment0.hdu.writeto(outfn)
         return moment0
