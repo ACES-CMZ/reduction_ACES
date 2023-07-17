@@ -226,4 +226,4 @@ TWELVE_M_weight_files = [str(x) for x in ACES_WORKDIR.glob(f'**/*.12M.{MOLECULE}
 
 if not (ACES_WORKDIR / f'{MOLECULE}.TP_7M_12M_weighted_mosaic.fits').exists():
     TP_7M_12M_mosaic_hdu = weighted_reproject_and_coadd(TP_7M_12M_cube_files, TWELVE_M_weight_files)
-    TP_7M_12M_mosaic_hdu.writeto(f'{MOLECULE}.TP_7M_12M_weighted_mosaic.fits')
+    TP_7M_12M_mosaic_hdu.writeto(ACES_WORKDIR / f'{MOLECULE}.TP_7M_12M_weighted_mosaic.fits')
