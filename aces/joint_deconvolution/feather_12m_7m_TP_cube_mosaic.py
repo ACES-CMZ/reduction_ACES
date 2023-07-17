@@ -9,6 +9,7 @@ from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs
 from casatools import imhead, exportfits, imtrans, feather, imreframe
 
+
 def check_files_exist(file_names):
     return all(file_name is not None and Path(file_name).exists() for file_name in file_names)
 
@@ -26,7 +27,7 @@ def create_fake_hdus(hdus, j):
     return fake_hdus
 
 
-# Function to reproject and coadd the cubes and weights 
+# Function to reproject and coadd the cubes and weights
 def weighted_reproject_and_coadd(cube_files, weight_files):
     assert len(cube_files) == len(weight_files), "Mismatched number of cubes and weights."
 
@@ -125,7 +126,7 @@ for i in range(len(sb_names)):
     tp_mous_id = sb_names['TP MOUS ID'][i]
     seven_m_mous_id = sb_names['7m MOUS ID'][i]
     twelve_m_mous_id = sb_names['12m MOUS ID'][i]
-    
+
     seven_m_cube = get_file(
         f"{ACES_DATA / (prefix + seven_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_7m_spw']}.cube.I.iter1.image.pbcor"
     )
@@ -135,7 +136,7 @@ for i in range(len(sb_names)):
     twelve_m_cube = get_file(
         f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.image.pbcor"
     )
-    twelve_m_wt = get_file( 
+    twelve_m_wt = get_file(
         f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.weight"
     )
 
@@ -162,7 +163,7 @@ for i in range(len(sb_names)):
                 order="0132"
             )
 
-        if not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image').is_dir():    
+        if not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image').is_dir():
             feather(
                 imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image'),
                 highres=seven_m_cube,
