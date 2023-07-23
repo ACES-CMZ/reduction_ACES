@@ -56,6 +56,7 @@ def main():
     debug = '--debug' in sys.argv
     check_syntax = '--check-syntax' in sys.argv
     use_parallel = '--parallel' in sys.argv
+    aggregate_only = '--aggregate-only' in sys.argv
 
     if debug:
         log.setLevel('DEBUG')
@@ -138,9 +139,13 @@ def main():
                 print(f"MOUS {mousname} is not downloaded/extracted (path={grouppath}/{mous}).")
                 continue
             for spw in imaging_status[mousname][config]:
+                log.debug(f"mous={mous} field={field} sbname={sbname} config={config} config_={config_} spw={spw}")
 
                 for imtype in imaging_status[mousname][config][spw]:
-                    log.debug(f"spw={spw} imtype={imtype}{'**************AGGREGATE**********' if 'aggregate' in imtype else ''}")
+                    if aggregate_only and not ('aggregate' in imtype or 'mfs' in imtype):
+                        log.debug(f"Skipped imtype {imtype} because it is not aggregate and aggregate_only was set")
+                        continue
+                    log.debug(f"spw={spw} imtype={imtype}{'**************AGGREGATE**********' if ('aggregate' in imtype) or ('mfs' in imtype) else ''}")
                     imstatus = imaging_status[mousname][config][spw][imtype]
 
                     calwork = f'{grouppath}/{mous}/calibrated/working'

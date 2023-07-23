@@ -72,13 +72,8 @@ def main():
     errors, tracebacks = [], []
     for proc in processes:
         proc.join()
-        if proc.exception:
-            failure = True
-            error, traceback = proc.exception
-            print(error)
-            print(traceback)
-            errors.append(error)
-            tracebacks.append(traceback)
+        if proc.exitcode != 0:
+            print(f"Exception caught from subprocess {proc}: exit code {proc.exitcode}")
 
     # do this _after_
     all_lines(header)
@@ -111,6 +106,8 @@ def continuum(header):
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*.tt0.pbcor.fits')
     print("Read as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
+    for hdu, fn in zip(hdus, filelist):
+        logprint(f'{fn}: {np.isnan(hdu.data).sum()}')
     logprint(filelist)
     print(flush=True)
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*I.pb.tt0.fits')
@@ -283,16 +280,22 @@ def hnco(header):
 
 def h40a(header):
     logprint("12m H40a")
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
+    #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
     hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz, suffix='_h40a').hdu for fn in filelist]
+    for hdu, fn in zip(hdus, filelist):
+        logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data==0).sum()}')
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')
     wthdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz, suffix='_h40a').hdu for fn in weightfiles]
+    for hdu, fn in zip(wthdus, weightfiles):
+        logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data==0).sum()}')
     make_mosaic(hdus, name='h40a_max', cbar_unit='K',
                 norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
     hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
+    for hdu, fn in zip(hdus, filelist):
+        logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data==0).sum()}')
     make_mosaic(hdus, name='h40a_m0', cbar_unit='K km/s',
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
@@ -300,8 +303,8 @@ def h40a(header):
 
 def cs21(header):
     logprint("12m cs21")
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
+    #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
     hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=97.98095330 * u.GHz, suffix='_cs21').hdu for fn in filelist]
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')

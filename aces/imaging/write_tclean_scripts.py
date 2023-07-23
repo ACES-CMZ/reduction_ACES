@@ -131,19 +131,23 @@ def main():
                     savedir_name = tempdir_name
 
                     # check for PSF
-                    expected_psfname = os.path.join(tempdir_name if temp_workdir else dirname,
-                                                    os.path.basename(tcpars['imagename']) +
-                                                    ('.psf.tt0' if tcpars['specmode'] == 'mfs' else '.psf')
-                                                    )
-                    check_psf_exists = textwrap.dedent(f"""
-                                            # if the PSF exists, don't re-calculate it
-                                            calcpsf = not os.path.exists('{expected_psfname}')
-                                            logprint(f"calcpsf={{calcpsf}}.  psfname={expected_psfname}")
+                    if tcpars['specmode'] == 'mfs':
+                        # just always recalculate psf - tt0, tt1 have to be moved over otherwise
+                        check_psf_exists = "calcpsf = True\n\n"
+                    else:
+                        expected_psfname = os.path.join(tempdir_name if temp_workdir else dirname,
+                                                        os.path.basename(tcpars['imagename']) +
+                                                        ('.psf.tt0' if tcpars['specmode'] == 'mfs' else '.psf')
+                                                        )
+                        check_psf_exists = textwrap.dedent(f"""
+                                                # if the PSF exists, don't re-calculate it
+                                                calcpsf = not os.path.exists('{expected_psfname}')
+                                                logprint(f"calcpsf={{calcpsf}}.  psfname={expected_psfname}")
 
-                                            if not os.path.exists('{os.path.basename(expected_psfname)}') and not calcpsf:
-                                                shutil.copytree('{expected_psfname}', '{os.path.basename(expected_psfname)}')
-                                            \n\n""")
-                    # this is overridden below tcpars['calcpsf'] = 'calcpsf'
+                                                if not os.path.exists('{os.path.basename(expected_psfname)}') and not calcpsf:
+                                                    shutil.copytree('{expected_psfname}', '{os.path.basename(expected_psfname)}')
+                                                \n\n""")
+                        # this is overridden below tcpars['calcpsf'] = 'calcpsf'
 
                     if temp_workdir:
 

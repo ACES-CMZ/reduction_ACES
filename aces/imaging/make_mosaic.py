@@ -82,7 +82,17 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
                     log.warn(f"File {fn} is a multi-beam cube.")
                     beam = cube.beams.common_beam()
                     equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
-                    mx = cube.max(axis=0).to(u.K, equivalencies=equiv)
+                    mxjy = cube.max(axis=0)
+                    if hasattr(mxjy, '_beam') and mxjy._beam is None:
+                        mxjy._beam = beam
+                    try:
+                        assert hasattr(mxjy, 'beam')
+                        assert mxjy.beam is not None
+                    except Exception as ex:
+                        print(ex)
+                        mxjy = mxjy.with_beam(beam, raise_error_jybm=False)
+
+                    mx = mxjy.to(u.K, equivalencies=equiv)
         if save_file:
             mx.hdu.writeto(outfn)
         if threshold is not None:
@@ -104,7 +114,12 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
             cube = cube.spectral_slab(**slab_kwargs)
         with cube.use_dask_scheduler('threads'):
             moment0 = cube.moment0(axis=0)
-        equiv = cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
+        if hasattr(cube, 'beam'):
+            equiv = cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
+        elif hasattr(cube, 'beams'):
+            beam = cube.beams.common_beam()
+            equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
+
         moment0 = (moment0 * u.s / u.km).to(u.K,
                                             equivalencies=equiv) * u.km / u.s
         if save_file:
