@@ -308,7 +308,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
         line = row['Line'].replace(" ", "_").replace("(", "_").replace(")", "_")
         restf = row['Rest (GHz)'] * u.GHz
 
-        log.info(f"{array} {line}")
+        log.info(f"{array} {line} {restf}")
 
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*spw{spwn}.{glob_suffix}')
         assert len(filelist) > 0

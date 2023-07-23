@@ -283,17 +283,24 @@ def h40a(header):
     #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
-    hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz, suffix='_h40a').hdu for fn in filelist]
+    hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
+                     rest_value=99.02295 * u.GHz,
+                     suffix='_h40a').hdu for fn in filelist]
     for hdu, fn in zip(hdus, filelist):
         logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data==0).sum()}')
     weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')
-    wthdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz, suffix='_h40a').hdu for fn in weightfiles]
+    wthdus = [get_peak(fn, slab_kwargs={'lo': -20 * u.km / u.s, 'hi': 20 * u.km / u.s},
+                       rest_value=99.02295 * u.GHz,
+                       threshold=0.5,
+                       suffix='_h40a').hdu for fn in weightfiles]
     for hdu, fn in zip(wthdus, weightfiles):
         logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data==0).sum()}')
     make_mosaic(hdus, name='h40a_max', cbar_unit='K',
                 norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
-    hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=99.02295 * u.GHz).hdu for fn in filelist]
+    hdus = [get_m0(fn,
+                   slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
+                   rest_value=99.02295 * u.GHz).hdu for fn in filelist]
     for hdu, fn in zip(hdus, filelist):
         logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data==0).sum()}')
     make_mosaic(hdus, name='h40a_m0', cbar_unit='K km/s',
