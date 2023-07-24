@@ -2552,6 +2552,9 @@
         "calcpsf": false,
         "psfcutoff": 0.35,
         "parallel": true
+      },
+      "spw35": {
+	"cyclefactor": 5
       }
     }
   },
