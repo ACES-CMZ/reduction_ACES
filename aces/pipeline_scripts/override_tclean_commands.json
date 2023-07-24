@@ -2553,6 +2553,9 @@
         "psfcutoff": 0.35,
         "parallel": true
       }
+      "spw35":{
+	"cyclefactor": 5
+      }
     }
   },
   "Sgr_A_st_ae_03_TM1": {
