@@ -122,7 +122,7 @@ def main():
                     aggregatecontrun = False
 
         if not cubepars or not contpars:
-            if sbname in ('Sgr_A_st_al_03_TM1',):
+            if sbname in ('Sgr_A_st_al_03_TM1', 'Sgr_A_st_am_03_TM1'):
                 print(f"Skipping {sbname} because it was manually QA'd")
                 continue
             raise ValueError("No parameters found")
