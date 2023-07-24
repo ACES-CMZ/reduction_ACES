@@ -110,6 +110,7 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
     else:
         ft = 'fits' if fn.endswith(".fits") else "casa_image"
         cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
+        cube.beam_threshold = 0.1 # SO2 or the one after it had 5% beam variance
         if slab_kwargs is not None:
             cube = cube.spectral_slab(**slab_kwargs)
         with cube.use_dask_scheduler('threads'):
