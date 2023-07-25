@@ -295,6 +295,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
 
 def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.image.pbcor',
+              lines='all',
               globdir='calibrated/working', use_weights=True):
 
     from astropy.table import Table
@@ -308,6 +309,9 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
         spwn = row[f'{array} SPW']
         line = row['Line'].replace(" ", "_").replace("(", "_").replace(")", "_")
         restf = row['Rest (GHz)'] * u.GHz
+
+        if lines != 'all' and not (line in lines or row['Line'] in lines):
+            continue
 
         log.info(f"{array} {line} {restf}")
 
@@ -352,7 +356,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
                 print(flush=True)
 
         if parallel:
-            print(f"Starting function make_mosaic for {line}")
+            print(f"Starting function make_mosaic for {line} peak intensity")
             proc = Process(target=make_mosaic, args=(hdus,),
                            kwargs=dict(name=f'{line}_max', cbar_unit='K',
                            norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
@@ -376,7 +380,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             print(flush=True)
 
         if parallel:
-            print(f"Starting function make_mosaic for {line}")
+            print(f"Starting function make_mosaic for {line} moment 0")
             proc = Process(target=make_mosaic, args=(m0hdus,),
                            kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
                            norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
