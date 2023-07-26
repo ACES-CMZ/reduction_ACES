@@ -20,35 +20,35 @@ def check_files_exist(file_names):
 # Function to convert the data in an HDU (Header Data Unit) to float32 format
 def convert_to_float32(hdu):
     hdu.data = hdu.data.astype('float32')
-    return(hdu)
+    return hdu
 
 
 # Function to crop a FITS cube to a specific velocity range
 def crop_cube_velocity_range(fits_file, rest_FREQUENCY, v_start, v_end, v_res=None):
     cube = SpectralCube.read(fits_file)
-    cube.allow_huge_operations=True
-    cube = cube.with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_FREQUENCY*u.GHz)
+    cube.allow_huge_operations = True
+    cube = cube.with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_FREQUENCY * u.GHz)
 
-    vrange = [v_start*u.km/u.s, v_end*u.km/u.s]
+    vrange = [v_start * u.km / u.s, v_end * u.km / u.s]
     cropped_cube = cube.spectral_slab(*vrange)
 
-    if cropped_cube.shape[0]<=1: 
-        return(None)
+    if cropped_cube.shape[0] <= 1:
+        return None
 
-    if v_res != None: 
+    if v_res is not None:
         cropped_cube = regrid_cube(cropped_cube, v_start, v_end, v_res)
-    
+
     cropped_cube = cropped_cube.minimal_subcube()
 
     hdu = cropped_cube.hdu
     hdu = fits.PrimaryHDU(hdu.data, hdu.header)
-    hdu = convert_to_float32(hdu) 
+    hdu = convert_to_float32(hdu)
     return hdu
 
 
 # Function to regrid a cube to a new velocity axis
 def regrid_cube(cube, v_start, v_end, v_res):
-    new_velocity = np.arange(v_start, v_end+v_res, v_res)*u.km/u.s
+    new_velocity = np.arange(v_start, v_end + v_res, v_res) * u.km / u.s
     new_cube = cube.spectral_interpolate(new_velocity, suppress_smooth_warning=True)
     return new_cube
 
@@ -135,7 +135,7 @@ Select the molecule/SPW based on the dictionary below, and the code will do the 
 """
 MOLECULE = 'HNCO'
 MOL_TRANS = 'HNCO 4-3'
-FREQUENCY = line_table[line_table['Line']== MOL_TRANS]['Rest (GHz)'].value[0]
+FREQUENCY = line_table[line_table['Line'] == MOL_TRANS]['Rest (GHz)'].value[0]
 START_VELOCITY = 0
 END_VELOCITY = 100
 VEL_RES = 3
@@ -185,8 +185,8 @@ for i in range(len(sb_names)):
         f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.weight"
     )
 
-    if (check_files_exist([tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt]) and 
-    not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image').is_dir()):
+    if (check_files_exist([tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt]) and
+        not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image').is_dir()):
         print(f'Processing {obs_dir}')
 
         tp_freq = imhead(tp_cube, mode='get', hdkey='restfreq')
