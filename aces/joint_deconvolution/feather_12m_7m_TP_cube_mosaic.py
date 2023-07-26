@@ -185,8 +185,7 @@ for i in range(len(sb_names)):
         f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.weight"
     )
 
-    if (check_files_exist([tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt]) and
-        not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image').is_dir()):
+    if (check_files_exist([tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt]) and not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image').is_dir()):
         print(f'Processing {obs_dir}')
 
         tp_freq = imhead(tp_cube, mode='get', hdkey='restfreq')
