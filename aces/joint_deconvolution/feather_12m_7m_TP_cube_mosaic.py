@@ -1,10 +1,13 @@
 import os
 import glob
-import warnings
+import shutil
 import numpy as np
 import pandas as pd
 from pathlib import Path
 from astropy.io import fits
+from astropy import units as u
+from astropy.table import Table
+from spectral_cube import SpectralCube
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs
 from casatools import imhead, exportfits, imtrans, feather, imreframe
@@ -12,6 +15,42 @@ from casatools import imhead, exportfits, imtrans, feather, imreframe
 
 def check_files_exist(file_names):
     return all(file_name is not None and Path(file_name).exists() for file_name in file_names)
+
+
+# Function to convert the data in an HDU (Header Data Unit) to float32 format
+def convert_to_float32(hdu):
+    hdu.data = hdu.data.astype('float32')
+    return(hdu)
+
+
+# Function to crop a FITS cube to a specific velocity range
+def crop_cube_velocity_range(fits_file, rest_FREQUENCY, v_start, v_end, v_res=None):
+    cube = SpectralCube.read(fits_file)
+    cube.allow_huge_operations=True
+    cube = cube.with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_FREQUENCY*u.GHz)
+
+    vrange = [v_start*u.km/u.s, v_end*u.km/u.s]
+    cropped_cube = cube.spectral_slab(*vrange)
+
+    if cropped_cube.shape[0]<=1: 
+        return(None)
+
+    if v_res != None: 
+        cropped_cube = regrid_cube(cropped_cube, v_start, v_end, v_res)
+    
+    cropped_cube = cropped_cube.minimal_subcube()
+
+    hdu = cropped_cube.hdu
+    hdu = fits.PrimaryHDU(hdu.data, hdu.header)
+    hdu = convert_to_float32(hdu) 
+    return hdu
+
+
+# Function to regrid a cube to a new velocity axis
+def regrid_cube(cube, v_start, v_end, v_res):
+    new_velocity = np.arange(v_start, v_end+v_res, v_res)*u.km/u.s
+    new_cube = cube.spectral_interpolate(new_velocity, suppress_smooth_warning=True)
+    return new_cube
 
 
 # Function to create fake HDUs for use in reprojecting
@@ -23,6 +62,7 @@ def create_fake_hdus(hdus, j):
         data = data[j]
         del header['*3*']
         del header['*4*']
+        header.set('WCSAXES', 2)
         fake_hdus.append(fits.PrimaryHDU(data, header))
     return fake_hdus
 
@@ -80,16 +120,25 @@ def export_fits(imagename, fitsimage):
         exportfits(imagename=imagename, fitsimage=fitsimage, dropdeg=True)
 
 
-# Set the relevant paths
+# Set the relevant paths and variables
 ACES_ROOTDIR = Path(os.getenv('ACES_ROOTDIR'))
 ACES_DATA = Path(os.getenv('ACES_DATA'))
 ACES_WORKDIR = Path(os.getenv('ACES_WORKDIR'))
 Path.cwd = ACES_WORKDIR
+line_table = Table.read((ACES_ROOTDIR / 'aces/data/tables/linelist.csv'), format='csv')
+sb_names = pd.read_csv(ACES_ROOTDIR / 'aces/data/tables/aces_SB_uids.csv')
+generic_name = '.Sgr_A_star_sci.spw'
+prefix = 'member.uid___A001_'
 
 """
 Select the molecule/SPW based on the dictionary below, and the code will do the rest.
 """
 MOLECULE = 'HNCO'
+MOL_TRANS = 'HNCO 4-3'
+FREQUENCY = line_table[line_table['Line']== MOL_TRANS]['Rest (GHz)'].value[0]
+START_VELOCITY = 0
+END_VELOCITY = 100
+VEL_RES = 3
 
 line_spws = {
     "HCOp": {
@@ -114,10 +163,6 @@ line_spws = {
     }
 }
 
-sb_names = pd.read_csv(ACES_ROOTDIR / 'aces/data/tables/aces_SB_uids.csv')
-generic_name = '.Sgr_A_star_sci.spw'
-prefix = 'member.uid___A001_'
-
 # Loop over all the SBs and create the 12m+7m+TP cubes for the given molecule
 for i in range(len(sb_names)):
     obs_id = sb_names['Obs ID'][i]
@@ -140,7 +185,8 @@ for i in range(len(sb_names)):
         f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.weight"
     )
 
-    if check_files_exist([tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt]):
+    if (check_files_exist([tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt]) and 
+    not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image').is_dir()):
         print(f'Processing {obs_dir}')
 
         tp_freq = imhead(tp_cube, mode='get', hdkey='restfreq')
@@ -170,7 +216,12 @@ for i in range(len(sb_names)):
                 lowres=tp_cube.replace('.fits', '.imtrans')
             )
 
-        tp_7m_cube = str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image')
+        tp_7m_cube = obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image'
+        if not tp_7m_cube.exists():
+            print(f"The file {tp_7m_cube} does not exist. Something went wrong when feathering the TP and 7m cubes.")
+            continue
+
+        tp_7m_cube = str(tp_7m_cube)
         tp_7m_cube_freq = imhead(tp_7m_cube, mode='get', hdkey='restfreq')
         twelve_m_freq = imhead(twelve_m_cube, mode='get', hdkey='restfreq')
 
@@ -211,19 +262,41 @@ for i in range(len(sb_names)):
             str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image')
         ]
 
-        for file in intermediary_files:
+        for directory in intermediary_files:
             try:
-                os.remove(file)
+                shutil.rmtree(directory)
             except FileNotFoundError:
-                print(f"File {file} not found. I cannot delete what does not exist.")
+                print(f"Directory {directory} not found. I cannot delete what does not exist.")
 
     else:
         print(f"One or more cubes do not exist for observation Sgr_A_st_{obs_id}. Skipping this one ...")
 
-# Create a weighted cube mosaic of the TP+7m+12m data
 TP_7M_12M_cube_files = [str(x) for x in ACES_WORKDIR.glob(f'**/*.TP_7M_12M_feather_all.{MOLECULE}.image.fits')]
 TWELVE_M_weight_files = [str(x) for x in ACES_WORKDIR.glob(f'**/*.12M.{MOLECULE}.image.weight.fits')]
 
-if not (ACES_WORKDIR / f'{MOLECULE}.TP_7M_12M_weighted_mosaic.fits').exists():
-    TP_7M_12M_mosaic_hdu = weighted_reproject_and_coadd(TP_7M_12M_cube_files, TWELVE_M_weight_files)
-    TP_7M_12M_mosaic_hdu.writeto(ACES_WORKDIR / f'{MOLECULE}.TP_7M_12M_weighted_mosaic.fits')
+# Crop the cubes to the desired velocity range
+for cube_file, weight_file in zip(sorted(TP_7M_12M_cube_files), sorted(TWELVE_M_weight_files)):
+    outputfile_cube = cube_file.replace('.fits', f'.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.crop.fits')
+    outputfile_weight = weight_file.replace('.fits', f'.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.crop.fits')
+
+    if not Path(outputfile_cube).exists():
+        hdu_cube = crop_cube_velocity_range(cube_file, FREQUENCY, v_start=START_VELOCITY, v_end=END_VELOCITY, v_res=VEL_RES)
+        if hdu_cube is None:
+            print(f'Could not crop {cube_file}')
+        else:
+            hdu_cube.writeto(outputfile_cube)
+
+    if not Path(outputfile_weight).exists():
+        hdu_weight = crop_cube_velocity_range(weight_file, FREQUENCY, v_start=START_VELOCITY, v_end=END_VELOCITY, v_res=VEL_RES)
+        if hdu_weight is None:
+            print(f'Could not crop {weight_file}')
+        else:
+            hdu_weight.writeto(outputfile_weight)
+
+TP_7M_12M_cube_files_crop = [str(x) for x in ACES_WORKDIR.glob(f'**/*.TP_7M_12M_feather_all.{MOLECULE}.image.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.crop.fits')]
+TWELVE_M_weight_files_crop = [str(x) for x in ACES_WORKDIR.glob(f'**/*.12M.{MOLECULE}.image.weight.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.crop.fits')]
+
+# Create a weighted cube mosaic of the TP+7m+12m data for the given molecule and velocity range
+if not (ACES_WORKDIR / f'{MOLECULE}.TP_7M_12M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.fits').exists():
+    TP_7M_12M_mosaic_hdu = weighted_reproject_and_coadd(sorted(TP_7M_12M_cube_files_crop), sorted(TWELVE_M_weight_files_crop))
+    TP_7M_12M_mosaic_hdu.writeto(ACES_WORKDIR / f'{MOLECULE}.TP_7M_12M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.fits')
