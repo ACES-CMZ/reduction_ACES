@@ -32,7 +32,7 @@ for line in tqdm(lines, desc = 'Lines'):
 		Reads the provided CSV file into a dictionary, where the keys are molecular line names and 
 		the values are dictionaries containing the corresponding spectral window (spw) values for 12m, 7m, and TP.
 	"""
-	# line_spws = read_table(filename)
+	line_spws = read_table(filename)
 
 	""" 
 		For each observation listed in the csv file, generates combined cubes (data structures representing 3D images)
@@ -40,7 +40,7 @@ for line in tqdm(lines, desc = 'Lines'):
 		The directory structure is created within the working directory (ACES_WORKDIR).
 		The raw data for the observations is read from the directory specified by ACES_DATA.
 	"""
-	# create_feathercubes(ACES_WORKDIR, ACES_DATA, line_spws, line)
+	create_feathercubes(ACES_WORKDIR, ACES_DATA, line_spws, line)
 
 	""" 
 		This function is responsible for creating a mosaic (a large image constructed from smaller images)
@@ -48,6 +48,6 @@ for line in tqdm(lines, desc = 'Lines'):
 		The function will calculate the weighted mean of the overlapping regions between the cubes
 		and save the resulting mosaic in the working directory (ACES_WORKDIR).
 	"""	
-	# create_weighted_mosaic(ACES_WORKDIR, line)
-	# cubeconvert_K_kms(ACES_WORKDIR, line)
+	create_weighted_mosaic(ACES_WORKDIR, line)
+	cubeconvert_K_kms(ACES_WORKDIR, line)
 	rebin(ACES_WORKDIR, line)
