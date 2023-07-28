@@ -19,11 +19,11 @@ ACES_DATA = Path(os.getenv('ACES_DATA'))
 LINE_TABLE = (ACES_ROOTDIR / 'aces/data/tables/linelist.csv')
 LINES = ['hnco43']
 
-START_VELOCITY = 0 # km/s
+START_VELOCITY = -100 # km/s
 END_VELOCITY = 100 # km/s
-VEL_RES = 5 # km/s
+VEL_RES = 1 # km/s
 
-INCLUDE_12M = False
+INCLUDE_12M = True
 REBIN_FACTOR = 2
 
 """
