@@ -19,9 +19,9 @@ ACES_DATA = Path(os.getenv('ACES_DATA'))
 LINE_TABLE = (ACES_ROOTDIR / 'aces/data/tables/linelist.csv')
 LINES = ['hnco43']
 
-START_VELOCITY = -100 # km/s
-END_VELOCITY = 100 # km/s
-VEL_RES = 1 # km/s
+START_VELOCITY = -100  # km/s
+END_VELOCITY = 100  # km/s
+VEL_RES = 1  # km/s
 
 INCLUDE_12M = True
 REBIN_FACTOR = 2
@@ -36,7 +36,7 @@ The following loop will process each line in the LINES list. For each line, the 
 - Rebin the mosaic (if desired)
 """
 
-for LINE in tqdm(LINES, desc = 'LINES'):
+for LINE in tqdm(LINES, desc='LINES'):
     LINE_SPWS = read_table(LINE_TABLE)
     create_feathercubes(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, LINE_SPWS, LINE, process_12M=INCLUDE_12M)
     crop_cubes(ACES_WORKDIR, START_VELOCITY, END_VELOCITY, VEL_RES, LINE_SPWS, LINE, process_12M=INCLUDE_12M)

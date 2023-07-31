@@ -20,10 +20,10 @@ def get_file(filename):
     (this should not be necessary once we remove duplicate images).
     """
     files = glob.glob(filename)
-    if len(files)==0:
+    if len(files) == 0:
         print(f"[INFO] No files matching '{filename}' were found.")
         return None
-    if len(files)>1:
+    if len(files) > 1:
         files.sort()
         print(f"[INFO] Too many files matching '{filename}' were found - taking highest pipeline stage number.")
 
@@ -90,107 +90,107 @@ def feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, twelve_m
         The molecule being processed (e.g. 'HNCO').
     """
     if (check_files_exist([tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt]) and
-    not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image').is_dir()):
+        not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image').is_dir()):
 
-        print(f'[INFO] Processing {obs_dir}')
+            print(f'[INFO] Processing {obs_dir}')
 
-        tp_freq = imhead(tp_cube, mode='get', hdkey='restfreq')
-        seven_m_freq = imhead(seven_m_cube, mode='get', hdkey='restfreq')
+            tp_freq = imhead(tp_cube, mode='get', hdkey='restfreq')
+            seven_m_freq = imhead(seven_m_cube, mode='get', hdkey='restfreq')
 
-        # If the rest frequencies do not match and the reframed TP cube does not exist, reframe the TP cube to match the 7m cube
-        if tp_freq['value'] != seven_m_freq['value'] and not (
-                Path(tp_cube).parent / tp_cube.replace('.fits', '.reframe')
-        ).is_dir():
-            imreframe(
-                imagename=tp_cube,
-                restfreq=seven_m_freq['value'] + ' Hz',
-                output=tp_cube.replace('.fits', '.reframe')
-            )
-
-        # If the transposed TP cube does not exist, transpose the TP cube
-        # This is often necessary -- feathering will not work if the axes are not in the same order
-        if not (Path(tp_cube).parent / tp_cube.replace('.fits', '.imtrans')).is_dir():
-            imtrans(
-                imagename=tp_cube.replace('.fits', '.reframe')
-                if (Path(tp_cube).parent / tp_cube.replace('.fits', '.reframe')).is_dir() else tp_cube,
-                outfile=tp_cube.replace('.fits', '.imtrans'),
-                order="0132"
-            )
-
-        feather_success = False
-        try:
-            if not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image').is_dir():
-                feather(
-                    imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image'),
-                    highres=seven_m_cube,
-                    lowres=tp_cube.replace('.fits', '.imtrans')
+            # If the rest frequencies do not match and the reframed TP cube does not exist, reframe the TP cube to match the 7m cube
+            if tp_freq['value'] != seven_m_freq['value'] and not (
+                    Path(tp_cube).parent / tp_cube.replace('.fits', '.reframe')
+            ).is_dir():
+                imreframe(
+                    imagename=tp_cube,
+                    restfreq=seven_m_freq['value'] + ' Hz',
+                    output=tp_cube.replace('.fits', '.reframe')
                 )
-            feather_success = True
-        except Exception as e:
-            print(f"Feather failed with highres={seven_m_cube}: {e}")
+
+            # If the transposed TP cube does not exist, transpose the TP cube
+            # This is often necessary -- feathering will not work if the axes are not in the same order
+            if not (Path(tp_cube).parent / tp_cube.replace('.fits', '.imtrans')).is_dir():
+                imtrans(
+                    imagename=tp_cube.replace('.fits', '.reframe')
+                    if (Path(tp_cube).parent / tp_cube.replace('.fits', '.reframe')).is_dir() else tp_cube,
+                    outfile=tp_cube.replace('.fits', '.imtrans'),
+                    order="0132"
+                )
+
+            feather_success = False
             try:
-                imsmooth(imagename=seven_m_cube, kernel='commonbeam', targetres=True, outfile=seven_m_cube+'.commonbeam')
-
-                feather(
-                    imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image'),
-                    highres=seven_m_cube+'.commonbeam',
-                    lowres=tp_cube.replace('.fits', '.imtrans')
-                )
+                if not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image').is_dir():
+                    feather(
+                        imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image'),
+                        highres=seven_m_cube,
+                        lowres=tp_cube.replace('.fits', '.imtrans')
+                    )
                 feather_success = True
             except Exception as e:
-                # If the feather task failed again, print an error message and proceed
-                print(f"Feather task failed again with 7M data smoothed to a common beam. Skipping feathering: {e}")
-
-        if feather_success:
-            tp_7m_cube = str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image')
-            tp_7m_cube_freq = imhead(tp_7m_cube, mode='get', hdkey='restfreq')
-            twelve_m_freq = imhead(twelve_m_cube, mode='get', hdkey='restfreq')
-
-            if tp_7m_cube_freq['value'] != twelve_m_freq['value'] and not (Path(tp_7m_cube) / '.reframe').is_dir():
-                imreframe(
-                    imagename=tp_7m_cube,
-                    restfreq=twelve_m_freq['value'] + ' Hz',
-                    output=tp_7m_cube + '.reframe'
-                )
-
-            # If the feathered TP+7m+12m cube does not exist, feather the 12m and TP+7m cubes together
-            feather_success_12M = False
-            try:
-                if not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image').is_dir():
-                    feather(
-                        imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image'),
-                        highres=twelve_m_cube,
-                        lowres=tp_7m_cube + '.reframe' if (Path(tp_7m_cube) / '.reframe').is_dir() else tp_7m_cube
-                    )
-                feather_success_12M = True
-            except Exception as e:
-                print(f"Feather failed with highres={twelve_m_cube}: {e}")
+                print(f"Feather failed with highres={seven_m_cube}: {e}")
                 try:
-                    imsmooth(imagename=twelve_m_cube, kernel='commonbeam', targetres=True, outfile=twelve_m_cube+'.commonbeam')
+                    imsmooth(imagename=seven_m_cube, kernel='commonbeam', targetres=True, outfile=seven_m_cube + '.commonbeam')
 
                     feather(
-                        imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image'),
-                        highres=twelve_m_cube+'.commonbeam',
-                        lowres=tp_7m_cube + '.reframe' if (Path(tp_7m_cube) / '.reframe').is_dir() else tp_7m_cube
+                        imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image'),
+                        highres=seven_m_cube + '.commonbeam',
+                        lowres=tp_cube.replace('.fits', '.imtrans')
                     )
+                    feather_success = True
+                except Exception as e:
+                    # If the feather task failed again, print an error message and proceed
+                    print(f"Feather task failed again with 7M data smoothed to a common beam. Skipping feathering: {e}")
+
+            if feather_success:
+                tp_7m_cube = str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image')
+                tp_7m_cube_freq = imhead(tp_7m_cube, mode='get', hdkey='restfreq')
+                twelve_m_freq = imhead(twelve_m_cube, mode='get', hdkey='restfreq')
+
+                if tp_7m_cube_freq['value'] != twelve_m_freq['value'] and not (Path(tp_7m_cube) / '.reframe').is_dir():
+                    imreframe(
+                        imagename=tp_7m_cube,
+                        restfreq=twelve_m_freq['value'] + ' Hz',
+                        output=tp_7m_cube + '.reframe'
+                    )
+
+                # If the feathered TP+7m+12m cube does not exist, feather the 12m and TP+7m cubes together
+                feather_success_12M = False
+                try:
+                    if not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image').is_dir():
+                        feather(
+                            imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image'),
+                            highres=twelve_m_cube,
+                            lowres=tp_7m_cube + '.reframe' if (Path(tp_7m_cube) / '.reframe').is_dir() else tp_7m_cube
+                        )
                     feather_success_12M = True
                 except Exception as e:
-                    print(f"Feather task failed again with 12M data smoothed to a common beam. Skipping feathering: {e}")
+                    print(f"Feather failed with highres={twelve_m_cube}: {e}")
+                    try:
+                        imsmooth(imagename=twelve_m_cube, kernel='commonbeam', targetres=True, outfile=twelve_m_cube + '.commonbeam')
 
-            if feather_success_12M:
-                # Export the feathered cubes and the 12m weights to FITS files
-                export_fits(
-                    imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image'),
-                    fitsimage=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image.fits')
-                )
+                        feather(
+                            imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image'),
+                            highres=twelve_m_cube + '.commonbeam',
+                            lowres=tp_7m_cube + '.reframe' if (Path(tp_7m_cube) / '.reframe').is_dir() else tp_7m_cube
+                        )
+                        feather_success_12M = True
+                    except Exception as e:
+                        print(f"Feather task failed again with 12M data smoothed to a common beam. Skipping feathering: {e}")
 
-                export_fits(
-                    imagename=twelve_m_wt,
-                    fitsimage=str(obs_dir / f'Sgr_A_st_{obs_id}.12M.{MOLECULE}.image.weight.fits')
-                )
+                if feather_success_12M:
+                    # Export the feathered cubes and the 12m weights to FITS files
+                    export_fits(
+                        imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image'),
+                        fitsimage=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_12M_feather_all.{MOLECULE}.image.fits')
+                    )
+
+                    export_fits(
+                        imagename=twelve_m_wt,
+                        fitsimage=str(obs_dir / f'Sgr_A_st_{obs_id}.12M.{MOLECULE}.image.weight.fits')
+                    )
     else:
         print(f"One or more cubes do not exist for observation Sgr_A_st_{obs_id}. Skipping this one ...")
-    return()
+    return ()
 
 
 def feathercubes_without_12M(obs_dir, obs_id, tp_cube, seven_m_cube, seven_m_wt, MOLECULE):
@@ -250,11 +250,11 @@ def feathercubes_without_12M(obs_dir, obs_id, tp_cube, seven_m_cube, seven_m_wt,
     except Exception as e:
         print(f"Feather failed with highres={seven_m_cube}: {e}")
         try:
-            imsmooth(imagename=seven_m_cube, kernel='commonbeam', targetres=True, outfile=seven_m_cube+'.commonbeam')
+            imsmooth(imagename=seven_m_cube, kernel='commonbeam', targetres=True, outfile=seven_m_cube + '.commonbeam')
 
             feather(
                 imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image'),
-                highres=seven_m_cube+'.commonbeam',
+                highres=seven_m_cube + '.commonbeam',
                 lowres=tp_cube.replace('.fits', '.imtrans')
             )
             feather_success = True
@@ -271,7 +271,7 @@ def feathercubes_without_12M(obs_dir, obs_id, tp_cube, seven_m_cube, seven_m_wt,
             imagename=seven_m_wt,
             fitsimage=str(obs_dir / f'Sgr_A_st_{obs_id}.7M.{MOLECULE}.image.weight.fits')
         )
-    return()
+    return ()
 
 
 def create_feathercubes(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, line_spws, MOLECULE, process_12M=True):
@@ -304,7 +304,7 @@ def create_feathercubes(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, line_spws, MOLECU
     prefix = 'member.uid___A001_'
 
     # Loop over each SB
-    for i in tqdm(range(len(sb_names)), desc = 'EBs'):
+    for i in tqdm(range(len(sb_names)), desc='EBs'):
         obs_id = sb_names['Obs ID'][i]
         obs_dir = ACES_WORKDIR / f'Sgr_A_st_{obs_id}'
         obs_dir.mkdir(exist_ok=True)
@@ -335,4 +335,4 @@ def create_feathercubes(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, line_spws, MOLECU
 
             feathercubes_without_12M(obs_dir, obs_id, tp_cube, seven_m_cube, seven_m_wt, MOLECULE)
 
-    return()
+    return ()

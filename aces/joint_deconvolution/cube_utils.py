@@ -13,7 +13,7 @@ def convert_to_float32(hdu):
     Does this one really need an explanation? Or even a separate function for that matter ...
     """
     hdu.data = hdu.data.astype('float32')
-    return(hdu)
+    return hdu
 
 
 def crop_cube_velocity_range(fits_file, rest_FREQUENCY, v_start, v_end, v_res=None):
@@ -40,7 +40,6 @@ def crop_cube_velocity_range(fits_file, rest_FREQUENCY, v_start, v_end, v_res=No
     cube = SpectralCube.read(fits_file)
     cube.allow_huge_operations = True
     cube = cube.with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_FREQUENCY * u.GHz)
-
 
     vrange = [v_start * u.km / u.s, v_end * u.km / u.s]
     cropped_cube = cube.spectral_slab(*vrange)
@@ -131,12 +130,12 @@ def cubeconvert_K_kms(ACES_WORKDIR, MOLECULE, START_VELOCITY, END_VELOCITY, VEL_
         If True, the filename is specified to include 12m data. Defaults to True.
     """
     if process_12M:
-        fits_file =  f'{ACES_WORKDIR}/{MOLECULE}.TP_7M_12M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.fits'
+        fits_file = f'{ACES_WORKDIR}/{MOLECULE}.TP_7M_12M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.fits'
     else:
-        fits_file =  f'{ACES_WORKDIR}/{MOLECULE}.TP_7M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.fits'
+        fits_file = f'{ACES_WORKDIR}/{MOLECULE}.TP_7M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.fits'
 
     cube = SpectralCube.read(fits_file)
-    cube.allow_huge_operations=True
+    cube.allow_huge_operations = True
 
     cube = cube.with_spectral_unit(u.km / u.s, velocity_convention='radio')
     cube = cube.minimal_subcube()
@@ -176,9 +175,9 @@ def rebin(ACES_WORKDIR, MOLECULE, START_VELOCITY, END_VELOCITY, VEL_RES, REBIN_F
         If True, overwrite any existing files with the same name. Defaults to True.
     """
     if process_12M:
-        input_fits =  f'{ACES_WORKDIR}/{MOLECULE}.TP_7M_12M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.K.kms.fits'
+        input_fits = f'{ACES_WORKDIR}/{MOLECULE}.TP_7M_12M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.K.kms.fits'
     else:
-        input_fits =  f'{ACES_WORKDIR}/{MOLECULE}.TP_7M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.K.kms.fits'
+        input_fits = f'{ACES_WORKDIR}/{MOLECULE}.TP_7M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.K.kms.fits'
 
     # Define the names of the intermediate images
     input_image = input_fits.replace('.fits', '.tmp.image')
@@ -189,6 +188,6 @@ def rebin(ACES_WORKDIR, MOLECULE, START_VELOCITY, END_VELOCITY, VEL_RES, REBIN_F
     rmtables([input_image, regrid_image])
 
     importfits(fitsimage=input_fits, imagename=input_image, overwrite=overwrite)
-    imrebin(imagename=input_image, outfile=regrid_image, factor=[REBIN_FACTOR,REBIN_FACTOR,1], overwrite=True)
+    imrebin(imagename=input_image, outfile=regrid_image, factor=[REBIN_FACTOR, REBIN_FACTOR, 1], overwrite=True)
     exportfits(imagename=regrid_image, fitsimage=output_fits, overwrite=overwrite, velocity=True)
     rmtables([input_image, regrid_image])

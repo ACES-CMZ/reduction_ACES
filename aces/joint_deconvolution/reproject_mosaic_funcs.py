@@ -63,27 +63,27 @@ def smooth_hdus_spectral_cube(files, largest_bmaj, largest_bmin):
     Smooth a set of cubes to the largest beam size.
     Note that we are only using BMAJ here so that the beam is circular.
     """
-    target_beam = Beam(major=largest_bmaj*u.deg, minor=largest_bmaj*u.deg, pa=0*u.deg)
+    target_beam = Beam(major=largest_bmaj * u.deg, minor=largest_bmaj * u.deg, pa=0 * u.deg)
     hdu_list = [fits.open(file)[0] for file in files]
     for i in range(len(files)):
 
         hdu = hdu_list[i]
         cube = SpectralCube.read(hdu)
-        cube.allow_huge_operations=True
+        cube.allow_huge_operations = True
         cube_beam_deg = cube.beam.major.to(u.deg).value
-        if cube_beam_deg < ((largest_bmaj*u.deg).value):
+        if cube_beam_deg < ((largest_bmaj * u.deg).value):
             cube = cube.convolve_to(target_beam)
 
         print('INFO Smoothed to largest beam.')
 
         outfile = files[i].replace('.fits', '.smoothed.fits')
-        print('INFO Save smoothed files: %s '% outfile)
+        print('INFO Save smoothed files: %s ' % outfile)
         cube.write(outfile, overwrite=True)
 
         del cube
         gc.collect()
 
-    return()
+    return ()
 
 
 def regrid_fits_to_template(input_fits, template_fits, output_fits, overwrite=True):
@@ -140,32 +140,32 @@ def weighted_reproject_and_coadd(cube_files, weight_files, dir_tmp='./tmp/'):
     wcs_out, shape_out = find_optimal_celestial_wcs(fake_hdus)
     hdu_out = wcs_out.to_fits()[0]
     hdu_out.data = np.ones(shape_out)
-    hdu_out.writeto('%s/hdu_out.fits' %dir_tmp, overwrite=True)
+    hdu_out.writeto('%s/hdu_out.fits' % dir_tmp, overwrite=True)
 
     reprojected_data, reprojected_weights = [], []
 
-    p_bar = tqdm(range(n_hdus*2))
+    p_bar = tqdm(range(n_hdus * 2))
     p_bar.refresh()
     for i in range(n_hdus):
 
-        print("[INFO] Processing primary_hdu[%i]" %i)
+        print("[INFO] Processing primary_hdu[%i]" % i)
 
         cube = SpectralCube.read(primary_hdus[i])
-        cube.allow_huge_operations=True
-        cube.write('%s/cube.fits' %dir_tmp, overwrite=True)
+        cube.allow_huge_operations = True
+        cube.write('%s/cube.fits' % dir_tmp, overwrite=True)
 
         if i == 0:
             keys = ['CUNIT3', 'CTYPE3', 'CRPIX3', 'CDELT3',
-            'CRVAL3', 'WCSAXES', 'SPECSYS', 'RESTFRQ',
-            'BUNIT', 'BMAJ', 'BMIN', 'BPA']
+                    'CRVAL3', 'WCSAXES', 'SPECSYS', 'RESTFRQ',
+                    'BUNIT', 'BMAJ', 'BMIN', 'BPA']
             for key in keys:
                 hdu_out.header[key] = cube.header[key]
 
-        regrid_fits_to_template('%s/cube.fits' %dir_tmp,
-                                '%s/hdu_out.fits' %dir_tmp,
-                                '%s/cube_regrid_%i.fits' %(dir_tmp, i))
+        regrid_fits_to_template('%s/cube.fits' % dir_tmp,
+                                '%s/hdu_out.fits' % dir_tmp,
+                                '%s/cube_regrid_%i.fits' % (dir_tmp, i))
 
-        cube_regrid = SpectralCube.read('%s/cube_regrid_%i.fits' %(dir_tmp, i))
+        cube_regrid = SpectralCube.read('%s/cube_regrid_%i.fits' % (dir_tmp, i))
         reprojected_data.append(cube_regrid.hdu.data)
 
         del cube
@@ -175,17 +175,17 @@ def weighted_reproject_and_coadd(cube_files, weight_files, dir_tmp='./tmp/'):
         p_bar.update(1)
         p_bar.refresh()
 
-        print("[INFO] Processing weight_hdus[%i]" %i)
+        print("[INFO] Processing weight_hdus[%i]" % i)
 
         cube_weight = SpectralCube.read(weight_hdus[i])
-        cube_weight.allow_huge_operations=True
-        cube_weight.write('%s/cube_weight.fits' %dir_tmp, overwrite=True)
+        cube_weight.allow_huge_operations = True
+        cube_weight.write('%s/cube_weight.fits' % dir_tmp, overwrite=True)
 
-        regrid_fits_to_template('%s/cube_weight.fits' %dir_tmp,
-                                '%s/hdu_out.fits' %dir_tmp,
-                                '%s/cube_weight_regrid_%i.fits' %(dir_tmp, i))
+        regrid_fits_to_template('%s/cube_weight.fits' % dir_tmp,
+                                '%s/hdu_out.fits' % dir_tmp,
+                                '%s/cube_weight_regrid_%i.fits' % (dir_tmp, i))
 
-        cube_weight_regrid = SpectralCube.read('%s/cube_weight_regrid_%i.fits' %(dir_tmp, i))
+        cube_weight_regrid = SpectralCube.read('%s/cube_weight_regrid_%i.fits' % (dir_tmp, i))
         reprojected_weights.append(cube_weight_regrid.hdu.data)
 
         del cube_weight
@@ -242,4 +242,4 @@ def create_weighted_mosaic(ACES_WORKDIR, START_VELOCITY, END_VELOCITY, VEL_RES, 
     mosaic_hdu.writeto(outputfile, overwrite=True)
     print(f"[INFO] Created and saved weighted mosaic to {outputfile}")
 
-    return()
+    return ()
