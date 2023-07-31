@@ -72,6 +72,9 @@ def feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, twelve_m
     This function also checks the rest frequencies of the cubes. If they do not match, the cube is reframed
     to match the target cube. The TP cube is transposed if needed.
 
+    Occasionally, feathering will fail if one of the cubes has multiple beams.
+    In this case, the offending cube is smoothed to a common beam and feathering is attempted again.
+
     Parameters
     ----------
     obs_dir : pathlib.Path
@@ -198,6 +201,9 @@ def feathercubes_without_12M(obs_dir, obs_id, tp_cube, seven_m_cube, seven_m_wt,
     This function extracts rest frequencies from the TP and 7m cubes. If they do not match, the TP cube is reframed
     to match the 7m cube. The TP cube is transposed if needed. The 7m and TP cubes are then feathered together and
     exported to FITS files.
+
+    Occasionally, feathering will fail if one of the cubes has multiple beams.
+    In this case, the offending cube is smoothed to a common beam and feathering is attempted again.
 
     Parameters
     ----------
