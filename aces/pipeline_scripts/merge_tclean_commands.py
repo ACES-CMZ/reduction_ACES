@@ -111,7 +111,7 @@ def make_table():
                   ]
     tabledata = list(map(list, zip(*tabledata)))
     table = Table(tabledata,
-                  names=['field', 'spw',] + clean_keys )
+                  names=['fieldname', 'spwname',] + clean_keys )
     return table
 
 
