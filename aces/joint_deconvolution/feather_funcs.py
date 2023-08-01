@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 from astropy.table import Table
 from tqdm import tqdm
-# from casatasks import imhead, exportfits, imtrans, feather, imreframe, imsmooth
+from casatasks import imhead, exportfits, imtrans, feather, imreframe, imsmooth
 
 
 def check_files_exist(file_names):
