@@ -1,5 +1,7 @@
 import json
+import itertools
 from astropy import log
+from astropy.table import Table
 import os
 from aces import conf
 
@@ -92,6 +94,25 @@ def main():
 
 def get_commands():
     return main()
+
+
+def make_table():
+    clean_keys = list(set(itertools.chain.from_iterable(
+        [list(commands[key]['tclean_cube_pars'][spw].keys())
+         for key in commands
+         for spw in commands[key]['tclean_cube_pars']
+        ])))
+    tabledata = [[key, spw,] + [(commands[key]['tclean_cube_pars'][spw][tkey]
+                            if tkey in commands[key]['tclean_cube_pars'][spw]
+                            else None)
+                           for tkey in clean_keys]
+                   for key in commands
+                   for spw in commands[key]['tclean_cube_pars']
+                  ]
+    tabledata = list(map(list, zip(*tabledata)))
+    table = Table(tabledata,
+                  names=['field', 'spw',] + clean_keys )
+    return table
 
 
 if __name__ == "__main__":
