@@ -38,7 +38,7 @@ def get_common_beam(files):
     common_beam = cube.beam
 
     for fn in files[1:]:
-        cube = SpectralCube.read(fn)        
+        cube = SpectralCube.read(fn)
         common_beam = common_beam.commonbeam_with(cube.beam)
     return common_beam
 
