@@ -30,58 +30,34 @@ def create_fake_hdus(hdus, j):
     return fake_hdus
 
 
-def get_largest_bmaj_bmin(files):
+def get_common_beam(files):
     """
-    Get the largest BMAJ and BMIN values from a list of FITS files.
+    Get the common beam size of a set of cubes.
     """
-    hdu_list = [fits.open(file)[0] for file in files]
+    cube = SpectralCube.read(files[0])
+    common_beam = cube.beam
 
-    # Initialize largest values
-    largest_bmaj, largest_bmin = 0, 0
-
-    # Loop over HDUs
-    for hdu in hdu_list:
-        header = hdu.header
-
-        # Check if BMAJ and BMIN exist in the header
-        if 'BMAJ' in header and 'BMIN' in header:
-            bmaj = header['BMAJ']
-            bmin = header['BMIN']
-
-            # Update largest values
-            if bmaj > largest_bmaj:
-                largest_bmaj = bmaj
-
-            if bmin > largest_bmin:
-                largest_bmin = bmin
-
-    return largest_bmaj, largest_bmin
+    for fn in files[1:]:
+        cube = SpectralCube.read(fn)        
+        common_beam = common_beam.commonbeam_with(cube.beam)
+    return common_beam
 
 
-def smooth_hdus_spectral_cube(files, largest_bmaj, largest_bmin):
+def smooth_to_common_beam(files, common_beam):
     """
-    Smooth a set of cubes to the largest beam size.
-    Note that we are only using BMAJ here so that the beam is circular.
+    Smooth a set of cubes to common beam size.
     """
-    target_beam = Beam(major=largest_bmaj * u.deg, minor=largest_bmaj * u.deg, pa=0 * u.deg)
     hdu_list = [fits.open(file)[0] for file in files]
     for i in range(len(files)):
-
         hdu = hdu_list[i]
         cube = SpectralCube.read(hdu)
         cube.allow_huge_operations = True
-        cube_beam_deg = cube.beam.major.to(u.deg).value
-        if cube_beam_deg < ((largest_bmaj * u.deg).value):
-            cube = cube.convolve_to(target_beam)
+        cube = cube.convolve_to(common_beam)
 
-        print('INFO Smoothed to largest beam.')
-
+        print('INFO Smoothed to common beam.')
         outfile = files[i].replace('.fits', '.smoothed.fits')
         print('INFO Save smoothed files: %s ' % outfile)
         cube.write(outfile, overwrite=True)
-
-        del cube
-        gc.collect()
 
     return ()
 
@@ -233,8 +209,8 @@ def create_weighted_mosaic(ACES_WORKDIR, START_VELOCITY, END_VELOCITY, VEL_RES, 
         weight_files = [str(x) for x in ACES_WORKDIR.glob(f'**/*.7M.{MOLECULE}.image.weight.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.fits')]
         outputfile = ACES_WORKDIR / f'{MOLECULE}.TP_7M_weighted_mosaic.{START_VELOCITY}_to_{END_VELOCITY}_kms.{VEL_RES}_kms_resolution.fits'
 
-    largest_bmaj, largest_bmin = get_largest_bmaj_bmin(cube_files)
-    smooth_hdus_spectral_cube(cube_files, largest_bmaj, largest_bmin)
+    common_beam = get_common_beam(cube_files)
+    smooth_to_common_beam(cube_files, common_beam)
     cube_files = [filename.replace('.fits', '.smoothed.fits') for filename in cube_files]
 
     print("[INFO] Creating weighted mosaic for TP+7m+12m cubes.")
