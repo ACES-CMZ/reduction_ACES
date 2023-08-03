@@ -123,9 +123,9 @@ def main():
                         psfglob = f'{workingpath}/{bn}.{iter_or_manual}.psf{tts}'
 
                         exists = (wildexists(pbcorglob) or
-                                ("WIPim" if wildexists(imageglob)
-                                    else "WIPpsf" if wildexists(psfglob)
-                                    else False))
+                                  ("WIPim" if wildexists(imageglob)
+                                   else "WIPpsf" if wildexists(psfglob)
+                                   else False))
                         if exists:
                             break
 
