@@ -2552,6 +2552,9 @@
         "calcpsf": false,
         "psfcutoff": 0.35,
         "parallel": true
+      },
+      "spw35": {
+	"cyclefactor": 5
       }
     }
   },
@@ -2866,7 +2869,7 @@
         "threshold": "0.01Jy",
         "nsigma": 0.0,
         "cycleniter": -1,
-        "cyclefactor": 1.0,
+        "cyclefactor": 2.5,
         "minpsffraction": 0.05,
         "maxpsffraction": 0.8,
         "interactive": 0,
