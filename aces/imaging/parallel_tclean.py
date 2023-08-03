@@ -333,30 +333,35 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
 psffile = os.path.basename(f'{imagename}.psf')
 ia.open(psffile)
 commonbeam = ia.commonbeam()
+ia.close()
+
+imagefile = os.path.basename(f'{imagename}.image')
+ia.open(imagefile)
 rbeam = ia.restoringbeam()
 ia.close()
 
 # if any beam is not the common beam...
 manybeam = False
-for beam in rbeam['beams'].values():
-    if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
-        manybeam = True
-        break
+if 'beams' in rbeam:
+    for beam in rbeam['beams'].values():
+        if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
+            manybeam = True
+            break
 
 if manybeam:
-     shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
-     shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
-     imsmooth(imagename=f'{imagename}.model',
-              outfile=f'{imagename}.convmodel',
-              beam=commonbeam)
-     ia.imagecalc(outfile=f'{os.path.basename(imagename)}.image',
-                  pixels=f'{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
-                  imagemd=f'{os.path.basename(imagename)}.convmodel',
-                  overwrite=True)
-     ia.close()
-     impbcor(imagename=f'{os.path.basename(imagename)}.image',
-             pbimage=f'{os.path.basename(imagename)}.pb',
-             outfile=f'{os.path.basename(imagename)}.image.pbcor',)
+    shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
+    shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
+    imsmooth(imagename=f'{imagename}.model',
+             outfile=f'{imagename}.convmodel',
+             beam=commonbeam)
+    ia.imagecalc(outfile=f'{os.path.basename(imagename)}.image',
+                 pixels=f'{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
+                 imagemd=f'{os.path.basename(imagename)}.convmodel',
+                 overwrite=True)
+    ia.close()
+    impbcor(imagename=f'{os.path.basename(imagename)}.image',
+            pbimage=f'{os.path.basename(imagename)}.pb',
+            outfile=f'{os.path.basename(imagename)}.image.pbcor',)
 
     exportfits(imagename=f'{os.path.basename(imagename)}.image.pbcor',
                fitsimage=f'{os.path.basename(imagename)}.image.pbcor.fits',
