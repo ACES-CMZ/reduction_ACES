@@ -101,17 +101,19 @@ def make_table():
         [list(commands[key]['tclean_cube_pars'][spw].keys())
          for key in commands
          for spw in commands[key]['tclean_cube_pars']
-        ])))
-    tabledata = [[key, spw,] + [(commands[key]['tclean_cube_pars'][spw][tkey]
-                            if tkey in commands[key]['tclean_cube_pars'][spw]
-                            else None)
-                           for tkey in clean_keys]
-                   for key in commands
-                   for spw in commands[key]['tclean_cube_pars']
-                  ]
+        ]
+    )))
+    tabledata = [[key, spw,] +
+                 [(commands[key]['tclean_cube_pars'][spw][tkey]
+                   if tkey in commands[key]['tclean_cube_pars'][spw]
+                   else None)
+                  for tkey in clean_keys]
+                 for key in commands
+                 for spw in commands[key]['tclean_cube_pars']
+                ]
     tabledata = list(map(list, zip(*tabledata)))
     table = Table(tabledata,
-                  names=['fieldname', 'spwname',] + clean_keys )
+                  names=['fieldname', 'spwname',] + clean_keys)
     return table
 
 
