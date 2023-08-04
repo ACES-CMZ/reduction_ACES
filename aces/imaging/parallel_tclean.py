@@ -276,6 +276,7 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
     else:
         assert len(infiles) > 0, f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}"
 
+
 for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
     #infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
@@ -329,10 +330,52 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
     else:
         print(f"Savedir {{savedir}} does not exist")
 
+psffile = os.path.basename(f'{imagename}.psf')
+ia.open(psffile)
+commonbeam = ia.commonbeam()
+ia.close()
+
+imagefile = os.path.basename(f'{imagename}.image')
+ia.open(imagefile)
+rbeam = ia.restoringbeam()
+ia.close()
+
+# if any beam is not the common beam...
+manybeam = False
+if 'beams' in rbeam:
+    for beam in rbeam['beams'].values():
+        if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
+            manybeam = True
+            break
+
+if manybeam:
+    shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
+    shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
+    imsmooth(imagename=f'{imagename}.model',
+             outfile=f'{imagename}.convmodel',
+             beam=commonbeam)
+    ia.imagecalc(outfile=f'{os.path.basename(imagename)}.image',
+                 pixels=f'{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
+                 imagemd=f'{os.path.basename(imagename)}.convmodel',
+                 overwrite=True)
+    ia.close()
+    impbcor(imagename=f'{os.path.basename(imagename)}.image',
+            pbimage=f'{os.path.basename(imagename)}.pb',
+            outfile=f'{os.path.basename(imagename)}.image.pbcor',)
+
+    exportfits(imagename=f'{os.path.basename(imagename)}.image.pbcor',
+               fitsimage=f'{os.path.basename(imagename)}.image.pbcor.fits',
+               overwrite=True
+               )
+    exportfits(imagename=f'{os.path.basename(imagename)}.image',
+               fitsimage=f'{os.path.basename(imagename)}.image.fits',
+               overwrite=True
+               )
+
+
 
 # Cleanup stage
 
-import os, shutil
 os.chdir('{workdir}')
 tclean_kwargs = {tclean_kwargs}
 

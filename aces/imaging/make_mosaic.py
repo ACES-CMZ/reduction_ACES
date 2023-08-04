@@ -81,7 +81,18 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
                 else:
                     log.warn(f"File {fn} is a multi-beam cube.")
                     beam = cube.beams.common_beam()
-                    mx = cube.max(axis=0).to(u.K, beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean()))
+                    equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
+                    mxjy = cube.max(axis=0)
+                    if hasattr(mxjy, '_beam') and mxjy._beam is None:
+                        mxjy._beam = beam
+                    try:
+                        assert hasattr(mxjy, 'beam')
+                        assert mxjy.beam is not None
+                    except Exception as ex:
+                        print(ex)
+                        mxjy = mxjy.with_beam(beam, raise_error_jybm=False)
+
+                    mx = mxjy.to(u.K, equivalencies=equiv)
         if save_file:
             mx.hdu.writeto(outfn)
         if threshold is not None:
@@ -99,12 +110,19 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
     else:
         ft = 'fits' if fn.endswith(".fits") else "casa_image"
         cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
+        cube.beam_threshold = 0.1  # SO2 or the one after it had 5% beam variance
         if slab_kwargs is not None:
             cube = cube.spectral_slab(**slab_kwargs)
         with cube.use_dask_scheduler('threads'):
             moment0 = cube.moment0(axis=0)
+        if hasattr(cube, 'beam'):
+            equiv = cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
+        elif hasattr(cube, 'beams'):
+            beam = cube.beams.common_beam()
+            equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
+
         moment0 = (moment0 * u.s / u.km).to(u.K,
-                                            equivalencies=cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())) * u.km / u.s
+                                            equivalencies=equiv) * u.km / u.s
         if save_file:
             moment0.hdu.writeto(outfn)
         return moment0
@@ -277,6 +295,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
 
 def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.image.pbcor',
+              lines='all',
               globdir='calibrated/working', use_weights=True):
 
     from astropy.table import Table
@@ -291,7 +310,10 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
         line = row['Line'].replace(" ", "_").replace("(", "_").replace(")", "_")
         restf = row['Rest (GHz)'] * u.GHz
 
-        log.info(f"{array} {line}")
+        if lines != 'all' and not (line in lines or row['Line'] in lines):
+            continue
+
+        log.info(f"{array} {line} {restf}")
 
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*spw{spwn}.{glob_suffix}')
         assert len(filelist) > 0
@@ -334,7 +356,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
                 print(flush=True)
 
         if parallel:
-            print(f"Starting function make_mosaic for {line}")
+            print(f"Starting function make_mosaic for {line} peak intensity")
             proc = Process(target=make_mosaic, args=(hdus,),
                            kwargs=dict(name=f'{line}_max', cbar_unit='K',
                            norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
@@ -358,7 +380,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             print(flush=True)
 
         if parallel:
-            print(f"Starting function make_mosaic for {line}")
+            print(f"Starting function make_mosaic for {line} moment 0")
             proc = Process(target=make_mosaic, args=(m0hdus,),
                            kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
                            norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
