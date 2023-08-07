@@ -191,7 +191,6 @@ def feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, twelve_m
                 )
     else:
         print(f"One or more cubes do not exist for observation Sgr_A_st_{obs_id}. Skipping this one ...")
-    return ()
 
 
 def feathercubes_without_12M(obs_dir, obs_id, tp_cube, seven_m_cube, seven_m_wt, MOLECULE):
@@ -275,7 +274,6 @@ def feathercubes_without_12M(obs_dir, obs_id, tp_cube, seven_m_cube, seven_m_wt,
             imagename=seven_m_wt,
             fitsimage=str(obs_dir / f'Sgr_A_st_{obs_id}.7M.{MOLECULE}.image.weight.fits')
         )
-    return ()
 
 
 def create_feathercubes(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, line_spws, MOLECULE, process_12M=True):

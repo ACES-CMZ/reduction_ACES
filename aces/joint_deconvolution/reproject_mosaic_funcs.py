@@ -59,8 +59,6 @@ def smooth_to_common_beam(files, common_beam):
         print('INFO Save smoothed files: %s ' % outfile)
         cube.write(outfile, overwrite=True)
 
-    return ()
-
 
 def regrid_fits_to_template(input_fits, template_fits, output_fits, overwrite=True):
     """
@@ -217,5 +215,3 @@ def create_weighted_mosaic(ACES_WORKDIR, START_VELOCITY, END_VELOCITY, VEL_RES, 
     mosaic_hdu = weighted_reproject_and_coadd(cube_files, weight_files)
     mosaic_hdu.writeto(outputfile, overwrite=True)
     print(f"[INFO] Created and saved weighted mosaic to {outputfile}")
-
-    return ()
