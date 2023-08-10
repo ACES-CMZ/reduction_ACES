@@ -10,7 +10,7 @@ from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs
 from casatasks import imhead, exportfits, imtrans, feather, imreframe
 from astropy.table import Table
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import glob 
 
 
@@ -50,7 +50,7 @@ def get_file(filename):
     return str(files[-1])
 
 
-def export_fits(imagename, fitsimage):
+def export_fits(imagename, fitsimage, overwrite=True):
     '''
     Function to export an image to a FITS file if it doesn't already exist.
     
@@ -62,8 +62,8 @@ def export_fits(imagename, fitsimage):
     - None, but a FITS file is created or overwritten if it already exists
     '''
     # print("[INFO] Exporting image to FITS file.")
-    if not Path(fitsimage).exists():
-        exportfits(imagename=imagename, fitsimage=fitsimage, dropdeg=True)
+    if ((not Path(fitsimage).exists()) or (overwrite)):
+        exportfits(imagename=imagename, fitsimage=fitsimage, dropdeg=True, overwrite=True)
         print(f"[INFO] Image exported to {fitsimage}.")
 
 

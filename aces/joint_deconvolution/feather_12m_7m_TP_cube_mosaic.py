@@ -1,7 +1,7 @@
 # Import the necessary libraries
 import os
 import glob
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import warnings
 import numpy as np
 import pandas as pd
@@ -10,6 +10,7 @@ from astropy.io import fits
 from casatasks import imhead, exportfits, imtrans, feather, imreframe
 from feather_12m_7m_TP_cube_mosaic_modsfeather import *
 from feather_12m_7m_TP_cube_mosaic_modsreprojectcasa import *
+from feather_12m_7m_TP_cube_mosaic_modssmoothcasa import *
 from feather_12m_7m_TP_cube_mosaic_modssavefits import *
 from astropy.table import Table 
 
@@ -23,10 +24,12 @@ ACES_WORKDIR = Path('/export/data1/abarnes/alma-aces/feather/working/')
 filename = '../../tables/ACESSpectralLineCoverage.csv'
 
 #Select the molecule/SPW based on the dictionary below, and the code will do the rest.
-lines = ['cs21','hnco43','h13cn10', 'ch3ch2cn', 'h13co+10', 'hn13c10', 'sio21', 'hco+10', 'hc3n1110', 'so4544', 'so3221']
+# lines = ['hnco43']
+# lines = ['cs21']
+lines = ['cs21','h13cn10', 'ch3ch2cn', 'h13co+10', 'hn13c10', 'sio21', 'hco+10', 'hc3n1110', 'so4544', 'so3221', 'hnco43']
 ######## ---------------------------------- ##### 
 
-for line in tqdm(lines, desc = 'Lines'):
+for line in tqdm(lines, desc = 'Lines', position=0, leave=True):
 
 	""" 
 		Reads the provided CSV file into a dictionary, where the keys are molecular line names and 
@@ -48,6 +51,6 @@ for line in tqdm(lines, desc = 'Lines'):
 		The function will calculate the weighted mean of the overlapping regions between the cubes
 		and save the resulting mosaic in the working directory (ACES_WORKDIR).
 	"""	
+	create_smoothed_regridded_mosaics(ACES_WORKDIR, line)
 	create_weighted_mosaic(ACES_WORKDIR, line)
-	cubeconvert_K_kms(ACES_WORKDIR, line)
-	rebin(ACES_WORKDIR, line)
+	cubeconvert_K_kms_astropy(ACES_WORKDIR, line)
