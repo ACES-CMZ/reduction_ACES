@@ -1061,8 +1061,7 @@
       "spw29": {
         "nchan": 1912,
         "width": "0.0305153MHz",
-        "threshold": "0.0221Jy",
-        "cyclefactor": 2.0
+        "threshold": "0.0221Jy"
       },
       "spw31": {
         "nchan": 1912,
@@ -1157,7 +1156,7 @@
         "threshold": "0.01Jy",
         "nsigma": 0.0,
         "cycleniter": -1,
-        "cyclefactor": 1.0,
+        "cyclefactor": 2.0,
         "minpsffraction": 0.05,
         "maxpsffraction": 0.8,
         "interactive": 0,
