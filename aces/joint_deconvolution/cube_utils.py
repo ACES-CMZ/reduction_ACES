@@ -96,7 +96,7 @@ def crop_cubes(ACES_WORKDIR, START_VELOCITY, END_VELOCITY, VEL_RES, line_spws, l
                 hdu.writeto(output_file)
 
     if process_12M:
-        cube_files = [str(x) for x in ACES_WORKDIR.glob(f'**/*.TP_7M_12M_feather_all.{line}.image.fits')],
+        cube_files = [str(x) for x in ACES_WORKDIR.glob(f'**/*.TP_7M_12M_feather_all.{line}.image.fits')]
         weight_files = [str(x) for x in ACES_WORKDIR.glob(f'**/*.12M.{line}.image.weight.fits')]
     else:
         cube_files = [str(x) for x in ACES_WORKDIR.glob(f'**/*.TP_7M_feather_all.{line}.image.fits')]
