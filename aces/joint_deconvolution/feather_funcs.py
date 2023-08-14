@@ -308,34 +308,33 @@ def create_feathercubes(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, line_spws, MOLECU
     # Loop over each SB
     for i in tqdm(range(len(sb_names)), desc='EBs'):
         obs_id = sb_names['Obs ID'][i]
-        if obs_id == 'b':
-            obs_dir = ACES_WORKDIR / f'Sgr_A_st_{obs_id}'
-            obs_dir.mkdir(exist_ok=True)
-            tp_mous_id = sb_names['TP MOUS ID'][i]
-            seven_m_mous_id = sb_names['7m MOUS ID'][i]
+        obs_dir = ACES_WORKDIR / f'Sgr_A_st_{obs_id}'
+        obs_dir.mkdir(exist_ok=True)
+        tp_mous_id = sb_names['TP MOUS ID'][i]
+        seven_m_mous_id = sb_names['7m MOUS ID'][i]
 
-            seven_m_cube = get_file(
-                f"{ACES_DATA / (prefix + seven_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_7m_spw']}.cube.I.iter1.image.pbcor"
+        seven_m_cube = get_file(
+            f"{ACES_DATA / (prefix + seven_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_7m_spw']}.cube.I.iter1.image.pbcor"
+        )
+        tp_cube = get_file(
+            f"{ACES_DATA / (prefix + tp_mous_id) / 'product'}/*{generic_name}{line_spws[MOLECULE]['mol_TP_spw']}.cube.I.sd.fits"
+        )
+
+        if process_12M:
+            twelve_m_mous_id = sb_names['12m MOUS ID'][i]
+            twelve_m_cube = get_file(
+                f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.image.pbcor"
             )
-            tp_cube = get_file(
-                f"{ACES_DATA / (prefix + tp_mous_id) / 'product'}/*{generic_name}{line_spws[MOLECULE]['mol_TP_spw']}.cube.I.sd.fits"
+            twelve_m_wt = get_file(
+                f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.weight"
             )
 
-            if process_12M:
-                twelve_m_mous_id = sb_names['12m MOUS ID'][i]
-                twelve_m_cube = get_file(
-                    f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.image.pbcor"
-                )
-                twelve_m_wt = get_file(
-                    f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.weight"
-                )
+            feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt, MOLECULE)
+        else:
+            seven_m_wt = get_file(
+                f"{ACES_DATA / (prefix + seven_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_7m_spw']}.cube.I.iter1.weight"
+            )
 
-                feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt, MOLECULE)
-            else:
-                seven_m_wt = get_file(
-                    f"{ACES_DATA / (prefix + seven_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_7m_spw']}.cube.I.iter1.weight"
-                )
-
-                feathercubes_without_12M(obs_dir, obs_id, tp_cube, seven_m_cube, seven_m_wt, MOLECULE)
+            feathercubes_without_12M(obs_dir, obs_id, tp_cube, seven_m_cube, seven_m_wt, MOLECULE)
 
     return ()
