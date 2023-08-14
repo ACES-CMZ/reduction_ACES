@@ -256,7 +256,7 @@ def feathercubes_without_12M(obs_dir, obs_id, tp_cube, seven_m_cube, seven_m_wt,
                 except Exception as e:
                     print(f"Feather task failed again with 7M data smoothed to a common beam. Skipping feathering: {e}")
 
-        if (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image').is_dir() and not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image.fits').is_file(): 
+        if (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image').is_dir() and not (obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image.fits').is_file():
             export_fits(
                 imagename=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image'),
                 fitsimage=str(obs_dir / f'Sgr_A_st_{obs_id}.TP_7M_feather_all.{MOLECULE}.image.fits')
