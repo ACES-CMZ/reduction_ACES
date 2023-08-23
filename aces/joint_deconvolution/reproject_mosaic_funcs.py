@@ -101,7 +101,7 @@ def weighted_reproject_and_coadd(cube_files, weight_files, dir_tmp='./tmp/', ove
     assert len(cube_files) == len(weight_files), "Mismatched number of cubes and weights."
 
     if overwrite_dir_tmp:
-        os.system('rm -rf %s' %dir_tmp)
+        os.system('rm -rf %s' % dir_tmp)
 
     if not os.path.isdir(dir_tmp):
         os.mkdir(dir_tmp)
@@ -117,14 +117,12 @@ def weighted_reproject_and_coadd(cube_files, weight_files, dir_tmp='./tmp/', ove
         wcs_out, shape_out = find_optimal_celestial_wcs(fake_hdus)
         hdu_out = wcs_out.to_fits()[0]
         hdu_out.data = np.ones(shape_out)
-        hdu_out.writeto('%s/hdu_out.fits' %dir_tmp, overwrite=True)
+        hdu_out.writeto('%s/hdu_out.fits' % dir_tmp, overwrite=True)
     else:
-        hdu_out = fits.open('%s/hdu_out.fits' %dir_tmp)[0]
+        hdu_out = fits.open('%s/hdu_out.fits' % dir_tmp)[0]
 
-        cube = fits.open('%s/cube.fits' %dir_tmp)[0]
-        keys = ['CUNIT3', 'CTYPE3', 'CRPIX3', 'CDELT3',
-        'CRVAL3', 'SPECSYS', 'RESTFRQ',
-        'BUNIT', 'BMAJ', 'BMIN', 'BPA']
+        cube = fits.open('%s/cube.fits' % dir_tmp)[0]
+        keys = ['CUNIT3', 'CTYPE3', 'CRPIX3', 'CDELT3', 'CRVAL3', 'SPECSYS', 'RESTFRQ', 'BUNIT', 'BMAJ', 'BMIN', 'BPA']
         for key in keys:
             hdu_out.header[key] = cube.header[key]
 
@@ -134,29 +132,27 @@ def weighted_reproject_and_coadd(cube_files, weight_files, dir_tmp='./tmp/', ove
     data_reproject = []
     reprojected_data, reprojected_weights = [], []
 
-    p_bar = tqdm(range(n_hdus*2))
+    p_bar = tqdm(range(n_hdus * 2))
     p_bar.refresh()
     for i in range(n_hdus):
-        if os.path.isfile('%s/cube_regrid_%i.fits' %(dir_tmp, i)):
-            tqdm.write("[INFO] Exists, not processing primary_hdu[%i]" %i)
-            cube_regrid = fits.open('%s/cube_regrid_%i.fits' %(dir_tmp, i))[0]
+        if os.path.isfile('%s/cube_regrid_%i.fits' % (dir_tmp, i)):
+            tqdm.write("[INFO] Exists, not processing primary_hdu[%i]" % i)
+            cube_regrid = fits.open('%s/cube_regrid_%i.fits' % (dir_tmp, i))[0]
         else:
-            tqdm.write("[INFO] Processing primary_hdu[%i]" %i)
+            tqdm.write("[INFO] Processing primary_hdu[%i]" % i)
             cube = primary_hdus[i]
-            cube.writeto('%s/cube.fits' %dir_tmp, overwrite=True)
+            cube.writeto('%s/cube.fits' % dir_tmp, overwrite=True)
 
             if i == 0:
-                keys = ['CUNIT3', 'CTYPE3', 'CRPIX3', 'CDELT3',
-                'CRVAL3', 'SPECSYS', 'RESTFRQ',
-                'BUNIT', 'BMAJ', 'BMIN', 'BPA']
+                keys = ['CUNIT3', 'CTYPE3', 'CRPIX3', 'CDELT3', 'CRVAL3', 'SPECSYS', 'RESTFRQ', 'BUNIT', 'BMAJ', 'BMIN', 'BPA']
                 for key in keys:
                     hdu_out.header[key] = cube.header[key]
 
-            regrid_fits_to_template('%s/cube.fits' %dir_tmp,
-                                    '%s/hdu_out.fits' %dir_tmp,
-                                    '%s/cube_regrid_%i.fits' %(dir_tmp, i))
+            regrid_fits_to_template('%s/cube.fits' % dir_tmp,
+                                    '%s/hdu_out.fits' % dir_tmp,
+                                    '%s/cube_regrid_%i.fits' % (dir_tmp, i))
 
-            cube_regrid = fits.open('%s/cube_regrid_%i.fits' %(dir_tmp, i))[0]
+            cube_regrid = fits.open('%s/cube_regrid_%i.fits' % (dir_tmp, i))[0]
             del cube
 
         reprojected_data.append(cube_regrid.data)
@@ -166,20 +162,20 @@ def weighted_reproject_and_coadd(cube_files, weight_files, dir_tmp='./tmp/', ove
         p_bar.update(1)
         p_bar.refresh()
 
-        if os.path.isfile('%s/cube_weight_regrid_%i.fits' %(dir_tmp, i)):
+        if os.path.isfile('%s/cube_weight_regrid_%i.fits' % (dir_tmp, i)):
 
-            tqdm.write("Exists, not processing weight_hdus[%i]" %i)
-            cube_weight_regrid = fits.open('%s/cube_weight_regrid_%i.fits' %(dir_tmp, i))[0]
+            tqdm.write("Exists, not processing weight_hdus[%i]" % i)
+            cube_weight_regrid = fits.open('%s/cube_weight_regrid_%i.fits' % (dir_tmp, i))[0]
         else:
-            tqdm.write("[INFO] Processing weight_hdus[%i]" %i)
+            tqdm.write("[INFO] Processing weight_hdus[%i]" % i)
             cube_weight = weight_hdus[i]
-            cube_weight.writeto('%s/cube_weight.fits' %dir_tmp, overwrite=True)
+            cube_weight.writeto('%s/cube_weight.fits' % dir_tmp, overwrite=True)
 
-            regrid_fits_to_template('%s/cube_weight.fits' %dir_tmp,
-                                    '%s/hdu_out.fits' %dir_tmp,
-                                    '%s/cube_weight_regrid_%i.fits' %(dir_tmp, i))
+            regrid_fits_to_template('%s/cube_weight.fits' % dir_tmp,
+                                    '%s/hdu_out.fits' % dir_tmp,
+                                    '%s/cube_weight_regrid_%i.fits' % (dir_tmp, i))
 
-            cube_weight_regrid = fits.open('%s/cube_weight_regrid_%i.fits' %(dir_tmp, i))[0]
+            cube_weight_regrid = fits.open('%s/cube_weight_regrid_%i.fits' % (dir_tmp, i))[0]
             del cube_weight
 
         reprojected_weights.append(cube_weight_regrid.data)
