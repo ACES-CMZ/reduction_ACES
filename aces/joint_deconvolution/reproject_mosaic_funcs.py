@@ -49,15 +49,16 @@ def smooth_to_common_beam(files, common_beam):
     """
     hdu_list = [fits.open(file)[0] for file in files]
     for i in range(len(files)):
-        hdu = hdu_list[i]
-        cube = SpectralCube.read(hdu)
-        cube.allow_huge_operations = True
-        cube = cube.convolve_to(common_beam)
+        if not os.path.exists(files[i].replace('.fits', '.smoothed.fits')):
+            hdu = hdu_list[i]
+            cube = SpectralCube.read(hdu)
+            cube.allow_huge_operations = True
+            cube = cube.convolve_to(common_beam)
 
-        print('INFO Smoothed to common beam.')
-        outfile = files[i].replace('.fits', '.smoothed.fits')
-        print('INFO Save smoothed files: %s ' % outfile)
-        cube.write(outfile, overwrite=True)
+            print('INFO Smoothed to common beam.')
+            outfile = files[i].replace('.fits', '.smoothed.fits')
+            print('INFO Save smoothed files: %s ' % outfile)
+            cube.write(outfile, overwrite=True)
 
 
 def regrid_fits_to_template(input_fits, template_fits, output_fits, overwrite=True):
@@ -85,93 +86,133 @@ def regrid_fits_to_template(input_fits, template_fits, output_fits, overwrite=Tr
     rmtables([input_image, template_image, regrid_image])
 
 
-def weighted_reproject_and_coadd(cube_files, weight_files, dir_tmp='./tmp/'):
-    """
-    Weighted reprojection and co-addition of a series of cubes and associated weight files.
+def weighted_reproject_and_coadd(cube_files, weight_files, dir_tmp='./tmp/', overwrite_dir_tmp=False):
+    '''
+    Function to reproject and coadd the cubes and weights.
 
-    Parameters
-    ----------
-    cube_files : list
-        List of paths to the cubes.
-    weight_files : list
-        List of paths to the weights cubes.
-    dir_tmp : str, optional
-        Directory for storing temporary files. Defaults to './tmp/'.
-    """
-    print("[INFO] Reprojecting and co-adding cubes and weights.")
+    Inputs:
+    - cube_files: a list of paths to the cube files
+    - weight_files: a list of paths to the weight files
+
+    Outputs:
+    - a HDU object representing the reprojected and coadded data
+    '''
+    tqdm.write("[INFO] Reprojecting and co-adding cubes and weights.")
     assert len(cube_files) == len(weight_files), "Mismatched number of cubes and weights."
+
+    if overwrite_dir_tmp:
+        os.system('rm -rf %s' %dir_tmp)
 
     if not os.path.isdir(dir_tmp):
         os.mkdir(dir_tmp)
 
-    primary_hdus = [fits.open(cube_file)[0] for cube_file in cube_files]
-    weight_hdus = [fits.open(weight_file)[0] for weight_file in weight_files]
+    if overwrite_dir_tmp:
 
-    n_hdus = len(primary_hdus)
+        tqdm.write("Processing fake hdu data")
+
+        primary_hdus = [fits.open(cube_file)[0] for cube_file in cube_files]
+        weight_hdus = [fits.open(weight_file)[0] for weight_file in weight_files]
+
+        fake_hdus = create_fake_hdus(primary_hdus, 0)
+        wcs_out, shape_out = find_optimal_celestial_wcs(fake_hdus)
+        hdu_out = wcs_out.to_fits()[0]
+        hdu_out.data = np.ones(shape_out)
+        hdu_out.writeto('%s/hdu_out.fits' %dir_tmp, overwrite=True)
+    else:
+        hdu_out = fits.open('%s/hdu_out.fits' %dir_tmp)[0]
+
+        cube = fits.open('%s/cube.fits' %dir_tmp)[0]
+        keys = ['CUNIT3', 'CTYPE3', 'CRPIX3', 'CDELT3',
+        'CRVAL3', 'SPECSYS', 'RESTFRQ',
+        'BUNIT', 'BMAJ', 'BMIN', 'BPA']
+        for key in keys:
+            hdu_out.header[key] = cube.header[key]
+
+        tqdm.write("Skipping processing of fake hdu data")
+
+    n_hdus = len(cube_files)
     data_reproject = []
-
-    fake_hdus = create_fake_hdus(primary_hdus, 0)
-    wcs_out, shape_out = find_optimal_celestial_wcs(fake_hdus)
-    hdu_out = wcs_out.to_fits()[0]
-    hdu_out.data = np.ones(shape_out)
-    hdu_out.writeto('%s/hdu_out.fits' % dir_tmp, overwrite=True)
-
     reprojected_data, reprojected_weights = [], []
 
-    p_bar = tqdm(range(n_hdus * 2))
+    p_bar = tqdm(range(n_hdus*2))
     p_bar.refresh()
     for i in range(n_hdus):
+        if os.path.isfile('%s/cube_regrid_%i.fits' %(dir_tmp, i)):
+            tqdm.write("[INFO] Exists, not processing primary_hdu[%i]" %i)
+            cube_regrid = fits.open('%s/cube_regrid_%i.fits' %(dir_tmp, i))[0]
+        else:
+            tqdm.write("[INFO] Processing primary_hdu[%i]" %i)
+            cube = primary_hdus[i]
+            cube.writeto('%s/cube.fits' %dir_tmp, overwrite=True)
 
-        print("[INFO] Processing primary_hdu[%i]" % i)
+            if i == 0:
+                keys = ['CUNIT3', 'CTYPE3', 'CRPIX3', 'CDELT3',
+                'CRVAL3', 'SPECSYS', 'RESTFRQ',
+                'BUNIT', 'BMAJ', 'BMIN', 'BPA']
+                for key in keys:
+                    hdu_out.header[key] = cube.header[key]
 
-        cube = SpectralCube.read(primary_hdus[i])
-        cube.allow_huge_operations = True
-        cube.write('%s/cube.fits' % dir_tmp, overwrite=True)
+            regrid_fits_to_template('%s/cube.fits' %dir_tmp,
+                                    '%s/hdu_out.fits' %dir_tmp,
+                                    '%s/cube_regrid_%i.fits' %(dir_tmp, i))
 
-        if i == 0:
-            keys = ['CUNIT3', 'CTYPE3', 'CRPIX3', 'CDELT3',
-                    'CRVAL3', 'WCSAXES', 'SPECSYS', 'RESTFRQ',
-                    'BUNIT', 'BMAJ', 'BMIN', 'BPA']
-            for key in keys:
-                hdu_out.header[key] = cube.header[key]
+            cube_regrid = fits.open('%s/cube_regrid_%i.fits' %(dir_tmp, i))[0]
+            del cube
 
-        regrid_fits_to_template('%s/cube.fits' % dir_tmp,
-                                '%s/hdu_out.fits' % dir_tmp,
-                                '%s/cube_regrid_%i.fits' % (dir_tmp, i))
-
-        cube_regrid = SpectralCube.read('%s/cube_regrid_%i.fits' % (dir_tmp, i))
-        reprojected_data.append(cube_regrid.hdu.data)
-
-        del cube
+        reprojected_data.append(cube_regrid.data)
         del cube_regrid
         gc.collect()
 
         p_bar.update(1)
         p_bar.refresh()
 
-        print("[INFO] Processing weight_hdus[%i]" % i)
+        if os.path.isfile('%s/cube_weight_regrid_%i.fits' %(dir_tmp, i)):
 
-        cube_weight = SpectralCube.read(weight_hdus[i])
-        cube_weight.allow_huge_operations = True
-        cube_weight.write('%s/cube_weight.fits' % dir_tmp, overwrite=True)
+            tqdm.write("Exists, not processing weight_hdus[%i]" %i)
+            cube_weight_regrid = fits.open('%s/cube_weight_regrid_%i.fits' %(dir_tmp, i))[0]
+        else:
+            tqdm.write("[INFO] Processing weight_hdus[%i]" %i)
+            cube_weight = weight_hdus[i]
+            cube_weight.writeto('%s/cube_weight.fits' %dir_tmp, overwrite=True)
 
-        regrid_fits_to_template('%s/cube_weight.fits' % dir_tmp,
-                                '%s/hdu_out.fits' % dir_tmp,
-                                '%s/cube_weight_regrid_%i.fits' % (dir_tmp, i))
+            regrid_fits_to_template('%s/cube_weight.fits' %dir_tmp,
+                                    '%s/hdu_out.fits' %dir_tmp,
+                                    '%s/cube_weight_regrid_%i.fits' %(dir_tmp, i))
 
-        cube_weight_regrid = SpectralCube.read('%s/cube_weight_regrid_%i.fits' % (dir_tmp, i))
-        reprojected_weights.append(cube_weight_regrid.hdu.data)
+            cube_weight_regrid = fits.open('%s/cube_weight_regrid_%i.fits' %(dir_tmp, i))[0]
+            del cube_weight
 
-        del cube_weight
+        reprojected_weights.append(cube_weight_regrid.data)
         del cube_weight_regrid
         gc.collect()
         p_bar.update(1)
         p_bar.refresh()
 
-    weighted_data = np.array(reprojected_data) * np.array(reprojected_weights)
-    data_reproject = np.nansum(weighted_data, axis=0) / np.nansum(reprojected_weights, axis=0)
+    tqdm.write('[INFO] Creating weighted_data')
+    weighted_data = np.array(reprojected_data, dtype=np.float32) * np.array(reprojected_weights, dtype=np.float32)
+    del reprojected_data
+    gc.collect()
 
+    tqdm.write('[INFO] Summing weighted_data --> weighted_data_sum')
+    weighted_data_sum = np.nansum(weighted_data, axis=0)
+    del weighted_data
+    gc.collect()
+
+    tqdm.write('[INFO] Summing reprojected_weights --> reprojected_weights_sum')
+    reprojected_weights_sum = np.nansum(reprojected_weights, axis=0)
+    del reprojected_weights
+    gc.collect()
+
+    tqdm.write('[INFO] Creating data_reproject')
+    data_reproject = weighted_data_sum / reprojected_weights_sum
+    del weighted_data_sum
+    del reprojected_weights_sum
+    gc.collect()
+
+    tqdm.write('[INFO] Creating hdu_reproject')
     hdu_reproject = fits.PrimaryHDU(data_reproject, hdu_out.header)
+    del data_reproject
+    gc.collect()
 
     return hdu_reproject
 
