@@ -418,7 +418,7 @@ def make_giant_mosaic_cube_header(target_header,
     header['NAXIS3'] = 3 if test else int(np.ceil(nchan / header['CDELT3']))
     header['CRPIX3'] = header['NAXIS3'] // 2
     header['CTYPE3'] = 'VRAD'
-    restfrq = reference_frequency
+    restfrq = u.Quantity(reference_frequency, u.Hz).to(u.Hz).value
     header['RESTFRQ'] = restfrq
     header['SPECSYS'] = 'LSRK'
 
