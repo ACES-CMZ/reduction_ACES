@@ -1,22 +1,15 @@
-incr=50
-jobids=""
+jobid=$(sbatch --job-name=aces_sio21_mos_arr \
+    --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_sio21_mosaic_%j_%A_%a.log  \
+    --array=0-49 \
+    --account=astronomy-dept --qos=astronomy-dept-b \
+    --ntasks=8 --nodes=1 --mem=32gb --time=96:00:00 --parsable \
+    --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python39/bin/python -c \"from aces.imaging.mosaic_12m import make_giant_mosaic_cube_sio21; make_giant_mosaic_cube_sio21(channels='slurm', skip_final_combination=True, verbose=True,)\"")
 
-for ch in `seq 0 ${incr} 300`; do
-    ch1=$ch
-    ch2=$((${ch1} + ${incr}))
-    jobid=$(sbatch --job-name=aces_cs21_mosaic_ch${ch1}to${ch2} \
-        --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_cs21_mosaic_ch${ch1}to${ch2}_%j.log  \
-        --account=astronomy-dept --qos=astronomy-dept-b \
-        --ntasks=8 --nodes=1 --mem=32gb --time=96:00:00 --parsable \
-        --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python39/bin/python -c \"from aces.imaging.mosaic_12m import make_giant_mosaic_cube_cs21; make_giant_mosaic_cube_cs21(channels=range(${ch1},${ch2}), skip_final_combination=True, verbose=True,)\"")
-    jobids+="${jobid}:"
-done
+echo "Job IDs are ${jobid}"
 
-echo "Job IDs are ${jobids}"
-
-sbatch --job-name=aces_cs21_mosaic_merge \
-    --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_cs21_mosaic_merge_%j.log  \
-    --dependency=afterok:$jobids \
+sbatch --job-name=aces_sio21_mosaic_merge \
+    --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_sio21_mosaic_merge_%j.log  \
+    --dependency=afterok:$jobid \
     --account=astronomy-dept --qos=astronomy-dept-b \
     --ntasks=8 --nodes=1 --mem=32gb --time=96:00:00 \
-    --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python39/bin/python -c \"from aces.imaging.mosaic_12m import make_giant_mosaic_cube_cs21; make_giant_mosaic_cube_cs21(channels='all', skip_channel_mosaicing=True, verbose=True,)\""
+    --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python39/bin/python -c \"from aces.imaging.mosaic_12m import make_giant_mosaic_cube_sio21; make_giant_mosaic_cube_sio21(channels='all', skip_channel_mosaicing=True, verbose=True,)\""
