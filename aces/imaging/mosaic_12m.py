@@ -377,7 +377,7 @@ def make_giant_mosaic_cube_cs21(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='CS21',
                            nchan=300,
-                           beam_threshold=2.4 * u.arcsec,
+                           beam_threshold=2.8 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/CS21_Channels/',
                            **kwargs,)
 
@@ -395,7 +395,7 @@ def make_giant_mosaic_cube_sio21(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='SiO21',
                            nchan=350,
-                           beam_threshold=2.4 * u.arcsec,
+                           beam_threshold=3.1 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/SiO21_Channels/',
                            **kwargs,)
 
@@ -415,4 +415,22 @@ def make_giant_mosaic_cube_hnco(**kwargs):
                            nchan=1200,
                            beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
+                           **kwargs,)
+
+
+def make_giant_mosaic_cube_hc3n(**kwargs):
+
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.iter1.image.pbcor')
+
+    print(f"Found {len(filelist)} HC3N-containing spw31 files")
+
+    restfrq = 100.0763e9
+    cdelt_kms = 1.5
+    make_giant_mosaic_cube(filelist,
+                           reference_frequency=restfrq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HC3N',
+                           nchan=300,
+                           beam_threshold=2.3 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/HC3N_Channels/',
                            **kwargs,)
