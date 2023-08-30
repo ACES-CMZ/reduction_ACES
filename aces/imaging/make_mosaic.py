@@ -426,6 +426,7 @@ def make_giant_mosaic_cube_header(target_header,
 
 
 def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
+                                    cubename,
                                     verbose=True,
                                     working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
                                     channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
@@ -448,7 +449,7 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
         if verbose:
             pbar.set_description(f'Channel {chan}')
 
-        chanfn = f'{working_directory}/HNCO_CubeMosaic_channel{chan}.fits'
+        chanfn = f'{working_directory}/{cubename}_CubeMosaic_channel{chan}.fits'
         if os.path.exists(f'{channelmosaic_directory}/{os.path.basename(chanfn)}'):
             print(f"Skipping completed channel {chan}", flush=True)
         elif os.path.exists(chanfn):
@@ -535,6 +536,7 @@ def make_giant_mosaic_cube(filelist,
     if not skip_channel_mosaicing:
         make_giant_mosaic_cube_channels(header, cubes, weightcubes,
                                         commonbeam=commonbeam,
+                                        cubename=cubename,
                                         verbose=verbose,
                                         working_directory=working_directory,
                                         channelmosaic_directory=channelmosaic_directory,
