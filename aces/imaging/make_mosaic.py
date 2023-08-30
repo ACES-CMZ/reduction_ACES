@@ -624,6 +624,6 @@ def slurm_set_channels(nchan):
         if nchan_per != int(nchan_per):
             raise ValueError("Must divide up slurm jobs evenly")
         nchan_per = int(nchan_per)
-        channels = list(range(slurm_array_task_id*nchan_per,
-                              (slurm_array_task_id+1)*nchan_per))
+        channels = list(range(slurm_array_task_id * nchan_per,
+                              (slurm_array_task_id + 1) * nchan_per))
         return channels
