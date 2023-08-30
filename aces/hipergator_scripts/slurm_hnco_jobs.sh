@@ -9,7 +9,7 @@ for ch in `seq 0 ${incr} 1200`; do
         --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_hnco_mosaic_ch${ch1}to${ch2}_%j.log  \
         --account=astronomy-dept --qos=astronomy-dept-b \
         --ntasks=8 --nodes=1 --mem=32gb --time=96:00:00 --parsable \
-        --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python39/bin/python -c \"from aces.imaging.mosaic_12m import make_giant_mosaic_cube_hnco; make_giant_mosaic_cube_hnco(channels=range(${ch1},${ch2}, skip_final_combination=True, verbose=True,)\"")
+        --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python39/bin/python -c \"from aces.imaging.mosaic_12m import make_giant_mosaic_cube_hnco; make_giant_mosaic_cube_hnco(channels=range(${ch1},${ch2}), skip_final_combination=True, verbose=True,)\"")
     jobids+=$jobid+":"
 done
 
