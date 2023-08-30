@@ -403,29 +403,12 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             proc.join()
 
 
-
-def make_giant_mosaic_cube(filelist,
-                           reference_frequency,
-                           cdelt_kms,
-                           cubename,
-                           nchan,
-                           test=False, verbose=True,
-                           target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr',
-                           working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
-                           channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
-                           beam_threshold=3.2*u.arcsec,
-                           channels='all'):
-    """
-    This takes too long as a full cube, so we have to do it slice-by-slice
-
-    channels : 'all' or a list of ints
-        This gives you the option to run only one channel at a time
-    beam_threshold : angle-like quantity
-        Cubes with beams larger than this will be excldued
-    """
-
-
-    # Part 1: Make the header
+def make_giant_mosaic_cube_header(filelist,
+                                  reference_frequency,
+                                  cdelt_kms,
+                                  nchan,
+                                  test=False,
+                                 )
     if test:
         filelist = filelist[:16]
     header = fits.Header.fromtextfile(target_header)
@@ -440,37 +423,14 @@ def make_giant_mosaic_cube(filelist,
     header['RESTFRQ'] = restfrq
     header['SPECSYS'] = 'LSRK'
 
+    return header
 
-    # Part 2: Load the cubes
-    print("Converting spectral units", flush=True)
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        cubes = [SpectralCube.read(fn,
-                                   format='casa_image',
-                                   use_dask=True).with_spectral_unit(u.km / u.s,
-                                                                     velocity_convention='radio',
-                                                                     rest_value=restfrq * u.Hz)
-                 for fn in filelist]
-        weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
-                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=restfrq * u.Hz)
-                        ) for fn in filelist]
 
-    # Part 3: Filter out bad cubes
-    # flag out wild outliers
-    # there are 2 as of writing
-    print("Filtering out cubes with sketchy beams", flush=True)
-    ok = [cube for cube in cubes if cube.beam.major < beam_threshold]
-    if not all(ok):
-        print(f"Filtered out {np.sum(ok)} cubes with beam major > {beam_threshold}")
-
-    cubes = [cube for k, cube in zip(ok, cubes) if k]
-    weightcubes = [cube for k, cube in zip(ok, weightcubes) if k]
-
-    # Part 4: Determine common beam
-    beams = radio_beam.Beams(beams=[cube.beam for cube in cubes])
-    commonbeam = beams.common_beam()
-    header.update(commonbeam.to_header_keywords())
-
+def make_giant_mosaic_cube_channels(header, cubes, weightcubes,
+                                    verbose=True,
+                                    working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
+                                    channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
+                                    channels='all'):
     ww = WCS(header)
     wws = ww.spectral
 
@@ -508,6 +468,90 @@ def make_giant_mosaic_cube(filelist,
                          )
             shutil.move(chanfn, channelmosaic_directory)
 
+def make_giant_mosaic_cube(filelist,
+                           reference_frequency,
+                           cdelt_kms,
+                           cubename,
+                           nchan,
+                           test=False, verbose=True,
+                           target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr',
+                           working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
+                           channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
+                           beam_threshold=3.2*u.arcsec,
+                           channels='all',
+                           skip_channel_mosaicing=False,
+                           skip_final_combination=False,
+                          ):
+    """
+    This takes too long as a full cube, so we have to do it slice-by-slice
+
+    channels : 'all' or a list of ints
+        This gives you the option to run only one channel at a time
+    beam_threshold : angle-like quantity
+        Cubes with beams larger than this will be excldued
+    """
+
+
+    # Part 1: Make the header
+    header = make_giant_mosaic_cube_header(filelist=filelist,
+                                           reference_frequency=reference_frequency,
+                                           cdelt_kms=cdelt_kms,
+                                           nchan=nchan,
+                                           test=test)
+
+
+    # Part 2: Load the cubes
+    print("Converting spectral units", flush=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        cubes = [SpectralCube.read(fn,
+                                   format='casa_image',
+                                   use_dask=True).with_spectral_unit(u.km / u.s,
+                                                                     velocity_convention='radio',
+                                                                     rest_value=restfrq * u.Hz)
+                 for fn in filelist]
+        weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
+                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=restfrq * u.Hz)
+                        ) for fn in filelist]
+
+    # Part 3: Filter out bad cubes
+    # flag out wild outliers
+    # there are 2 as of writing
+    print("Filtering out cubes with sketchy beams", flush=True)
+    ok = [cube for cube in cubes if cube.beam.major < beam_threshold]
+    if not all(ok):
+        print(f"Filtered out {np.sum(ok)} cubes with beam major > {beam_threshold}")
+
+    cubes = [cube for k, cube in zip(ok, cubes) if k]
+    weightcubes = [cube for k, cube in zip(ok, weightcubes) if k]
+
+    # Part 4: Determine common beam
+    beams = radio_beam.Beams(beams=[cube.beam for cube in cubes])
+    commonbeam = beams.common_beam()
+    header.update(commonbeam.to_header_keywords())
+
+
+    if not skip_channel_mosaicing:
+        make_giant_mosaic_cube_channels(header, cubes, weightcubes,
+                                        verbose=verbose,
+                                        working_directory=working_directory,
+                                        channelmosaic_directory=channelmosaic_directory,
+                                        channels=channels,
+                                       )
+
+    if not skip_final_combination and not test:
+        combine_channels_into_mosaic_cube(header,
+                                          cubename,
+                                          working_directory=working_directory,
+                                          channelmosaic_directory=channelmosaic_directory,
+                                          verbose=verbose,
+                                         )
+
+def combine_channels_into_mosaic_cube(header, cubename,
+                                      working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
+                                      channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
+                                      verbose=False,
+                                     ):
     # Part 6: Create output supergiant cube into which final product will be stashed
     output_working_file = f'{working_directory}/{cubename}_CubeMosaic.fits'
     output_file = f'{basepath}/mosaics/{cubename}_CubeMosaic.fits'
@@ -540,13 +584,18 @@ def make_giant_mosaic_cube(filelist,
     hdu.flush()  # make sure the header gets written right
 
     # Part 7: Populate supergiant cube by copying data over, channel-by-channel
-    pbar = tqdm(channels, desc='Channels')
+    if verbose:
+        pbar = tqdm(channels, desc='Channels')
+    else:
+        pbar = channels
     for chan in pbar:
         chanfn = f'{channelmosaic_directory}/{cubename}_CubeMosaic_channel{chan}.fits'
         if os.path.exists(chanfn):
-            pbar.set_description('Channels (filling)')
+            if verbose:
+                pbar.set_description('Channels (filling)')
             output_array[chan] = fits.getdata(chanfn)
-            pbar.set_description('Channels (flushing)')
+            if verbose:
+                pbar.set_description('Channels (flushing)')
             hdu.flush()
 
     shutil.move(output_working_file, output_file)
