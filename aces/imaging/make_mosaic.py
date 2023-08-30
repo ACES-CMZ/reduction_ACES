@@ -522,10 +522,10 @@ def make_giant_mosaic_cube(filelist,
     # flag out wild outliers
     # there are 2 as of writing
     print("Filtering out cubes with sketchy beams", flush=True)
-    ok = [cube for cube in cubes if cube.beam.major < beam_threshold]
+    ok = [cube.beam.major < beam_threshold for cube in cubes]
     if verbose:
         if not all(ok):
-            print(f"Filtered out {np.sum(ok)} cubes with beam major > {beam_threshold}")
+            print(f"Filtered down to {np.sum(ok)} of {len(ok)} cubes with beam major > {beam_threshold}")
         else:
             print(f"Found {np.sum(ok)} cubes with good beams (i.e., all of them)")
 
