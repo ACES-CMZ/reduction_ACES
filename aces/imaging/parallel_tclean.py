@@ -18,6 +18,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          remove_incomplete_weight=True,
                          **kwargs):
 
+    print(f"Starting parallel clean in workdir={workdir} with casa={CASAVERSION}")
+
     try:
         hasunit = False
         start = int(start)
@@ -168,12 +170,12 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         elif os.path.exists(tclean_kwargs['imagename'] + ".residual"):
             raise ValueError(f"{{tclean_kwargs['imagename']}}.residual exists.  Current state unclear.")
         elif os.path.exists(tclean_kwargs['imagename'] + ".psf"):
-            if remove_incomplete_psf:
+            if {remove_incomplete_psf}:
                 shutil.rmtree(tclean_kwargs['imagename'] + ".psf")
             else:
                 raise ValueError(f"{{tclean_kwargs['imagename']}}.psf exists.  Remove it before continuing.")
         elif os.path.exists(tclean_kwargs['imagename'] + ".weight"):
-            if remove_incomplete_weight:
+            if {remove_incomplete_weight}:
                 shutil.rmtree(tclean_kwargs['imagename'] + ".weight")
             else:
                 raise ValueError(f"{{tclean_kwargs['imagename']}}.weight exists.  Remove it before continuing.")
