@@ -22,6 +22,9 @@ from multiprocessing import Process, Pool
 import warnings
 from spectral_cube.utils import SpectralCubeWarning
 
+from spectral_cube import SpectralCube
+from tqdm.auto import tqdm
+
 from aces import conf
 
 basepath = conf.basepath
@@ -398,3 +401,152 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
     if parallel:
         for proc in processes:
             proc.join()
+
+
+
+def make_giant_mosaic_cube(filelist,
+                           reference_frequency,
+                           cdelt_kms,
+                           cubename,
+                           nchan,
+                           test=False, verbose=True,
+                           target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr',
+                           working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
+                           channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
+                           beam_threshold=3.2*u.arcsec,
+                           channels='all'):
+    """
+    This takes too long as a full cube, so we have to do it slice-by-slice
+
+    channels : 'all' or a list of ints
+        This gives you the option to run only one channel at a time
+    beam_threshold : angle-like quantity
+        Cubes with beams larger than this will be excldued
+    """
+
+
+    # Part 1: Make the header
+    if test:
+        filelist = filelist[:16]
+    header = fits.Header.fromtextfile(target_header)
+    header['NAXIS'] = 3
+    header['CDELT3'] = cdelt_kms
+    header['CUNIT3'] = 'km/s'
+    header['CRVAL3'] = 0
+    header['NAXIS3'] = 3 if test else int(np.ceil(nchan / header['CDELT3']))
+    header['CRPIX3'] = header['NAXIS3'] // 2
+    header['CTYPE3'] = 'VRAD'
+    restfrq = reference_frequency
+    header['RESTFRQ'] = restfrq
+    header['SPECSYS'] = 'LSRK'
+
+
+    # Part 2: Load the cubes
+    print("Converting spectral units", flush=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        cubes = [SpectralCube.read(fn,
+                                   format='casa_image',
+                                   use_dask=True).with_spectral_unit(u.km / u.s,
+                                                                     velocity_convention='radio',
+                                                                     rest_value=restfrq * u.Hz)
+                 for fn in filelist]
+        weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
+                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=restfrq * u.Hz)
+                        ) for fn in filelist]
+
+    # Part 3: Filter out bad cubes
+    # flag out wild outliers
+    # there are 2 as of writing
+    print("Filtering out cubes with sketchy beams", flush=True)
+    ok = [cube for cube in cubes if cube.beam.major < beam_threshold]
+    if not all(ok):
+        print(f"Filtered out {np.sum(ok)} cubes with beam major > {beam_threshold}")
+
+    cubes = [cube for k, cube in zip(ok, cubes) if k]
+    weightcubes = [cube for k, cube in zip(ok, weightcubes) if k]
+
+    # Part 4: Determine common beam
+    beams = radio_beam.Beams(beams=[cube.beam for cube in cubes])
+    commonbeam = beams.common_beam()
+    header.update(commonbeam.to_header_keywords())
+
+    ww = WCS(header)
+    wws = ww.spectral
+
+    if channels == 'all':
+        channels = range(header['NAXIS3'])
+
+    # Part 5: Make per-channel mosaics
+    pbar = tqdm(channels, desc='Channels (mosaic)') if verbose else channels
+    for chan in pbar:
+        # For each channel, we're making a full-frame mosaic
+        theader = header.copy()
+        theader['NAXIS3'] = 1
+        theader['CRPIX3'] = 1
+        theader['CRVAL3'] = wws.pixel_to_world(chan).to(u.km / u.s).value
+
+        if verbose:
+            pbar.set_description(f'Channel {chan}')
+
+        chanfn = f'{working_directory}/HNCO_CubeMosaic_channel{chan}.fits'
+        if os.path.exists(f'{channelmosaic_directory}/{os.path.basename(chanfn)}'):
+            print(f"Skipping completed channel {chan}", flush=True)
+        elif os.path.exists(chanfn):
+            print(f"Channel {chan} was already completed, moving it to {channelmosaic_directory}", flush=True)
+            shutil.move(chanfn, channelmosaic_directory)
+        else:
+            print(f"Starting mosaic_cubes for channel {chan}", flush=True)
+            mosaic_cubes(cubes,
+                         target_header=theader,
+                         commonbeam=commonbeam,
+                         weights=weightcubes,
+                         spectral_block_size=None,
+                         output_file=chanfn,
+                         method='channel',
+                         verbose=verbose
+                         )
+            shutil.move(chanfn, channelmosaic_directory)
+
+    # Part 6: Create output supergiant cube into which final product will be stashed
+    output_working_file = f'{working_directory}/{cubename}_CubeMosaic.fits'
+    output_file = f'{basepath}/mosaics/{cubename}_CubeMosaic.fits'
+    if os.path.exists(output_working_file) and not os.path.exists(output_file):
+        print(f"Continuing work on existing file {output_working_file}")
+    elif not os.path.exists(output_file):
+        # Make a new file
+        # https://docs.astropy.org/en/stable/generated/examples/io/skip_create-large-fits.html#sphx-glr-generated-examples-io-skip-create-large-fits-py
+        hdu = fits.PrimaryHDU(data=np.ones([5, 5, 5], dtype=float),
+                              header=header,
+                              )
+        for kwd in ('NAXIS1', 'NAXIS2', 'NAXIS3'):
+            hdu.header[kwd] = header[kwd]
+
+        shape_opt = header['NAXIS3'], header['NAXIS2'], header['NAXIS1']
+
+        header.tofile(output_working_file, overwrite=True)
+        with open(output_working_file, 'rb+') as fobj:
+            fobj.seek(len(header.tostring()) +
+                      (np.prod(shape_opt) * np.abs(header['BITPIX'] // 8)) - 1)
+            fobj.write(b'\0')
+    elif os.path.exists(output_file) and not os.path.exists(output_working_file):
+        print(f"Working on file {output_file}, but moving it to {output_working_file} first")
+        shutil.move(output_file, output_working_file)
+    else:
+        raise ValueError("This outcome should not be possible")
+
+    hdu = fits.open(output_working_file, mode='update', overwrite=True)
+    output_array = hdu[0].data
+    hdu.flush()  # make sure the header gets written right
+
+    # Part 7: Populate supergiant cube by copying data over, channel-by-channel
+    pbar = tqdm(channels, desc='Channels')
+    for chan in pbar:
+        chanfn = f'{channelmosaic_directory}/{cubename}_CubeMosaic_channel{chan}.fits'
+        if os.path.exists(chanfn):
+            pbar.set_description('Channels (filling)')
+            output_array[chan] = fits.getdata(chanfn)
+            pbar.set_description('Channels (flushing)')
+            hdu.flush()
+
+    shutil.move(output_working_file, output_file)
