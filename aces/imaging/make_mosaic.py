@@ -466,7 +466,11 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                          method='channel',
                          verbose=verbose
                          )
+            print(f"Channel {chan} completed successfully, moving it to {channelmosaic_directory}", flush=True)
             shutil.move(chanfn, channelmosaic_directory)
+
+        if verbose:
+            print("\n\n", flush=True)
 
 
 def make_giant_mosaic_cube(filelist,
@@ -519,11 +523,17 @@ def make_giant_mosaic_cube(filelist,
     # there are 2 as of writing
     print("Filtering out cubes with sketchy beams", flush=True)
     ok = [cube for cube in cubes if cube.beam.major < beam_threshold]
-    if not all(ok):
-        print(f"Filtered out {np.sum(ok)} cubes with beam major > {beam_threshold}")
+    if verbose:
+        if not all(ok):
+            print(f"Filtered out {np.sum(ok)} cubes with beam major > {beam_threshold}")
+        else:
+            print(f"Found {np.sum(ok)} cubes with good beams (i.e., all of them)")
 
     cubes = [cube for k, cube in zip(ok, cubes) if k]
     weightcubes = [cube for k, cube in zip(ok, weightcubes) if k]
+
+    if verbose:
+        print(f"There are {len(cubes)} cubes and {len(weightcubes)} weightcubes.", flush=True)
 
     # Part 4: Determine common beam
     beams = radio_beam.Beams(beams=[cube.beam for cube in cubes])

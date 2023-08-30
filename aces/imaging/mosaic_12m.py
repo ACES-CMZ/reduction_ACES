@@ -368,6 +368,8 @@ def make_giant_mosaic_cube_cs21(**kwargs):
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor')
 
+    print(f"Found {len(filelist) CS 2-1-containing spw33 files")
+
     restfrq = 97.98095330e9
     cdelt_kms = 1.4844932
     make_giant_mosaic_cube(filelist,
@@ -384,6 +386,8 @@ def make_giant_mosaic_cube_sio21(**kwargs):
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw27.cube.I.iter1.image.pbcor')
 
+    print(f"Found {len(filelist) SiO 2-1-containing spw27 files")
+
     restfrq = 86.84696e9
     cdelt_kms = 0.84
     make_giant_mosaic_cube(filelist,
@@ -399,6 +403,8 @@ def make_giant_mosaic_cube_sio21(**kwargs):
 def make_giant_mosaic_cube_hnco(**kwargs):
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw31.cube.I.iter1.image.pbcor')
+
+    print(f"Found {len(filelist) HNCO-containing spw31 files")
 
     restfrq = 87.925238e9
     cdelt_kms = 0.21
