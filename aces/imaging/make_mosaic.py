@@ -437,6 +437,9 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes,
     if channels == 'all':
         channels = range(header['NAXIS3'])
 
+    if not os.path.exists(channelmosaic_directory):
+        os.mkdir(channelmosaic_directory)
+
     # Part 5: Make per-channel mosaics
     pbar = tqdm(channels, desc='Channels (mosaic)') if verbose else channels
     for chan in pbar:
@@ -467,6 +470,7 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes,
                          verbose=verbose
                          )
             shutil.move(chanfn, channelmosaic_directory)
+
 
 def make_giant_mosaic_cube(filelist,
                            reference_frequency,
@@ -546,6 +550,7 @@ def make_giant_mosaic_cube(filelist,
                                           channelmosaic_directory=channelmosaic_directory,
                                           verbose=verbose,
                                          )
+
 
 def combine_channels_into_mosaic_cube(header, cubename,
                                       working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
