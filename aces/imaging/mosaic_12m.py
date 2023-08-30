@@ -375,10 +375,9 @@ def make_giant_mosaic_cube_cs21(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='CS21',
                            nchan=300,
-                           beam_threshold=2.4*u.arcsec,
+                           beam_threshold=2.4 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/CS21_Channels/',
-                           **kwargs,
-                          )
+                           **kwargs,)
 
 
 def make_giant_mosaic_cube_sio21(**kwargs):
@@ -392,10 +391,9 @@ def make_giant_mosaic_cube_sio21(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='SiO21',
                            nchan=350,
-                           beam_threshold=2.4*u.arcsec,
+                           beam_threshold=2.4 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/SiO21_Channels/',
-                           **kwargs,
-                          )
+                           **kwargs,)
 
 
 def make_giant_mosaic_cube_hnco(**kwargs):
@@ -409,7 +407,6 @@ def make_giant_mosaic_cube_hnco(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO',
                            nchan=1200,
-                           beam_threshold=3.2*u.arcsec,
+                           beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
-                           **kwargs,
-                          )
+                           **kwargs,)

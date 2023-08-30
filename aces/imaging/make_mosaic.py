@@ -7,22 +7,24 @@ from spectral_cube.spectral_cube import _regionlist_to_single_region
 from spectral_cube import SpectralCube
 from spectral_cube.wcs_utils import strip_wcs_from_header
 from spectral_cube.utils import NoBeamError
+from spectral_cube.cube_utils import mosaic_cubes
 from astropy.table import Table
 from astropy import units as u
 from astropy.io import fits
 from astropy import wcs
+from astropy.wcs import WCS
 from astropy import log
 from astropy.utils.console import ProgressBar
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 import os
 import glob
+import shutil
 from functools import partial
 from multiprocessing import Process, Pool
 import warnings
 from spectral_cube.utils import SpectralCubeWarning
 
-from spectral_cube import SpectralCube
 from tqdm.auto import tqdm
 
 from aces import conf
@@ -403,14 +405,11 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             proc.join()
 
 
-def make_giant_mosaic_cube_header(filelist,
+def make_giant_mosaic_cube_header(target_header,
                                   reference_frequency,
                                   cdelt_kms,
                                   nchan,
-                                  test=False,
-                                 ):
-    if test:
-        filelist = filelist[:16]
+                                  test=False,):
     header = fits.Header.fromtextfile(target_header)
     header['NAXIS'] = 3
     header['CDELT3'] = cdelt_kms
@@ -426,16 +425,13 @@ def make_giant_mosaic_cube_header(filelist,
     return header
 
 
-def make_giant_mosaic_cube_channels(header, cubes, weightcubes,
+def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                                     verbose=True,
                                     working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
                                     channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
                                     channels='all'):
     ww = WCS(header)
     wws = ww.spectral
-
-    if channels == 'all':
-        channels = range(header['NAXIS3'])
 
     if not os.path.exists(channelmosaic_directory):
         os.mkdir(channelmosaic_directory)
@@ -481,11 +477,10 @@ def make_giant_mosaic_cube(filelist,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr',
                            working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
-                           beam_threshold=3.2*u.arcsec,
+                           beam_threshold=3.2 * u.arcsec,
                            channels='all',
                            skip_channel_mosaicing=False,
-                           skip_final_combination=False,
-                          ):
+                           skip_final_combination=False,):
     """
     This takes too long as a full cube, so we have to do it slice-by-slice
 
@@ -495,14 +490,14 @@ def make_giant_mosaic_cube(filelist,
         Cubes with beams larger than this will be excldued
     """
 
+    reference_frequency = u.Quantity(reference_frequency, u.Hz)
 
     # Part 1: Make the header
-    header = make_giant_mosaic_cube_header(filelist=filelist,
+    header = make_giant_mosaic_cube_header(target_header=target_header,
                                            reference_frequency=reference_frequency,
                                            cdelt_kms=cdelt_kms,
                                            nchan=nchan,
                                            test=test)
-
 
     # Part 2: Load the cubes
     print("Converting spectral units", flush=True)
@@ -512,10 +507,10 @@ def make_giant_mosaic_cube(filelist,
                                    format='casa_image',
                                    use_dask=True).with_spectral_unit(u.km / u.s,
                                                                      velocity_convention='radio',
-                                                                     rest_value=restfrq * u.Hz)
+                                                                     rest_value=reference_frequency)
                  for fn in filelist]
         weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
-                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=restfrq * u.Hz)
+                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=reference_frequency)
                         ) for fn in filelist]
 
     # Part 3: Filter out bad cubes
@@ -534,29 +529,30 @@ def make_giant_mosaic_cube(filelist,
     commonbeam = beams.common_beam()
     header.update(commonbeam.to_header_keywords())
 
+    if channels == 'all':
+        channels = range(header['NAXIS3'])
 
     if not skip_channel_mosaicing:
         make_giant_mosaic_cube_channels(header, cubes, weightcubes,
+                                        commonbeam=commonbeam,
                                         verbose=verbose,
                                         working_directory=working_directory,
                                         channelmosaic_directory=channelmosaic_directory,
-                                        channels=channels,
-                                       )
+                                        channels=channels,)
 
     if not skip_final_combination and not test:
         combine_channels_into_mosaic_cube(header,
                                           cubename,
+                                          channels=channels,
                                           working_directory=working_directory,
                                           channelmosaic_directory=channelmosaic_directory,
-                                          verbose=verbose,
-                                         )
+                                          verbose=verbose,)
 
 
-def combine_channels_into_mosaic_cube(header, cubename,
+def combine_channels_into_mosaic_cube(header, cubename, channels,
                                       working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
                                       channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
-                                      verbose=False,
-                                     ):
+                                      verbose=False,):
     # Part 6: Create output supergiant cube into which final product will be stashed
     output_working_file = f'{working_directory}/{cubename}_CubeMosaic.fits'
     output_file = f'{basepath}/mosaics/{cubename}_CubeMosaic.fits'
@@ -566,8 +562,7 @@ def combine_channels_into_mosaic_cube(header, cubename,
         # Make a new file
         # https://docs.astropy.org/en/stable/generated/examples/io/skip_create-large-fits.html#sphx-glr-generated-examples-io-skip-create-large-fits-py
         hdu = fits.PrimaryHDU(data=np.ones([5, 5, 5], dtype=float),
-                              header=header,
-                              )
+                              header=header,)
         for kwd in ('NAXIS1', 'NAXIS2', 'NAXIS3'):
             hdu.header[kwd] = header[kwd]
 
