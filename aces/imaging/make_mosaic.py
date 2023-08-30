@@ -542,6 +542,8 @@ def make_giant_mosaic_cube(filelist,
 
     if channels == 'all':
         channels = range(header['NAXIS3'])
+    elif channels == 'slurm':
+        channels = slurm_set_channels(nchan)
 
     if not skip_channel_mosaicing:
         make_giant_mosaic_cube_channels(header, cubes, weightcubes,
@@ -611,3 +613,17 @@ def combine_channels_into_mosaic_cube(header, cubename, channels,
             hdu.flush()
 
     shutil.move(output_working_file, output_file)
+
+
+def slurm_set_channels(nchan):
+    if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
+        slurm_array_task_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
+        slurm_array_task_count = int(os.getenv('SLURM_ARRAY_TASK_COUNT'))
+
+        nchan_per = nchan / slurm_array_task_count
+        if nchan_per != int(nchan_per):
+            raise ValueError("Must divide up slurm jobs evenly")
+        nchan_per = int(nchan_per)
+        channels = list(range(slurm_array_task_id*nchan_per,
+                              (slurm_array_task_id+1)*nchan_per))
+        return channels
