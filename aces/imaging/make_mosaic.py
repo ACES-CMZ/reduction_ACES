@@ -408,7 +408,7 @@ def make_giant_mosaic_cube_header(filelist,
                                   cdelt_kms,
                                   nchan,
                                   test=False,
-                                 )
+                                 ):
     if test:
         filelist = filelist[:16]
     header = fits.Header.fromtextfile(target_header)

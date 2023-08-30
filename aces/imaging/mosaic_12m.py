@@ -11,7 +11,9 @@ from astropy import units as u
 from astropy.io import fits
 from astropy import log
 from astropy.wcs import WCS
-from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0, all_lines
+from aces.imaging.make_mosaic import (make_mosaic, read_as_2d, get_peak,
+                                      get_m0, all_lines,
+                                      make_giant_mosaic_cube)
 # import os
 # from functools import partial
 from multiprocessing import Process, Pool

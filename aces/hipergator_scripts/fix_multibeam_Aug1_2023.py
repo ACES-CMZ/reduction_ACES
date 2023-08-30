@@ -1,4 +1,5 @@
-import os, shutil
+import os
+import shutil
 import glob
 from casatasks import imsmooth, impbcor, exportfits
 from casatools import image
@@ -30,10 +31,10 @@ for dotimage in images:
     manybeam = False
     if 'beams' in rbeam:
         for beam in rbeam['beams'].values():
-             if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
-                 print(f"beam={beam['*0']}, commonbeam={commonbeam}")
-                 manybeam = True
-                 break
+            if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
+                print(f"beam={beam['*0']}, commonbeam={commonbeam}")
+                manybeam = True
+                break
 
     if manybeam:
         print(f"Found a multi-beam image {imagename} = {dotimage}")
