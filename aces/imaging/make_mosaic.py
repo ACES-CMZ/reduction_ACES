@@ -536,7 +536,10 @@ def make_giant_mosaic_cube(filelist,
         print(f"There are {len(cubes)} cubes and {len(weightcubes)} weightcubes.", flush=True)
 
     # Part 4: Determine common beam
-    beams = radio_beam.Beams(beams=[cube.beam for cube in cubes])
+    beams = radio_beam.Beams(beams=[cube.beam
+                                    if hasattr(cube, 'beam')
+                                    else cube.beams.common_beam()
+                                    for cube in cubes])
     commonbeam = beams.common_beam()
     header.update(commonbeam.to_header_keywords())
 
