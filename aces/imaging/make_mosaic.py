@@ -415,7 +415,7 @@ def make_giant_mosaic_cube_header(target_header,
     header['CDELT3'] = cdelt_kms
     header['CUNIT3'] = 'km/s'
     header['CRVAL3'] = 0
-    header['NAXIS3'] = 3 if test else int(np.ceil(nchan / header['CDELT3']))
+    header['NAXIS3'] = 3 if test else nchan
     header['CRPIX3'] = header['NAXIS3'] // 2
     header['CTYPE3'] = 'VRAD'
     restfrq = u.Quantity(reference_frequency, u.Hz).to(u.Hz).value
@@ -569,13 +569,14 @@ def make_giant_mosaic_cube(filelist,
     if not skip_final_combination and not test:
         combine_channels_into_mosaic_cube(header,
                                           cubename,
+                                          nchan,
                                           channels=channels,
                                           working_directory=working_directory,
                                           channelmosaic_directory=channelmosaic_directory,
                                           verbose=verbose,)
 
 
-def combine_channels_into_mosaic_cube(header, cubename, channels,
+def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
                                       working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
                                       channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
                                       verbose=False,):
@@ -592,6 +593,7 @@ def combine_channels_into_mosaic_cube(header, cubename, channels,
         for kwd in ('NAXIS1', 'NAXIS2', 'NAXIS3'):
             hdu.header[kwd] = header[kwd]
 
+        assert header['NAXIS3'] == nchan, f"Sanity check: header must have same number of channels as requested (header={header['NAXIS3']}, nchan={nchan})"
         shape_opt = header['NAXIS3'], header['NAXIS2'], header['NAXIS1']
 
         header.tofile(output_working_file, overwrite=True)
@@ -604,6 +606,10 @@ def combine_channels_into_mosaic_cube(header, cubename, channels,
         shutil.move(output_file, output_working_file)
     else:
         raise ValueError("This outcome should not be possible")
+
+    hdu = fits.open(output_working_file)
+    if hdu[0].data.shape[0] != nchan:
+        raise ValueError(f"Existing file on disk {output_working_file} has {hdu[0].data.shape[0]} channels instead of the requested {nchan}")
 
     hdu = fits.open(output_working_file, mode='update', overwrite=True)
     output_array = hdu[0].data
