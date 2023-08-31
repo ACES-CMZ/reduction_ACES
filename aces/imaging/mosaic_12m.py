@@ -442,3 +442,23 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
                            beam_threshold=2.3 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HC3N_Channels/',
                            **kwargs,)
+
+
+def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
+
+    filelist = glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Image_cubes/*.hnco43.image.fits')
+    print(f"Found {len(filelist)} HNCO 7m+12m+TP FITS files")
+
+    restfrq = 87.925238e9
+    cdelt_kms = 0.104
+    make_giant_mosaic_cube(filelist,
+                           reference_frequency=restfrq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HNCO',
+                           nchan=1900,
+                           beam_threshold=3.2 * u.arcsec,
+                           target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
+                           channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
+                           **kwargs,)
+
+

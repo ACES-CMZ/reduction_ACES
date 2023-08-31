@@ -484,6 +484,7 @@ def make_giant_mosaic_cube(filelist,
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
                            beam_threshold=3.2 * u.arcsec,
                            channels='all',
+                           imageformat='casa_image',
                            skip_channel_mosaicing=False,
                            skip_final_combination=False,):
     """
@@ -509,13 +510,18 @@ def make_giant_mosaic_cube(filelist,
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         cubes = [SpectralCube.read(fn,
-                                   format='casa_image',
+                                   format=image_format,
                                    use_dask=True).with_spectral_unit(u.km / u.s,
                                                                      velocity_convention='radio',
                                                                      rest_value=reference_frequency)
                  for fn in filelist]
-        weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"), format='casa_image', use_dask=True)
-                        .with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=reference_frequency)
+        weightcubes = [(SpectralCube.read(fn
+                                          .replace(".image.pbcor", ".pb"),
+                                          .replace(".image.fits", ".image.weight.fits"),
+                                          format=image_format, use_dask=True)
+                        .with_spectral_unit(u.km / u.s,
+                                            velocity_convention='radio',
+                                            rest_value=reference_frequency)
                         ) for fn in filelist]
 
     # Part 3: Filter out bad cubes
