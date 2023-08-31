@@ -484,7 +484,7 @@ def make_giant_mosaic_cube(filelist,
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
                            beam_threshold=3.2 * u.arcsec,
                            channels='all',
-                           imageformat='casa_image',
+                           image_format='casa_image',
                            skip_channel_mosaicing=False,
                            skip_final_combination=False,):
     """

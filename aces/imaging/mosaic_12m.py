@@ -459,6 +459,7 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
                            beam_threshold=3.2 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
+                           image_format='fits',
                            **kwargs,)
 
 
