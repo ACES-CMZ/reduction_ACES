@@ -516,7 +516,7 @@ def make_giant_mosaic_cube(filelist,
                                                                      rest_value=reference_frequency)
                  for fn in filelist]
         weightcubes = [(SpectralCube.read(fn
-                                          .replace(".image.pbcor", ".pb"),
+                                          .replace(".image.pbcor", ".pb")
                                           .replace(".image.fits", ".image.weight.fits"),
                                           format=image_format, use_dask=True)
                         .with_spectral_unit(u.km / u.s,

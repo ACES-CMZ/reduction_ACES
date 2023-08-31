@@ -461,5 +461,3 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
                            image_format='fits',
                            **kwargs,)
-
-
