@@ -447,7 +447,12 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
 def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
 
     filelist = glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Image_cubes/*.hnco43.image.fits')
+    weightfilelist = glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Weight_cubes/*.hnco43.image.weight.fits')
     print(f"Found {len(filelist)} HNCO 7m+12m+TP FITS files")
+    print(f"Found {len(weghtfilelist)} HNCO 7m+12m+TP FITS weight files")
+    assert len(weightfilelist) == len(filelist)
+    for xx, yy in zip(filelist, weightfilelist):
+        assert xx.split(".")[0] == yy.split(".")[0]
 
     restfrq = 87.925238e9
     cdelt_kms = 0.104
@@ -460,4 +465,5 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
                            image_format='fits',
+                           weightfilelist=weightfilelist,
                            **kwargs,)

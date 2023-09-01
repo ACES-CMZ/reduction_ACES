@@ -479,6 +479,7 @@ def make_giant_mosaic_cube(filelist,
                            cubename,
                            nchan,
                            test=False, verbose=True,
+                           weightfilelist=None,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr',
                            working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
@@ -515,15 +516,20 @@ def make_giant_mosaic_cube(filelist,
                                                                      velocity_convention='radio',
                                                                      rest_value=reference_frequency)
                  for fn in filelist]
-        weightcubes = [(SpectralCube.read(fn
-                                          .replace(".image.pbcor", ".pb")
-                                          .replace(".image.fits", ".image.weight.fits")
-                                          .replace("Image", "Weight"),
-                                          format=image_format, use_dask=True)
-                        .with_spectral_unit(u.km / u.s,
-                                            velocity_convention='radio',
-                                            rest_value=reference_frequency)
-                        ) for fn in filelist]
+        if weightfilelist is None:
+            weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"),
+                                              format=image_format, use_dask=True)
+                            .with_spectral_unit(u.km / u.s,
+                                                velocity_convention='radio',
+                                                rest_value=reference_frequency)
+                            ) for fn in filelist]
+        else:
+            weightcubes = [SpectralCube.read(fn,
+                                       format=image_format,
+                                       use_dask=True).with_spectral_unit(u.km / u.s,
+                                                                         velocity_convention='radio',
+                                                                         rest_value=reference_frequency)
+                     for fn in weightfilelist]
 
     # Part 3: Filter out bad cubes
     # flag out wild outliers
