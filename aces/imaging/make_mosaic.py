@@ -637,7 +637,9 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
                 pbar.set_description('Channels (flushing)')
             hdu.flush()
 
+    print(f"Moving {output_working_file} to {output_file}")
     shutil.move(output_working_file, output_file)
+    print(f"Successfully moved {output_working_file} to {output_file}")
 
 
 def slurm_set_channels(nchan):
