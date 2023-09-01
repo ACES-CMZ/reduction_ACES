@@ -590,8 +590,11 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
     # Part 6: Create output supergiant cube into which final product will be stashed
     output_working_file = f'{working_directory}/{cubename}_CubeMosaic.fits'
     output_file = f'{basepath}/mosaics/{cubename}_CubeMosaic.fits'
+    if verbose:
+        print(f"Beginning combination: working file is {output_working_file} and final output is {output_file}")
     if os.path.exists(output_working_file) and not os.path.exists(output_file):
-        print(f"Continuing work on existing file {output_working_file}")
+        if verbose:
+            print(f"Continuing work on existing file {output_working_file}")
     elif not os.path.exists(output_file):
         # Make a new file
         # https://docs.astropy.org/en/stable/generated/examples/io/skip_create-large-fits.html#sphx-glr-generated-examples-io-skip-create-large-fits-py
@@ -603,13 +606,16 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
         assert header['NAXIS3'] == nchan, f"Sanity check: header must have same number of channels as requested (header={header['NAXIS3']}, nchan={nchan})"
         shape_opt = header['NAXIS3'], header['NAXIS2'], header['NAXIS1']
 
+        if verbose:
+            print(f"Creating output working file {output_working_file}")
         header.tofile(output_working_file, overwrite=True)
         with open(output_working_file, 'rb+') as fobj:
             fobj.seek(len(header.tostring()) +
                       (np.prod(shape_opt) * np.abs(header['BITPIX'] // 8)) - 1)
             fobj.write(b'\0')
     elif os.path.exists(output_file) and not os.path.exists(output_working_file):
-        print(f"Working on file {output_file}, but moving it to {output_working_file} first")
+        if verbose:
+            print(f"Working on file {output_file}, but moving it to {output_working_file} first")
         shutil.move(output_file, output_working_file)
     else:
         raise ValueError("This outcome should not be possible")
@@ -637,9 +643,11 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
                 pbar.set_description('Channels (flushing)')
             hdu.flush()
 
-    print(f"Moving {output_working_file} to {output_file}")
+    if verbose:
+        print(f"Moving {output_working_file} to {output_file}")
     shutil.move(output_working_file, output_file)
-    print(f"Successfully moved {output_working_file} to {output_file}")
+    if verbose:
+        print(f"Successfully moved {output_working_file} to {output_file}")
 
 
 def slurm_set_channels(nchan):
