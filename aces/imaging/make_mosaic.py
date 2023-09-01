@@ -524,12 +524,12 @@ def make_giant_mosaic_cube(filelist,
                                                 rest_value=reference_frequency)
                             ) for fn in filelist]
         else:
-            weightcubes = [SpectralCube.read(fn,
-                                       format=image_format,
-                                       use_dask=True).with_spectral_unit(u.km / u.s,
-                                                                         velocity_convention='radio',
-                                                                         rest_value=reference_frequency)
-                     for fn in weightfilelist]
+            weightcubes = [SpectralCube.read(fn, format=image_format,
+                                             use_dask=True)
+                           .with_spectral_unit(u.km / u.s,
+                                               velocity_convention='radio',
+                                               rest_value=reference_frequency)
+                           for fn in weightfilelist]
 
     # Part 3: Filter out bad cubes
     # flag out wild outliers
