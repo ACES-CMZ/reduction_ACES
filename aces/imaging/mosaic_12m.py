@@ -417,7 +417,7 @@ def make_giant_mosaic_cube_hnco(**kwargs):
     print(f"Found {len(filelist)} HNCO-containing spw31 files")
 
     restfrq = 87.925238e9
-    cdelt_kms = 0.20818593 # smooth by 2 chans
+    cdelt_kms = 0.20818593  # smooth by 2 chans
     make_giant_mosaic_cube(filelist,
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
@@ -461,7 +461,7 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
 
     restfrq = 87.925238e9
     #cdelt_kms = 0.10409296373
-    cdelt_kms = 0.20818593 # smooth by 2 chans
+    cdelt_kms = 0.20818593  # smooth by 2 chans
     make_giant_mosaic_cube(filelist,
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
