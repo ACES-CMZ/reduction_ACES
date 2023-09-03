@@ -460,7 +460,7 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
     make_giant_mosaic_cube(filelist,
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
-                           cubename='HNCO',
+                           cubename='HNCO_7m12mTP',
                            nchan=1900,
                            beam_threshold=3.2 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
