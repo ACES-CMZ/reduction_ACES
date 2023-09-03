@@ -589,7 +589,7 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
                                       verbose=False,):
     # Part 6: Create output supergiant cube into which final product will be stashed
     output_working_file = f'{working_directory}/{cubename}_CubeMosaic.fits'
-    output_file = f'{basepath}/mosaics/{cubename}_CubeMosaic.fits'
+    output_file = f'{basepath}/mosaics/cubes/{cubename}_CubeMosaic.fits'
     if verbose:
         print(f"Beginning combination: working file is {output_working_file} and final output is {output_file}")
     if os.path.exists(output_working_file) and not os.path.exists(output_file):
@@ -660,5 +660,5 @@ def slurm_set_channels(nchan):
             raise ValueError(f"Must divide up slurm jobs evenly.  Got {nchan_per} channels, which isn't an int")
         nchan_per = int(nchan_per)
         channels = list(range(slurm_array_task_id * nchan_per,
-                              (slurm_array_task_id + 1) * nchan_per))
+                              (slurm_array_task_id + 1) * nchan_per + 1))
         return channels
