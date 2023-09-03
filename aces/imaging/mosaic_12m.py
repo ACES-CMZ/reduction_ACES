@@ -365,6 +365,10 @@ def starstarmap_with_kwargs(pool, fn, kwargs_iter):
 
 
 def make_giant_mosaic_cube_cs21(**kwargs):
+    """
+    Sep 2023: Fields ar and ad are excluded because of their beams
+    ad shouldn't be, but it is.
+    """
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.manual*image.pbcor')
@@ -393,7 +397,7 @@ def make_giant_mosaic_cube_sio21(**kwargs):
     print(f"Found {len(filelist)} SiO 2-1-containing spw27 files")
 
     restfrq = 86.84696e9
-    cdelt_kms = 0.84
+    cdelt_kms = 0.84455895
     make_giant_mosaic_cube(filelist,
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
@@ -413,7 +417,7 @@ def make_giant_mosaic_cube_hnco(**kwargs):
     print(f"Found {len(filelist)} HNCO-containing spw31 files")
 
     restfrq = 87.925238e9
-    cdelt_kms = 0.21
+    cdelt_kms = 0.20818593 # smooth by 2 chans
     make_giant_mosaic_cube(filelist,
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
@@ -433,7 +437,7 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
     print(f"Found {len(filelist)} HC3N-containing spw31 files")
 
     restfrq = 100.0763e9
-    cdelt_kms = 1.5
+    cdelt_kms = 1.47015502
     make_giant_mosaic_cube(filelist,
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
@@ -456,12 +460,13 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
         assert os.path.basename(xx.split(".")[0]) == os.path.basename(yy.split(".")[0])
 
     restfrq = 87.925238e9
-    cdelt_kms = 0.104
+    #cdelt_kms = 0.10409296373
+    cdelt_kms = 0.20818593 # smooth by 2 chans
     make_giant_mosaic_cube(filelist,
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO_7m12mTP',
-                           nchan=1900,
+                           nchan=1000,
                            beam_threshold=3.2 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
