@@ -442,6 +442,7 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
     for chan in pbar:
         # For each channel, we're making a full-frame mosaic
         theader = header.copy()
+
         theader['NAXIS3'] = 1
         theader['CRPIX3'] = 1
         theader['CRVAL3'] = wws.pixel_to_world(chan).to(u.km / u.s).value
@@ -451,10 +452,20 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
 
         chanfn = f'{working_directory}/{cubename}_CubeMosaic_channel{chan}.fits'
         if os.path.exists(f'{channelmosaic_directory}/{os.path.basename(chanfn)}'):
-            print(f"Skipping completed channel {chan}", flush=True)
+            if check_channel(f'{channelmosaic_directory}/{os.path.basename(chanfn)}', verbose=verbose)
+                print(f"Skipping completed channel {chan}", flush=True)
+            else:
+                print(f"Removing failed channel {chan}.  Will need to re-run", flush=True)
+                os.remove(f'{channelmosaic_directory}/{os.path.basename(chanfn)}')
+                raise ValueError("Empty channel found - re-run needed.")
         elif os.path.exists(chanfn):
-            print(f"Channel {chan} was already completed, moving it to {channelmosaic_directory}", flush=True)
-            shutil.move(chanfn, channelmosaic_directory)
+            if check_channel(chanfn, verbose=True):
+                print(f"Channel {chan} was already completed, moving it to {channelmosaic_directory}", flush=True)
+                shutil.move(chanfn, channelmosaic_directory)
+            else:
+                print(f"Removing failed channel {chan}={chanfn}.  Will need to re-run", flush=True)
+                os.remove(chanfn)
+                raise ValueError("Empty channel found - re-run needed.")
         else:
             print(f"Starting mosaic_cubes for channel {chan}", flush=True)
             mosaic_cubes(cubes,
@@ -466,11 +477,24 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                          method='channel',
                          verbose=verbose
                          )
-            print(f"Channel {chan} completed successfully, moving it to {channelmosaic_directory}", flush=True)
-            shutil.move(chanfn, channelmosaic_directory)
+            print(f"Channel {chan} appears to have completed successfully, but we're checking first.", flush=True)
+            if not check_channel(chanfn, verbose=verbose):
+                raise ValueError("Produced an empty channel - raising exception as this is not expected")
+            else:
+                print(f"Channel {chan} completed successfully, moving it to {channelmosaic_directory}", flush=True)
+                shutil.move(chanfn, channelmosaic_directory)
 
         if verbose:
             print("\n\n", flush=True)
+
+
+def check_channel(chanfn, verbose=True):
+    data = fits.getdata(chanfn)
+    if np.all(np.isnan(data)) or np.nansum(data) == 0:
+        print(f"{chanfn} failed: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()}")
+        return False
+    else:
+        return True
 
 
 def make_giant_mosaic_cube(filelist,
@@ -646,6 +670,7 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
     if verbose:
         print(f"Moving {output_working_file} to {output_file}")
     shutil.move(output_working_file, output_file)
+    assert os.path.exists(output_file), f"Failed to move {output_working_file} to {output_file}"
     if verbose:
         print(f"Successfully moved {output_working_file} to {output_file}")
 
@@ -662,3 +687,20 @@ def slurm_set_channels(nchan):
         channels = list(range(slurm_array_task_id * nchan_per,
                               (slurm_array_task_id + 1) * nchan_per + 1))
         return channels
+
+
+def make_downsampled_cubes(cubename, outcubename, factor=9, overwrite=False,
+                           save_to_tmpdir=True):
+    """
+    TODO: may need to dump-to-temp while reprojecting
+    """
+    cube = SpectralCube.read(cubename, use_dask=True)
+    hdr = cube.header.copy()
+    hdr['NAXIS1'] = int(hdr['NAXIS1'] / factor)
+    hdr['NAXIS2'] = int(hdr['NAXIS2'] / factor)
+    hdr['CRPIX1'] = int(hdr['CRPIX1'] / factor)
+    hdr['CRPIX2'] = int(hdr['CRPIX2'] / factor)
+    hdr['CDELT1'] = int(hdr['CDELT1'] * factor)
+    hdr['CDELT2'] = int(hdr['CDELT2'] * factor)
+    dscube = cube.reproject(hdr, save_to_tmpdir=save_to_tmpdir)
+    dscube.write(outcubename, overwrite=overwrite)
