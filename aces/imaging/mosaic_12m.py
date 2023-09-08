@@ -372,7 +372,7 @@ def make_giant_mosaic_cube_cs21(**kwargs):
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.manual*image.pbcor')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.manual.pbcor.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*33.cube.I.manual.pbcor.fits')
 
     print(f"Found {len(filelist)} CS 2-1-containing spw33 files")
 
@@ -392,7 +392,7 @@ def make_giant_mosaic_cube_sio21(**kwargs):
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw27.cube.I.iter1.image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw27.cube.I.manual*image.pbcor')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw27.cube.I.manual.pbcor.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*27.cube.I.manual.pbcor.fits')
 
     print(f"Found {len(filelist)} SiO 2-1-containing spw27 files")
 
@@ -412,7 +412,7 @@ def make_giant_mosaic_cube_hnco(**kwargs):
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw31.cube.I.iter1.image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw31.cube.I.manual*image.pbcor')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw31.cube.I.manual.pbcor.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*31.cube.I.manual.pbcor.fits')
 
     print(f"Found {len(filelist)} HNCO-containing spw31 files")
 
@@ -425,6 +425,7 @@ def make_giant_mosaic_cube_hnco(**kwargs):
                            nchan=1200,
                            beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
+                           fail_if_cube_dropped=False,
                            **kwargs,)
 
 
@@ -432,7 +433,7 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.iter1.image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.manual*image.pbcor')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw35.cube.I.manual.pbcor.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*35.cube.I.manual.pbcor.fits')
 
     print(f"Found {len(filelist)} HC3N-containing spw31 files")
 
@@ -472,4 +473,5 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
                            image_format='fits',
                            weightfilelist=weightfilelist,
+                           fail_if_cube_dropped=False,
                            **kwargs,)

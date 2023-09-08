@@ -430,6 +430,7 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                                     verbose=True,
                                     working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
                                     channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
+                                    fail_if_cube_dropped=True,
                                     channels='all'):
     ww = WCS(header)
     wws = ww.spectral
@@ -452,7 +453,7 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
 
         chanfn = f'{working_directory}/{cubename}_CubeMosaic_channel{chan}.fits'
         if os.path.exists(f'{channelmosaic_directory}/{os.path.basename(chanfn)}'):
-            if check_channel(f'{channelmosaic_directory}/{os.path.basename(chanfn)}', verbose=verbose)
+            if check_channel(f'{channelmosaic_directory}/{os.path.basename(chanfn)}', verbose=verbose):
                 print(f"Skipping completed channel {chan}", flush=True)
             else:
                 print(f"Removing failed channel {chan}.  Will need to re-run", flush=True)
@@ -475,7 +476,8 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                          spectral_block_size=None,
                          output_file=chanfn,
                          method='channel',
-                         verbose=verbose
+                         verbose=verbose,
+                         fail_if_cube_dropped=fail_if_cube_dropped,
                          )
             print(f"Channel {chan} appears to have completed successfully, but we're checking first.", flush=True)
             if not check_channel(chanfn, verbose=verbose):
@@ -509,7 +511,7 @@ def make_giant_mosaic_cube(filelist,
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
                            beam_threshold=3.2 * u.arcsec,
                            channels='all',
-                           image_format='casa_image',
+                           fail_if_cube_dropped=True,
                            skip_channel_mosaicing=False,
                            skip_final_combination=False,):
     """
@@ -535,20 +537,20 @@ def make_giant_mosaic_cube(filelist,
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         cubes = [SpectralCube.read(fn,
-                                   format=image_format,
+                                   format='fits' if fn.endswith('fits') else 'casa_image',
                                    use_dask=True).with_spectral_unit(u.km / u.s,
                                                                      velocity_convention='radio',
                                                                      rest_value=reference_frequency)
                  for fn in filelist]
         if weightfilelist is None:
             weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"),
-                                              format=image_format, use_dask=True)
+                                              format='fits' if fn.endswith('fits') else 'casa_image', use_dask=True)
                             .with_spectral_unit(u.km / u.s,
                                                 velocity_convention='radio',
                                                 rest_value=reference_frequency)
                             ) for fn in filelist]
         else:
-            weightcubes = [SpectralCube.read(fn, format=image_format,
+            weightcubes = [SpectralCube.read(fn, format='fits' if fn.endswith('fits') else 'casa_image',
                                              use_dask=True)
                            .with_spectral_unit(u.km / u.s,
                                                velocity_convention='radio',
@@ -566,6 +568,7 @@ def make_giant_mosaic_cube(filelist,
     if verbose:
         if not all(ok):
             print(f"Filtered down to {np.sum(ok)} of {len(ok)} cubes with beam major > {beam_threshold}")
+            print(f"Filtered cubes include: {[fn for fn, k in zip(filelist, ok) if not k]}")
         else:
             print(f"Found {np.sum(ok)} cubes with good beams (i.e., all of them)")
 
@@ -595,6 +598,7 @@ def make_giant_mosaic_cube(filelist,
                                         verbose=verbose,
                                         working_directory=working_directory,
                                         channelmosaic_directory=channelmosaic_directory,
+                                        fail_if_cube_dropped=fail_if_cube_dropped,
                                         channels=channels,)
 
     if not skip_final_combination and not test:
@@ -685,7 +689,7 @@ def slurm_set_channels(nchan):
             raise ValueError(f"Must divide up slurm jobs evenly.  Got {nchan_per} channels, which isn't an int")
         nchan_per = int(nchan_per)
         channels = list(range(slurm_array_task_id * nchan_per,
-                              (slurm_array_task_id + 1) * nchan_per + 1))
+                              (slurm_array_task_id + 1) * nchan_per))
         return channels
 
 
