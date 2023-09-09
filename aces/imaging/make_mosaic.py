@@ -557,6 +557,12 @@ def make_giant_mosaic_cube(filelist,
                                                rest_value=reference_frequency)
                            for fn in weightfilelist]
 
+    # BUGFIX: there are FITS headers that incorrectly specify UTC in caps
+    for cube in cubes + weightcubes:
+        cube._wcs.wcs.timesys = cube.wcs.wcs.timesys.lower()
+        if hasattr(cube.mask, '_wcs'):
+            cube.mask._wcs.wcs.timesys = cube.wcs.wcs.timesys.lower()
+
     # Part 3: Filter out bad cubes
     # flag out wild outliers
     # there are 2 as of writing
