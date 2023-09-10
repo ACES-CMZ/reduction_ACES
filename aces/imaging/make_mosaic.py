@@ -699,8 +699,8 @@ def slurm_set_channels(nchan):
         return channels
 
 
-def make_downsampled_cubes(cubename, outcubename, factor=9, overwrite=False,
-                           save_to_tmpdir=True):
+def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False,
+                          save_to_tmpdir=True):
     """
     TODO: may need to dump-to-temp while reprojecting
     """
@@ -710,7 +710,11 @@ def make_downsampled_cubes(cubename, outcubename, factor=9, overwrite=False,
     hdr['NAXIS2'] = int(hdr['NAXIS2'] / factor)
     hdr['CRPIX1'] = int(hdr['CRPIX1'] / factor)
     hdr['CRPIX2'] = int(hdr['CRPIX2'] / factor)
-    hdr['CDELT1'] = int(hdr['CDELT1'] * factor)
-    hdr['CDELT2'] = int(hdr['CDELT2'] * factor)
-    dscube = cube.reproject(hdr, save_to_tmpdir=save_to_tmpdir)
-    dscube.write(outcubename, overwrite=overwrite)
+    hdr['CDELT1'] = (hdr['CDELT1'] * factor)
+    hdr['CDELT2'] = (hdr['CDELT2'] * factor)
+    # shouldn't be needed with dask cube.allow_huge_operations = True
+    import dask.array as da
+    from dask.diagnostics import ProgressBar
+    with ProgressBar():
+        dscube = cube.reproject(hdr, save_to_tmpdir=save_to_tmpdir, use_memmap=True)
+        dscube.write(outcubename, overwrite=overwrite)

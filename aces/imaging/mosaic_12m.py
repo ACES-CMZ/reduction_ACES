@@ -13,6 +13,7 @@ from astropy import log
 from astropy.wcs import WCS
 from aces.imaging.make_mosaic import (make_mosaic, read_as_2d, get_peak,
                                       get_m0, all_lines,
+                                      make_downsampled_cube,
                                       make_giant_mosaic_cube)
 # import os
 # from functools import partial
@@ -387,6 +388,11 @@ def make_giant_mosaic_cube_cs21(**kwargs):
                            channelmosaic_directory=f'{basepath}/mosaics/CS21_Channels/',
                            **kwargs,)
 
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/CS21_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/CS21_CubeMosaic_downsampled9.fits',
+                             )
+
 
 def make_giant_mosaic_cube_sio21(**kwargs):
 
@@ -406,6 +412,11 @@ def make_giant_mosaic_cube_sio21(**kwargs):
                            beam_threshold=3.1 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/SiO21_Channels/',
                            **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/SiO21_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/SiO21_CubeMosaic_downsampled9.fits',
+                             )
 
 
 def make_giant_mosaic_cube_hnco(**kwargs):
@@ -428,6 +439,11 @@ def make_giant_mosaic_cube_hnco(**kwargs):
                            fail_if_cube_dropped=False,
                            **kwargs,)
 
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HNCO_CubeMosaic_downsampled9.fits',
+                             )
+
 
 def make_giant_mosaic_cube_hc3n(**kwargs):
 
@@ -448,6 +464,10 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
                            channelmosaic_directory=f'{basepath}/mosaics/HC3N_Channels/',
                            **kwargs,)
 
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HC3N_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HC3N_CubeMosaic_downsampled9.fits',
+                             )
 
 def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
 
@@ -471,7 +491,11 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
                            beam_threshold=3.2 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
-                           image_format='fits',
                            weightfilelist=weightfilelist,
                            fail_if_cube_dropped=False,
                            **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_7m12mTP_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HNCO_7m12mTP_CubeMosaic_downsampled9.fits',
+                             )
