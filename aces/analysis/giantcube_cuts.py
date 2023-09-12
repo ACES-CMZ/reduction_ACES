@@ -5,13 +5,15 @@ import time
 from spectral_cube import SpectralCube
 import os
 
-from aces.conf import basepath
+from aces import conf
+
+basepath = conf.basepath
 
 cubepath = f'{basepath}/mosaics/cubes/'
 mompath = f'{basepath}/mosaics/cubes/moments/'
 
 if __name__ == "__main__":
-    dodask = False
+    dodask = os.getenv('USE_DASK')
 
     if os.getenv('MOLNAME'):
         molname = os.getenv('MOLNAME')
@@ -51,7 +53,7 @@ if __name__ == "__main__":
         pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
 
     else:
-        print("Before imports", flush=True)
+        print("Before imports (using dask)", flush=True)
 
         import dask
         #dask.config.set(scheduler='threads')

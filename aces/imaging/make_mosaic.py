@@ -699,22 +699,26 @@ def slurm_set_channels(nchan):
         return channels
 
 
-def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False,
-                          save_to_tmpdir=True):
+def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False):
     """
     TODO: may need to dump-to-temp while reprojecting
     """
     cube = SpectralCube.read(cubename, use_dask=True)
-    hdr = cube.header.copy()
-    hdr['NAXIS1'] = int(hdr['NAXIS1'] / factor)
-    hdr['NAXIS2'] = int(hdr['NAXIS2'] / factor)
-    hdr['CRPIX1'] = int(hdr['CRPIX1'] / factor)
-    hdr['CRPIX2'] = int(hdr['CRPIX2'] / factor)
-    hdr['CDELT1'] = (hdr['CDELT1'] * factor)
-    hdr['CDELT2'] = (hdr['CDELT2'] * factor)
-    # shouldn't be needed with dask cube.allow_huge_operations = True
     import dask.array as da
     from dask.diagnostics import ProgressBar
     with ProgressBar():
-        dscube = cube.reproject(hdr, save_to_tmpdir=save_to_tmpdir, use_memmap=True)
+        dscube = cube[:, ::factor, ::factor]
         dscube.write(outcubename, overwrite=overwrite)
+    #hdr = cube.header.copy()
+    #hdr['NAXIS1'] = int(hdr['NAXIS1'] / factor)
+    #hdr['NAXIS2'] = int(hdr['NAXIS2'] / factor)
+    #hdr['CRPIX1'] = int(hdr['CRPIX1'] / factor)
+    #hdr['CRPIX2'] = int(hdr['CRPIX2'] / factor)
+    #hdr['CDELT1'] = (hdr['CDELT1'] * factor)
+    #hdr['CDELT2'] = (hdr['CDELT2'] * factor)
+    ## shouldn't be needed with dask cube.allow_huge_operations = True
+    #with ProgressBar():
+    #    dscube = cube.reproject(hdr, return_type='dask', filled=False, parallel=True, block_size=[1,1000,1000])
+    #    # non-dask dscube = cube.reproject(hdr, use_memmap=True)
+    #    print("Writing")
+    #    dscube.write(outcubename, overwrite=overwrite)
