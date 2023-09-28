@@ -20,6 +20,8 @@ echo $GITHUB_TOKEN
 cd /blue/adamginsburg/adamginsburg/ACES/workdir/
 pwd
 
+export USE_DASK=True
+
 if [ -e /orange/adamginsburg/ACES/mosaics/cubes/CS21_CubeMosaic.fits ]; then
 
     echo "test import"
