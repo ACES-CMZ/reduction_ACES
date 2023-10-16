@@ -91,7 +91,6 @@ if __name__ == "__main__":
         pv_mean = cube.mean(axis=2)
         pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
 
-
     print("Downsampling")
     from aces.imaging.make_mosaic import make_downsampled_cube, basepath
     make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits')
