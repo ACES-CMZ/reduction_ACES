@@ -89,6 +89,7 @@ if __name__ == "__main__":
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
                     cube = SpectralCube.read(cubefn)
+                    cube.allow_huge_operations = True  # suppress future warnings
                     ww = cube.wcs.celestial
                     ww._naxis = cube.shape[1:]
 
