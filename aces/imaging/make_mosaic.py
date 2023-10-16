@@ -717,7 +717,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False):
     #hdr['CRPIX2'] = int(hdr['CRPIX2'] / factor)
     #hdr['CDELT1'] = (hdr['CDELT1'] * factor)
     #hdr['CDELT2'] = (hdr['CDELT2'] * factor)
-    ## shouldn't be needed with dask cube.allow_huge_operations = True
+    # shouldn't be needed with dask cube.allow_huge_operations = True
     #with ProgressBar():
     #    dscube = cube.reproject(hdr, return_type='dask', filled=False, parallel=True, block_size=[1,1000,1000])
     #    # non-dask dscube = cube.reproject(hdr, use_memmap=True)

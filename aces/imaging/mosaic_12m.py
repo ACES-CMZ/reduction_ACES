@@ -391,7 +391,7 @@ def make_giant_mosaic_cube_cs21(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/CS21_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/CS21_CubeMosaic_downsampled9.fits',
-                             )
+                              )
 
 
 def make_giant_mosaic_cube_sio21(**kwargs):
@@ -416,7 +416,7 @@ def make_giant_mosaic_cube_sio21(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/SiO21_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/SiO21_CubeMosaic_downsampled9.fits',
-                             )
+                              )
 
 
 def make_giant_mosaic_cube_hnco(**kwargs):
@@ -442,7 +442,7 @@ def make_giant_mosaic_cube_hnco(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HNCO_CubeMosaic_downsampled9.fits',
-                             )
+                              )
 
 
 def make_giant_mosaic_cube_hc3n(**kwargs):
@@ -467,7 +467,8 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HC3N_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HC3N_CubeMosaic_downsampled9.fits',
-                             )
+                              )
+
 
 def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
 
@@ -498,7 +499,8 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_7m12mTP_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HNCO_7m12mTP_CubeMosaic_downsampled9.fits',
-                             )
+                              )
+
 
 def make_giant_mosaic_cube_hcop(**kwargs):
 
@@ -522,5 +524,4 @@ def make_giant_mosaic_cube_hcop(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HCOP_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HCOP_CubeMosaic_downsampled9.fits',
-                             )
-
+                              )
