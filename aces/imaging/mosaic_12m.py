@@ -451,7 +451,7 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.manual*image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*35.cube.I.manual.pbcor.fits')
 
-    print(f"Found {len(filelist)} HC3N-containing spw31 files")
+    print(f"Found {len(filelist)} HC3N-containing spw35 files")
 
     restfrq = 100.0763e9
     cdelt_kms = 1.47015502
@@ -499,3 +499,28 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_7m12mTP_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HNCO_7m12mTP_CubeMosaic_downsampled9.fits',
                              )
+
+def make_giant_mosaic_cube_hcop(**kwargs):
+
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.iter1.image.pbcor')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.manual*image.pbcor')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
+
+    print(f"Found {len(filelist)} HCOP-containing spw29 files")
+
+    restfrq = 89.188526e9
+    cdelt_kms = 0.20818593  # smooth by 2 chans
+    make_giant_mosaic_cube(filelist,
+                           reference_frequency=restfrq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HCOP',
+                           nchan=1000,
+                           beam_threshold=3.2 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/HCOP_Channels/',
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HCOP_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HCOP_CubeMosaic_downsampled9.fits',
+                             )
+

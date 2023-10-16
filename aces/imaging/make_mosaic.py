@@ -706,6 +706,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False):
     cube = SpectralCube.read(cubename, use_dask=True)
     import dask.array as da
     from dask.diagnostics import ProgressBar
+    print(f"Downsampling cube {cubename} -> {outcubename}")
     with ProgressBar():
         dscube = cube[:, ::factor, ::factor]
         dscube.write(outcubename, overwrite=overwrite)
