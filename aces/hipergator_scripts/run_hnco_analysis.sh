@@ -20,7 +20,9 @@ echo $GITHUB_TOKEN
 cd /blue/adamginsburg/adamginsburg/ACES/workdir/
 pwd
 
-if [ -e hnco_CubeMosaic.fits ]; then
+export USE_DASK=True
+
+if [ -e /orange/adamginsburg/ACES/mosaics/cubes/HNCO_CubeMosaic.fits ]; then
 
     echo "test import"
     /orange/adamginsburg/miniconda3/envs/python39/bin/python -c "import zipfile" || exit 1
