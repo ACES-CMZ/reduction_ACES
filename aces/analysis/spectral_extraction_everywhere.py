@@ -104,14 +104,30 @@ if __name__ == "__main__":
                     ww = wcs_utils.slice_wcs(scube.wcs, slc, numpy_order=False)
                     hdu.header.update(ww.to_header())
                     hdu.data = hdu.data[:, None, None]
+                    hdu.header['CATINDX'] = row['index']
+                    hdu.header['CATGLON'] = row['GLON']
+                    hdu.header['CATGLAT'] = row['GLAT']
+                    hdu.header['CATMAJS'] = row['major_sigma']
+                    hdu.header['CATMINS'] = row['minor_sigma']
+                    hdu.header['CATPA'] = row['position_angle']
 
                     outfn = f"{spectrum_dir}/mp179_source{row['index']}_ellipseaverage_" + cubefn.split("/")[-1]
                     hdu.writeto(outfn, overwrite=True)
 
-                    spec = extract_from_mask(cube, maskfile[0], row['index'] + 1)
+                    try:
+                        spec = extract_from_mask(cube, maskfile[0], row['index'] + 1)
+                    except Exception as ex:
+                        print(f"Failed for cube {cubefn} for id {row['index']} with exception {ex}")
+                        continue
                     hdu = spec.hdu
                     hdu.header.update(ww.to_header())
                     hdu.data = hdu.data[:, None, None]
+                    hdu.header['CATINDX'] = row['index']
+                    hdu.header['CATGLON'] = row['GLON']
+                    hdu.header['CATGLAT'] = row['GLAT']
+                    hdu.header['CATMAJS'] = row['major_sigma']
+                    hdu.header['CATMINS'] = row['minor_sigma']
+                    hdu.header['CATPA'] = row['position_angle']
 
                     outfn = f"{spectrum_dir}/mp179_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
                     hdu.writeto(outfn, overwrite=True)

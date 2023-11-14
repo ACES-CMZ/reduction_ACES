@@ -373,6 +373,7 @@ def make_giant_mosaic_cube_cs21(**kwargs):
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.manual*image.pbcor')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.reclean*image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*33.cube.I.manual.pbcor.fits')
 
     print(f"Found {len(filelist)} CS 2-1-containing spw33 files")
@@ -391,6 +392,7 @@ def make_giant_mosaic_cube_cs21(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/CS21_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/CS21_CubeMosaic_downsampled9.fits',
+                              overwrite=True
                               )
 
 
@@ -524,4 +526,36 @@ def make_giant_mosaic_cube_hcop(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HCOP_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HCOP_CubeMosaic_downsampled9.fits',
+                              )
+
+def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
+
+    raise NotImplementedError("Need weight cubes")
+    filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/*.hnco43.image'))
+    weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/Weight_cubes/*.hnco43.image.weight.fits'))
+    print(f"Found {len(filelist)} HNCO 7m+TP FITS files")
+    print(f"Found {len(weightfilelist)} HNCO 7m+TP FITS weight files")
+    assert len(weightfilelist) == len(filelist)
+    for xx, yy in zip(filelist, weightfilelist):
+        print(f'Beginning of filenames: {os.path.basename(xx.split(".")[0])}, {os.path.basename(yy.split(".")[0])}')
+        assert os.path.basename(xx.split(".")[0]) == os.path.basename(yy.split(".")[0])
+
+    restfrq = 87.925238e9
+    #cdelt_kms = 0.10409296373
+    cdelt_kms = 0.20818593  # smooth by 2 chans
+    make_giant_mosaic_cube(filelist,
+                           reference_frequency=restfrq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HNCO_7mTP',
+                           nchan=1000,
+                           beam_threshold=3.2 * u.arcsec,
+                           target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_7m.hdr',
+                           channelmosaic_directory=f'{basepath}/mosaics/HNCO_7mTP_Channels/',
+                           weightfilelist=weightfilelist,
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic_downsampled9.fits',
                               )

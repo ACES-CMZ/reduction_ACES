@@ -439,6 +439,8 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
         os.mkdir(channelmosaic_directory)
 
     # Part 5: Make per-channel mosaics
+    if verbose:
+        print(f"Making per-channel mosaics into cube {cubename} with channels {channels}")
     pbar = tqdm(channels, desc='Channels (mosaic)') if verbose else channels
     for chan in pbar:
         # For each channel, we're making a full-frame mosaic
@@ -566,7 +568,8 @@ def make_giant_mosaic_cube(filelist,
     # Part 3: Filter out bad cubes
     # flag out wild outliers
     # there are 2 as of writing
-    print("Filtering out cubes with sketchy beams", flush=True)
+    if verbose:
+        print("Filtering out cubes with sketchy beams", flush=True)
     ok = [cube.beam.major < beam_threshold
           if hasattr(cube, 'beam')
           else cube.beams.common_beam().major < beam_threshold
@@ -585,6 +588,8 @@ def make_giant_mosaic_cube(filelist,
         print(f"There are {len(cubes)} cubes and {len(weightcubes)} weightcubes.", flush=True)
 
     # Part 4: Determine common beam
+    if verbose:
+        print("Determining common beam")
     beams = radio_beam.Beams(beams=[cube.beam
                                     if hasattr(cube, 'beam')
                                     else cube.beams.common_beam()
@@ -597,7 +602,10 @@ def make_giant_mosaic_cube(filelist,
     elif channels == 'slurm':
         channels = slurm_set_channels(nchan)
 
+    # Part 5: make per-channel mosaics
     if not skip_channel_mosaicing:
+        if verbose:
+            print(f"Making the channels from our {len(cubes)} cubes and {len(weightcubes)} weightcubes for channels {channels}")
         make_giant_mosaic_cube_channels(header, cubes, weightcubes,
                                         commonbeam=commonbeam,
                                         cubename=cubename,
@@ -606,8 +614,12 @@ def make_giant_mosaic_cube(filelist,
                                         channelmosaic_directory=channelmosaic_directory,
                                         fail_if_cube_dropped=fail_if_cube_dropped,
                                         channels=channels,)
+    else:
+        print("Skipped channel mosaicking")
 
     if not skip_final_combination and not test:
+        if verbose:
+            print("Combining channels into mosaic cube")
         combine_channels_into_mosaic_cube(header,
                                           cubename,
                                           nchan,
@@ -630,6 +642,8 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
         if verbose:
             print(f"Continuing work on existing file {output_working_file}")
     elif not os.path.exists(output_file):
+        if verbose:
+            print(f"Making new file {output_file}")
         # Make a new file
         # https://docs.astropy.org/en/stable/generated/examples/io/skip_create-large-fits.html#sphx-glr-generated-examples-io-skip-create-large-fits-py
         hdu = fits.PrimaryHDU(data=np.ones([5, 5, 5], dtype=float),
@@ -651,6 +665,8 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
         if verbose:
             print(f"Working on file {output_file}, but moving it to {output_working_file} first")
         shutil.move(output_file, output_working_file)
+        if verbose:
+            print(f"Completed move of {output_file} to {output_working_file}")
     else:
         raise ValueError("This outcome should not be possible")
 
@@ -664,6 +680,7 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
 
     # Part 7: Populate supergiant cube by copying data over, channel-by-channel
     if verbose:
+        print(f"Beginning channel filling from channel mosaic directory {channelmosaic_directory}")
         pbar = tqdm(channels, desc='Channels')
     else:
         pbar = channels
