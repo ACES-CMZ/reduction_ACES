@@ -14,7 +14,9 @@ from astropy.wcs import WCS
 from aces.imaging.make_mosaic import (make_mosaic, read_as_2d, get_peak,
                                       get_m0, all_lines,
                                       make_downsampled_cube,
-                                      make_giant_mosaic_cube)
+                                      make_giant_mosaic_cube,
+                                      rms
+                                      )
 # import os
 # from functools import partial
 from multiprocessing import Process, Pool
@@ -97,10 +99,13 @@ def main_():
     reimaged(header)
     reimaged_high(header)
     continuum(header)
+    rms(prefix='12m_continuum', threshold=3)
     hcop(header)
     hnco(header)
     h40a(header)
     all_lines(header)
+
+
 
 
 def continuum(header):
@@ -390,9 +395,11 @@ def make_giant_mosaic_cube_cs21(**kwargs):
                            **kwargs,)
 
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        # for unknown reasons, this one _really_ doesn't like dask
         make_downsampled_cube(f'{basepath}/mosaics/cubes/CS21_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/CS21_CubeMosaic_downsampled9.fits',
-                              overwrite=True
+                              overwrite=True,
+                              use_dask=False
                               )
 
 

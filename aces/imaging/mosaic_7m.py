@@ -80,4 +80,6 @@ def main():
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='7m', basepath=basepath)
 
+    rms(prefix='7m_continuum', threshold=3)
+
     all_lines(header, array='7m', parallel=False)
