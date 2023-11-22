@@ -769,7 +769,7 @@ def rms_map(img, kernel=Gaussian2DKernel(10)):
     return rms
 
 
-def rms(prefix='12m_continuum', threshold=2, maxiter=20):
+def rms(prefix='12m_continuum', threshold=2, maxiter=50):
     import glob
     for fn in glob.glob(f'{basepath}/mosaics/{prefix}*mosaic.fits'):
         if 'rms' in fn:
@@ -796,11 +796,13 @@ def rms(prefix='12m_continuum', threshold=2, maxiter=20):
         ndet = []
         for ii in range(maxiter):
             # second iteration: threshold and try again
-            detections = (datacopy / rms) > 3
-            if detections.sum() == 0:
+            detections = (datacopy / rms) > threshold
+            ndet_this = detections.sum()
+            if ndet_this == 0:
                 print(f"Converged in {ii} iterations")
                 break
-            ndet.append(detections.sum())
+            ndet.append(ndet_this)
+            print(f"Iteration {ii} detected {ndet}")
 
             datacopy[detections] = np.nan
             rms = rms_map(datacopy, kernel=Gaussian2DKernel(kernelwidth))
