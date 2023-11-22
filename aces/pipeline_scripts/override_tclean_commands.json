@@ -1195,7 +1195,7 @@
       }
     },
     "tclean_cube_pars": {
-      "spw25": {
+      "spw25": { 
         "nchan": 1912,
         "width": "0.2441231MHz"
       },
@@ -1210,10 +1210,6 @@
       "spw31": {
         "nchan": 1912,
         "width": "0.03051545MHz"
-      },
-      "spw35": {
-        "nchan": 3832,
-        "width": "0.4882462MHz"
       },
       "spw33": {
         "vis": [
@@ -1327,6 +1323,10 @@
         "calcpsf": false,
         "psfcutoff": 0.35,
         "parallel": true
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.4882462MHz"
       }
     }
   },
