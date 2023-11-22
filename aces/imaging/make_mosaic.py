@@ -781,10 +781,10 @@ def rms(prefix='12m_continuum', threshold=2, maxiter=20):
         pixscale = ww.proj_plane_pixel_area()**0.5
         try:
             beam = radio_beam.Beam.from_fits_header(fh[0].header)
-            kernelwidth = ((beam.major * 2)/pixscale).decompose()
+            kernelwidth = ((beam.major * 2) / pixscale).decompose()
         except Exception as ex:
             print(ex, fn)
-            kernelwidth = (2.5*u.arcsec/pixscale).decompose()
+            kernelwidth = (2.5 * u.arcsec / pixscale).decompose()
 
         rms = rms_map(fh[0].data, kernel=Gaussian2DKernel(kernelwidth))
 

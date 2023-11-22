@@ -106,8 +106,6 @@ def main_():
     all_lines(header)
 
 
-
-
 def continuum(header):
     logprint("12m continuum")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.tt0.pbcor.fits')

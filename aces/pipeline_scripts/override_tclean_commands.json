@@ -16,6 +16,9 @@
     }
   },
   "Sgr_A_st_al_03_TM1": {
+    "manual QA": "True"
+  },
+  "Sgr_A_st_al_03_TM1": {
     "manual QA": "True",
     "mous": "uid://A001/X15a0/X17e",
     "pipeline_run": [
