@@ -1195,6 +1195,22 @@
       }
     },
     "tclean_cube_pars": {
+      "spw25": { 
+        "nchan": 1912,
+        "width": "0.2441231MHz"
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "0.2441231MHz"
+      },
+      "spw29": {
+        "nchan": 1912,
+        "width": "0.03051545MHz"
+      },
+      "spw31": {
+        "nchan": 1912,
+        "width": "0.03051545MHz"
+      },
       "spw33": {
         "vis": [
           "uid___A002_Xf99bb0_X2491_target.ms",
@@ -1307,6 +1323,10 @@
         "calcpsf": false,
         "psfcutoff": 0.35,
         "parallel": true
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.4882462MHz"
       }
     }
   },
