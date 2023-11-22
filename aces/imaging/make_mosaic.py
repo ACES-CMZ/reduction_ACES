@@ -497,9 +497,12 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
 def check_channel(chanfn, verbose=True):
     data = fits.getdata(chanfn)
     if np.all(np.isnan(data)) or np.nansum(data) == 0:
-        print(f"{chanfn} failed: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()}")
+        if verbose:
+            print(f"{chanfn} failed: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))}")
         return False
     else:
+        if verbose:
+            print(f"{chanfn} succeeded: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))}")
         return True
 
 
@@ -769,12 +772,19 @@ def rms_map(img, kernel=Gaussian2DKernel(10)):
 def rms(prefix='12m_continuum', threshold=2, maxiter=20):
     import glob
     for fn in glob.glob(f'{basepath}/mosaics/{prefix}*mosaic.fits'):
-        print(f"Computing RMS map for {fn}")
+        if 'rms' in fn:
+            # don't re-rms rms maps
+            continue
+        print(f"Computing RMS map for {fn}", flush=True)
         fh = fits.open(fn)
         ww = WCS(fh[0].header)
         pixscale = ww.proj_plane_pixel_area()**0.5
-        beam = radio_beam.Beam.from_fits_header(fh[0].header)
-        kernelwidth = ((beam.major * 2)/pixscale).decompose()
+        try:
+            beam = radio_beam.Beam.from_fits_header(fh[0].header)
+            kernelwidth = ((beam.major * 2)/pixscale).decompose()
+        except Exception as ex:
+            print(ex, fn)
+            kernelwidth = (2.5*u.arcsec/pixscale).decompose()
 
         rms = rms_map(fh[0].data, kernel=Gaussian2DKernel(kernelwidth))
 
