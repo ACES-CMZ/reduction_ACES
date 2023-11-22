@@ -144,7 +144,7 @@ if __name__ == "__main__":
                 cy, cx = ((np.arange(fm.shape[0])[:, None] * (fm == ii)).sum() / fsum,
                           (np.arange(fm.shape[1])[None, :] * (fm == ii)).sum() / fsum)
                 # print(cx,cy)
-                pl.text(cx, cy, f"{ii}\n{tbl[ii-1]['Obs ID']}",
+                pl.text(cx, cy, f"{ii}\n{tbl[ii - 1]['Obs ID']}",
                         horizontalalignment='left', verticalalignment='center',
                         color='k', transform=ax.get_transform('pixel'),
                         backgroundcolor='w')

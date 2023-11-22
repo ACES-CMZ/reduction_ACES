@@ -290,7 +290,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             fsum = (flagmap == ii).sum()
             cy, cx = ((np.arange(flagmap.shape[0])[:, None] * (flagmap == ii)).sum() / fsum,
                       (np.arange(flagmap.shape[1])[None, :] * (flagmap == ii)).sum() / fsum)
-            pl.text(cx, cy, f"{ii}\n{tbl[ii-1]['Obs ID']}",
+            pl.text(cx, cy, f"{ii}\n{tbl[ii - 1]['Obs ID']}",
                     horizontalalignment='left', verticalalignment='center',
                     color=(1, 0.8, 0.5), transform=ax.get_transform('pixel'),
                     zorder=fronter)

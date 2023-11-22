@@ -294,7 +294,7 @@ def h40a(header):
                      rest_value=99.02295 * u.GHz,
                      suffix='_h40a').hdu for fn in filelist]
     for hdu, fn in zip(hdus, filelist):
-        logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data==0).sum()}')
+        logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data == 0).sum()}')
     #weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')
     weightfiles = [fn.replace(".iter1.image.pbcor", "iter1.pb") for fn in filelist]
     assert len(weightfiles) == len(filelist)
@@ -303,7 +303,7 @@ def h40a(header):
                        threshold=0.5,
                        suffix='_h40a').hdu for fn in weightfiles]
     for hdu, fn in zip(wthdus, weightfiles):
-        logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data==0).sum()}')
+        logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data == 0).sum()}')
 
     make_mosaic(hdus, name='h40a_max', cbar_unit='K',
                 norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
@@ -312,7 +312,7 @@ def h40a(header):
                    slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
                    rest_value=99.02295 * u.GHz).hdu for fn in filelist]
     for hdu, fn in zip(hdus, filelist):
-        logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data==0).sum()}')
+        logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data == 0).sum()}')
     make_mosaic(hdus, name='h40a_m0', cbar_unit='K km/s',
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
