@@ -761,11 +761,14 @@ def rms_map(img, kernel=Gaussian2DKernel(10)):
     """
     Gaussian2DKernel should be larger than the beam, probably at least 2x larger
     """
+    nans = np.isnan(img)
     sm = convolve_fft(img, kernel, allow_huge=True)
     res = img - sm
     var = res**2
     smvar = convolve_fft(var, kernel, allow_huge=True)
     rms = smvar**0.5
+    # restore NaNs: the convolution process will naturally fill them
+    rms[nans] = np.nan
     return rms
 
 

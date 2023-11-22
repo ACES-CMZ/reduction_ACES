@@ -1,3 +1,6 @@
+"""
+sbatch --qos=astronomy-dept-b --account=astronomy-dept --ntasks=1 --nodes=1 --mem=64gb --time=96:00:00 --job-name=ACES_fixMultiBeam --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/casapy38/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/hipergator_scripts/fix_multibeam_Aug1_2023.py"
+"""
 import os
 import shutil
 import glob
