@@ -42,7 +42,7 @@ for dotimage in images:
     if manybeam:
         print(f"Found a multi-beam image {imagename} = {dotimage}")
         if os.path.exists(f'{imagename}.image.multibeam'):
-            raise ValueError("The multi-beam image {dotimage} should have already been corrected")
+            raise ValueError(f"The multi-beam image {dotimage} should have already been corrected")
         shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
         shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
         imsmooth(imagename=f'{imagename}.model',

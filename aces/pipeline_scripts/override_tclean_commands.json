@@ -16,7 +16,8 @@
     }
   },
   "Sgr_A_st_al_03_TM1": {
-    "manual QA": "True"
+    "manual QA": "True",
+    "mous": "uid://A001/X15a0/X184"
   },
   "Sgr_A_st_al_03_TM1": {
     "manual QA": "True",

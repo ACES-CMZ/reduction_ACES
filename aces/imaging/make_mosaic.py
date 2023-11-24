@@ -772,7 +772,7 @@ def rms_map(img, kernel=Gaussian2DKernel(10)):
     return rms
 
 
-def rms(prefix='12m_continuum', threshold=2, maxiter=50):
+def rms(prefix='12m_continuum', threshold=2.5, maxiter=50):
     import glob
     for fn in glob.glob(f'{basepath}/mosaics/{prefix}*mosaic.fits'):
         if 'rms' in fn:
