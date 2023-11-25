@@ -768,11 +768,12 @@ def rms_map(img, kernel=Gaussian2DKernel(10)):
     smvar = convolve_fft(var, kernel, allow_huge=True)
     rms = smvar**0.5
     # restore NaNs: the convolution process will naturally fill them
-    rms[nans] = np.nan
+    # don't do this: it turns internal pixels into nans that shouldn't be
+    # rms[nans] = np.nan
     return rms
 
 
-def rms(prefix='12m_continuum', threshold=2.5, maxiter=50):
+def rms(prefix='12m_continuum', threshold=2.5, nbeams=3, maxiter=50):
     import glob
     for fn in glob.glob(f'{basepath}/mosaics/{prefix}*mosaic.fits'):
         if 'rms' in fn:
@@ -784,12 +785,14 @@ def rms(prefix='12m_continuum', threshold=2.5, maxiter=50):
         pixscale = ww.proj_plane_pixel_area()**0.5
         try:
             beam = radio_beam.Beam.from_fits_header(fh[0].header)
-            kernelwidth = ((beam.major * 2) / pixscale).decompose()
+            kernelwidth = ((beam.major * nbeams) / pixscale).decompose()
         except Exception as ex:
             print(ex, fn)
             kernelwidth = (2.5 * u.arcsec / pixscale).decompose()
 
+        nans = np.isnan(fh[0].data)
         rms = rms_map(fh[0].data, kernel=Gaussian2DKernel(kernelwidth))
+        rms[nans] = np.nan
 
         outname = fn.replace("_mosaic.fits", "_rms_mosaic.fits")
         fits.PrimaryHDU(data=rms, header=fh[0].header).writeto(outname, overwrite=True)
@@ -809,6 +812,7 @@ def rms(prefix='12m_continuum', threshold=2.5, maxiter=50):
 
             datacopy[detections] = np.nan
             rms = rms_map(datacopy, kernel=Gaussian2DKernel(kernelwidth))
+        rms[nans] = np.nan
 
         outname = fn.replace("_mosaic.fits", "_maskedrms_mosaic.fits")
         fits.PrimaryHDU(data=rms, header=fh[0].header).writeto(outname, overwrite=True)
