@@ -2207,8 +2207,11 @@
   },
   "Sgr_A_st_i_updated_03_7M": {
     "tclean_cube_pars": {
+      "spw22": {
+        "cyclefactor": 3.5
+      },
       "spw26": {
-        "cyclefactor": 1.5
+        "cyclefactor": 3.0
       }
     }
   },
