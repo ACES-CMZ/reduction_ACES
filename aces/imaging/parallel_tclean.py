@@ -35,8 +35,10 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     tclean_kwargs = {'nchan': nchan_per, }
     tclean_kwargs.update(**kwargs)
     # can't be zero, even though docs say it can be
-    del tclean_kwargs['interactive']
-    del tclean_kwargs['parallel']
+    if 'interactive' in tclean_kwargs:
+        del tclean_kwargs['interactive']
+    if 'parallel' in tclean_kwargs:
+        del tclean_kwargs['parallel']
     assert 'interactive' not in tclean_kwargs
     tclean_kwargs['calcres'] = True
     tclean_kwargs['calcpsf'] = True
