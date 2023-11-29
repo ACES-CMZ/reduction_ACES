@@ -33,7 +33,7 @@
         "imagename": "uid___A001_X15a0_X184.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual",
         "field": "Sgr_A_star",
         "phasecenter": "ICRS 17:45:12.176 -28.54.51.587",
-        "specmode": "cont",
+        "specmode": "mfs",
         "nterms": 2,
         "imsize": [
           1400,
