@@ -1,3 +1,6 @@
+"""
+sbatch --qos=astronomy-dept-b --account=astronomy-dept --ntasks=1 --nodes=1 --mem=64gb --time=96:00:00 --job-name=ACES_fixMultiBeam --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/casapy38/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/hipergator_scripts/fix_multibeam_Aug1_2023.py"
+"""
 import os
 import shutil
 import glob
@@ -39,7 +42,7 @@ for dotimage in images:
     if manybeam:
         print(f"Found a multi-beam image {imagename} = {dotimage}")
         if os.path.exists(f'{imagename}.image.multibeam'):
-            raise ValueError("The multi-beam image {dotimage} should have already been corrected")
+            raise ValueError(f"The multi-beam image {dotimage} should have already been corrected")
         shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
         shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
         imsmooth(imagename=f'{imagename}.model',

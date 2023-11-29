@@ -409,7 +409,7 @@ for vis in tclean_kwargs['vis']:
     with open(slurmcmd_merge, 'w') as fh:
         fh.write(runcmd_merge)
 
-    cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks*4} '
+    cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks * 4} '
            f'--mem-per-cpu={mem_per_cpu} --output={jobname}_merge_%j_%A_%a.log --job-name={jobname}_merge --account={account} '
            f'--dependency=afterok:{jobid} '
            f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd_merge}')

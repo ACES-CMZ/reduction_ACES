@@ -408,7 +408,7 @@ def main():
     if runonce:
         print("Completed re-imaging run with RUNONCE enabled, but didn't run at all.")
 
-    print(f"Done with aces_write_tclean_scripts after t={time.time()-t0}")
+    print(f"Done with aces_write_tclean_scripts after t={time.time() - t0}")
     globals().update(locals())
 
 

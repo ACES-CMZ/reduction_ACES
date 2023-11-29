@@ -199,8 +199,7 @@ def main(dryrun=False):
 * [{'x' if downloaded else ' '}] Downloaded? (specify where)
   * [{'x' if downloaded else ' '}] hipergator""" + ("" if array == 'TP' else f"""
   * [{'x' if pipeline_run else ' '}] hipergator pipeline run
-""") +
-                         f"""
+""") + f"""
 * [{'x' if new_sb in weblog_names else ' '}] [Weblog]({weblog_url}) unpacked{extra_weblog_line}
 * [ ] [Weblog]({weblog_url}) Quality Assessment?
 * [ ] Imaging: Continuum

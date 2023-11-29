@@ -15,10 +15,12 @@ from astropy import wcs
 from astropy.wcs import WCS
 from astropy import log
 from astropy.utils.console import ProgressBar
+from astropy.convolution import convolve_fft, convolve, Gaussian2DKernel
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 import os
 import glob
+import copy
 import shutil
 from functools import partial
 from multiprocessing import Process, Pool
@@ -288,7 +290,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             fsum = (flagmap == ii).sum()
             cy, cx = ((np.arange(flagmap.shape[0])[:, None] * (flagmap == ii)).sum() / fsum,
                       (np.arange(flagmap.shape[1])[None, :] * (flagmap == ii)).sum() / fsum)
-            pl.text(cx, cy, f"{ii}\n{tbl[ii-1]['Obs ID']}",
+            pl.text(cx, cy, f"{ii}\n{tbl[ii - 1]['Obs ID']}",
                     horizontalalignment='left', verticalalignment='center',
                     color=(1, 0.8, 0.5), transform=ax.get_transform('pixel'),
                     zorder=fronter)
@@ -495,9 +497,12 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
 def check_channel(chanfn, verbose=True):
     data = fits.getdata(chanfn)
     if np.all(np.isnan(data)) or np.nansum(data) == 0:
-        print(f"{chanfn} failed: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()}")
+        if verbose:
+            print(f"{chanfn} failed: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))}")
         return False
     else:
+        if verbose:
+            print(f"{chanfn} succeeded: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))}")
         return True
 
 
@@ -637,7 +642,7 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
     output_working_file = f'{working_directory}/{cubename}_CubeMosaic.fits'
     output_file = f'{basepath}/mosaics/cubes/{cubename}_CubeMosaic.fits'
     if verbose:
-        print(f"Beginning combination: working file is {output_working_file} and final output is {output_file}")
+        print(f"Beginning combination: working file is {output_working_file} (exists={os.path.exists(output_working_file)}) and final output is {output_file} (exists={os.path.exists(output_file)})")
     if os.path.exists(output_working_file) and not os.path.exists(output_file):
         if verbose:
             print(f"Continuing work on existing file {output_working_file}")
@@ -668,7 +673,7 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
         if verbose:
             print(f"Completed move of {output_file} to {output_working_file}")
     else:
-        raise ValueError("This outcome should not be possible")
+        raise ValueError(f"This outcome should not be possible: both {output_file} and {output_working_file} exist")
 
     hdu = fits.open(output_working_file)
     if hdu[0].data.shape[0] != nchan:
@@ -716,27 +721,99 @@ def slurm_set_channels(nchan):
         return channels
 
 
-def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False):
+def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_dask=True):
     """
     TODO: may need to dump-to-temp while reprojecting
     """
-    cube = SpectralCube.read(cubename, use_dask=True)
-    import dask.array as da
-    from dask.diagnostics import ProgressBar
+    cube = SpectralCube.read(cubename, use_dask=use_dask)
+    if use_dask:
+        import dask.array as da
+        from dask.diagnostics import ProgressBar
+    else:
+        cube.allow_huge_operations = True
+
     print(f"Downsampling cube {cubename} -> {outcubename}")
+    print(cube)
     with ProgressBar():
         dscube = cube[:, ::factor, ::factor]
         dscube.write(outcubename, overwrite=overwrite)
-    #hdr = cube.header.copy()
-    #hdr['NAXIS1'] = int(hdr['NAXIS1'] / factor)
-    #hdr['NAXIS2'] = int(hdr['NAXIS2'] / factor)
-    #hdr['CRPIX1'] = int(hdr['CRPIX1'] / factor)
-    #hdr['CRPIX2'] = int(hdr['CRPIX2'] / factor)
-    #hdr['CDELT1'] = (hdr['CDELT1'] * factor)
-    #hdr['CDELT2'] = (hdr['CDELT2'] * factor)
-    # shouldn't be needed with dask cube.allow_huge_operations = True
-    #with ProgressBar():
-    #    dscube = cube.reproject(hdr, return_type='dask', filled=False, parallel=True, block_size=[1,1000,1000])
-    #    # non-dask dscube = cube.reproject(hdr, use_memmap=True)
-    #    print("Writing")
-    #    dscube.write(outcubename, overwrite=overwrite)
+    # else:
+    #     cube = SpectralCube.read(cubename, use_dask=False)
+    #     #hdr = cube.header.copy()
+    #     #hdr['NAXIS1'] = int(hdr['NAXIS1'] / factor)
+    #     #hdr['NAXIS2'] = int(hdr['NAXIS2'] / factor)
+    #     #hdr['CRPIX1'] = int(hdr['CRPIX1'] / factor)
+    #     #hdr['CRPIX2'] = int(hdr['CRPIX2'] / factor)
+    #     #hdr['CDELT1'] = (hdr['CDELT1'] * factor)
+    #     #hdr['CDELT2'] = (hdr['CDELT2'] * factor)
+    #     cube.allow_huge_operations = True
+    #     print(f"Downsampling cube {cubename} -> {outcubename}")
+    #     print(cube)
+    #     dscube = cube[:, ::factor, ::factor]
+    #     dscube.write(outcubename, overwrite=overwrite)
+    #         #dscube = cube.reproject(hdr, return_type='dask', filled=False, parallel=True, block_size=[1,1000,1000])
+    #         ## non-dask dscube = cube.reproject(hdr, use_memmap=True)
+    #         #print("Writing")
+    #         #dscube.write(outcubename, overwrite=overwrite)
+
+
+def rms_map(img, kernel=Gaussian2DKernel(10)):
+    """
+    Gaussian2DKernel should be larger than the beam, probably at least 2x larger
+    """
+    nans = np.isnan(img)
+    sm = convolve_fft(img, kernel, allow_huge=True)
+    res = img - sm
+    var = res**2
+    smvar = convolve_fft(var, kernel, allow_huge=True)
+    rms = smvar**0.5
+    # restore NaNs: the convolution process will naturally fill them
+    # don't do this: it turns internal pixels into nans that shouldn't be
+    # rms[nans] = np.nan
+    return rms
+
+
+def rms(prefix='12m_continuum', threshold=2.5, nbeams=3, maxiter=50):
+    import glob
+    for fn in glob.glob(f'{basepath}/mosaics/{prefix}*mosaic.fits'):
+        if 'rms' in fn:
+            # don't re-rms rms maps
+            continue
+        print(f"Computing RMS map for {fn}", flush=True)
+        fh = fits.open(fn)
+        ww = WCS(fh[0].header)
+        pixscale = ww.proj_plane_pixel_area()**0.5
+        try:
+            beam = radio_beam.Beam.from_fits_header(fh[0].header)
+            kernelwidth = ((beam.major * nbeams) / pixscale).decompose()
+        except Exception as ex:
+            print(ex, fn)
+            kernelwidth = (2.5 * u.arcsec / pixscale).decompose()
+
+        nans = np.isnan(fh[0].data)
+        rms = rms_map(fh[0].data, kernel=Gaussian2DKernel(kernelwidth))
+        rms[nans] = np.nan
+
+        outname = fn.replace("_mosaic.fits", "_rms_mosaic.fits")
+        fits.PrimaryHDU(data=rms, header=fh[0].header).writeto(outname, overwrite=True)
+        print(f"Finished RMS map for {fn}")
+
+        datacopy = copy.copy(fh[0].data)
+        ndet = []
+        for ii in range(maxiter):
+            # second iteration: threshold and try again
+            detections = (datacopy / rms) > threshold
+            ndet_this = detections.sum()
+            if ndet_this == 0:
+                print(f"Converged in {ii} iterations")
+                break
+            ndet.append(ndet_this)
+            print(f"Iteration {ii} detected {ndet}")
+
+            datacopy[detections] = np.nan
+            rms = rms_map(datacopy, kernel=Gaussian2DKernel(kernelwidth))
+        rms[nans] = np.nan
+
+        outname = fn.replace("_mosaic.fits", "_maskedrms_mosaic.fits")
+        fits.PrimaryHDU(data=rms, header=fh[0].header).writeto(outname, overwrite=True)
+        print(f"Finished masked RMS map for {fn}.  Detections iterated: {ndet}")

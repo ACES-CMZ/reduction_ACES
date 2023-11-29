@@ -40,7 +40,7 @@ NCOLS = 50
 def dt(message=""):
     global then
     now = time.time()
-    print(f"Elapsed: {now-then:0.1g}.  {message}", flush=True)
+    print(f"Elapsed: {now - then:0.1g}.  {message}", flush=True)
     then = now
 
 
@@ -78,7 +78,7 @@ def main(num_workers=None):
         try:
             nthreads = int(threads)
             #memlimit = f'{0.8 * int(mem_mb) / int(nthreads)}MB'
-            memlimit = f'{0.4*int(mem_mb)}MB'
+            memlimit = f'{0.4 * int(mem_mb)}MB'
             if nthreads > 1:
                 num_workers = nthreads
                 scheduler = 'threads'
