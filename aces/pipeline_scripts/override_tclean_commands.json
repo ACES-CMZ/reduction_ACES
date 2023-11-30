@@ -73,6 +73,9 @@
           1400,
           3000
         ],
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "cell": [
           "0.3arcsec"
         ],
