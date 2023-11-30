@@ -1979,7 +1979,7 @@
   "Sgr_A_st_ag_03_7M": {
     "tclean_cube_pars": {
       "spw24": {
-        "cyclefactor": 3
+        "cyclefactor": 4
       },
       "spw20": {
         "niter": 500000
