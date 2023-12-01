@@ -2,6 +2,7 @@
 sbatch --qos=astronomy-dept-b --account=astronomy-dept --ntasks=1 --nodes=1 --mem=64gb --time=96:00:00 --job-name=ACES_fixMultiBeam --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/casapy38/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/hipergator_scripts/fix_multibeam_Aug1_2023.py"
 """
 import os
+import numpy as np
 import shutil
 import glob
 from casatasks import imsmooth, impbcor, exportfits
@@ -9,6 +10,7 @@ from casatools import image
 ia = image()
 
 images = glob.glob("/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/m*/calibrated/working/*.image")
+images = glob.glob("/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X1a2/calibrated/working/*spw33*image")
 
 for dotimage in images:
     imagename = os.path.splitext(dotimage)[0]
@@ -18,13 +20,26 @@ for dotimage in images:
     try:
         psffile = os.path.basename(f'{imagename}.psf')
         ia.open(psffile)
-        commonbeam = ia.commonbeam()
-        ia.close()
     except Exception as ex:
         print(f"Problem with {psffile}: {ex}")
         ia.open(dotimage)
-        commonbeam = ia.commonbeam()
-        ia.close()
+
+    beams = ia.restoringbeam()
+    if 'beams' in beams:
+        bmaj = np.array([bm['*0']['major']['value'] for bm in beams['beams'].values()])
+        bad_beams = (bmaj > 1.1 * np.median(bmaj)) | (bmaj < 0.9 * np.median(bmaj))
+        if any(bad_beams):
+            print(f"Found {bad_beams.sum()} bad beams in {imagename}")
+            avbeam = np.median(bmaj[~bad_beams])
+            for ii, (beam, isbad) in enumerate(zip(beams['beams'].values(), bad_beams)):
+                if isbad:
+                    beam['*0']['major']['value'] = avbeam
+                    beam['*0']['minor']['value'] = avbeam
+                    beam['*0']['positionangle']['value'] = 0
+                ia.setrestoringbeam(beam=beam['*0'], channel=ii)
+
+    commonbeam = ia.commonbeam()
+    ia.close()
 
     ia.open(dotimage)
     rbeam = ia.restoringbeam()
