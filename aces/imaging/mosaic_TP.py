@@ -30,7 +30,7 @@ basepath = conf.basepath
 
 def cube_mosaicing():
 
-    for spw in (17, 19, 21, 23, 25, 27)[::-1]:
+    for spw in (17, 19, 21, 23, 25, 27):
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw{spw}.cube.I.sd.fits')
 
         # cube0 = SpectralCube.read(filelist[0])
@@ -47,8 +47,21 @@ def cube_mosaicing():
         #                         -0.30 / output_wcs.wcs.cdelt[1],
         #                         cube0.wcs.wcs.crpix[2]]
 
-        result = mosaic_cubes([SpectralCube.read(fn) for fn in filelist], combine_header_kwargs=dict(frame='galactic'))
+        result = mosaic_cubes([SpectralCube.read(fn) for fn in filelist],
+                              combine_header_kwargs=dict(frame='galactic',
+                                                         spectral_dx_threshold=0.01))
         result.write(f'{basepath}/mosaics/cubes/ACES_TP_spw{spw}_mosaic.fits', overwrite=True)
+
+
+def noisemaps():
+    for fn in glob.glob(f"{basepath}/mosaics/cubes/ACES_TP_spw*mosaic.fits"):
+        outname = f"{basepath}/mosaics/cubes/moments/{fn.split('/')[-1].replace('mosaic.fits', 'mosaic_madstd.fits')}"
+        cube = SpectralCube.read(fn, use_dask=True)
+        mstd = cube.mad_std(axis=0)
+        try:
+            mstd.write(outname, overwrite=True)
+        except Exception as ex:
+            print(ex)
 
 
 def main():
@@ -146,7 +159,8 @@ def main():
 
     fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic_withgridandlabels.png', bbox_inches='tight')
 
+    cube_mosaicing()
+    noisemaps()
+
     all_lines(header, array='TP', glob_suffix='cube.I.sd.fits', globdir='product', use_weights=False,
               parallel=False)
-
-    cube_mosaicing()
