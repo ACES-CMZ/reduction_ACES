@@ -9,20 +9,24 @@ from casatasks import imsmooth, impbcor, exportfits
 from casatools import image
 ia = image()
 
-images = glob.glob("/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/m*/calibrated/working/*.image")
-images = glob.glob("/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X1a2/calibrated/working/*spw33*image")
+images = glob.glob("/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/m*/calibrated/working/*cube*.image")
+images = glob.glob("/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X1a2/calibrated/working/*spw33.cube*psf")
 
-for dotimage in images:
-    imagename = os.path.splitext(dotimage)[0]
+for dotsomething in images:
+    print(f"Working on {dotsomething}")
+    imagename = os.path.splitext(dotsomething)[0]
+    dotimage = f"{imagename}.image"
 
     os.chdir(os.path.dirname(imagename))
 
     try:
         psffile = os.path.basename(f'{imagename}.psf')
         ia.open(psffile)
+        used = 'psf'
     except Exception as ex:
         print(f"Problem with {psffile}: {ex}")
         ia.open(dotimage)
+        used = 'image'
 
     beams = ia.restoringbeam()
     if 'beams' in beams:
@@ -41,9 +45,14 @@ for dotimage in images:
     commonbeam = ia.commonbeam()
     ia.close()
 
-    ia.open(dotimage)
-    rbeam = ia.restoringbeam()
-    ia.close()
+    try:
+        ia.open(dotimage)
+        rbeam = ia.restoringbeam()
+        ia.close()
+        noimage = False
+    except Exception as ex:
+        rbeam = beams
+        noimage = True
 
     # if any beam is not the common beam...
     manybeam = False
@@ -54,12 +63,15 @@ for dotimage in images:
                 manybeam = True
                 break
 
-    if manybeam:
-        print(f"Found a multi-beam image {imagename} = {dotimage}")
-        if os.path.exists(f'{imagename}.image.multibeam'):
-            raise ValueError(f"The multi-beam image {dotimage} should have already been corrected")
-        shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
-        shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
+    if manybeam or noimage:
+        if noimage:
+            print(f"Found no image: {dotimage}")
+        else:
+            print(f"Found a multi-beam image {imagename} = {dotimage}")
+            if os.path.exists(f'{imagename}.image.multibeam'):
+                raise ValueError(f"The multi-beam image {dotimage} should have already been corrected")
+            shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
+            shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
         imsmooth(imagename=f'{imagename}.model',
                  outfile=f'{imagename}.convmodel',
                  beam=commonbeam)
