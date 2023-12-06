@@ -324,7 +324,7 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
         print(f"Moving {{outfile}} to {{savedir}}")
         full_outfile = os.path.join(savedir, outfile)
         if os.path.exists(full_outfile):
-            print("Outfile {{full_outfile}} already exists.  Check what's up.")
+            print(f"Outfile {{full_outfile}} already exists.  Check what's up.")
         else:
             shutil.move(outfile, savedir)
             shutil.move(outfile+".fits", savedir)

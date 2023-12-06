@@ -117,7 +117,7 @@ def main():
 
                     tts = '.tt0' if 'aggregate' in spwkey else ''
 
-                    for iter_or_manual in ('iter1', 'manual', 'iter1.reclean', 'manual.reclean'):
+                    for iter_or_manual in ('iter1', 'manual', 'iter1.reclean', 'manual.reclean', 'iter2.reclean'):
                         imageglob = f'{workingpath}/{bn}.{iter_or_manual}.image{tts}'
                         pbcorglob = f'{workingpath}/{bn}.{iter_or_manual}.image{tts}.pbcor'
                         psfglob = f'{workingpath}/{bn}.{iter_or_manual}.psf{tts}'
