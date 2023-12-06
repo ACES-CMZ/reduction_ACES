@@ -536,8 +536,14 @@ def make_giant_mosaic_cube_hcop(**kwargs):
 
 
 def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
+    """
+    Not 12m!
+    """
 
     filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/*.hnco43.image'))
+    filelist += sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/*.HCNO.image.fits'))
+    filelist = sorted(filelist)
+
     weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/HNCO_7M_weights/*.hnco43.image.weight.fits'))
     print(f"Found {len(filelist)} HNCO 7m+TP FITS files")
     print(f"Found {len(weightfilelist)} HNCO 7m+TP FITS weight files")
