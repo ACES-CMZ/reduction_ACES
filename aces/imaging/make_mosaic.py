@@ -731,6 +731,8 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_
         from dask.diagnostics import ProgressBar
     else:
         cube.allow_huge_operations = True
+        import contextlib
+        ProgressBar = contextlib.nullcontext
 
     print(f"Downsampling cube {cubename} -> {outcubename}")
     print(cube)
