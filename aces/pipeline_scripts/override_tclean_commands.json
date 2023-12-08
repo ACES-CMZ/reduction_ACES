@@ -1726,23 +1726,55 @@
   },
   "Sgr_A_st_p_03_TM1": {
     "tclean_cube_pars": {
+      "spw25": {
+        "usemask": "pb",
+        "pbmask": 0.5,
+        "niter": 50000000,
+        "cyclefactor": 3,
+        "width": "0.2441605MHz",
+        "nchan": 1912,
+        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw25.cube.I.iter2",
+        "threshold":"0.015Jy"
+      },
       "spw27": {
         "usemask": "pb",
         "pbmask": 0.5,
-        "niter": 20000000,
-        "cyclefactor": 3
+        "niter": 50000000,
+        "cyclefactor": 3,
+        "width": "0.2441605MHz",
+        "nchan": 1912,
+        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw27.cube.I.iter2",
+        "threshold":"0.015Jy"
       },
       "spw29": {
         "usemask": "pb",
         "pbmask": 0.5,
-        "niter": 20000000,
-        "cyclefactor": 3
+        "niter": 50000000,
+        "cyclefactor": 3,
+        "width": "0.03051540MHz",
+        "nchan": 1912,
+        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw29.cube.I.iter2",
+        "threshold":"0.03Jy"
       },
       "spw31": {
         "usemask": "pb",
         "pbmask": 0.5,
-        "niter": 20000000,
-        "cyclefactor": 3
+        "niter": 50000000,
+        "cyclefactor": 3,
+        "width": "0.03051540MHz",
+        "nchan": 1912,
+        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw31.cube.I.iter2",
+        "threshold":"0.03Jy"
+      },
+      "spw35": {
+        "usemask": "pb",
+        "pbmask": 0.5,
+        "niter": 50000000,
+        "cyclefactor": 3,
+        "nchan": 3836,
+        "width": "4882495Hz",
+        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw35.cube.I.iter2",
+        "threshold": "0.01Jy"
       },
       "spw33": {
         "vis": [
@@ -1768,7 +1800,7 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_Xfa.s38_0.Sgr_A_star_sci.spw33.cube.I.iter1",
+        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw33.cube.I.iter2",
         "imsize": [
           2000,
           2000
@@ -1782,9 +1814,7 @@
         "startmodel": "",
         "specmode": "cube",
         "reffreq": "",
-        "nchan": 3836,
         "start": "97.6660537907GHz",
-        "width": "488246Hz",
         "outframe": "LSRK",
         "veltype": "radio",
         "restfreq": [],
@@ -1822,18 +1852,20 @@
         "uvtaper": [
           ""
         ],
-        "niter": 30000000,
-        "gain": 0.1,
+        "usemask": "pb",
+        "pbmask": 0.5,
+        "niter": 50000000,
+        "cyclefactor": 3,
+        "nchan": 3836,
+        "width": "4882495Hz",
         "threshold": "0.01Jy",
+        "gain": 0.1,
         "nsigma": 0.0,
         "cycleniter": -1,
-        "cyclefactor": 1.5,
         "minpsffraction": 0.05,
         "maxpsffraction": 0.8,
         "interactive": 0,
-        "usemask": "auto-multithresh",
         "mask": "",
-        "pbmask": 0.0,
         "sidelobethreshold": 1.5,
         "noisethreshold": 3.0,
         "lownoisethreshold": 1.5,
