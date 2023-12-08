@@ -55,7 +55,7 @@ ${PYPATH}/aces_recover_tclean_commands || exit 1
 echo "Writing tclean scripts"
 ${PYPATH}/aces_write_tclean_scripts || exit 1
 echo "Calling job running"
-${PYPATH}/aces_job_runner --verbose=True || exit 1
+${PYPATH}/aces_job_runner --verbose=True --parallel || exit 1
 echo "Linking repipeline weblogs"
 ${PYPATH}/aces_link_repipeline_weblogs || exit 1
 echo "Done!"

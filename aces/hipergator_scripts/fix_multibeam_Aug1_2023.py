@@ -72,6 +72,7 @@ for dotsomething in images:
                 raise ValueError(f"The multi-beam image {dotimage} should have already been corrected")
             shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
             shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
+
         imsmooth(imagename=f'{imagename}.model',
                  outfile=f'{imagename}.convmodel',
                  beam=commonbeam)
@@ -89,4 +90,14 @@ for dotsomething in images:
                    overwrite=True)
         exportfits(imagename=f'{os.path.basename(imagename)}.image',
                    fitsimage=f'{os.path.basename(imagename)}.image.fits',
+                   overwrite=True)
+
+    # separate step: make sure pbcor exists
+    pbimg = f'{os.path.basename(imagename)}.image.pbcor'
+    if not os.path.exists(pbimg):
+        impbcor(imagename=f'{os.path.basename(imagename)}.image',
+                pbimage=f'{os.path.basename(imagename)}.pb',
+                outfile=f'{os.path.basename(imagename)}.image.pbcor',)
+        exportfits(imagename=f'{os.path.basename(imagename)}.image.pbcor',
+                   fitsimage=f'{os.path.basename(imagename)}.image.pbcor.fits',
                    overwrite=True)
