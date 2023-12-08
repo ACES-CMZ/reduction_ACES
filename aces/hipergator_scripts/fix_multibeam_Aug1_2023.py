@@ -50,7 +50,7 @@ for dotsomething in images:
         rbeam = ia.restoringbeam()
         ia.close()
         noimage = False
-    except Exception as ex:
+    except Exception as ex:  # noqa
         rbeam = beams
         noimage = True
 
