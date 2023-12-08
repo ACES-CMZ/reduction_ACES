@@ -541,7 +541,7 @@ def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
     """
 
     filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/*.hnco43.image'))
-    filelist += sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/*.HCNO.image.fits'))
+    filelist += sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/*.HNCO.image.fits'))
     filelist = sorted(filelist)
 
     weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/HNCO_7M_weights/*.hnco43.image.weight.fits'))
@@ -560,7 +560,7 @@ def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO_7mTP',
                            nchan=1000,
-                           beam_threshold=3.2 * u.arcsec,
+                           beam_threshold=25 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_7m.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7mTP_Channels/',
                            weightfilelist=weightfilelist,
