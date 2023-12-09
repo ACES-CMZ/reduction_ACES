@@ -1733,7 +1733,6 @@
         "cyclefactor": 3,
         "width": "0.2441605MHz",
         "nchan": 1912,
-        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw25.cube.I.iter2",
         "threshold":"0.015Jy"
       },
       "spw27": {
@@ -1743,7 +1742,6 @@
         "cyclefactor": 3,
         "width": "0.2441605MHz",
         "nchan": 1912,
-        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw27.cube.I.iter2",
         "threshold":"0.015Jy"
       },
       "spw29": {
@@ -1753,7 +1751,6 @@
         "cyclefactor": 3,
         "width": "0.03051540MHz",
         "nchan": 1912,
-        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw29.cube.I.iter2",
         "threshold":"0.03Jy"
       },
       "spw31": {
@@ -1763,7 +1760,6 @@
         "cyclefactor": 3,
         "width": "0.03051540MHz",
         "nchan": 1912,
-        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw31.cube.I.iter2",
         "threshold":"0.03Jy"
       },
       "spw35": {
@@ -1772,8 +1768,7 @@
         "niter": 50000000,
         "cyclefactor": 3,
         "nchan": 3836,
-        "width": "4882495Hz",
-        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw35.cube.I.iter2",
+        "width": "0.4882495MHz",
         "threshold": "0.01Jy"
       },
       "spw33": {
@@ -1800,7 +1795,6 @@
         "observation": "",
         "intent": "OBSERVE_TARGET#ON_SOURCE",
         "datacolumn": "corrected",
-        "imagename": "uid___A001_X15a0_Xfa.Sgr_A_star_sci.spw33.cube.I.iter2",
         "imsize": [
           2000,
           2000
@@ -1857,7 +1851,7 @@
         "niter": 50000000,
         "cyclefactor": 3,
         "nchan": 3836,
-        "width": "4882495Hz",
+        "width": "0.4882495MHz",
         "threshold": "0.01Jy",
         "gain": 0.1,
         "nsigma": 0.0,
