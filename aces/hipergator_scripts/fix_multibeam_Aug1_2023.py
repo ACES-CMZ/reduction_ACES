@@ -10,7 +10,7 @@ from casatools import image
 ia = image()
 
 images = glob.glob("/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/m*/calibrated/working/*cube*.image")
-images = glob.glob("/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X1a2/calibrated/working/*spw33.cube*psf")
+#images = glob.glob("/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X1a2/calibrated/working/*spw33.cube*psf")
 
 for dotsomething in images:
     print(f"Working on {dotsomething}")

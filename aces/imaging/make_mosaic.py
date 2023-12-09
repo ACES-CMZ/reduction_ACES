@@ -483,7 +483,7 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                          verbose=verbose,
                          fail_if_cube_dropped=fail_if_cube_dropped,
                          )
-            print(f"Channel {chan} appears to have completed successfully, but we're checking first.", flush=True)
+            print(f"\nChannel {chan} appears to have completed successfully, but we're checking first.", flush=True)
             if not check_channel(chanfn, verbose=verbose):
                 raise ValueError("Produced an empty channel - raising exception as this is not expected")
             else:
