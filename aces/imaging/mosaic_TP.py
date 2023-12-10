@@ -10,7 +10,7 @@ from spectral_cube import SpectralCube
 from spectral_cube.cube_utils import mosaic_cubes
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
-from aces.imaging.make_mosaic import all_lines
+from aces.imaging.make_mosaic import all_lines as all_lines_
 
 from aces import conf
 
@@ -26,6 +26,9 @@ basepath = conf.basepath
 # header = target_wcs.to_header()
 # header['NAXIS1'] = 4000
 # header['NAXIS2'] = 4000
+
+def all_lines(*args, folder='TP_flattened', **kwargs):
+    return all_lines_(*args, folder=folder, **kwargs)
 
 
 def cube_mosaicing():

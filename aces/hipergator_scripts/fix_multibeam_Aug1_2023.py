@@ -22,6 +22,7 @@ for dotsomething in images:
     try:
         psffile = os.path.basename(f'{imagename}.psf')
         ia.open(psffile)
+        ia.commonbeam() # this checks whether there is *any* beam, and fails to .image otherwise
         used = 'psf'
     except Exception as ex:
         print(f"Problem with {psffile}: {ex}")
@@ -69,13 +70,17 @@ for dotsomething in images:
         else:
             print(f"Found a multi-beam image {imagename} = {dotimage}")
             if os.path.exists(f'{imagename}.image.multibeam'):
-                raise ValueError(f"The multi-beam image {dotimage} should have already been corrected")
-            shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
-            shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
+                print(f"The multi-beam image {dotimage} should have already been corrected.  Skipping the move")
+                #raise ValueError(f"The multi-beam image {dotimage} should have already been corrected")
+            else:
+                shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
+                shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
 
         imsmooth(imagename=f'{imagename}.model',
                  outfile=f'{imagename}.convmodel',
-                 beam=commonbeam)
+                 beam=commonbeam,
+                 overwrite=True
+                 )
         ia.imagecalc(outfile=f'{os.path.basename(imagename)}.image',
                      pixels=f'{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
                      imagemd=f'{os.path.basename(imagename)}.convmodel',
@@ -83,7 +88,9 @@ for dotsomething in images:
         ia.close()
         impbcor(imagename=f'{os.path.basename(imagename)}.image',
                 pbimage=f'{os.path.basename(imagename)}.pb',
-                outfile=f'{os.path.basename(imagename)}.image.pbcor',)
+                outfile=f'{os.path.basename(imagename)}.image.pbcor',
+                overwrite=True
+                )
 
         exportfits(imagename=f'{os.path.basename(imagename)}.image.pbcor',
                    fitsimage=f'{os.path.basename(imagename)}.image.pbcor.fits',

@@ -17,6 +17,7 @@ from aces.imaging.make_mosaic import (make_mosaic, read_as_2d, get_peak,
                                       make_giant_mosaic_cube,
                                       rms
                                       )
+from aces.imaging.make_mosaic import make_mosaic as make_mosaic_, all_lines as all_lines_
 # import os
 # from functools import partial
 from multiprocessing import Process, Pool
@@ -57,6 +58,14 @@ basepath = conf.basepath
 def logprint(x, **kwargs):
     print(x, flush=True, **kwargs)
     log.info(x)
+
+
+def make_mosaic(*args, folder='12m_flattened', **kwargs):
+    return make_mosaic_(*args, folder=folder, **kwargs)
+
+
+def all_lines(*args, folder='12m_flattened', **kwargs):
+    return all_lines_(*args, folder=folder, **kwargs)
 
 
 def main():
@@ -127,12 +136,14 @@ def continuum(header):
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
+                folder='continuum'
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
+                folder='continuum'
                 )
 
     feath = uvcombine.feather_simple(f'{basepath}/mosaics/12m_continuum_commonbeam_circular_mosaic.fits',
