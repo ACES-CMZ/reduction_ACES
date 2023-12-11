@@ -160,7 +160,9 @@ def main():
                                 [textwrap.dedent(
                                     f"""
                                     try:
+                                        print('Copying {x} to {rename(x)}.')
                                         shutil.copytree('{x}', '{rename(x)}')
+                                        print('Successfully copied {x} to {rename(x)}.')
                                     except FileExistsError as ex:
                                         print(f'MS file already copied: {{ex}}.  Proceeding.')
                                     """)
@@ -317,6 +319,7 @@ def main():
                         fh.write('logprint(f"calcpsf: {calcpsf}")\n\n')
                         # first major cycle
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
+                        fh.write("savedata()\n\n")
                         fh.write(textwrap.dedent("""
                                      logprint(f"ret={ret}")
                                      if ret is False:

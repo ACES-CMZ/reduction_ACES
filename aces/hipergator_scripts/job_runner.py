@@ -94,10 +94,6 @@ def main():
     for mous, spwpars in parameters.items():
         mousname = mous.split('.')[1]
 
-        #if 'X15b4_X41' in mousname:
-        #    print("Skipping X15b4_X41 (Sgr b2 m) temporarily while it finishes running pipeline")
-        #    continue
-
         jobtime = '96:00:00'
         if 'burst' in spwpars:
             if 'jobtime' in spwpars:
