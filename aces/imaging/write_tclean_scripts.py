@@ -320,9 +320,10 @@ def main():
                         fh.write('logprint(f"calcpsf: {calcpsf}")\n\n')
                         # first major cycle
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
+                        fh.write("logprint(f'ret={ret}')\n\n")
                         fh.write("savedata()\n\n")
                         fh.write(textwrap.dedent("""
-                                     logprint(f"ret={ret}")
+                                     logprint(f"after savedata, ret={ret}")
                                      if ret is False:
                                         raise ValueError(f"tclean returned ret={ret}")
 
@@ -336,6 +337,7 @@ def main():
                         # remaining major cycles
                         fh.write(textwrap.dedent(f"""
                                  nmajors = 1
+                                 logprint(f"peakres = {{peakres}}, threshold={threshold}")
                                  while peakres > {threshold}:
                                      peakres = 0
                                      for val1 in ret['summaryminor'].values():

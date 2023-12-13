@@ -22,7 +22,7 @@ for dotsomething in images:
     try:
         psffile = os.path.basename(f'{imagename}.psf')
         ia.open(psffile)
-        ia.commonbeam() # this checks whether there is *any* beam, and fails to .image otherwise
+        ia.commonbeam()  # this checks whether there is *any* beam, and fails to .image otherwise
         used = 'psf'
     except Exception as ex:
         print(f"Problem with {psffile}: {ex}")

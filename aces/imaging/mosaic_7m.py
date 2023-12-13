@@ -1,7 +1,7 @@
 import glob
 from astropy import units as u
 from astropy.io import fits
-from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0, all_lines, rms
+from aces.imaging.make_mosaic import read_as_2d, get_peak, get_m0, rms
 from aces.imaging.make_mosaic import make_mosaic as make_mosaic_, all_lines as all_lines_
 
 from aces import conf
@@ -18,6 +18,7 @@ basepath = conf.basepath
 # header = target_wcs.to_header()
 # header['NAXIS1'] = 4000
 # header['NAXIS2'] = 4000
+
 
 def make_mosaic(*args, folder='7m_flattened', **kwargs):
     return make_mosaic_(*args, folder=folder, **kwargs)
