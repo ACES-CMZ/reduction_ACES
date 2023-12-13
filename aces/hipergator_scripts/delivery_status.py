@@ -112,20 +112,23 @@ def main():
                     else:
                         clean_ = clean
 
-                    bn = f'{mous}.s*_0.Sgr_A_star_sci.{spw}.{clean_}.I'
-                    workingpath = f'{fullpath}/calibrated/working/'
+                    for stepglob in ("s*_0.", ""):
+                        bn = f'{mous}.{stepglob}Sgr_A_star_sci.{spw}.{clean_}.I'
+                        workingpath = f'{fullpath}/calibrated/working/'
 
-                    tts = '.tt0' if 'aggregate' in spwkey else ''
+                        tts = '.tt0' if 'aggregate' in spwkey else ''
 
-                    for iter_or_manual in ('iter1', 'manual', 'iter1.reclean', 'manual.reclean'):
-                        imageglob = f'{workingpath}/{bn}.{iter_or_manual}.image{tts}'
-                        pbcorglob = f'{workingpath}/{bn}.{iter_or_manual}.image{tts}.pbcor'
-                        psfglob = f'{workingpath}/{bn}.{iter_or_manual}.psf{tts}'
+                        for iter_or_manual in ('iter1', 'manual', 'iter1.reclean', 'manual.reclean', 'iter2.reclean'):
+                            imageglob = f'{workingpath}/{bn}.{iter_or_manual}.image{tts}'
+                            pbcorglob = f'{workingpath}/{bn}.{iter_or_manual}.image{tts}.pbcor'
+                            psfglob = f'{workingpath}/{bn}.{iter_or_manual}.psf{tts}'
 
-                        exists = (wildexists(pbcorglob) or
-                                  ("WIPim" if wildexists(imageglob)
-                                   else "WIPpsf" if wildexists(psfglob)
-                                   else False))
+                            exists = (wildexists(pbcorglob) or
+                                      ("WIPim" if wildexists(imageglob)
+                                       else "WIPpsf" if wildexists(psfglob)
+                                       else False))
+                            if exists:
+                                break
                         if exists:
                             break
 

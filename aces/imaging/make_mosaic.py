@@ -65,9 +65,11 @@ def read_as_2d(fn, minval=None):
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
-             threshold=None):
+             folder=None, threshold=None):
     print(".", end='', flush=True)
     outfn = fn.replace(".fits", "") + f"{suffix}_max.fits"
+    if folder is not None:
+        outfn = os.path.join(folder, os.path.basename(outfn))
     if os.path.exists(outfn):
         hdu = fits.open(outfn)
         proj = Projection.from_hdu(hdu)
@@ -107,9 +109,11 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
         return mx
 
 
-def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True):
+def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, folder=None):
     print(".", end='', flush=True)
     outfn = fn.replace(".fits", "") + f"{suffix}_mom0.fits"
+    if folder is not None:
+        outfn = os.path.join(folder, os.path.basename(outfn))
     if os.path.exists(outfn):
         hdu = fits.open(outfn)
         proj = Projection.from_hdu(hdu)
@@ -143,6 +147,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 rest_value=None,
                 cbar_unit=None,
                 array='7m',
+                folder='',
                 basepath='./'):
 
     if target_header is None:
@@ -209,7 +214,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     if commonbeam is not None:
         header.update(cb.to_header_keywords())
 
-    outfile = f'{basepath}/mosaics/{array}_{name}_mosaic.fits'
+    outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.fits'
     log.info(f"Writing reprojected data to {outfile}")
     fits.PrimaryHDU(data=prjarr, header=header).writeto(outfile, overwrite=True)
 
@@ -248,7 +253,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     overlay[0].set_major_formatter('hh:mm')
     ax.set_axisbelow(True)
     ax.set_zorder(back)
-    fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgrid.png', bbox_inches='tight')
+    fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_withgrid.png', bbox_inches='tight')
 
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
 
@@ -278,7 +283,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 print("Error - the composite mask has no overlap with the flag map.  "
                       "I don't know why this occurs but it definitely is not expected.")
 
-    outfile = f'{basepath}/mosaics/{array}_{name}_field_number_map.fits'
+    outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_field_number_map.fits'
     log.info(f"Writing flag image to {outfile}")
     fits.PrimaryHDU(data=flagmap,
                     header=target_wcs.to_header()).writeto(outfile, overwrite=True)
@@ -295,14 +300,14 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                     color=(1, 0.8, 0.5), transform=ax.get_transform('pixel'),
                     zorder=fronter)
 
-    fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')
+    fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')
 
     if commonbeam is not None:
         return cb
 
 
 def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.image.pbcor',
-              lines='all',
+              lines='all', folder='',
               globdir='calibrated/working', use_weights=True):
 
     from astropy.table import Table
@@ -375,6 +380,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             make_mosaic(hdus, name=f'{line}_max', cbar_unit='K',
                         norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                         array=array, basepath=basepath, weights=wthdus if use_weights else None,
+                        folder=folder,
                         target_header=header)
             del hdus
 
@@ -483,7 +489,7 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                          verbose=verbose,
                          fail_if_cube_dropped=fail_if_cube_dropped,
                          )
-            print(f"Channel {chan} appears to have completed successfully, but we're checking first.", flush=True)
+            print(f"\nChannel {chan} appears to have completed successfully, but we're checking first.", flush=True)
             if not check_channel(chanfn, verbose=verbose):
                 raise ValueError("Produced an empty channel - raising exception as this is not expected")
             else:
@@ -731,6 +737,8 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_
         from dask.diagnostics import ProgressBar
     else:
         cube.allow_huge_operations = True
+        import contextlib
+        ProgressBar = contextlib.nullcontext
 
     print(f"Downsampling cube {cubename} -> {outcubename}")
     print(cube)

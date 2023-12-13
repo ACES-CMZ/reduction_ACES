@@ -170,7 +170,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
             logprint(f"Already done with startchan={{startchan}}")
             sys.exit(0)
         elif os.path.exists(tclean_kwargs['imagename'] + ".residual"):
-            raise ValueError(f"{{tclean_kwargs['imagename']}}.residual exists.  Current state unclear.")
+            print(ValueError(f"{{tclean_kwargs['imagename']}}.residual exists.  Current state unclear."))
+            print("Attempting to continue anyway.")
         elif os.path.exists(tclean_kwargs['imagename'] + ".psf"):
             if {remove_incomplete_psf}:
                 shutil.rmtree(tclean_kwargs['imagename'] + ".psf")
@@ -324,7 +325,7 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
         print(f"Moving {{outfile}} to {{savedir}}")
         full_outfile = os.path.join(savedir, outfile)
         if os.path.exists(full_outfile):
-            print("Outfile {{full_outfile}} already exists.  Check what's up.")
+            print(f"Outfile {{full_outfile}} already exists.  Check what's up.")
         else:
             shutil.move(outfile, savedir)
             shutil.move(outfile+".fits", savedir)

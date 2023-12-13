@@ -11,12 +11,13 @@ from astropy import units as u
 from astropy.io import fits
 from astropy import log
 from astropy.wcs import WCS
-from aces.imaging.make_mosaic import (make_mosaic, read_as_2d, get_peak,
-                                      get_m0, all_lines,
+from aces.imaging.make_mosaic import (read_as_2d, get_peak,
+                                      get_m0,
                                       make_downsampled_cube,
                                       make_giant_mosaic_cube,
                                       rms
                                       )
+from aces.imaging.make_mosaic import make_mosaic as make_mosaic_, all_lines as all_lines_
 # import os
 # from functools import partial
 from multiprocessing import Process, Pool
@@ -57,6 +58,14 @@ basepath = conf.basepath
 def logprint(x, **kwargs):
     print(x, flush=True, **kwargs)
     log.info(x)
+
+
+def make_mosaic(*args, folder='12m_flattened', **kwargs):
+    return make_mosaic_(*args, folder=folder, **kwargs)
+
+
+def all_lines(*args, folder='12m_flattened', **kwargs):
+    return all_lines_(*args, folder=folder, **kwargs)
 
 
 def main():
@@ -127,12 +136,14 @@ def continuum(header):
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
+                folder='continuum'
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
                 target_header=header,
+                folder='continuum'
                 )
 
     feath = uvcombine.feather_simple(f'{basepath}/mosaics/12m_continuum_commonbeam_circular_mosaic.fits',
@@ -377,6 +388,7 @@ def make_giant_mosaic_cube_cs21(**kwargs):
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.manual*image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.reclean*image.pbcor')
+    # this next line is only for field am and should be removed b/c we need the .pb
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*33.cube.I.manual.pbcor.fits')
 
     print(f"Found {len(filelist)} CS 2-1-containing spw33 files")
@@ -535,10 +547,15 @@ def make_giant_mosaic_cube_hcop(**kwargs):
 
 
 def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
+    """
+    Not 12m!
+    """
 
-    raise NotImplementedError("Need weight cubes")
     filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/*.hnco43.image'))
-    weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/Weight_cubes/*.hnco43.image.weight.fits'))
+    filelist += sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/*.HNCO.image.fits'))
+    filelist = sorted(filelist)
+
+    weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/HNCO_7M_weights/*.hnco43.image.weight.fits'))
     print(f"Found {len(filelist)} HNCO 7m+TP FITS files")
     print(f"Found {len(weightfilelist)} HNCO 7m+TP FITS weight files")
     assert len(weightfilelist) == len(filelist)
@@ -554,7 +571,7 @@ def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO_7mTP',
                            nchan=1000,
-                           beam_threshold=3.2 * u.arcsec,
+                           beam_threshold=25 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_7m.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7mTP_Channels/',
                            weightfilelist=weightfilelist,

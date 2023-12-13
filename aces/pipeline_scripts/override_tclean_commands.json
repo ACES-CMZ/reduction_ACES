@@ -73,6 +73,9 @@
           1400,
           3000
         ],
+        "nchan": -1,
+        "start": "",
+        "width": "",
         "cell": [
           "0.3arcsec"
         ],
@@ -1034,6 +1037,7 @@
         "smoothfactor": 1,
         "minbeamfrac": 0.3,
         "cutthreshold": 0.01,
+        "cyclefactor": 2.5,
         "nchan": -1,
         "start": "",
         "width": ""

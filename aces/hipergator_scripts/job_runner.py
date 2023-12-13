@@ -307,6 +307,7 @@ def main():
                     if imtype == 'cube' and 'aggregate' not in spw and use_parallel:
                         datapath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mousname[6:]}/calibrated/working'
                         tcpars = copy.copy(commands[sbname]['tclean_cube_pars'][spw])
+                        # in at least one case (X15b4_X41), had to rename targets to target (linked).  But that might be incorrect.
                         tcpars['vis'] = [os.path.join(datapath, os.path.basename(vis))
                                          if os.path.exists(os.path.join(datapath, os.path.basename(vis)))
                                          else os.path.join(datapath, os.path.basename(vis)).replace("targets", "target")

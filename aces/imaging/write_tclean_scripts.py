@@ -160,9 +160,11 @@ def main():
                                 [textwrap.dedent(
                                     f"""
                                     try:
+                                        logprint('Copying {x} to {rename(x)}.')
                                         shutil.copytree('{x}', '{rename(x)}')
+                                        logprint('Successfully copied {x} to {rename(x)}.')
                                     except FileExistsError as ex:
-                                        print(f'MS file already copied: {{ex}}.  Proceeding.')
+                                        logprint(f'MS file already copied: {{ex}}.  Proceeding.')
                                     """)
                                  for x in tcpars['vis']
                                  ])
@@ -211,6 +213,7 @@ def main():
                             import numpy as np
                             import glob
                             def savedata():
+                                logprint("Running savedata")
                                 flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
                                 for fn in flist:
                                     realfn = os.path.realpath(fn)
@@ -218,7 +221,7 @@ def main():
                                     realtarget = os.path.realpath(target)
                                     logprint(f'Copying {{fn}} to {savedir_name} ({{realfn}} to {{realtarget}})')
                                     if realfn == realtarget:
-                                       print("Skipping copy - source = destination")
+                                       logprint("Skipping copy - source = destination")
                                     else:
                                         if fn.endswith('.fits'):
                                             shutil.copy(fn, target)
@@ -317,8 +320,10 @@ def main():
                         fh.write('logprint(f"calcpsf: {calcpsf}")\n\n')
                         # first major cycle
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
+                        fh.write("logprint(f'ret={ret}')\n\n")
+                        fh.write("savedata()\n\n")
                         fh.write(textwrap.dedent("""
-                                     logprint(f"ret={ret}")
+                                     logprint(f"after savedata, ret={ret}")
                                      if ret is False:
                                         raise ValueError(f"tclean returned ret={ret}")
 
@@ -332,6 +337,7 @@ def main():
                         # remaining major cycles
                         fh.write(textwrap.dedent(f"""
                                  nmajors = 1
+                                 logprint(f"peakres = {{peakres}}, threshold={threshold}")
                                  while peakres > {threshold}:
                                      peakres = 0
                                      for val1 in ret['summaryminor'].values():
