@@ -3260,6 +3260,26 @@
   },
   "Sgr_A_st_l_03_TM1": {
     "tclean_cube_pars": {
+      "spw25": {
+        "nchan": 1912,
+        "width": "0.2441196MHz"
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "0.2441196MHz"
+      },
+      "spw29": {
+        "nchan": 1910,
+        "width": "0.030515MHz"
+      },
+      "spw31": {
+        "nchan": 1912,
+        "width": "0.030515MHz"
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.48823915MHz"
+      },
       "spw33": {
         "vis": [
           "uid___A002_Xf8f6a9_X1251d_target.ms",
