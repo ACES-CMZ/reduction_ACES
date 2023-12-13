@@ -2165,6 +2165,26 @@
   },
   "Sgr_A_st_d_03_TM1": {
     "tclean_cube_pars": {
+      "spw25": {
+        "nchan": 1912,
+        "width": "0.2441563MHz"
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "0.2441563MHz"
+      },
+      "spw29": {
+        "nchan": 1912,
+        "width": "0.0305196MHz"
+      },
+      "spw31": {
+        "nchan": 1912,
+        "width": "0.0305196MHz"
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.4883125MHz"
+      },
       "spw33": {
         "nchan": -1,
         "start": "",
@@ -2187,6 +2207,26 @@
   },
   "Sgr_A_st_aa_03_TM1": {
     "tclean_cube_pars": {
+      "spw25": {
+        "nchan": 1912,
+        "width": "0.2441565MHz"
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "0.2441565MHz"
+      },
+      "spw29": {
+        "nchan": 1912,
+        "width": "0.0305196MHz"
+      },
+      "spw31": {
+        "nchan": 1914,
+        "width": "0.0305196MHz"
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.4883129MHz"
+      },
       "spw33": {
         "nchan": -1,
         "start": "",
@@ -2473,6 +2513,26 @@
   },
   "Sgr_A_st_r_03_TM1": {
     "tclean_cube_pars": {
+      "spw25": {
+        "nchan": 1914,
+        "width": "0.2441565MHz"
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "0.2441565MHz"
+      },
+      "spw29": {
+        "nchan": 1912,
+        "width": "0.0305196MHz"
+      },
+      "spw31": {
+        "nchan": 1914,
+        "width": "0.0305196MHz"
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.48831295MHz"
+      },
       "spw33": {
         "nchan": -1,
         "start": "",
@@ -3240,6 +3300,26 @@
   },
   "Sgr_A_st_l_03_TM1": {
     "tclean_cube_pars": {
+      "spw25": {
+        "nchan": 1912,
+        "width": "0.2441196MHz"
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "0.2441196MHz"
+      },
+      "spw29": {
+        "nchan": 1910,
+        "width": "0.030515MHz"
+      },
+      "spw31": {
+        "nchan": 1912,
+        "width": "0.030515MHz"
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.48823915MHz"
+      },
       "spw33": {
         "vis": [
           "uid___A002_Xf8f6a9_X1251d_target.ms",
@@ -4039,6 +4119,26 @@
   },
   "Sgr_A_st_g_03_TM1": {
     "tclean_cube_pars": {
+      "spw25": {
+        "nchan": 1912,
+        "width": "0.24411885MHz"
+      },
+      "spw27": {
+        "nchan": 1912,
+        "width": "0.24411885MHz"
+      },
+      "spw29": {
+        "nchan": 1910,
+        "width": "0.0305149MHz"
+      },
+      "spw31": {
+        "nchan": 1910,
+        "width": "0.0305149MHz"
+      },
+      "spw35": {
+        "nchan": 3832,
+        "width": "0.48823765MHz"
+      },
       "spw33": {
         "nchan": -1,
         "start": "",
