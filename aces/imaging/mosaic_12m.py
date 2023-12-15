@@ -581,4 +581,5 @@ def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic_downsampled9.fits',
+                              overwrite=True
                               )

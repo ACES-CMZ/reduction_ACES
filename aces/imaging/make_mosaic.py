@@ -2,6 +2,7 @@ import numpy as np
 import regions
 import radio_beam
 import spectral_cube
+import PIL
 from spectral_cube.lower_dimensional_structures import Projection
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 from spectral_cube import SpectralCube
@@ -221,6 +222,15 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     log.info("Creating plots")
     import pylab as pl
     from astropy import visualization
+    import matplotlib.colors as mcolors
+    import pyavm
+
+    colors1 = pl.cm.gray_r(np.linspace(0., 1, 128))
+    colors2 = pl.cm.hot(np.linspace(0, 1, 128))
+
+    colors = np.vstack((colors1, colors2))
+    mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+
     pl.rc('axes', axisbelow=True)
     pl.matplotlib.use('agg')
 
@@ -230,7 +240,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
     fig = pl.figure(figsize=(20, 7))
     ax = fig.add_subplot(111, projection=target_wcs)
-    im = ax.imshow(prjarr, norm=visualization.simple_norm(prjarr, **norm_kwargs), zorder=front, cmap='gray')
+    norm = visualization.simple_norm(prjarr, **norm_kwargs)
+    im = ax.imshow(prjarr, norm=norm, zorder=front, cmap=mymap)
     cbar = pl.colorbar(mappable=im)
     if cbar_unit is not None:
         cbar.set_label(cbar_unit)
@@ -256,6 +267,16 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_withgrid.png', bbox_inches='tight')
 
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
+
+    log.info("Creating AVM-embedded colormapped image")
+    colordata = mymap(norm(prjarr))
+    ct = (colordata[::-1,:,:3] * 256).astype('uint8')
+    ct[(colordata[::-1,:,:3] * 256) > 255] = 255
+    img = PIL.Image.fromarray(ct)
+    imfn = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_noaxes.png'
+    img.save(imfn)
+    avm = pyavm.AVM.from_wcs(target_wcs)
+    avm.embed(imfn, imfn)
 
     log.info("Computing overlap regions")
     # create a list of composite regions for labeling purposes
@@ -583,7 +604,8 @@ def make_giant_mosaic_cube(filelist,
         print("Filtering out cubes with sketchy beams", flush=True)
     ok = [cube.beam.major < beam_threshold
           if hasattr(cube, 'beam')
-          else cube.beams.common_beam().major < beam_threshold
+          # HACK: for HCOP, the max_epsilon default of 1e-3 didn't work
+          else cube.beams.common_beam(max_epsilon=1e-2).major < beam_threshold
           for cube in cubes]
     if verbose:
         if not all(ok):
