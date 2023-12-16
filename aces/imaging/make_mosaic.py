@@ -252,8 +252,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.coords[0].set_ticks(spacing=0.1 * u.deg)
     ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
-    fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic.png', bbox_inches='tight')
-    fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
+    fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.png', bbox_inches='tight')
+    fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
 
     ax.coords.grid(True, color='black', ls='--', zorder=back)
 
@@ -270,8 +270,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
     log.info("Creating AVM-embedded colormapped image")
     colordata = mymap(norm(prjarr))
-    ct = (colordata[::-1,:,:3] * 256).astype('uint8')
-    ct[(colordata[::-1,:,:3] * 256) > 255] = 255
+    ct = (colordata[::-1,:,:] * 256).astype('uint8')
+    ct[(colordata[::-1,:,:] * 256) > 255] = 255
+    ct[:,:,3][np.isnan(prjarr) | (prjarr == 0) | (footprint == 0)] = 0
     img = PIL.Image.fromarray(ct)
     imfn = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_noaxes.png'
     img.save(imfn)
