@@ -1293,6 +1293,7 @@
         "width": "",
         "cyclefactor": 3.0,
         "threshold": "0.01Jy",
+        "field": "Sgr_A_star",
         "vis": [
           "uid___A002_Xf8f6a9_X2f1d_target.ms",
           "uid___A002_Xf8f6a9_X8d0c_target.ms"
