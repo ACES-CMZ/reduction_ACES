@@ -15,6 +15,8 @@ mompath = f'{basepath}/mosaics/cubes/moments/'
 
 if __name__ == "__main__":
     dodask = os.getenv('USE_DASK')
+    if dodask and dodask.lower() == 'false':
+        dodask = False
 
     if os.getenv('MOLNAME'):
         molname = os.getenv('MOLNAME')
