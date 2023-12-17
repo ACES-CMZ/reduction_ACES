@@ -1,6 +1,7 @@
 import numpy as np
 import regions
 import radio_beam
+from radio_beam.utils import BeamError
 import spectral_cube
 import PIL
 from spectral_cube.lower_dimensional_structures import Projection
@@ -94,7 +95,7 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
                         try:
                             beam = cube.beams.common_beam(tolerance=beam_threshold)
                             break
-                        except BeamError as ex:
+                        except (BeamError, ValueError) as ex:
                             print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
                             if beam_threshold == 1e-2:
                                 raise ex
@@ -141,7 +142,7 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, fol
                 try:
                     beam = cube.beams.common_beam(tolerance=beam_threshold)
                     break
-                except BeamError as ex:
+                except (BeamError, ValueError) as ex:
                     print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
                     if beam_threshold == 1e-2:
                         raise ex
@@ -209,7 +210,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 try:
                     cb = beams.common_beam(tolerance=beam_threshold)
                     break
-                except BeamError as ex:
+                except (BeamError, ValueError) as ex:
                     print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
                     if beam_threshold == 1e-2:
                         raise ex
@@ -670,7 +671,7 @@ def make_giant_mosaic_cube(filelist,
         try:
             commonbeam = beams.common_beam(tolerance=beam_threshold)
             break
-        except BeamError as ex:
+        except (BeamError, ValueError) as ex:
             print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
             if beam_threshold == 1e-2:
                 raise ex
