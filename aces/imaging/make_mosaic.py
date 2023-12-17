@@ -90,7 +90,14 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
                     mx = cube.max(axis=0).to(u.K)
                 else:
                     log.warn(f"File {fn} is a multi-beam cube.")
-                    beam = cube.beams.common_beam()
+                    for beam_threshold in np.logspace(-6, -2, 4):
+                        try:
+                            beam = cube.beams.common_beam(tolerance=beam_threshold)
+                            break
+                        except BeamError as ex:
+                            print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
+                            if beam_threshold == 1e-2:
+                                raise ex
                     equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
                     mxjy = cube.max(axis=0)
                     if hasattr(mxjy, '_beam') and mxjy._beam is None:
@@ -130,7 +137,14 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, fol
         if hasattr(cube, 'beam'):
             equiv = cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
         elif hasattr(cube, 'beams'):
-            beam = cube.beams.common_beam()
+            for beam_threshold in np.logspace(-6, -2, 4):
+                try:
+                    beam = cube.beams.common_beam(tolerance=beam_threshold)
+                    break
+                except BeamError as ex:
+                    print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
+                    if beam_threshold == 1e-2:
+                        raise ex
             equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
 
         moment0 = (moment0 * u.s / u.km).to(u.K,
@@ -139,6 +153,29 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, fol
             moment0.hdu.writeto(outfn)
         return moment0
 
+
+def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
+    import pylab as pl
+    from astropy import visualization
+    import matplotlib.colors as mcolors
+    import pyavm
+
+    colors1 = pl.cm.gray_r(np.linspace(0., 1, 128))
+    colors2 = pl.cm.hot(np.linspace(0, 1, 128))
+
+    colors = np.vstack((colors1, colors2))
+    mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+
+    norm = visualization.simple_norm(data, **norm_kwargs)
+
+    colordata = mymap(norm(data))
+    ct = (colordata[:,:,:] * 256).astype('uint8')
+    ct[(colordata[:,:,:] * 256) > 255] = 255
+    ct[:,:,3][np.isnan(data) | (data == 0) | (footprint == 0 if footprint is not None else False)] = 0
+    img = PIL.Image.fromarray(ct[::-1,:,:])
+    img.save(imfn)
+    avm = pyavm.AVM.from_wcs(wcs)
+    avm.embed(imfn, imfn)
 
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 weights=None,
@@ -168,7 +205,14 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         if isinstance(commonbeam, radio_beam.Beam):
             cb = commonbeam
         else:
-            cb = beams.common_beam()
+            for beam_threshold in np.logspace(-6, -2, 4):
+                try:
+                    cb = beams.common_beam(tolerance=beam_threshold)
+                    break
+                except BeamError as ex:
+                    print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
+                    if beam_threshold == 1e-2:
+                        raise ex
 
         if isinstance(commonbeam, str) and commonbeam == 'circular':
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
@@ -269,15 +313,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
 
     log.info("Creating AVM-embedded colormapped image")
-    colordata = mymap(norm(prjarr))
-    ct = (colordata[::-1,:,:] * 256).astype('uint8')
-    ct[(colordata[::-1,:,:] * 256) > 255] = 255
-    ct[:,:,3][np.isnan(prjarr) | (prjarr == 0) | (footprint == 0)] = 0
-    img = PIL.Image.fromarray(ct)
+
     imfn = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_noaxes.png'
-    img.save(imfn)
-    avm = pyavm.AVM.from_wcs(target_wcs)
-    avm.embed(imfn, imfn)
+    makepng(prjarr, target_wcs, imfn, footprint=footprint, **norm_kwargs)
 
     log.info("Computing overlap regions")
     # create a list of composite regions for labeling purposes
@@ -606,7 +644,7 @@ def make_giant_mosaic_cube(filelist,
     ok = [cube.beam.major < beam_threshold
           if hasattr(cube, 'beam')
           # HACK: for HCOP, the max_epsilon default of 1e-3 didn't work
-          else cube.beams.common_beam(max_epsilon=1e-2).major < beam_threshold
+          else cube.beams.common_beam(max_epsilon=1e-2, threshold=1e-2).major < beam_threshold
           for cube in cubes]
     if verbose:
         if not all(ok):
@@ -628,7 +666,14 @@ def make_giant_mosaic_cube(filelist,
                                     if hasattr(cube, 'beam')
                                     else cube.beams.common_beam()
                                     for cube in cubes])
-    commonbeam = beams.common_beam()
+    for beam_threshold in np.logspace(-6, -2, 4):
+        try:
+            commonbeam = beams.common_beam(tolerance=beam_threshold)
+            break
+        except BeamError as ex:
+            print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
+            if beam_threshold == 1e-2:
+                raise ex
     header.update(commonbeam.to_header_keywords())
 
     if channels == 'all':

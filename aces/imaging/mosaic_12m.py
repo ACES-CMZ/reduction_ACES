@@ -197,7 +197,7 @@ def reimaged(header):
 
 def reimaged_high(header):
     logprint("12m continuum reimaged")
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*cont.I.iter1.image.tt0.pbcor')
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*cont.I*image.tt0.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33_35*cont*tt0.pbcor.fits')
     print("Read as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
@@ -228,32 +228,44 @@ def reimaged_high(header):
 
 def residuals(header):
     logprint("12m continuum residuals")
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I.iter1.residual.tt0')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont.I*.residual.tt0')
-    hdus = [read_as_2d(fn) for fn in filelist]
-    print(flush=True)
-    weightfiles = [x.replace(".residual.tt0", ".pb.tt0") for x in filelist]
-    beamfiles = [x.replace(".residual.tt0", ".image.tt0") for x in filelist]
-    beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(read_as_2d(fn)[0].header)
-                                    for fn in beamfiles])
-    assert len(weightfiles) == len(filelist)
-    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
-    print(flush=True)
-    make_mosaic(hdus, name='continuum_residual_reimaged', weights=wthdus,
-                cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='linear', max_cut=0.001, min_cut=-0.001),
-                target_header=header,
-                )
-    print(flush=True)
-    cb = radio_beam.Beam.from_fits_header(fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_mosaic.fits'))
-    make_mosaic(hdus, name='continuum_residual_commonbeam_circular_reimaged',
-                commonbeam=cb,
-                beams=beams,
-                weights=wthdus,
-                cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.001),
-                target_header=header,
-                )
+    for spw, name in zip(('25_27_29_31_33_35', '33_35'), ('reimaged', 'reimaged_high')):
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*{spw}*cont.I.iter1.residual.tt0')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*{spw}*cont.I*.residual.tt0')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*{spw}*cont.I*.residual.tt0')
+        
+        # check that field am, which is done, is included
+        assert any(['uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.residual.tt0' in fn
+                    for fn in filelist])
+
+        hdus = [read_as_2d(fn) for fn in filelist]
+        print(flush=True)
+        weightfiles = [x.replace(".residual.tt0", ".pb.tt0") for x in filelist]
+        beamfiles = [x.replace(".residual.tt0", ".image.tt0") for x in filelist]
+        beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(read_as_2d(fn)[0].header)
+                                        for fn in beamfiles])
+        assert len(weightfiles) == len(filelist)
+        wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+        print(flush=True)
+        make_mosaic(hdus, name=f'continuum_residual_{name}', weights=wthdus,
+                    cbar_unit='Jy/beam', array='12m', basepath=basepath,
+                    norm_kwargs=dict(stretch='linear', max_cut=0.001, min_cut=-0.001),
+                    target_header=header,
+                    )
+        print(flush=True)
+        if name =='reimaged':
+            cb = radio_beam.Beam.from_fits_header(fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_reimaged_mosaic.fits'))
+        elif name =='reimaged_high':
+            cb = radio_beam.Beam.from_fits_header(fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_reimaged_spw33_35_mosaic.fits'))
+        else:
+            raise NotImplementedError(f"name={name}")
+        make_mosaic(hdus, name=f'continuum_residual_commonbeam_circular_{name}',
+                    commonbeam=cb,
+                    beams=beams,
+                    weights=wthdus,
+                    cbar_unit='Jy/beam', array='12m', basepath=basepath,
+                    norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.001),
+                    target_header=header,
+                    )
 
 
 def hcop(header):

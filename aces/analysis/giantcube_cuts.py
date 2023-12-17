@@ -6,6 +6,7 @@ from spectral_cube import SpectralCube
 import os
 
 from aces import conf
+from aces.imaging.make_mosaic import makepng
 
 basepath = conf.basepath
 
@@ -26,32 +27,8 @@ if __name__ == "__main__":
         t0 = time.time()
 
         cube = SpectralCube.read(f'{cubepath}/{molname}_CubeMosaic.fits')
-        print(cube)
 
-        print(f"PV peak intensity.  dt={time.time() - t0}", flush=True)
-        pv_max = cube.max(axis=1, how='slice')
-        pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_max.fits", overwrite=True)
-
-        print(f"PV mean.  dt={time.time() - t0}")
-        pv_mean = cube.mean(axis=1, how='slice')
-        pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
-
-        print(f"mom0.  dt={time.time() - t0}")
-        mom0 = cube.moment0(axis=0, how='slice')
-        mom0.write(f"{mompath}/{molname}_CubeMosaic_mom0.fits", overwrite=True)
-
-        print(f"max.  dt={time.time() - t0}")
-        mx = cube.max(axis=0, how='slice')
-        mx.write(f"{mompath}/{molname}_CubeMosaic_max.fits", overwrite=True)
-
-        print(f"PV max 2.  dt={time.time() - t0}")
-        pv_max = cube.max(axis=2, how='slice')
-        pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_b_max.fits", overwrite=True)
-
-        print(f"PV mean 2.  dt={time.time() - t0}")
-        pv_mean = cube.mean(axis=2, how='slice')
-        pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
-
+        howargs = {'how': 'slice'}
     else:
         print("Before imports (using dask)", flush=True)
 
@@ -65,31 +42,47 @@ if __name__ == "__main__":
         t0 = time.time()
 
         cube = SpectralCube.read(f'{cubepath}/{molname}_CubeMosaic.fits', use_dask=True)
-        print(cube)
 
-        print(f"PV peak intensity.  dt={time.time() - t0}", flush=True)
-        pv_max = cube.max(axis=1)
-        pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_max.fits", overwrite=True)
+        howargs = {}
 
-        print(f"PV mean.  dt={time.time() - t0}")
-        pv_mean = cube.mean(axis=1)
-        pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
+    print(cube)
 
-        print(f"mom0.  dt={time.time() - t0}")
-        mom0 = cube.moment0(axis=0)
-        mom0.write(f"{mompath}/{molname}_CubeMosaic_mom0.fits", overwrite=True)
+    print(f"PV peak intensity.  dt={time.time() - t0}", flush=True)
+    pv_max = cube.max(axis=1, **howargs)
+    pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_max.fits", overwrite=True)
+    makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_max.png",
+            stretch='asinh', min_percent=1, max_percent=99.5)
 
-        print(f"max.  dt={time.time() - t0}")
-        mx = cube.max(axis=0)
-        mx.write(f"{mompath}/{molname}_CubeMosaic_max.fits", overwrite=True)
+    print(f"PV mean.  dt={time.time() - t0}")
+    pv_mean = cube.mean(axis=1, **howargs)
+    pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
+    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean.png",
+            stretch='asinh', min_percent=1, max_percent=99.5)
 
-        print(f"PV max 2.  dt={time.time() - t0}")
-        pv_max = cube.max(axis=2)
-        pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_b_max.fits", overwrite=True)
+    print(f"mom0.  dt={time.time() - t0}")
+    mom0 = cube.moment0(axis=0, **howargs)
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_mom0.fits", overwrite=True)
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_mom0.png",
+            stretch='asinh', min_percent=1, max_percent=99.5)
 
-        print(f"PV mean 2.  dt={time.time() - t0}")
-        pv_mean = cube.mean(axis=2)
-        pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
+    print(f"max.  dt={time.time() - t0}")
+    mx = cube.max(axis=0, **howargs)
+    mx.write(f"{mompath}/{molname}_CubeMosaic_max.fits", overwrite=True)
+    makepng(data=max.value, wcs=max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
+            stretch='asinh', min_percent=1, max_percent=99.5)
+
+    print(f"PV max 2.  dt={time.time() - t0}")
+    pv_max = cube.max(axis=2, **howargs)
+    pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_b_max.fits", overwrite=True)
+    makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_max.png",
+            stretch='asinh', min_percent=1, max_percent=99.5)
+
+    print(f"PV mean 2.  dt={time.time() - t0}")
+    pv_mean = cube.mean(axis=2, **howargs)
+    pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
+    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean.png",
+            stretch='asinh', min_percent=1, max_percent=99.5)
+
 
     print("Downsampling")
     from aces.imaging.make_mosaic import make_downsampled_cube, basepath
