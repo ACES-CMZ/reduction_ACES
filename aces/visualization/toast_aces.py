@@ -105,7 +105,11 @@ def make_all_indexes():
     for imfn in glob.glob("/orange/adamginsburg/ACES/mosaics/12m_flattened/*noaxes.png"):
         tdr = os.path.basename(imfn).replace("_noaxes.png", "")
         print(imfn, tdr)
-        ind = toast(imfn, targetdir=f'/orange/adamginsburg/web/public/ACES/mosaics/12m_flattened/{tdr}')
+        try:
+            ind = toast(imfn, targetdir=f'/orange/adamginsburg/web/public/ACES/mosaics/12m_flattened/{tdr}')
+        except Exception as ex:
+            print(f'{imfn} failed')
+            print(ex)
         indexes.append(ind)
 
     return indexes
