@@ -2235,6 +2235,7 @@
         "nchan": -1,
         "start": "",
         "width": "",
+        "cyclefactor": 3.0,
         "threshold": "0.01Jy"
       }
     }
