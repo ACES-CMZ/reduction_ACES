@@ -175,7 +175,7 @@ def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
     ct[:,:,3][np.isnan(data) | (data == 0) | (footprint == 0 if footprint is not None else False)] = 0
     img = PIL.Image.fromarray(ct[::-1,:,:])
     img.save(imfn)
-    avm = pyavm.AVM.from_wcs(wcs)
+    avm = pyavm.AVM.from_wcs(wcs, shape=data.shape)
     avm.embed(imfn, imfn)
 
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
@@ -362,6 +362,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                     zorder=fronter)
 
     fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')
+
+    # close figures to avoid memory leak
+    pl.close('all')
 
     if commonbeam is not None:
         return cb

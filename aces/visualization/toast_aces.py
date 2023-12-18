@@ -125,6 +125,10 @@ def make_joint_index(indexes):
     fld.type = 'SKY'
     fld.children = []
 
+    acestens = folder.Folder.from_file("/orange/adamginsburg/web/public/ACES/MUSTANG_Feather/index_rel.wtml")
+    acestens.children[0].name = 'ACES+TENS (toasty)'
+    fld.children.extend(acestens.children)
+
     for ind in indexes:
         newfld = folder.Folder.from_file(ind)
         name = ind.split(os.sep)[-2].replace("_mosaic", "")

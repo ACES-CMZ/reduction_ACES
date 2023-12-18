@@ -17,6 +17,8 @@ if __name__ == "__main__":
     dodask = os.getenv('USE_DASK')
     if dodask and dodask.lower() == 'false':
         dodask = False
+    dods = os.getenv('DOWNSAMPLE')
+    dopv = os.getenv('DO_PV')
 
     if os.getenv('MOLNAME'):
         molname = os.getenv('MOLNAME')
@@ -49,17 +51,18 @@ if __name__ == "__main__":
 
     print(cube)
 
-    print(f"PV peak intensity.  dt={time.time() - t0}", flush=True)
-    pv_max = cube.max(axis=1, **howargs)
-    pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_max.fits", overwrite=True)
-    makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_max.png",
-            stretch='asinh', min_percent=1, max_percent=99.5)
+    if dopv:
+        print(f"PV peak intensity.  dt={time.time() - t0}", flush=True)
+        pv_max = cube.max(axis=1, **howargs)
+        pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_max.fits", overwrite=True)
+        makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_max.png",
+                stretch='asinh', min_percent=1, max_percent=99.5)
 
-    print(f"PV mean.  dt={time.time() - t0}")
-    pv_mean = cube.mean(axis=1, **howargs)
-    pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
-    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean.png",
-            stretch='asinh', min_percent=1, max_percent=99.5)
+        print(f"PV mean.  dt={time.time() - t0}")
+        pv_mean = cube.mean(axis=1, **howargs)
+        pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
+        makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean.png",
+                stretch='asinh', min_percent=1, max_percent=99.5)
 
     print(f"mom0.  dt={time.time() - t0}")
     mom0 = cube.moment0(axis=0, **howargs)
@@ -70,22 +73,24 @@ if __name__ == "__main__":
     print(f"max.  dt={time.time() - t0}")
     mx = cube.max(axis=0, **howargs)
     mx.write(f"{mompath}/{molname}_CubeMosaic_max.fits", overwrite=True)
-    makepng(data=max.value, wcs=max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
+    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
-    print(f"PV max 2.  dt={time.time() - t0}")
-    pv_max = cube.max(axis=2, **howargs)
-    pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_b_max.fits", overwrite=True)
-    makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_max.png",
-            stretch='asinh', min_percent=1, max_percent=99.5)
+    if dopv:
+        print(f"PV max 2.  dt={time.time() - t0}")
+        pv_max = cube.max(axis=2, **howargs)
+        pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_b_max.fits", overwrite=True)
+        makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_max.png",
+                stretch='asinh', min_percent=1, max_percent=99.5)
 
-    print(f"PV mean 2.  dt={time.time() - t0}")
-    pv_mean = cube.mean(axis=2, **howargs)
-    pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
-    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean.png",
-            stretch='asinh', min_percent=1, max_percent=99.5)
+        print(f"PV mean 2.  dt={time.time() - t0}")
+        pv_mean = cube.mean(axis=2, **howargs)
+        pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
+        makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean.png",
+                stretch='asinh', min_percent=1, max_percent=99.5)
 
 
-    print("Downsampling")
-    from aces.imaging.make_mosaic import make_downsampled_cube, basepath
-    make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits')
+    if dods:
+        print("Downsampling")
+        from aces.imaging.make_mosaic import make_downsampled_cube, basepath
+        make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits')
