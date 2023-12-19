@@ -653,7 +653,7 @@ def make_giant_mosaic_cube(filelist,
     ok = [cube.beam.major < beam_threshold
           if hasattr(cube, 'beam')
           # HACK: for HCOP, the max_epsilon default of 1e-3 didn't work
-          else cube.beams.common_beam(max_epsilon=1e-2, threshold=1e-2).major < beam_threshold
+          else cube.beams.common_beam(max_epsilon=1e-2, tolerance=1e-2).major < beam_threshold
           for cube in cubes]
     if verbose:
         if not all(ok):
