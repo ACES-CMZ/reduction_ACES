@@ -102,7 +102,10 @@ def toast(imfn, targetdir='/orange/adamginsburg/web/public/ACES/toasts/'):
 def make_all_indexes():
     import glob
     indexes = []
-    for imfn in glob.glob("/orange/adamginsburg/ACES/mosaics/12m_flattened/*noaxes.png"):
+    for imfn in (glob.glob("/orange/adamginsburg/ACES/mosaics/12m_flattened/*continuum*noaxes.png") +
+                 glob.glob("/orange/adamginsburg/ACES/mosaics/cubes/moments/*png")):
+        if 'residual' in imfn: 
+            continue
         tdr = os.path.basename(imfn).replace("_noaxes.png", "")
         print(imfn, tdr)
         try:
@@ -127,6 +130,7 @@ def make_joint_index(indexes):
 
     acestens = folder.Folder.from_file("/orange/adamginsburg/web/public/ACES/MUSTANG_Feather/index_rel.wtml")
     acestens.children[0].name = 'ACES+TENS (toasty)'
+    acestens.children[0].thumbnail = 'https://data.rc.ufl.edu/pub/adamginsburg/ACES/MUSTANG_Feather/0/0/0_0.png'
     fld.children.extend(acestens.children)
 
     for ind in indexes:

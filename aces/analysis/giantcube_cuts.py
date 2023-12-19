@@ -68,13 +68,13 @@ if __name__ == "__main__":
     mom0 = cube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_mom0.png",
-            stretch='asinh', min_percent=1, max_percent=99.5)
+            stretch='asinh', min_cut=-0.1, max_percent=99.5)
 
     print(f"max.  dt={time.time() - t0}")
     mx = cube.max(axis=0, **howargs)
     mx.write(f"{mompath}/{molname}_CubeMosaic_max.fits", overwrite=True)
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
-            stretch='asinh', min_percent=1, max_percent=99.5)
+            stretch='sqrt', min_cut=0, max_percent=99.5)
 
     if dopv:
         print(f"PV max 2.  dt={time.time() - t0}")

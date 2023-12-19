@@ -167,12 +167,17 @@ def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
     colors = np.vstack((colors1, colors2))
     mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
+    sel = np.isnan(data) | (data == 0) | (footprint == 0 if footprint is not None else False)
+
     norm = visualization.simple_norm(data, **norm_kwargs)
+    if 'min_cut' in norm_kwargs:
+        norm.vmin = norm_kwargs['min_cut']
+        assert norm.vmin == norm_kwargs['min_cut']
 
     colordata = mymap(norm(data))
     ct = (colordata[:,:,:] * 256).astype('uint8')
     ct[(colordata[:,:,:] * 256) > 255] = 255
-    ct[:,:,3][np.isnan(data) | (data == 0) | (footprint == 0 if footprint is not None else False)] = 0
+    ct[:,:,3][sel] = 0
     img = PIL.Image.fromarray(ct[::-1,:,:])
     img.save(imfn)
     avm = pyavm.AVM.from_wcs(wcs, shape=data.shape)
