@@ -2673,8 +2673,8 @@
     "tclean_cube_pars": {
       "spw33": {
         "vis": [
-          "uid___A002_Xfed4ee_X1e3_targets_line.ms",
-          "uid___A002_Xfee03e_X2787_targets_line.ms"
+          "uid___A002_Xfed4ee_X1e3_targets.ms",
+          "uid___A002_Xfee03e_X2787_targets.ms"
         ],
         "selectdata": true,
         "field": "Sgr_A_star",
