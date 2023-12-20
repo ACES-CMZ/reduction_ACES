@@ -321,20 +321,6 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
                overwrite=True # don't want to crash here, and don't expect FITS files to be hanging around...
                )
 
-    if savedir and os.path.exists(savedir):
-        print(f"Moving {{outfile}} to {{savedir}}")
-        full_outfile = os.path.join(savedir, outfile)
-        if os.path.exists(full_outfile):
-            print(f"Outfile {{full_outfile}} already exists.  Check what's up.")
-        else:
-            shutil.move(outfile, savedir)
-            shutil.move(outfile+".fits", savedir)
-
-            if not os.path.exists(full_outfile):
-                print(f"FAILURE: attempt to move {{outfile}} to {{savedir}} had no effect")
-    else:
-        print(f"Savedir {{savedir}} does not exist")
-
 psffile = os.path.basename(f'{imagename}.psf')
 ia.open(psffile)
 commonbeam = ia.commonbeam()
@@ -377,6 +363,22 @@ if manybeam:
                overwrite=True
                )
 
+
+for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
+    outfile = os.path.basename(f'{imagename}.{{suffix}}')
+    if savedir and os.path.exists(savedir):
+        print(f"Moving {{outfile}} to {{savedir}}")
+        full_outfile = os.path.join(savedir, outfile)
+        if os.path.exists(full_outfile):
+            print(f"Outfile {{full_outfile}} already exists.  Check what's up.")
+        else:
+            shutil.move(outfile, savedir)
+            shutil.move(outfile+".fits", savedir)
+
+            if not os.path.exists(full_outfile):
+                print(f"FAILURE: attempt to move {{outfile}} to {{savedir}} had no effect")
+    else:
+        print(f"Savedir {{savedir}} does not exist")
 
 
 # Cleanup stage
