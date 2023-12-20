@@ -39,6 +39,16 @@ warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
                         append=True)
 
 
+def get_common_beam(beams):
+    for epsilon in (5e-4, 1e-3, 1e-4, 5e-3, 1e-2):
+        for beam_threshold in np.logspace(-6, -2, 4):
+            try:
+                commonbeam = beams.common_beam(tolerance=beam_threshold, epsilon=epsilon)
+                return commonbeam
+            except (BeamError, ValueError) as ex:
+                print(f"Encountered beam error '{ex}' with threshold {beam_threshold} and epsilon {epsilon}.  Trying again.")
+    raise BeamError("Failed to find common beam.")
+
 def read_as_2d(fn, minval=None):
     print(".", end='', flush=True)
     if fn.endswith('fits') or fn.endswith('.fits.gz'):
@@ -91,14 +101,7 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
                     mx = cube.max(axis=0).to(u.K)
                 else:
                     log.warn(f"File {fn} is a multi-beam cube.")
-                    for beam_threshold in np.logspace(-6, -2, 4):
-                        try:
-                            beam = cube.beams.common_beam(tolerance=beam_threshold)
-                            break
-                        except (BeamError, ValueError) as ex:
-                            print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
-                            if beam_threshold == 1e-2:
-                                raise ex
+                    beam = get_common_beam(cube.beams)
                     equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
                     mxjy = cube.max(axis=0)
                     if hasattr(mxjy, '_beam') and mxjy._beam is None:
@@ -138,14 +141,7 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, fol
         if hasattr(cube, 'beam'):
             equiv = cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
         elif hasattr(cube, 'beams'):
-            for beam_threshold in np.logspace(-6, -2, 4):
-                try:
-                    beam = cube.beams.common_beam(tolerance=beam_threshold)
-                    break
-                except (BeamError, ValueError) as ex:
-                    print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
-                    if beam_threshold == 1e-2:
-                        raise ex
+            beam = get_common_beam(cube.beams)
             equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
 
         moment0 = (moment0 * u.s / u.km).to(u.K,
@@ -211,14 +207,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         if isinstance(commonbeam, radio_beam.Beam):
             cb = commonbeam
         else:
-            for beam_threshold in np.logspace(-6, -2, 4):
-                try:
-                    cb = beams.common_beam(tolerance=beam_threshold)
-                    break
-                except (BeamError, ValueError) as ex:
-                    print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
-                    if beam_threshold == 1e-2:
-                        raise ex
+            beam = get_common_beam(cube.beams)
 
         if isinstance(commonbeam, str) and commonbeam == 'circular':
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
@@ -650,11 +639,8 @@ def make_giant_mosaic_cube(filelist,
     # there are 2 as of writing
     if verbose:
         print("Filtering out cubes with sketchy beams", flush=True)
-    ok = [cube.beam.major < beam_threshold
-          if hasattr(cube, 'beam')
-          # HACK: for HCOP, the max_epsilon default of 1e-3 didn't work
-          else cube.beams.common_beam(max_epsilon=1e-2, tolerance=1e-2).major < beam_threshold
-          for cube in cubes]
+    cb = get_common_beam(cube.beams) if hasattr(cube, 'beams') else cube.beam
+    ok = [cb.major < beam_threshold for cube in cubes]
     if verbose:
         if not all(ok):
             print(f"Filtered down to {np.sum(ok)} of {len(ok)} cubes with beam major > {beam_threshold}")
@@ -673,16 +659,9 @@ def make_giant_mosaic_cube(filelist,
         print("Determining common beam")
     beams = radio_beam.Beams(beams=[cube.beam
                                     if hasattr(cube, 'beam')
-                                    else cube.beams.common_beam()
+                                    else get_common_beam(cube.beams)
                                     for cube in cubes])
-    for beam_threshold in np.logspace(-6, -2, 4):
-        try:
-            commonbeam = beams.common_beam(tolerance=beam_threshold)
-            break
-        except (BeamError, ValueError) as ex:
-            print(f"Encountered beam error {ex} with threshold {beam_threshold}.  Trying again.")
-            if beam_threshold == 1e-2:
-                raise ex
+    commonbeam = get_common_beam(beams)
     header.update(commonbeam.to_header_keywords())
 
     if channels == 'all':

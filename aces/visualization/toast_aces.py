@@ -65,16 +65,25 @@ def toast(imfn, targetdir='/orange/adamginsburg/web/public/ACES/toasts/'):
     points = points.reshape(2, np.prod(points.shape[1:])).T
     wpoints = wcs.pixel_to_world(points[:,0], points[:,1])
 
-    # +1 to convert from py->FITS
-    wcsfk5 = fit_wcs_from_points((points[:,0]+1, points[:,1]+1), wpoints.fk5)
-    #print(wcs, wcsfk5)
+    wcsfk5 = fit_wcs_from_points((points[:,0], points[:,1]), wpoints.fk5)
 
+    # sanity check
+    gc = SkyCoord(0*u.deg, 0*u.deg, frame='galactic')
+    print(f"Sanity check: 0,0 gal -> pix in orig: {wcs.world_to_pixel(gc)}, in fk5: {wcsfk5.world_to_pixel(gc)} should be the same! diff is {np.array(wcs.world_to_pixel(gc)) - np.array(wcsfk5.world_to_pixel(gc))}")
+
+    height, width, _ = np.array(img).shape
+
+    # redo: using world_to_pixel makes the cd flip not work (probably a wcs.set call populates pc instead of cd)
+    wcsfk5 = timage._flip_wcs_parity(fit_wcs_from_points((points[:,0], points[:,1]), wpoints.fk5),
+                                     height - 1)
     # really dumb, definitely wrong hack to make the builder not complain about parity
-    wcsfk5.wcs.cd[:,1] *= -1
+    # wcsfk5.wcs.cd[:,1] *= -1
+    print(f"Sanity check: 0,0 gal from the flipped fk5: {wcsfk5.world_to_pixel(gc)[1]} should match {wcs.world_to_pixel(gc)[1]} if we do naxis-y: {height - np.array(wcsfk5.world_to_pixel(gc)[1])}")
+
 
     bui = builder.Builder(pyramid.PyramidIO(targetdir))
     stud = bui.prepare_study_tiling(tim)
-    height, width, _ = np.array(img).shape
+#    if 'HNCO' in targetdir or not os.path.exists(f'{targetdir}/0/0/0_0.png'):
     if not os.path.exists(f'{targetdir}/0/0/0_0.png'):
         bui.execute_study_tiling(tim, stud)
         merge.cascade_images(
@@ -89,6 +98,11 @@ def toast(imfn, targetdir='/orange/adamginsburg/web/public/ACES/toasts/'):
     bui.apply_wcs_info(wcsfk5, width=width, height=height)
     bui.imgset.thumbnail_url = bui.imgset.url.format(0, 0, 0, 0)
     bui.imgset.name = os.path.basename(targetdir)
+
+    ctr = SkyCoord(0.1189*u.deg, -0.05505*u.deg, frame='galactic').fk5
+    bui.place.ra_hr = ctr.ra.hourangle
+    bui.place.dec_deg = ctr.dec.deg
+    bui.place.zoom_level = 4
 
     fldr = bui.create_wtml_folder()
     
@@ -106,7 +120,7 @@ def make_all_indexes():
                  glob.glob("/orange/adamginsburg/ACES/mosaics/cubes/moments/*png")):
         if 'residual' in imfn: 
             continue
-        tdr = os.path.basename(imfn).replace("_noaxes.png", "")
+        tdr = os.path.basename(imfn).replace("_noaxes.png", "").replace(".png", "")
         print(imfn, tdr)
         try:
             ind = toast(imfn, targetdir=f'/orange/adamginsburg/web/public/ACES/mosaics/12m_flattened/{tdr}')
@@ -131,6 +145,12 @@ def make_joint_index(indexes):
     acestens = folder.Folder.from_file("/orange/adamginsburg/web/public/ACES/MUSTANG_Feather/index_rel.wtml")
     acestens.children[0].name = 'ACES+TENS (toasty)'
     acestens.children[0].thumbnail = 'https://data.rc.ufl.edu/pub/adamginsburg/ACES/MUSTANG_Feather/0/0/0_0.png'
+
+    ctr = SkyCoord(0.1189*u.deg, -0.05505*u.deg, frame='galactic').fk5
+    acestens.children[0].ra_hr = ctr.ra.hourangle
+    acestens.children[0].dec_deg = ctr.dec.deg
+    acestens.children[0].zoom_level = 4
+
     fld.children.extend(acestens.children)
 
     for ind in indexes:
