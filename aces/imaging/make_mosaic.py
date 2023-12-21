@@ -41,9 +41,10 @@ warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
 
 def get_common_beam(beams):
     for epsilon in (5e-4, 1e-3, 1e-4, 5e-3, 1e-2):
-        for beam_threshold in np.logspace(-6, -2, 4):
+        for beam_threshold in np.logspace(-6, -2, 5):
             try:
                 commonbeam = beams.common_beam(tolerance=beam_threshold, epsilon=epsilon)
+                print(f"Successfully acquired common beam with tolerance={beam_threshold} and epsilon={epsilon}.  beam={commonbeam}")
                 return commonbeam
             except (BeamError, ValueError) as ex:
                 print(f"Encountered beam error '{ex}' with threshold {beam_threshold} and epsilon {epsilon}.  Trying again.")
@@ -207,7 +208,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         if isinstance(commonbeam, radio_beam.Beam):
             cb = commonbeam
         else:
-            beam = get_common_beam(cube.beams)
+            cb = get_common_beam(beams)
 
         if isinstance(commonbeam, str) and commonbeam == 'circular':
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)

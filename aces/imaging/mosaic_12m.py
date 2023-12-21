@@ -11,6 +11,7 @@ from astropy import units as u
 from astropy.io import fits
 from astropy import log
 from astropy.wcs import WCS
+from astropy.table import Table
 from aces.imaging.make_mosaic import (read_as_2d, get_peak,
                                       get_m0,
                                       make_downsampled_cube,
@@ -68,15 +69,29 @@ def all_lines(*args, folder='12m_flattened', **kwargs):
     return all_lines_(*args, folder=folder, **kwargs)
 
 
+def rms_(*args, **kwargs):
+    return rms(prefix='12m_continuum', threshold=3, **kwargs)
+
 def main():
+
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("--contonly", dest="contonly",
+                      default=False,
+                      action='store_true',
+                      help="Run only continuum mosaicing?", metavar="contonly")
+    (options, args) = parser.parse_args()
 
     np.seterr('ignore')
 
     header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
 
+    funcs = ((residuals, reimaged, reimaged_high, continuum, rms_)
+             if options.contonly else
+             (residuals, reimaged, reimaged_high, continuum, rms_, cs21, hcop, hnco, h40a))
+
     processes = []
-    for func in (residuals, reimaged, reimaged_high, continuum, cs21, hcop, hnco,
-                 h40a):
+    for func in funcs:
         print(f"Starting function {func}")
         proc = Process(target=func, args=(header,))
         proc.start()
@@ -90,7 +105,8 @@ def main():
             print(f"Exception caught from subprocess {proc}: exit code {proc.exitcode}")
 
     # do this _after_
-    all_lines(header)
+    if not options.contonly:
+        all_lines(header)
 
     if failure:
         print(errors)
@@ -99,6 +115,9 @@ def main():
 
 
 def main_():
+    """
+    I'm pretty sure main_ is the 'old version' that I was just commenting out without deleting...
+    """
 
     np.seterr('ignore')
 
@@ -118,7 +137,16 @@ def main_():
 def continuum(header):
     logprint("12m continuum")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.tt0.pbcor.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.manual.pbcor.tt0.fits')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*.tt0.pbcor.fits')
+
+    uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
+    for row in uidtb:
+        matches = [row['12m MOUS ID'] in fn for fn in filelist]
+        print(row['Obs ID'], sum(matches))
+        if sum(matches) != 1:
+            raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+
     print("Read as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
     for hdu, fn in zip(hdus, filelist):
@@ -129,7 +157,8 @@ def continuum(header):
     print(flush=True)
     #weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*I.pb.tt0.fits')
     #weightfiles += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.pb.tt0.fits')
-    weightfiles = [fn.replace(".image.tt0.pbcor", ".pb.tt0").replace(".I.tt0.pbcor", ".I.pb.tt0") for fn in filelist]
+    weightfiles = [fn.replace(".image.tt0.pbcor", ".pb.tt0").replace(".I.tt0.pbcor", ".I.pb.tt0").replace('manual.pbcor.tt0', 'manual.pb.tt0')
+                   for fn in filelist]
     assert len(weightfiles) == len(filelist)
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
@@ -160,7 +189,16 @@ def continuum(header):
 def reimaged(header):
     logprint("12m continuum reimaged")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I*image.tt0.pbcor')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
+
+    uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
+    for row in uidtb:
+        matches = [row['12m MOUS ID'] in fn for fn in filelist]
+        print(row['Obs ID'], sum(matches))
+        if sum(matches) != 1:
+            raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+
+
     print("Read as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
     print(flush=True)
@@ -199,6 +237,15 @@ def reimaged_high(header):
     logprint("12m continuum reimaged")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*cont.I*image.tt0.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33_35*cont*tt0.pbcor.fits')
+
+    uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
+    for row in uidtb:
+        matches = [row['12m MOUS ID'] in fn for fn in filelist]
+        print(row['Obs ID'], sum(matches))
+        if sum(matches) != 1:
+            raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+
+
     print("Read as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
     print(flush=True)
@@ -230,11 +277,22 @@ def residuals(header):
     logprint("12m continuum residuals")
     for spw, name in zip(('25_27_29_31_33_35', '33_35'), ('reimaged', 'reimaged_high')):
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*{spw}*cont.I.iter1.residual.tt0')
-        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*{spw}*cont.I*.residual.tt0')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*{spw}*cont.I.manual.residual.tt0')
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*{spw}*cont.I*.residual.tt0')
+
+        uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
+        for row in uidtb:
+            matches = [row['12m MOUS ID'] in fn for fn in filelist]
+            print(row['Obs ID'], sum(matches))
+            if sum(matches) != 1:
+                for fn in filelist:
+                    if row['12m MOUS ID'] in fn:
+                        print(fn)
+                raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+
         
         # check that field am, which is done, is included
-        assert any(['uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.residual.tt0' in fn
+        assert any([f'uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.residual.tt0' in fn
                     for fn in filelist])
 
         hdus = [read_as_2d(fn) for fn in filelist]
