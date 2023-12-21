@@ -134,18 +134,27 @@ def main_():
     all_lines(header)
 
 
+def check_files(filelist):
+    uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
+    for row in uidtb:
+        matches = [row['12m MOUS ID'] in fn for fn in filelist]
+        print(row['Obs ID'], sum(matches))
+        if sum(matches) != 1:
+            for fn in filelist:
+                if row['12m MOUS ID'] in fn:
+                    print(fn)
+            raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+
+
+
+
 def continuum(header):
     logprint("12m continuum")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.tt0.pbcor.fits')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.manual.pbcor.tt0.fits')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*.tt0.pbcor.fits')
 
-    uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
-    for row in uidtb:
-        matches = [row['12m MOUS ID'] in fn for fn in filelist]
-        print(row['Obs ID'], sum(matches))
-        if sum(matches) != 1:
-            raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+    check_files(filelist)
 
     print("Read as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
@@ -191,12 +200,7 @@ def reimaged(header):
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*cont.I*image.tt0.pbcor')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
 
-    uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
-    for row in uidtb:
-        matches = [row['12m MOUS ID'] in fn for fn in filelist]
-        print(row['Obs ID'], sum(matches))
-        if sum(matches) != 1:
-            raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+    check_files(filelist)
 
 
     print("Read as 2d for files: ", end=None, flush=True)
@@ -238,12 +242,7 @@ def reimaged_high(header):
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*cont.I*image.tt0.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33_35*cont*tt0.pbcor.fits')
 
-    uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
-    for row in uidtb:
-        matches = [row['12m MOUS ID'] in fn for fn in filelist]
-        print(row['Obs ID'], sum(matches))
-        if sum(matches) != 1:
-            raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+    check_files(filelist)
 
 
     print("Read as 2d for files: ", end=None, flush=True)
@@ -280,15 +279,7 @@ def residuals(header):
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*{spw}*cont.I.manual.residual.tt0')
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*{spw}*cont.I*.residual.tt0')
 
-        uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
-        for row in uidtb:
-            matches = [row['12m MOUS ID'] in fn for fn in filelist]
-            print(row['Obs ID'], sum(matches))
-            if sum(matches) != 1:
-                for fn in filelist:
-                    if row['12m MOUS ID'] in fn:
-                        print(fn)
-                raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+        check_files(filelist)
 
         
         # check that field am, which is done, is included
@@ -330,6 +321,9 @@ def hcop(header):
     logprint("12m HCO+")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw29.cube.I.pbcor.fits')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw29.cube.I.pbcor.fits')
+
+    check_files(filelist)
+
     hdus = [get_peak(fn).hdu for fn in filelist]
     print(flush=True)
     #weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw29.mfs.I.pb.fits.gz')
@@ -354,6 +348,9 @@ def hnco(header):
     logprint("12m HNCO")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw31.cube.I.pbcor.fits')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw31.cube.I.pbcor.fits')
+
+    check_files(filelist)
+
     hdus = [get_peak(fn, suffix='_hnco').hdu for fn in filelist]
     print(flush=True)
     #weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw31.mfs.I.pb.fits.gz')
@@ -378,6 +375,9 @@ def h40a(header):
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
+
+    check_files(filelist)
+
     hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
                      rest_value=99.02295 * u.GHz,
                      suffix='_h40a').hdu for fn in filelist]
@@ -411,6 +411,9 @@ def cs21(header):
     #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
+    
+    check_files(filelist)
+
     hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=97.98095330 * u.GHz, suffix='_cs21').hdu for fn in filelist]
     #weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.pb')
     weightfiles = [fn.replace("cube.I.iter1.image.pbcor", "cube.I.iter1.pb") for fn in filelist]
@@ -471,6 +474,8 @@ def make_giant_mosaic_cube_cs21(**kwargs):
 
     print(f"Found {len(filelist)} CS 2-1-containing spw33 files")
 
+    check_files(filelist)
+
     restfrq = 97.98095330e9
     cdelt_kms = 1.4844932
     make_giant_mosaic_cube(filelist,
@@ -499,6 +504,8 @@ def make_giant_mosaic_cube_sio21(**kwargs):
 
     print(f"Found {len(filelist)} SiO 2-1-containing spw27 files")
 
+    check_files(filelist)
+
     restfrq = 86.84696e9
     cdelt_kms = 0.84455895
     make_giant_mosaic_cube(filelist,
@@ -523,6 +530,8 @@ def make_giant_mosaic_cube_hnco(**kwargs):
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*31.cube.I.manual.pbcor.fits')
 
     print(f"Found {len(filelist)} HNCO-containing spw31 files")
+
+    check_files(filelist)
 
     restfrq = 87.925238e9
     cdelt_kms = 0.20818593  # smooth by 2 chans
@@ -549,6 +558,8 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*35.cube.I.manual.pbcor.fits')
 
     print(f"Found {len(filelist)} HC3N-containing spw35 files")
+
+    check_files(filelist)
 
     restfrq = 100.0763e9
     cdelt_kms = 1.47015502
@@ -606,6 +617,8 @@ def make_giant_mosaic_cube_hcop(**kwargs):
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
 
     print(f"Found {len(filelist)} HCOP-containing spw29 files")
+
+    check_files(filelist)
 
     restfrq = 89.188526e9
     cdelt_kms = 0.20818593  # smooth by 2 chans
