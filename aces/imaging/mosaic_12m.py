@@ -175,23 +175,23 @@ def continuum(header):
                 commonbeam='circular',
                 weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.0001),
                 target_header=header,
                 folder='continuum'
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.0001),
                 target_header=header,
                 folder='continuum'
                 )
 
-    feath = uvcombine.feather_simple(f'{basepath}/mosaics/12m_continuum_commonbeam_circular_mosaic.fits',
-                                     f'{basepath}/mosaics/7m_continuum_commonbeam_circular_mosaic.fits')
+    feath = uvcombine.feather_simple(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_mosaic.fits',
+                                     f'{basepath}/mosaics/7m_flattened/7m_continuum_commonbeam_circular_mosaic.fits')
     fits.PrimaryHDU(data=feath.real,
-                    header=fits.getheader(f'{basepath}/mosaics/12m_continuum_commonbeam_circular_mosaic.fits')
-                    ).writeto(f'{basepath}/mosaics/feather_7m12m_continuum_commonbeam_circular_mosaic.fits',
+                    header=fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_mosaic.fits')
+                    ).writeto(f'{basepath}/mosaics/7m_flattened/feather_7m12m_continuum_commonbeam_circular_mosaic.fits',
                               overwrite=True)
 
 
@@ -220,19 +220,19 @@ def reimaged(header):
                 commonbeam='circular', weights=wthdus, cbar_unit='Jy/beam',
                 array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01,
-                                 min_cut=-0.001),
+                                 min_cut=-0.0001),
                 target_header=header,
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.0001),
                 target_header=header,
                 )
     print(flush=True)
     make_mosaic(wthdus, name='primarybeam_coverage', weights=wthdus,
                 cbar_unit='PB Level', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.001),
+                norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0001),
                 target_header=header,
                 )
 
@@ -261,13 +261,13 @@ def reimaged_high(header):
                 commonbeam='circular', weights=wthdus, cbar_unit='Jy/beam',
                 array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.01,
-                                 min_cut=-0.001),
+                                 min_cut=-0.0001),
                 target_header=header,
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged_spw33_35', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.0001),
                 target_header=header,
                 )
 
@@ -275,9 +275,9 @@ def reimaged_high(header):
 def residuals(header):
     logprint("12m continuum residuals")
     for spw, name in zip(('25_27_29_31_33_35', '33_35'), ('reimaged', 'reimaged_high')):
-        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*{spw}*cont.I.iter1.residual.tt0')
-        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*{spw}*cont.I.manual.residual.tt0')
-        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*{spw}*cont.I*.residual.tt0')
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}*cont.I.iter1.residual.tt0')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}*cont.I.manual.residual.tt0')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw{spw}*cont.I*.residual.tt0')
 
         check_files(filelist)
 
@@ -297,7 +297,7 @@ def residuals(header):
         print(flush=True)
         make_mosaic(hdus, name=f'continuum_residual_{name}', weights=wthdus,
                     cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                    norm_kwargs=dict(stretch='linear', max_cut=0.001, min_cut=-0.001),
+                    norm_kwargs=dict(stretch='linear', max_cut=0.001, min_cut=-0.0001),
                     target_header=header,
                     )
         print(flush=True)
@@ -312,7 +312,7 @@ def residuals(header):
                     beams=beams,
                     weights=wthdus,
                     cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                    norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.001),
+                    norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.0001),
                     target_header=header,
                     )
 
@@ -555,6 +555,7 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
 
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.iter1.image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.manual*image.pbcor')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.iter1.reclean.image.pbcor')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*35.cube.I.manual.pbcor.fits')
 
     print(f"Found {len(filelist)} HC3N-containing spw35 files")
