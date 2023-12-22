@@ -175,14 +175,14 @@ def continuum(header):
                 commonbeam='circular',
                 weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.0001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
                 target_header=header,
                 folder='continuum'
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.0001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
                 target_header=header,
                 folder='continuum'
                 )
@@ -219,20 +219,20 @@ def reimaged(header):
     make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
                 commonbeam='circular', weights=wthdus, cbar_unit='Jy/beam',
                 array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01,
-                                 min_cut=-0.0001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.008,
+                                 min_cut=-0.0002),
                 target_header=header,
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.0001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
                 target_header=header,
                 )
     print(flush=True)
     make_mosaic(wthdus, name='primarybeam_coverage', weights=wthdus,
                 cbar_unit='PB Level', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0001),
+                norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0002),
                 target_header=header,
                 )
 
@@ -260,14 +260,14 @@ def reimaged_high(header):
     make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged_spw33_35',
                 commonbeam='circular', weights=wthdus, cbar_unit='Jy/beam',
                 array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01,
-                                 min_cut=-0.0001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.008,
+                                 min_cut=-0.0002),
                 target_header=header,
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged_spw33_35', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.01, min_cut=-0.0001),
+                norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
                 target_header=header,
                 )
 
@@ -297,7 +297,7 @@ def residuals(header):
         print(flush=True)
         make_mosaic(hdus, name=f'continuum_residual_{name}', weights=wthdus,
                     cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                    norm_kwargs=dict(stretch='linear', max_cut=0.001, min_cut=-0.0001),
+                    norm_kwargs=dict(stretch='linear', max_cut=0.001, min_cut=-0.0002),
                     target_header=header,
                     )
         print(flush=True)
@@ -312,7 +312,7 @@ def residuals(header):
                     beams=beams,
                     weights=wthdus,
                     cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                    norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.0001),
+                    norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.0002),
                     target_header=header,
                     )
 
