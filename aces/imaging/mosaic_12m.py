@@ -675,3 +675,35 @@ def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
                               f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic_downsampled9.fits',
                               overwrite=True
                               )
+
+
+def make_giant_mosaic_cube_so32(**kwargs):
+
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.manual*image.pbcor')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.reclean*image.pbcor')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*33.cube.I.manual.pbcor.fits')
+    filelist = sorted(filelist)
+
+    print(f"Found {len(filelist)} SO 3-2-containing spw33 files")
+
+    check_files(filelist)
+
+    restfreq = 	99.29987e9
+    cdelt_kms = 1.4844932
+    make_giant_mosaic_cube(filelist,
+                           reference_frequency=restfreq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='SO32',
+                           nchan=350,
+                           beam_threshold=3.1 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/SO32_Channels/',
+                           # we prefer to fail_if_dropped; enabling this for debugging
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/SO32_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/SO32_CubeMosaic_downsampled9.fits',
+                              )
+
