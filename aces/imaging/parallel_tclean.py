@@ -17,6 +17,14 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          remove_incomplete_psf=True,
                          remove_incomplete_weight=True,
                          **kwargs):
+    """
+    Parameters
+    ----------
+    savedir: 
+        Where to put the files in the end
+    workdir: 
+        Where to store the intermediate files
+    """
 
     print(f"Starting parallel clean in workdir={workdir} with casa={CASAVERSION}")
 

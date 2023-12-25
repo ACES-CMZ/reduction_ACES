@@ -144,6 +144,9 @@ def check_files(filelist):
                 if row['12m MOUS ID'] in fn:
                     print(fn)
             raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+    
+    for fn in filelist:
+        assert os.path.exists(fn.replace("image.pbcor", "pb")), f"No pb found for {fn}"
 
 
 
