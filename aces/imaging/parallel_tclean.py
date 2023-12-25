@@ -197,6 +197,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     splitscriptname = os.path.join(workdir, f"{imagename}_parallel_split_script.py")
     with open(splitscriptname, 'w') as fh:
         fh.write(splitscript)
+    print(f"Wrote splitscript {splitscriptname}")
 
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
 
@@ -211,6 +212,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     slurmsplitcmdsh = imagename + "_split_slurm_cmd.sh"
     with open(slurmsplitcmdsh, 'w') as fh:
         fh.write(runsplitcmd)
+    print(f"Wrote runsplit {slurmsplitcmdsh}")
 
     slurmsplitcmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
                      f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log '
@@ -231,6 +233,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     scriptname = os.path.join(workdir, f"{imagename}_parallel_script.py")
     with open(scriptname, 'w') as fh:
         fh.write(script)
+    print(f"Wrote sript {scriptname}")
 
 
 
@@ -245,6 +248,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     slurmcmd = imagename + "_slurm_cmd.sh"
     with open(slurmcmd, 'w') as fh:
         fh.write(runcmd)
+    print(f"Wrote command {slurmcmd}")
 
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
            f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log '

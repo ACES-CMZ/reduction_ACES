@@ -64,14 +64,14 @@ def main():
     with open(f'{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.json', 'r') as fh:
         imaging_status = json.load(fh)
 
-    mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
-    mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
-
-    datadir = f'{conf.basepath}/data/'
+    datadir = os.getenv('BASEPATH') or f'{conf.basepath}/data/'
 
     projcode = os.getenv('PROJCODE') or '2021.1.00172.L'
     sous = os.getenv('SOUS') or 'A001_X1590_X30a8'
     gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
+
+    mousmap = get_mous_to_sb_mapping(projcode)
+    mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
 
     sacct = subprocess.check_output(['/opt/slurm/bin/sacct',
                                      '--format=JobID,JobName%45,Account%15,QOS%17,State,Priority%8,ReqMem%8,CPUTime%15,Elapsed%15,Timelimit%15,NodeList%20'])
