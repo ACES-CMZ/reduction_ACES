@@ -84,7 +84,8 @@ def toast(imfn, targetdir='/orange/adamginsburg/web/public/ACES/toasts/'):
     bui = builder.Builder(pyramid.PyramidIO(targetdir))
     stud = bui.prepare_study_tiling(tim)
 #    if 'HNCO' in targetdir or not os.path.exists(f'{targetdir}/0/0/0_0.png'):
-    if not os.path.exists(f'{targetdir}/0/0/0_0.png'):
+    #if not os.path.exists(f'{targetdir}/0/0/0_0.png'):
+    if True: # always redo
         bui.execute_study_tiling(tim, stud)
         merge.cascade_images(
             bui.pio, start=7, merger=merge.averaging_merger, cli_progress=True
@@ -165,7 +166,10 @@ def make_joint_index(indexes):
             write_xml_doc(fld.to_xml(), dest_stream=fh)
 
 
-if __name__ == "__main__":
+def main():
     indexes = make_all_indexes()
 
     make_joint_index(indexes)
+
+if __name__ == "__main__":
+    main()
