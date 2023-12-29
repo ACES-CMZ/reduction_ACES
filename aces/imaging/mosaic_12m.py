@@ -479,9 +479,14 @@ def make_giant_mosaic_cube_cs21(**kwargs):
 
     check_files(filelist)
 
+    weightfilelist = [fn.replace(".image.pbcor", ".pb").replace(".pbcor", ".pb") for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
     restfrq = 97.98095330e9
     cdelt_kms = 1.4844932
     make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
                            cubename='CS21',
@@ -692,9 +697,14 @@ def make_giant_mosaic_cube_so32(**kwargs):
 
     check_files(filelist)
 
+    weightfilelist = [fn.replace(".image.pbcor", ".pb").replace(".pbcor", ".pb") for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
     restfreq = 	99.29987e9
     cdelt_kms = 1.4844932
     make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
                            reference_frequency=restfreq,
                            cdelt_kms=cdelt_kms,
                            cubename='SO32',
