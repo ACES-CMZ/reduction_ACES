@@ -179,7 +179,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
             sys.exit(0)
         elif os.path.exists(tclean_kwargs['imagename'] + ".residual"):
             logprint(ValueError(f"{{tclean_kwargs['imagename']}}.residual exists.  Current state unclear."))
-            sys.exit(0)
+            #sys.exit(0)
             logprint("Attempting to continue anyway.")
         elif os.path.exists(tclean_kwargs['imagename'] + ".psf"):
             if {remove_incomplete_psf}:
@@ -191,6 +191,11 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                 shutil.rmtree(tclean_kwargs['imagename'] + ".weight")
             else:
                 raise ValueError(f"{{tclean_kwargs['imagename']}}.weight exists.  Remove it before continuing.")
+
+        # if we're continuing from a partially-completed run
+        # we still want calcres=True in case model components were made
+        if os.path.exists(tclean_kwargs['imagename'] + ".psf"):
+            tclean_kwargs['calcpsf'] = False
 
         logprint(f'tclean_kwargs: {{tclean_kwargs}}')
         logprint(tclean_kwargs['vis'])
