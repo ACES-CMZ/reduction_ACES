@@ -336,9 +336,9 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
 
     # consolidates the remainder into a single virtual cube
     # (these files can be removed later)
-    ia.imageconcat(outfile=outfile+".move",
-                   infiles=infiles,
-                   mode='m')
+    #ia.imageconcat(outfile=outfile+".move",
+    #               infiles=infiles,
+    #               mode='m')
 
     exportfits(imagename=outfile,
                fitsimage=outfile+".fits",
