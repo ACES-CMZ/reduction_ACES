@@ -71,7 +71,8 @@ def toast(imfn, targetdir='/orange/adamginsburg/web/public/ACES/toasts/'):
 
     # sanity check
     gc = SkyCoord(0 * u.deg, 0 * u.deg, frame='galactic')
-    print(f"Sanity check: 0,0 gal -> pix in orig: {wcs.world_to_pixel(gc)}, in fk5: {wcsfk5.world_to_pixel(gc)} should be the same! diff is {np.array(wcs.world_to_pixel(gc)) - np.array(wcsfk5.world_to_pixel(gc))}")
+    print(f"Sanity check: 0,0 gal -> pix in orig: {wcs.world_to_pixel(gc)}, in fk5: {wcsfk5.world_to_pixel(gc)}"
+          f" should be the same! diff is {np.array(wcs.world_to_pixel(gc)) - np.array(wcsfk5.world_to_pixel(gc))}")
 
     height, width, _ = np.array(img).shape
 
@@ -86,7 +87,7 @@ def toast(imfn, targetdir='/orange/adamginsburg/web/public/ACES/toasts/'):
     stud = bui.prepare_study_tiling(tim)
 #    if 'HNCO' in targetdir or not os.path.exists(f'{targetdir}/0/0/0_0.png'):
     #if not os.path.exists(f'{targetdir}/0/0/0_0.png'):
-    if True: # always redo
+    if True:  # always redo
         bui.execute_study_tiling(tim, stud)
         merge.cascade_images(
             bui.pio, start=7, merger=merge.averaging_merger, cli_progress=True
