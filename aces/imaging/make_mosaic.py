@@ -50,6 +50,7 @@ def get_common_beam(beams):
                 print(f"Encountered beam error '{ex}' with threshold {beam_threshold} and epsilon {epsilon}.  Trying again.")
     raise BeamError("Failed to find common beam.")
 
+
 def read_as_2d(fn, minval=None):
     print(".", end='', flush=True)
     if fn.endswith('fits') or fn.endswith('.fits.gz'):
@@ -172,13 +173,14 @@ def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
         assert norm.vmin == norm_kwargs['min_cut']
 
     colordata = mymap(norm(data))
-    ct = (colordata[:,:,:] * 256).astype('uint8')
-    ct[(colordata[:,:,:] * 256) > 255] = 255
-    ct[:,:,3][sel] = 0
-    img = PIL.Image.fromarray(ct[::-1,:,:])
+    ct = (colordata[:, :, :] * 256).astype('uint8')
+    ct[(colordata[:, :, :] * 256) > 255] = 255
+    ct[:, :, 3][sel] = 0
+    img = PIL.Image.fromarray(ct[::-1, :, :])
     img.save(imfn)
     avm = pyavm.AVM.from_wcs(wcs, shape=data.shape)
     avm.embed(imfn, imfn)
+
 
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 weights=None,
@@ -428,7 +430,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
 
         if parallel:
             print(f"Starting function make_mosaic for {line} peak intensity")
-            proc = Process(target=make_mosaic, args=(hdus,),
+            proc = Process(target=make_mosaic, args=(hdus, ),
                            kwargs=dict(name=f'{line}_max', cbar_unit='K',
                            norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                            array=array, basepath=basepath, weights=wthdus if use_weights else None,
@@ -453,7 +455,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
 
         if parallel:
             print(f"Starting function make_mosaic for {line} moment 0")
-            proc = Process(target=make_mosaic, args=(m0hdus,),
+            proc = Process(target=make_mosaic, args=(m0hdus, ),
                            kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
                            norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
                            array=array, basepath=basepath, weights=wthdus if use_weights else None, target_header=header))
@@ -476,7 +478,8 @@ def make_giant_mosaic_cube_header(target_header,
                                   reference_frequency,
                                   cdelt_kms,
                                   nchan,
-                                  test=False,):
+                                  test=False,
+                                  ):
     header = fits.Header.fromtextfile(target_header)
     header['NAXIS'] = 3
     header['CDELT3'] = cdelt_kms
@@ -585,7 +588,8 @@ def make_giant_mosaic_cube(filelist,
                            channels='all',
                            fail_if_cube_dropped=True,
                            skip_channel_mosaicing=False,
-                           skip_final_combination=False,):
+                           skip_final_combination=False,
+                           ):
     """
     This takes too long as a full cube, so we have to do it slice-by-slice
 
@@ -682,7 +686,8 @@ def make_giant_mosaic_cube(filelist,
                                         working_directory=working_directory,
                                         channelmosaic_directory=channelmosaic_directory,
                                         fail_if_cube_dropped=fail_if_cube_dropped,
-                                        channels=channels,)
+                                        channels=channels,
+                                        )
     else:
         print("Skipped channel mosaicking")
 
@@ -695,13 +700,15 @@ def make_giant_mosaic_cube(filelist,
                                           channels=channels,
                                           working_directory=working_directory,
                                           channelmosaic_directory=channelmosaic_directory,
-                                          verbose=verbose,)
+                                          verbose=verbose,
+                                          )
 
 
 def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
                                       working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
                                       channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
-                                      verbose=False,):
+                                      verbose=False,
+                                      ):
     # Part 6: Create output supergiant cube into which final product will be stashed
     output_working_file = f'{working_directory}/{cubename}_CubeMosaic.fits'
     output_file = f'{basepath}/mosaics/cubes/{cubename}_CubeMosaic.fits'
@@ -716,7 +723,8 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
         # Make a new file
         # https://docs.astropy.org/en/stable/generated/examples/io/skip_create-large-fits.html#sphx-glr-generated-examples-io-skip-create-large-fits-py
         hdu = fits.PrimaryHDU(data=np.ones([5, 5, 5], dtype=float),
-                              header=header,)
+                              header=header,
+                              )
         for kwd in ('NAXIS1', 'NAXIS2', 'NAXIS3'):
             hdu.header[kwd] = header[kwd]
 
@@ -831,6 +839,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_
         assert outcubename.endswith('.fits')
         dscube_s.write(outcubename.replace(".fits", "_spectrally.fits"))
 
+
 def rms_map(img, kernel=Gaussian2DKernel(10)):
     """
     Gaussian2DKernel should be larger than the beam, probably at least 2x larger
@@ -848,7 +857,6 @@ def rms_map(img, kernel=Gaussian2DKernel(10)):
 
 
 def rms(prefix='12m_continuum', threshold=2.5, nbeams=3, maxiter=50):
-    import glob
     for fn in glob.glob(f'{basepath}/mosaics/{prefix}*mosaic.fits'):
         if 'rms' in fn:
             # don't re-rms rms maps

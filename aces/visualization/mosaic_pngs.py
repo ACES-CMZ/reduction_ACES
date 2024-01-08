@@ -15,6 +15,7 @@ basepath = conf.basepath
 cubepath = f'{basepath}/mosaics/cubes/'
 mompath = f'{basepath}/mosaics/cubes/moments/'
 
+
 def pngify(mol, suf='mom0', **kwargs):
     fh = fits.open(f'{mompath}/{mol}_CubeMosaic_{suf}.fits')
     data = fh[0].data
@@ -25,6 +26,7 @@ def pngify(mol, suf='mom0', **kwargs):
 
     makepng(data=data, wcs=wcs, imfn=f"{mompath}/{mol}_CubeMosaic_{suf}.png",
             **kwargs)
+
 
 if __name__ == "__main__":
     pngify('SiO21', 'mom0', stretch='sqrt', min_cut=-0.1, max_percent=99.95)

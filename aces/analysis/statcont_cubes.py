@@ -33,7 +33,6 @@ from aces.imaging.make_mosaic import makepng
 
 basepath = conf.basepath
 
-
 # for zarr storage
 if not os.getenv('SLURM_TMPDIR'):
     os.environ['TMPDIR'] = '/blue/adamginsburg/adamginsburg/tmp'

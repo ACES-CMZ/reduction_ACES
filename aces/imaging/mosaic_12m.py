@@ -145,7 +145,7 @@ def check_files(filelist):
                 if row['12m MOUS ID'] in fn:
                     print(fn)
             raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
-    
+
     for fn in filelist:
         assert os.path.exists(fn.replace("image.pbcor", "pb")), f"No pb found for {fn}"
 
@@ -204,7 +204,6 @@ def reimaged(header):
 
     check_files(filelist)
 
-
     print("Read as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
     print(flush=True)
@@ -246,7 +245,6 @@ def reimaged_high(header):
 
     check_files(filelist)
 
-
     print("Read as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
     print(flush=True)
@@ -283,7 +281,6 @@ def residuals(header):
 
         check_files(filelist)
 
-        
         # check that field am, which is done, is included
         assert any([f'uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.residual.tt0' in fn
                     for fn in filelist])
@@ -303,9 +300,9 @@ def residuals(header):
                     target_header=header,
                     )
         print(flush=True)
-        if name =='reimaged':
+        if name == 'reimaged':
             cb = radio_beam.Beam.from_fits_header(fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_reimaged_mosaic.fits'))
-        elif name =='reimaged_high':
+        elif name == 'reimaged_high':
             cb = radio_beam.Beam.from_fits_header(fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_reimaged_spw33_35_mosaic.fits'))
         else:
             raise NotImplementedError(f"name={name}")
@@ -413,7 +410,7 @@ def cs21(header):
     #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
-    
+
     check_files(filelist)
 
     hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=97.98095330 * u.GHz, suffix='_cs21').hdu for fn in filelist]
@@ -700,7 +697,7 @@ def make_giant_mosaic_cube_so32(**kwargs):
     for fn in weightfilelist:
         assert os.path.exists(fn)
 
-    restfreq = 	99.29987e9
+    restfreq = 99.29987e9
     cdelt_kms = 1.4844932
     make_giant_mosaic_cube(filelist,
                            weightfilelist=weightfilelist,
@@ -718,4 +715,3 @@ def make_giant_mosaic_cube_so32(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/SO32_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/SO32_CubeMosaic_downsampled9.fits',
                               )
-
