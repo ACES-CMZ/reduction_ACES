@@ -180,7 +180,13 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         elif os.path.exists(tclean_kwargs['imagename'] + ".residual"):
             logprint(ValueError(f"{{tclean_kwargs['imagename']}}.residual exists.  Current state unclear."))
             #sys.exit(0)
+            # assumption is: residual got made, but no major cycles completed
             logprint("Attempting to continue anyway.")
+        elif os.path.exists(tclean_kwargs['imagename'] + ".model"):
+            # assumption is: could still be running
+            logprint(ValueError(f"{{tclean_kwargs['imagename']}}.model exists.  Current state unclear."))
+            logprint("Quitting.")
+            sys.exit(0)
         elif os.path.exists(tclean_kwargs['imagename'] + ".psf"):
             if {remove_incomplete_psf}:
                 shutil.rmtree(tclean_kwargs['imagename'] + ".psf")
