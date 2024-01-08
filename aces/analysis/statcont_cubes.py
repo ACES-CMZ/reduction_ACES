@@ -97,7 +97,7 @@ def main():
 
     sizes = {ii: get_size(fn)
              for ii, fn in enumerate(filenames)
-            }
+             }
 
     target_chunk_size = int(1e8)
 
@@ -169,22 +169,22 @@ def main():
                 os.remove(outfn)
 
         if fn.endswith('.fits'):
-            outcube = fn[:-5]+'.statcont.contsub.fits'
+            outcube = fn[:-5] + '.statcont.contsub.fits'
             assert outcube.count('.fits') == 1
             if (not os.path.exists(outcube)) or redo:
                 print(f"Writing contsub cube to {outcube}", flush=True)
                 cube = SpectralCube.read(fn,
                                          target_chunk_size=target_chunk_size,
                                          use_dask=True, format=fileformat)
-                cube.allow_huge_operations=True
+                cube.allow_huge_operations = True
                 if cube.shape[1] != cont.shape[0] or cube.shape[2] != cont.shape[1]:
                     print(f"Minimizing {cube}", flush=True)
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore")
                         cube = cube.minimal_subcube()
-                    cube.allow_huge_operations=True
-                    
-                scube = cube - cont*cube.unit
+                    cube.allow_huge_operations = True
+
+                scube = cube - cont * cube.unit
                 scube.write(outcube, overwrite=True)
         sys.stdout.flush()
         sys.stderr.flush()
