@@ -22,7 +22,8 @@ def pngify(mol, suf='mom0', **kwargs):
     wcs = WCS(fh[0].header)
 
     # DEBUG
-    print(f"{mol} {suf} Pixel of 0,0: {wcs.world_to_pixel(SkyCoord(0*u.deg, 0*u.deg, frame='galactic'))}, shape: {data.shape}, crpix={wcs.wcs.crpix}, crval={wcs.wcs.crval}")
+    print(f"{mol} {suf} Pixel of 0,0: {wcs.world_to_pixel(SkyCoord(0 * u.deg, 0 * u.deg, frame='galactic'))},"
+          f" shape: {data.shape}, crpix={wcs.wcs.crpix}, crval={wcs.wcs.crval}")
 
     makepng(data=data, wcs=wcs, imfn=f"{mompath}/{mol}_CubeMosaic_{suf}.png",
             **kwargs)

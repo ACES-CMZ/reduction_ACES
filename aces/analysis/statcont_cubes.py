@@ -117,7 +117,7 @@ def main():
             with open(outfn, 'w') as fh:
                 fh.write("")
 
-            print(f"{fn}->{outfn}, size={sizes[ii]/1024**3} GB", flush=True)
+            print(f"{fn}->{outfn}, size={sizes[ii] / 1024**3} GB", flush=True)
 
             print(f"Target chunk size is {target_chunk_size}", flush=True)
             cube = SpectralCube.read(fn, target_chunk_size=target_chunk_size,
@@ -153,7 +153,7 @@ def main():
                     fits.PrimaryHDU(data=cont,
                                     header=cube[0].header).writeto(outfn,
                                                                    overwrite=True)
-            print(f"{fn} -> {outfn} in {time.time()-t0}s", flush=True)
+            print(f"{fn} -> {outfn} in {time.time() - t0}s", flush=True)
         else:
             try:
                 cont = fits.getdata(outfn)
