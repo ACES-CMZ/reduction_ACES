@@ -20,9 +20,9 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     """
     Parameters
     ----------
-    savedir: 
+    savedir:
         Where to put the files in the end
-    workdir: 
+    workdir:
         Where to store the intermediate files
     """
 

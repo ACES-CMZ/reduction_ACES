@@ -4,13 +4,9 @@ from astropy import units as u
 from radio_beam import Beam
 from astropy.io import fits
 import pylab as pl
-pl.rcParams['figure.facecolor'] = 'w'
-pl.rcParams['figure.dpi'] = 300
 from astropy import visualization
 from astropy import wcs
 import PIL
-PIL.Image.MAX_IMAGE_PIXELS = 933120000
-
 
 import matplotlib.colors as mcolors
 import numpy as np
@@ -24,6 +20,11 @@ from astropy.coordinates import SkyCoord
 
 from astropy.wcs.utils import fit_wcs_from_points
 
+pl.rcParams['figure.facecolor'] = 'w'
+pl.rcParams['figure.dpi'] = 300
+PIL.Image.MAX_IMAGE_PIXELS = 933120000
+
+
 def fits_to_avmpng(fitsfn, outpng):
     colors1 = pl.cm.gray_r(np.linspace(0., 1, 128))
     colors2 = pl.cm.hot(np.linspace(0, 1, 128))
@@ -35,19 +36,20 @@ def fits_to_avmpng(fitsfn, outpng):
     ACESheader = ACES[0].header
     ACESdata = ACES[0].data
     ACESwcs = wcs.WCS(ACES[0].header)
-    ACESdata *= (1*u.Jy).to(u.K, Beam.from_fits_header(ACESheader).jtok_equiv(95*u.GHz)).value
+    ACESdata *= (1 * u.Jy).to(u.K, Beam.from_fits_header(ACESheader).jtok_equiv(95 * u.GHz)).value
     ACESheader['BUNIT'] = 'K'
-    
+
     norm = simple_norm([0], min_cut=0.0001, max_cut=1.5, stretch='log')
-    
-    norm = simple_norm(mustangdata, min_cut=0.0001, max_cut=1.5, stretch='log')
-    colordata_tens = mymap(norm(mustangdata))
-    ct = (colordata_tens[::-1,:,:3] * 256).astype('uint8')
-    ct[(colordata_tens[::-1,:,:3] * 256) > 255] = 255
+
+    norm = simple_norm(ACESdata, min_cut=0.0001, max_cut=1.5, stretch='log')
+    colordata_tens = mymap(norm(ACESdata))
+    ct = (colordata_tens[::-1, :, :3] * 256).astype('uint8')
+    ct[(colordata_tens[::-1, :, :3] * 256) > 255] = 255
     img_tens = PIL.Image.fromarray(ct)
     img_tens.save(outpng)
-    avm = pyavm.AVM.from_wcs(mustangwcs)
+    avm = pyavm.AVM.from_wcs(ACESwcs)
     avm.embed(outpng, outpng)
+
 
 def toast(imfn, targetdir='/orange/adamginsburg/web/public/ACES/toasts/'):
 
@@ -60,26 +62,25 @@ def toast(imfn, targetdir='/orange/adamginsburg/web/public/ACES/toasts/'):
 
     #points = np.array([(0,0), (0, rslt.data.shape[0]), (rslt.data.shape[1], 0), (rslt.data.shape[1], rslt.data.shape[0])])
     #points = np.array([np.linspace(0, rslt.data.shape[1]), np.linspace(0, rslt.data.shape[0])]).T
-    # overkill: 
+    # overkill:
     points = np.mgrid[0:data.shape[1]:1000, 0:data.shape[0]:1000]
     points = points.reshape(2, np.prod(points.shape[1:])).T
-    wpoints = wcs.pixel_to_world(points[:,0], points[:,1])
+    wpoints = wcs.pixel_to_world(points[:, 0], points[:, 1])
 
-    wcsfk5 = fit_wcs_from_points((points[:,0], points[:,1]), wpoints.fk5)
+    wcsfk5 = fit_wcs_from_points((points[:, 0], points[:, 1]), wpoints.fk5)
 
     # sanity check
-    gc = SkyCoord(0*u.deg, 0*u.deg, frame='galactic')
+    gc = SkyCoord(0 * u.deg, 0 * u.deg, frame='galactic')
     print(f"Sanity check: 0,0 gal -> pix in orig: {wcs.world_to_pixel(gc)}, in fk5: {wcsfk5.world_to_pixel(gc)} should be the same! diff is {np.array(wcs.world_to_pixel(gc)) - np.array(wcsfk5.world_to_pixel(gc))}")
 
     height, width, _ = np.array(img).shape
 
     # redo: using world_to_pixel makes the cd flip not work (probably a wcs.set call populates pc instead of cd)
-    wcsfk5 = timage._flip_wcs_parity(fit_wcs_from_points((points[:,0], points[:,1]), wpoints.fk5),
+    wcsfk5 = timage._flip_wcs_parity(fit_wcs_from_points((points[:, 0], points[:, 1]), wpoints.fk5),
                                      height - 1)
     # really dumb, definitely wrong hack to make the builder not complain about parity
     # wcsfk5.wcs.cd[:,1] *= -1
     print(f"Sanity check: 0,0 gal from the flipped fk5: {wcsfk5.world_to_pixel(gc)[1]} should match {wcs.world_to_pixel(gc)[1]} if we do naxis-y: {height - np.array(wcsfk5.world_to_pixel(gc)[1])}")
-
 
     bui = builder.Builder(pyramid.PyramidIO(targetdir))
     stud = bui.prepare_study_tiling(tim)
@@ -100,26 +101,26 @@ def toast(imfn, targetdir='/orange/adamginsburg/web/public/ACES/toasts/'):
     bui.imgset.thumbnail_url = bui.imgset.url.format(0, 0, 0, 0)
     bui.imgset.name = os.path.basename(targetdir)
 
-    ctr = SkyCoord(0.1189*u.deg, -0.05505*u.deg, frame='galactic').fk5
+    ctr = SkyCoord(0.1189 * u.deg, -0.05505 * u.deg, frame='galactic').fk5
     bui.place.ra_hr = ctr.ra.hourangle
     bui.place.dec_deg = ctr.dec.deg
     bui.place.zoom_level = 4
 
     fldr = bui.create_wtml_folder()
-    
+
     # write both the 'rel' and 'full' URL versions
     bui.write_index_rel_wtml()
     with open(os.path.join(bui.pio._base_dir, "index.wtml"), 'w') as fh:
-        write_xml_doc(fldr.to_xml(), dest_stream=fh)          
+        write_xml_doc(fldr.to_xml(), dest_stream=fh)
     print("Wrote ", os.path.join(bui.pio._base_dir, "index.wtml"))
     return os.path.join(bui.pio._base_dir, "index.wtml")
 
+
 def make_all_indexes():
-    import glob
     indexes = []
     for imfn in (glob.glob("/orange/adamginsburg/ACES/mosaics/12m_flattened/*continuum*noaxes.png") +
                  glob.glob("/orange/adamginsburg/ACES/mosaics/cubes/moments/*png")):
-        if 'residual' in imfn: 
+        if 'residual' in imfn:
             continue
         tdr = os.path.basename(imfn).replace("_noaxes.png", "").replace(".png", "")
         print(imfn, tdr)
@@ -147,7 +148,7 @@ def make_joint_index(indexes):
     acestens.children[0].name = 'ACES+TENS (toasty)'
     acestens.children[0].thumbnail = 'https://data.rc.ufl.edu/pub/adamginsburg/ACES/MUSTANG_Feather/0/0/0_0.png'
 
-    ctr = SkyCoord(0.1189*u.deg, -0.05505*u.deg, frame='galactic').fk5
+    ctr = SkyCoord(0.1189 * u.deg, -0.05505 * u.deg, frame='galactic').fk5
     acestens.children[0].ra_hr = ctr.ra.hourangle
     acestens.children[0].dec_deg = ctr.dec.deg
     acestens.children[0].zoom_level = 4
@@ -170,6 +171,7 @@ def main():
     indexes = make_all_indexes()
 
     make_joint_index(indexes)
+
 
 if __name__ == "__main__":
     main()

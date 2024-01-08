@@ -89,7 +89,6 @@ if __name__ == "__main__":
         makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean.png",
                 stretch='asinh', min_percent=1, max_percent=99.5)
 
-
     if dods:
         print("Downsampling")
         from aces.imaging.make_mosaic import make_downsampled_cube, basepath

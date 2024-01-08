@@ -251,7 +251,7 @@ def main():
                                 if fn.endswith('.fits'):
                                     shutil.copy(fn, '{tempdir_name}/')
                                 else:
-                                    shutil.copytree(fn, '{tempdir_name}/')\n\n""") 
+                                    shutil.copytree(fn, '{tempdir_name}/')\n\n""")
                         )
 
                         cleanupcmds = (textwrap.dedent(

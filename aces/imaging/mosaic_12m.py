@@ -72,6 +72,7 @@ def all_lines(*args, folder='12m_flattened', **kwargs):
 def rms_(*args, **kwargs):
     return rms(prefix='12m_continuum', threshold=3, **kwargs)
 
+
 def main():
 
     from optparse import OptionParser
@@ -147,8 +148,6 @@ def check_files(filelist):
     
     for fn in filelist:
         assert os.path.exists(fn.replace("image.pbcor", "pb")), f"No pb found for {fn}"
-
-
 
 
 def continuum(header):
