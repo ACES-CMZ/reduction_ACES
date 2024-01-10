@@ -1,7 +1,7 @@
 """
 After running this, symlink to web via:
-ln -s /orange/adamginsburg/ACES/mosaics/*m0_mosaic*png /orange/adamginsburg/web/secure/ACES/mosaics/lines/
-ln -s /orange/adamginsburg/ACES/mosaics/*max_mosaic*png /orange/adamginsburg/web/secure/ACES/mosaics/lines/
+ln -s /orange/adamginsburg/ACES/mosaics/12m_flattened/*m0_mosaic*png /orange/adamginsburg/web/secure/ACES/mosaics/lines/
+ln -s /orange/adamginsburg/ACES/mosaics/12m_flattened/*max_mosaic*png /orange/adamginsburg/web/secure/ACES/mosaics/lines/
 """
 import shutil
 import glob

@@ -190,7 +190,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 rest_value=None,
                 cbar_unit=None,
                 array='7m',
-                folder='',
+                folder=None, # must be specified though
                 basepath='./'):
 
     if target_header is None:
@@ -856,8 +856,8 @@ def rms_map(img, kernel=Gaussian2DKernel(10)):
     return rms
 
 
-def rms(prefix='12m_continuum', threshold=2.5, nbeams=3, maxiter=50):
-    for fn in glob.glob(f'{basepath}/mosaics/{prefix}*mosaic.fits'):
+def rms(prefix='12m_continuum', folder='12m_flattened', threshold=2.5, nbeams=3, maxiter=50):
+    for fn in glob.glob(f'{basepath}/mosaics/{folder}/{prefix}*mosaic.fits'):
         if 'rms' in fn:
             # don't re-rms rms maps
             continue
