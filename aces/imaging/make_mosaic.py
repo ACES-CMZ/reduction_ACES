@@ -813,7 +813,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_
         dscube = cube[:, start::factor, start::factor]
         # this is a hack; see https://github.com/astropy/astropy/pull/10897
         # the spectral-cube approach is right normally, but we're cheating here and just taking every 9th pixel, we're not smoothing first.
-        dscube.wcs.celestial.crpix[:] = (dscube.wcs.celestial.crpix[:] - 1 - start) / factor + 1
+        dscube.wcs.celestial.wcs.crpix[:] = (dscube.wcs.celestial.wcs.crpix[:] - 1 - start) / factor + 1
         dscube.write(outcubename, overwrite=overwrite)
     # else:
     #     cube = SpectralCube.read(cubename, use_dask=False)
