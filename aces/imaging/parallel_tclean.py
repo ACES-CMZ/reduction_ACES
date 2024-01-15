@@ -12,6 +12,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          CASAVERSION='casa-6.4.3-2-pipeline-2021.3.0.17',
                          field='Sgr_A_star',
                          workdir='/blue/adamginsburg/adamginsburg/ACES/workdir',
+                         logdir='/blue/adamginsburg/adamginsburg/ACES/logs',
                          dry=False,
                          savedir=None,
                          remove_incomplete_psf=True,
@@ -222,7 +223,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
 
     runsplitcmd = ("#!/bin/bash\n"
-                   f'LOGFILENAME="casa_log_split_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_JOB_ID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
+                   f'LOGFILENAME="{logdir}/casa_log_split_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_JOB_ID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
                    'echo "Log file is $LOGFILENAME"\n'
                    f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                    ' --nologger --nogui '
@@ -235,7 +236,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     print(f"Wrote runsplit {slurmsplitcmdsh}")
 
     slurmsplitcmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
-                     f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log '
+                     f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_%j_%A_%a.log '
                      f'--job-name={jobname}_split --account={account} '
                      f'--qos={qos} --export=ALL --time={jobtime} {slurmsplitcmdsh}\n')
 
@@ -258,7 +259,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
 
     runcmd = ("#!/bin/bash\n"
-              f'LOGFILENAME="casa_log_line_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
+              f'LOGFILENAME="{logdir}/casa_log_line_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
               'echo "Log file is $LOGFILENAME"\n'
               f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
               ' --nologger --nogui '
@@ -271,7 +272,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     print(f"Wrote command {slurmcmd}")
 
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
-           f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log '
+           f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_%j_%A_%a.log '
            f'--job-name={jobname}_arr --account={account} '
            f'--array=0-{NARRAY} '
            f'--dependency=afterok:{scriptjobid} '
@@ -427,7 +428,7 @@ for vis in tclean_kwargs['vis']:
     #now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
     #LOGFILENAME = f"casa_log_line_{jobname}_merge_{now}.log"
     runcmd_merge = ("#!/bin/bash\n"
-                    f'LOGFILENAME="casa_log_merge_{jobname}_${{SLURM_JOBID}}_{now}.log"\n'
+                    f'LOGFILENAME="{logdir}/casa_log_merge_{jobname}_${{SLURM_JOBID}}_{now}.log"\n'
                     'echo "Log file is $LOGFILENAME"\n'
                     f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                     f' --nologger --nogui '
@@ -439,7 +440,7 @@ for vis in tclean_kwargs['vis']:
         fh.write(runcmd_merge)
 
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks * 4} '
-           f'--mem-per-cpu={mem_per_cpu} --output={jobname}_merge_%j_%A_%a.log --job-name={jobname}_merge --account={account} '
+           f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_merge_%j_%A_%a.log --job-name={jobname}_merge --account={account} '
            f'--dependency=afterok:{jobid} '
            f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd_merge}')
 
