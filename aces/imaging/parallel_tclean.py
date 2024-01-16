@@ -323,11 +323,11 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
     if os.path.exists(outfile):
         backup_outfile = outfile+f".backup_{{now}}"
         print(f"Found existing file {{outfile}}.  Moving to {{backup_outfile}}")
-        shutil.move(outfile, backup_outfile)
+        os.rename(outfile, backup_outfile)
     if os.path.exists(outfile+".move"):
         backup_outfile = outfile+".move"+f".backup_{{now}}"
         print(f"Found existing file {{outfile+'.move'}}.  Moving to {{backup_outfile}}")
-        shutil.move(outfile+".move", backup_outfile)
+        os.rename(outfile+".move", backup_outfile)
 
     # reads much more efficiently, is consistent with other cubes
     ia.imageconcat(outfile=outfile,
@@ -365,26 +365,34 @@ if 'beams' in rbeam:
             break
 
 if manybeam:
-    shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
-    shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
-    imsmooth(imagename=f'{imagename}.model',
-             outfile=f'{imagename}.convmodel',
+    try:
+        os.rename('{imagename}.image', '{imagename}.image.multibeam')
+    except Exception as ex:
+        print("Failed to move {imagename}.image -> {imagename}.image.multibeam, probably because the latter exists")
+        print(ex)
+    try:
+        os.rename('{imagename}.image.pbcor', '{imagename}.image.pbcor.multibeam')
+    except Exception as ex:
+        print("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
+        print(ex)
+    imsmooth(imagename='{imagename}.model',
+             outfile='{imagename}.convmodel',
              beam=commonbeam)
-    ia.imagecalc(outfile=f'{os.path.basename(imagename)}.image',
-                 pixels=f'{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
-                 imagemd=f'{os.path.basename(imagename)}.convmodel',
+    ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
+                 pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
+                 imagemd='{os.path.basename(imagename)}.convmodel',
                  overwrite=True)
     ia.close()
-    impbcor(imagename=f'{os.path.basename(imagename)}.image',
-            pbimage=f'{os.path.basename(imagename)}.pb',
-            outfile=f'{os.path.basename(imagename)}.image.pbcor',)
+    impbcor(imagename='{os.path.basename(imagename)}.image',
+            pbimage='{os.path.basename(imagename)}.pb',
+            outfile='{os.path.basename(imagename)}.image.pbcor',)
 
-    exportfits(imagename=f'{os.path.basename(imagename)}.image.pbcor',
-               fitsimage=f'{os.path.basename(imagename)}.image.pbcor.fits',
+    exportfits(imagename='{os.path.basename(imagename)}.image.pbcor',
+               fitsimage='{os.path.basename(imagename)}.image.pbcor.fits',
                overwrite=True
                )
-    exportfits(imagename=f'{os.path.basename(imagename)}.image',
-               fitsimage=f'{os.path.basename(imagename)}.image.fits',
+    exportfits(imagename='{os.path.basename(imagename)}.image',
+               fitsimage='{os.path.basename(imagename)}.image.fits',
                overwrite=True
                )
 
