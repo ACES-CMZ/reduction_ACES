@@ -378,14 +378,16 @@ if manybeam:
     imsmooth(imagename='{imagename}.model',
              outfile='{imagename}.convmodel',
              beam=commonbeam)
-    ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
-                 pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
-                 imagemd='{os.path.basename(imagename)}.convmodel',
-                 overwrite=True)
-    ia.close()
-    impbcor(imagename='{os.path.basename(imagename)}.image',
-            pbimage='{os.path.basename(imagename)}.pb',
-            outfile='{os.path.basename(imagename)}.image.pbcor',)
+    if not os.path.exists('{os.path.basename(imagename)}.image',):
+        ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
+                    pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
+                    imagemd='{os.path.basename(imagename)}.convmodel',
+                    overwrite=True)
+        ia.close()
+    if not os.path.exists('{os.path.basename(imagename)}.image',):
+        impbcor(imagename='{os.path.basename(imagename)}.image',
+                pbimage='{os.path.basename(imagename)}.pb',
+                outfile='{os.path.basename(imagename)}.image.pbcor',)
 
     exportfits(imagename='{os.path.basename(imagename)}.image.pbcor',
                fitsimage='{os.path.basename(imagename)}.image.pbcor.fits',
