@@ -101,7 +101,16 @@ def main():
 
     target_chunk_size = int(1e8)
 
+    if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
+        slurm_array_task_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
+    else:
+        slurm_array_task_id = None 
+
     for ii in sorted(sizes, key=lambda x: sizes[x]):
+
+        if slurm_array_task_id is not None:
+            if ii != slurm_array_task_id:
+                continue
 
         fn = filenames[ii]
 

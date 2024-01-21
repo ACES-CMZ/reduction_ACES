@@ -391,7 +391,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*spw{spwn}.{glob_suffix}')
         assert len(filelist) > 0
         if use_weights:
-            weightfiles = [fn.replace("image.pbcor", "pb") for fn in filelist]
+            weightfiles = [fn.replace("image.pbcor", "weight") for fn in filelist]
             for ii, (ifn, wfn) in enumerate(zip(list(filelist), list(weightfiles))):
                 if not os.path.exists(wfn):
                     log.error(f"Missing file {wfn}")
