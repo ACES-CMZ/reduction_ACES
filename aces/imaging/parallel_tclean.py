@@ -375,9 +375,10 @@ if manybeam:
     except Exception as ex:
         print("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
         print(ex)
-    imsmooth(imagename='{imagename}.model',
-             outfile='{imagename}.convmodel',
-             beam=commonbeam)
+    if not os.path.exists('{imagename}.convmodel'):
+        imsmooth(imagename='{imagename}.model',
+                outfile='{imagename}.convmodel',
+                beam=commonbeam)
     if not os.path.exists('{os.path.basename(imagename)}.image',):
         ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
                     pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
