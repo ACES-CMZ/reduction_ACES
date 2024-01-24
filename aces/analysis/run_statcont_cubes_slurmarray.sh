@@ -1,7 +1,7 @@
 
 basepath=/orange/adamginsburg/ACES/
-filenames=${basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*.image.pbcor.fits
-nfiles=$(ls -1 ${basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*.image.pbcor.fits | wc -l)
+filenames=${basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*cube*.image.pbcor.fits
+nfiles=$(ls -1 ${basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*cube*.image.pbcor.fits | wc -l)
 echo "Working on ${nfiles} files"
 
 

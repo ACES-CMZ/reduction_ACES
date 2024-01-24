@@ -100,11 +100,32 @@ for dotsomething in images:
                    overwrite=True)
 
     # separate step: make sure pbcor exists
-    pbimg = f'{os.path.basename(imagename)}.image.pbcor'
-    if not os.path.exists(pbimg):
+    pbcimg = f'{os.path.basename(imagename)}.image.pbcor'
+    try:
+        # check whether there's a single beam
+        ia.open(pbcimg)
+        rbeam_pbc = ia.restoringbeam()
+        ia.close()
+        nopbcimage = False
+    except Exception as ex:  # noqa
+        nopbcimage = True
+
+    # if any beam is not the common beam...
+    manybeam_pbc = False
+    if 'beams' in rbeam_pbc:
+        for beam in rbeam_pbc['beams'].values():
+            if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
+                print(f"beam={beam['*0']}, commonbeam={commonbeam}")
+                manybeam_pbc = True
+                break
+
+    if nopbcimage or manybeam_pbc or not os.path.exists(pbcimg):
+        print(f"pbcorrecting {imagename}")
         impbcor(imagename=f'{os.path.basename(imagename)}.image',
                 pbimage=f'{os.path.basename(imagename)}.pb',
-                outfile=f'{os.path.basename(imagename)}.image.pbcor',)
+                outfile=f'{os.path.basename(imagename)}.image.pbcor',
+                overwrite=True
+                )
         exportfits(imagename=f'{os.path.basename(imagename)}.image.pbcor',
                    fitsimage=f'{os.path.basename(imagename)}.image.pbcor.fits',
                    overwrite=True)

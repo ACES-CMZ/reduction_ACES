@@ -644,6 +644,12 @@ def make_giant_mosaic_cube(filelist,
     # there are 2 as of writing
     if verbose:
         print("Filtering out cubes with sketchy beams", flush=True)
+    for cube, fn in zip(cubes, filelist):
+        try:
+            beams_test = cube.beam if hasattr(cube, 'beam') else cube.beams
+        except NoBeamError as ex:
+            print(f"{fn} has no beam")
+            raise ex
     beams = [get_common_beam(cube.beams) if hasattr(cube, 'beams') else cube.beam
              for cube in cubes]
     ok = [beam.major < beam_threshold for beam in beams]

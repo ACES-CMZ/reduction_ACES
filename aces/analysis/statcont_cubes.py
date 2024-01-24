@@ -16,6 +16,8 @@ import time
 import warnings
 from astropy.table import Table
 from spectral_cube import SpectralCube
+import spectral_cube
+from spectral_cube.utils import NoBeamError
 from astropy.io import fits
 import dask
 
@@ -118,6 +120,16 @@ def main():
         outfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.cont.fits")
         fileformat = 'fits'
         assert outfn.count('.fits') == 1
+
+        if os.path.exists(outfn):
+            try:
+                beam = SpectralCube.read(outfn).beam
+            except NoBeamError:
+                try:
+                    beam = SpectralCube.read(fn).beam
+                except NoBeamError:
+                    raise ValueError(f"Neither {fn} nor {outfn} have a beam")
+                redo = True
 
         if not os.path.exists(outfn) or redo:
             t0 = time.time()
