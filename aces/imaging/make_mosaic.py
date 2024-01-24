@@ -190,7 +190,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 rest_value=None,
                 cbar_unit=None,
                 array='7m',
-                folder=None, # must be specified though
+                folder=None,  # must be specified though
                 basepath='./'):
 
     if target_header is None:

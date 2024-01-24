@@ -74,7 +74,7 @@ if __name__ == "__main__":
     mx = cube.max(axis=0, **howargs)
     mx.write(f"{mompath}/{molname}_CubeMosaic_max.fits", overwrite=True)
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
-            stretch='sqrt', min_cut=0, max_percent=99.5)
+            stretch='asinh', min_percent=0.1, max_percent=99.9)
 
     if dopv:
         print(f"PV max 2.  dt={time.time() - t0}")

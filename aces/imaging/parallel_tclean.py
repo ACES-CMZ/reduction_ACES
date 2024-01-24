@@ -361,6 +361,7 @@ manybeam = False
 if 'beams' in rbeam:
     for beam in rbeam['beams'].values():
         if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
+            print(f"Manybeam: beam={{beam['*0']}}, commonbeam={{commonbeam}}")
             manybeam = True
             break
 

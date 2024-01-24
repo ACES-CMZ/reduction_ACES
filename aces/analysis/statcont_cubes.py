@@ -93,7 +93,7 @@ def main():
     # simpler approach
     #sizes = {fn: get_size(fn) for fn in glob.glob(f"{basepath}/*_12M_spw[0-9].image")}
     #filenames = [f'{basepath}/{fn}' for fn in tbl['filename']] + list(glob.glob(f"{basepath}/*_12M_spw[0-9].image")) + list(glob.glob(f"{basepath}/*_12M_sio.image"))
-    filenames = glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*.image.pbcor.fits')
+    filenames = glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*cube*.image.pbcor.fits')
 
     sizes = {ii: get_size(fn)
              for ii, fn in enumerate(filenames)
@@ -104,7 +104,7 @@ def main():
     if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
         slurm_array_task_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
     else:
-        slurm_array_task_id = None 
+        slurm_array_task_id = None
 
     for ii in sorted(sizes, key=lambda x: sizes[x]):
 
@@ -167,7 +167,8 @@ def main():
             try:
                 cont = fits.getdata(outfn)
             except Exception as ex:
-                print(f"File {outfn} exists but could not be opened; skipping contsub step", flush=True)
+                shutil.move(outfn, outfn.replace(".fits", ".bad.fits"))
+                print(f"File {outfn} exists but could not be opened; renaming it.  Try again.", flush=True)
                 print(ex)
                 continue
             print(f"{fn} is done, loaded {outfn}", flush=True)
@@ -195,6 +196,8 @@ def main():
 
                 scube = cube - cont * cube.unit
                 scube.write(outcube, overwrite=True)
+            else:
+                print(f"Found existing cube {outcube} and redo=False")
         sys.stdout.flush()
         sys.stderr.flush()
 
