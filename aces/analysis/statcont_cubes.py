@@ -121,16 +121,6 @@ def main():
         fileformat = 'fits'
         assert outfn.count('.fits') == 1
 
-        if os.path.exists(outfn):
-            try:
-                beam = SpectralCube.read(outfn).beam
-            except NoBeamError:
-                try:
-                    beam = SpectralCube.read(fn).beam
-                except NoBeamError:
-                    raise ValueError(f"Neither {fn} nor {outfn} have a beam")
-                redo = True
-
         if not os.path.exists(outfn) or redo:
             t0 = time.time()
 
@@ -190,8 +180,25 @@ def main():
                 print(f"{outfn} had size {os.path.getsize(outfn)}", flush=True)
                 os.remove(outfn)
 
+        outcube = contsubfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.contsub.fits")
+        if os.path.exists(contsubfn):
+            try:
+                print(f"Checking {contsubfn} for beam")
+                beam = SpectralCube.read(contsubfn).beam
+            except NoBeamError:
+                try:
+                    beam = SpectralCube.read(fn).beam
+                except NoBeamError:
+                    raise ValueError(f"Neither {fn} nor {contsubfn} have a beam")
+                except AttributeError:
+                    beams = SpectralCube.read(fn).beams
+                    raise AttributeError(f"{fn} is a multi-beam cube")
+                redo = True
+            except AttributeError:
+                beams = SpectralCube.read(contsubfn).beams
+                redo = True
+
         if fn.endswith('.fits'):
-            outcube = fn[:-5] + '.statcont.contsub.fits'
             assert outcube.count('.fits') == 1
             if (not os.path.exists(outcube)) or redo:
                 print(f"Writing contsub cube to {outcube}", flush=True)
@@ -210,6 +217,8 @@ def main():
                 scube.write(outcube, overwrite=True)
             else:
                 print(f"Found existing cube {outcube} and redo=False")
+        else:
+            print("Operated on a non-FITS file: no contsub cube was created")
         sys.stdout.flush()
         sys.stderr.flush()
 
