@@ -294,8 +294,13 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     mergescript = textwrap.dedent(
 f"""
 import glob, os, shutil, datetime
+
+{logprint}
+
+
 savedir = '{savedir}'
 os.chdir('{workdir}')
+
 for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
     infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
@@ -377,16 +382,19 @@ if manybeam:
         print("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
         print(ex)
     if not os.path.exists('{imagename}.convmodel'):
+        logprint('Creating convmodel {os.path.basename(imagename)}.convmodel')
         imsmooth(imagename='{imagename}.model',
                 outfile='{imagename}.convmodel',
                 beam=commonbeam)
-    if not os.path.exists('{os.path.basename(imagename)}.image',):
+    if not os.path.exists('{os.path.basename(imagename)}.image'):
+        logprint('Creating image {os.path.basename(imagename)}.image')
         ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
                     pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
                     imagemd='{os.path.basename(imagename)}.convmodel',
                     overwrite=True)
         ia.close()
-    if not os.path.exists('{os.path.basename(imagename)}.image',):
+    if not os.path.exists('{os.path.basename(imagename)}.image.pbcor',):
+        logprint('Creating pbcor image {os.path.basename(imagename)}.image.pbcor')
         impbcor(imagename='{os.path.basename(imagename)}.image',
                 pbimage='{os.path.basename(imagename)}.pb',
                 outfile='{os.path.basename(imagename)}.image.pbcor',)
@@ -423,7 +431,6 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
 os.chdir('{workdir}')
 tclean_kwargs = {tclean_kwargs}
 
-{logprint}
 {rename_vis}
 
 for vis in tclean_kwargs['vis']:

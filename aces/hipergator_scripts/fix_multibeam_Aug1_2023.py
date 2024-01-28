@@ -12,6 +12,11 @@ ia = image()
 images = glob.glob("/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/m*/calibrated/working/*cube*.image")
 #images = glob.glob("/orange/adamginsburg/ACES/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X1a2/calibrated/working/*spw33.cube*psf")
 
+
+# if we use .image and the code below fails halfway, it won't try to recover b/c it renames .image to .image.multibeam
+# so we can use .residual instead, maybe (or .model)
+images = glob.glob("/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/m*/calibrated/working/*cube*.residual")
+
 for dotsomething in images:
     print(f"Working on {dotsomething} (fixing multibeam if needed)", flush=True)
     imagename = os.path.splitext(dotsomething)[0]
@@ -76,6 +81,9 @@ for dotsomething in images:
                 shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
                 shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
 
+        if not os.path.exists(f'{imagename}.model'):
+            print(f"MISSING MODEL for {imagename}")
+            continue
         imsmooth(imagename=f'{imagename}.model',
                  outfile=f'{imagename}.convmodel',
                  beam=commonbeam,
