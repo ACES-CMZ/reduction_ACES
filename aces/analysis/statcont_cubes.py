@@ -13,6 +13,7 @@ customized.
 We should eventually allow multi-cube combination using full statcont abilities
 """
 import time
+import shutil
 import warnings
 from astropy.table import Table
 from spectral_cube import SpectralCube
