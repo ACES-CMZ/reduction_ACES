@@ -843,7 +843,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_
     if spectrally_too:
         dscube_s = dscube.downsample_axis(factor=factor, axis=0)
         assert outcubename.endswith('.fits')
-        dscube_s.write(outcubename.replace(".fits", "_spectrally.fits"))
+        dscube_s.write(outcubename.replace(".fits", "_spectrally.fits"), overwrite=True)
 
 
 def rms_map(img, kernel=Gaussian2DKernel(10)):
