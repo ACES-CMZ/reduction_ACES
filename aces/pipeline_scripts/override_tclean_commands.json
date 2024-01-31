@@ -227,6 +227,7 @@
         "nchan": -1,
         "start": "",
         "width": "",
+        "cyclefactor": 2.5,
         "phasecenter": "ICRS 17:45:12.176 -28.54.51.587",
         "specmode": "cube",
         "gridder": "mosaic",
@@ -1021,7 +1022,7 @@
         "start": "",
         "width": "",
         "threshold": "0.01Jy",
-        "cyclefactor": 2.5
+        "cyclefactor": 3.5
       },
       "spw35": {
         "imagename": "uid___A001_X15a0_X190.s38_0.Sgr_A_star_sci.spw35.cube.I.iter1.reclean",
@@ -1823,6 +1824,7 @@
         "nchan": -1,
         "start": "",
         "width": "",
+        "cyclefactor": 3.5,
         "threshold": "0.01Jy"
       }
     }
@@ -2754,7 +2756,7 @@
         "threshold": "0.01Jy",
         "nsigma": 0.0,
         "cycleniter": -1,
-        "cyclefactor": 3.0,
+        "cyclefactor": 3.5,
         "minpsffraction": 0.05,
         "maxpsffraction": 0.8,
         "interactive": 0,
