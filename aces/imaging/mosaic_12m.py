@@ -175,7 +175,7 @@ def continuum(header):
     print(flush=True)
     #weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*I.pb.tt0.fits')
     #weightfiles += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.pb.tt0.fits')
-    weightfiles = [fn.replace(".image.tt0.pbcor", ".pb.tt0").replace(".I.tt0.pbcor", ".I.pb.tt0").replace('manual.pbcor.tt0', 'manual.pb.tt0')
+    weightfiles = [fn.replace(".image.tt0.pbcor", ".weight.tt0").replace(".I.tt0.pbcor", ".I.weight.tt0").replace('manual.pbcor.tt0', 'manual.weight.tt0')
                    for fn in filelist]
     assert len(weightfiles) == len(filelist)
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
@@ -218,7 +218,7 @@ def reimaged(header):
     #weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
     #weightfiles_ = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*I.iter1.pb.tt0')
     #weightfiles_ += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.pb.tt0.fits')
-    weightfiles = [fn.replace(".image.tt0.pbcor", ".pb.tt0").replace(".I.tt0.pbcor", ".I.pb.tt0") for fn in filelist]
+    weightfiles = [fn.replace(".image.tt0.pbcor", ".weight.tt0").replace(".I.tt0.pbcor", ".I.weight.tt0") for fn in filelist]
     #assert len(weightfiles) == len(filelist)
     #for missing in set(weightfiles_) - set(weightfiles):
     #    logprint(f"Missing {missing}")
@@ -230,18 +230,21 @@ def reimaged(header):
                 norm_kwargs=dict(stretch='asinh', max_cut=0.008,
                                  min_cut=-0.0002),
                 target_header=header,
+                folder='continuum'
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
                 target_header=header,
+                folder='continuum'
                 )
     print(flush=True)
     make_mosaic(wthdus, name='primarybeam_coverage', weights=wthdus,
                 cbar_unit='PB Level', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0002),
                 target_header=header,
+                folder='continuum'
                 )
 
 
@@ -258,7 +261,7 @@ def reimaged_high(header):
     #weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
     #weightfiles_ = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*I.iter1.pb.tt0')
     #weightfiles_ += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33_35*.pb.tt0.fits')
-    weightfiles = [fn.replace(".image.tt0.pbcor", ".pb.tt0").replace(".I.tt0.pbcor", ".I.pb.tt0") for fn in filelist]
+    weightfiles = [fn.replace(".image.tt0.pbcor", ".weight.tt0").replace(".I.tt0.pbcor", ".I.weight.tt0") for fn in filelist]
     #assert len(weightfiles) == len(filelist)
     #for missing in set(weightfiles_) - set(weightfiles):
     #    logprint(f"Missing {missing}")
@@ -270,12 +273,14 @@ def reimaged_high(header):
                 norm_kwargs=dict(stretch='asinh', max_cut=0.008,
                                  min_cut=-0.0002),
                 target_header=header,
+                folder='continuum'
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged_spw33_35', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
                 target_header=header,
+                folder='continuum'
                 )
 
 
@@ -294,7 +299,7 @@ def residuals(header):
 
         hdus = [read_as_2d(fn) for fn in filelist]
         print(flush=True)
-        weightfiles = [x.replace(".residual.tt0", ".pb.tt0") for x in filelist]
+        weightfiles = [x.replace(".residual.tt0", ".weight.tt0") for x in filelist]
         beamfiles = [x.replace(".residual.tt0", ".image.tt0") for x in filelist]
         beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(read_as_2d(fn)[0].header)
                                         for fn in beamfiles])
