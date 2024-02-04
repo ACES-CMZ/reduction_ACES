@@ -185,18 +185,18 @@ def main():
         if os.path.exists(contsubfn):
             try:
                 print(f"Checking {contsubfn} for beam")
-                beam = SpectralCube.read(contsubfn).beam
+                SpectralCube.read(contsubfn).beam
             except NoBeamError:
                 try:
-                    beam = SpectralCube.read(fn).beam
+                    SpectralCube.read(fn).beam
                 except NoBeamError:
                     raise ValueError(f"Neither {fn} nor {contsubfn} have a beam")
                 except AttributeError:
-                    beams = SpectralCube.read(fn).beams
+                    SpectralCube.read(fn).beams
                     raise AttributeError(f"{fn} is a multi-beam cube")
                 redo = True
             except AttributeError:
-                beams = SpectralCube.read(contsubfn).beams
+                SpectralCube.read(contsubfn).beams
                 redo = True
 
         if fn.endswith('.fits'):
