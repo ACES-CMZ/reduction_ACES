@@ -93,3 +93,18 @@ if __name__ == "__main__":
         print("Downsampling")
         from aces.imaging.make_mosaic import make_downsampled_cube, basepath
         make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits')
+
+
+    print(f"masked mom0.  dt={time.time() - t0}")
+    std = cube.mad_std()
+    mom0 = cube.with_mask(cube > std).moment0(axis=0, **howargs)
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_mom0.fits", overwrite=True)
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
+            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+
+    from dask_image import ndmorph
+    signal_mask = ndmorph.binary_dilation(signal_mask, structure=np.ones([3,3,3]), iterations=1)
+    mom0 = cube.with_mask(signal_mask).moment0(axis=0, **howargs)
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.png",
+            stretch='asinh', min_cut=-0.1, max_percent=99.5)
