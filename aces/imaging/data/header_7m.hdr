@@ -17,3 +17,4 @@ CRVAL2  =   -0.037344573965058 / [deg] Coordinate value at reference point
 LONPOLE =                180.0 / [deg] Native longitude of celestial pole       
 LATPOLE =   -0.037344573965058 / [deg] Native latitude of celestial pole        
 MJDREF  =                  0.0 / [d] MJD of fiducial time                       
+BUNIT   =            'Jy/beam' /

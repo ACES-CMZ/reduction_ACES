@@ -234,6 +234,26 @@ def main():
                                             shutil.copytree(fn, target)\n\n
                             """)
 
+                        setupcmds = (textwrap.dedent(
+                            f"""
+                            import glob
+                            flist = glob.glob('{workingpath}/{os.path.basename(tcpars['imagename'])}.*')
+                            for fn in flist:
+                                logprint(f'Copying {{fn}} to {tempdir_name}')
+                                target = f'{tempdir_name}/{{os.path.basename(fn)}}'
+                                if os.path.exists(target):
+                                    logprint(f'Removing {{target}} because it exists')
+                                    assert 'iter1' in target  # sanity check - don't remove important directories!
+                                    if fn.endswith('.fits'):
+                                        os.remove(target)
+                                    else:
+                                        shutil.rmtree(target)
+                                if fn.endswith('.fits'):
+                                    shutil.copy(fn, '{tempdir_name}/')
+                                else:
+                                    shutil.copytree(fn, '{tempdir_name}/')\n\n""")
+                        )
+
                         cleanupcmds = (textwrap.dedent(
                             f"""
                             import glob
@@ -296,6 +316,7 @@ def main():
                         if temp_workdir:
                             fh.write("".join(splitcmd))
                             fh.write("\n\n")
+                            fh.write(setupcmds)
                         fh.write(check_psf_exists)
                         print(f"tcpars['imagename'] = {tcpars['imagename']}")
                         fh.write(savecmds)

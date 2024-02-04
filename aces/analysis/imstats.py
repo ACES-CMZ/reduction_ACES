@@ -249,7 +249,7 @@ def imstats(fn, reg=None):
         fh = fits.open(fn)
         data = fh[0].data
         ww = wcs.WCS(fh[0].header)
-        casaversion = fh[0].header['ORIGIN']
+        casaversion = fh[0].header['ORIGIN'] if 'ORIGIN' in fh[0].header else 'unknown'
     except IsADirectoryError:
         cube = SpectralCube.read(fn, format='casa_image')
         data = cube[0].value
@@ -396,6 +396,7 @@ def parse_fn(fn):
             'robust': 'r' + str(robust),
             'suffix': split[-1],
             'pbcor': 'pbcor' in fn.lower(),
+            'spws': ','.join([x for x in split[3].replace("spw", "").split("_")]),
             }
 
 
@@ -497,6 +498,10 @@ class MyEncoder(json.JSONEncoder):
 
 def savestats(basepath=basepath,
               suffix='image.tt0*', filetype=".fits"):
+    """
+    filtype : str
+        ".fits" or "" for CASA image
+    """
 
     stats = assemble_stats(
         f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}",
@@ -507,7 +512,7 @@ def savestats(basepath=basepath,
     requested = get_requested_sens()
 
     meta_keys = ['region', 'band', 'array', 'robust', 'suffix',
-                 'pbcor', 'filename']
+                 'pbcor', 'spws', 'filename', ]
     stats_keys = ['bmaj', 'bmin', 'bpa', 'beam_geomavg' 'peak', 'sum', 'fluxsum', 'sumgt3sig',
                   'sumgt5sig', 'mad', 'mad_sample', 'std_sample', 'peak/mad',
                   'psf_secondpeak', 'psf_secondpeak_radius',
@@ -546,4 +551,4 @@ def savestats(basepath=basepath,
 
 
 def main():
-    savestats()
+    return savestats()

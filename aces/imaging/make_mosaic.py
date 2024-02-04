@@ -1,7 +1,9 @@
 import numpy as np
 import regions
 import radio_beam
+from radio_beam.utils import BeamError
 import spectral_cube
+import PIL
 from spectral_cube.lower_dimensional_structures import Projection
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 from spectral_cube import SpectralCube
@@ -35,6 +37,18 @@ basepath = conf.basepath
 
 warnings.filterwarnings(action='ignore', category=SpectralCubeWarning,
                         append=True)
+
+
+def get_common_beam(beams):
+    for epsilon in (5e-4, 1e-3, 1e-4, 5e-3, 1e-2):
+        for beam_threshold in np.logspace(-6, -2, 5):
+            try:
+                commonbeam = beams.common_beam(tolerance=beam_threshold, epsilon=epsilon)
+                print(f"Successfully acquired common beam with tolerance={beam_threshold} and epsilon={epsilon}.  beam={commonbeam}")
+                return commonbeam
+            except (BeamError, ValueError) as ex:
+                print(f"Encountered beam error '{ex}' with threshold {beam_threshold} and epsilon {epsilon}.  Trying again.")
+    raise BeamError("Failed to find common beam.")
 
 
 def read_as_2d(fn, minval=None):
@@ -89,7 +103,7 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
                     mx = cube.max(axis=0).to(u.K)
                 else:
                     log.warn(f"File {fn} is a multi-beam cube.")
-                    beam = cube.beams.common_beam()
+                    beam = get_common_beam(cube.beams)
                     equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
                     mxjy = cube.max(axis=0)
                     if hasattr(mxjy, '_beam') and mxjy._beam is None:
@@ -129,7 +143,7 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, fol
         if hasattr(cube, 'beam'):
             equiv = cube.beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
         elif hasattr(cube, 'beams'):
-            beam = cube.beams.common_beam()
+            beam = get_common_beam(cube.beams)
             equiv = beam.jtok_equiv(cube.with_spectral_unit(u.GHz).spectral_axis.mean())
 
         moment0 = (moment0 * u.s / u.km).to(u.K,
@@ -137,6 +151,35 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, fol
         if save_file:
             moment0.hdu.writeto(outfn)
         return moment0
+
+
+def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
+    import pylab as pl
+    from astropy import visualization
+    import matplotlib.colors as mcolors
+    import pyavm
+
+    colors1 = pl.cm.gray_r(np.linspace(0., 1, 128))
+    colors2 = pl.cm.hot(np.linspace(0, 1, 128))
+
+    colors = np.vstack((colors1, colors2))
+    mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+
+    sel = np.isnan(data) | (data == 0) | (footprint == 0 if footprint is not None else False)
+
+    norm = visualization.simple_norm(data, **norm_kwargs)
+    if 'min_cut' in norm_kwargs:
+        norm.vmin = norm_kwargs['min_cut']
+        assert norm.vmin == norm_kwargs['min_cut']
+
+    colordata = mymap(norm(data))
+    ct = (colordata[:, :, :] * 256).astype('uint8')
+    ct[(colordata[:, :, :] * 256) > 255] = 255
+    ct[:, :, 3][sel] = 0
+    img = PIL.Image.fromarray(ct[::-1, :, :])
+    img.save(imfn)
+    avm = pyavm.AVM.from_wcs(wcs, shape=data.shape)
+    avm.embed(imfn, imfn)
 
 
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
@@ -147,7 +190,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 rest_value=None,
                 cbar_unit=None,
                 array='7m',
-                folder='',
+                folder=None,  # must be specified though
                 basepath='./'):
 
     if target_header is None:
@@ -167,7 +210,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         if isinstance(commonbeam, radio_beam.Beam):
             cb = commonbeam
         else:
-            cb = beams.common_beam()
+            cb = get_common_beam(beams)
 
         if isinstance(commonbeam, str) and commonbeam == 'circular':
             circbeam = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
@@ -221,6 +264,15 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     log.info("Creating plots")
     import pylab as pl
     from astropy import visualization
+    import matplotlib.colors as mcolors
+    import pyavm
+
+    colors1 = pl.cm.gray_r(np.linspace(0., 1, 128))
+    colors2 = pl.cm.hot(np.linspace(0, 1, 128))
+
+    colors = np.vstack((colors1, colors2))
+    mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+
     pl.rc('axes', axisbelow=True)
     pl.matplotlib.use('agg')
 
@@ -230,7 +282,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
     fig = pl.figure(figsize=(20, 7))
     ax = fig.add_subplot(111, projection=target_wcs)
-    im = ax.imshow(prjarr, norm=visualization.simple_norm(prjarr, **norm_kwargs), zorder=front, cmap='gray')
+    norm = visualization.simple_norm(prjarr, **norm_kwargs)
+    im = ax.imshow(prjarr, norm=norm, zorder=front, cmap=mymap)
     cbar = pl.colorbar(mappable=im)
     if cbar_unit is not None:
         cbar.set_label(cbar_unit)
@@ -241,8 +294,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.coords[0].set_ticks(spacing=0.1 * u.deg)
     ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
-    fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic.png', bbox_inches='tight')
-    fig.savefig(f'{basepath}/mosaics/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
+    fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.png', bbox_inches='tight')
+    fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
 
     ax.coords.grid(True, color='black', ls='--', zorder=back)
 
@@ -256,6 +309,11 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_withgrid.png', bbox_inches='tight')
 
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
+
+    log.info("Creating AVM-embedded colormapped image")
+
+    imfn = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_noaxes.png'
+    makepng(prjarr, target_wcs, imfn, footprint=footprint, **norm_kwargs)
 
     log.info("Computing overlap regions")
     # create a list of composite regions for labeling purposes
@@ -302,6 +360,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
     fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')
 
+    # close figures to avoid memory leak
+    pl.close('all')
+
     if commonbeam is not None:
         return cb
 
@@ -330,7 +391,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*spw{spwn}.{glob_suffix}')
         assert len(filelist) > 0
         if use_weights:
-            weightfiles = [fn.replace("image.pbcor", "pb") for fn in filelist]
+            weightfiles = [fn.replace("image.pbcor", "weight") for fn in filelist]
             for ii, (ifn, wfn) in enumerate(zip(list(filelist), list(weightfiles))):
                 if not os.path.exists(wfn):
                     log.error(f"Missing file {wfn}")
@@ -369,7 +430,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
 
         if parallel:
             print(f"Starting function make_mosaic for {line} peak intensity")
-            proc = Process(target=make_mosaic, args=(hdus,),
+            proc = Process(target=make_mosaic, args=(hdus, ),
                            kwargs=dict(name=f'{line}_max', cbar_unit='K',
                            norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                            array=array, basepath=basepath, weights=wthdus if use_weights else None,
@@ -394,7 +455,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
 
         if parallel:
             print(f"Starting function make_mosaic for {line} moment 0")
-            proc = Process(target=make_mosaic, args=(m0hdus,),
+            proc = Process(target=make_mosaic, args=(m0hdus, ),
                            kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
                            norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
                            array=array, basepath=basepath, weights=wthdus if use_weights else None, target_header=header))
@@ -417,7 +478,8 @@ def make_giant_mosaic_cube_header(target_header,
                                   reference_frequency,
                                   cdelt_kms,
                                   nchan,
-                                  test=False,):
+                                  test=False,
+                                  ):
     header = fits.Header.fromtextfile(target_header)
     header['NAXIS'] = 3
     header['CDELT3'] = cdelt_kms
@@ -526,7 +588,8 @@ def make_giant_mosaic_cube(filelist,
                            channels='all',
                            fail_if_cube_dropped=True,
                            skip_channel_mosaicing=False,
-                           skip_final_combination=False,):
+                           skip_final_combination=False,
+                           ):
     """
     This takes too long as a full cube, so we have to do it slice-by-slice
 
@@ -556,7 +619,7 @@ def make_giant_mosaic_cube(filelist,
                                                                      rest_value=reference_frequency)
                  for fn in filelist]
         if weightfilelist is None:
-            weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".pb"),
+            weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".weight"),
                                               format='fits' if fn.endswith('fits') else 'casa_image', use_dask=True)
                             .with_spectral_unit(u.km / u.s,
                                                 velocity_convention='radio',
@@ -581,10 +644,15 @@ def make_giant_mosaic_cube(filelist,
     # there are 2 as of writing
     if verbose:
         print("Filtering out cubes with sketchy beams", flush=True)
-    ok = [cube.beam.major < beam_threshold
-          if hasattr(cube, 'beam')
-          else cube.beams.common_beam().major < beam_threshold
-          for cube in cubes]
+    for cube, fn in zip(cubes, filelist):
+        try:
+            cube.beam if hasattr(cube, 'beam') else cube.beams
+        except NoBeamError as ex:
+            print(f"{fn} has no beam")
+            raise ex
+    beams = [get_common_beam(cube.beams) if hasattr(cube, 'beams') else cube.beam
+             for cube in cubes]
+    ok = [beam.major < beam_threshold for beam in beams]
     if verbose:
         if not all(ok):
             print(f"Filtered down to {np.sum(ok)} of {len(ok)} cubes with beam major > {beam_threshold}")
@@ -603,9 +671,9 @@ def make_giant_mosaic_cube(filelist,
         print("Determining common beam")
     beams = radio_beam.Beams(beams=[cube.beam
                                     if hasattr(cube, 'beam')
-                                    else cube.beams.common_beam()
+                                    else get_common_beam(cube.beams)
                                     for cube in cubes])
-    commonbeam = beams.common_beam()
+    commonbeam = get_common_beam(beams)
     header.update(commonbeam.to_header_keywords())
 
     if channels == 'all':
@@ -624,7 +692,8 @@ def make_giant_mosaic_cube(filelist,
                                         working_directory=working_directory,
                                         channelmosaic_directory=channelmosaic_directory,
                                         fail_if_cube_dropped=fail_if_cube_dropped,
-                                        channels=channels,)
+                                        channels=channels,
+                                        )
     else:
         print("Skipped channel mosaicking")
 
@@ -637,13 +706,15 @@ def make_giant_mosaic_cube(filelist,
                                           channels=channels,
                                           working_directory=working_directory,
                                           channelmosaic_directory=channelmosaic_directory,
-                                          verbose=verbose,)
+                                          verbose=verbose,
+                                          )
 
 
 def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
                                       working_directory='/blue/adamginsburg/adamginsburg/ACES/workdir/mosaics/',
                                       channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
-                                      verbose=False,):
+                                      verbose=False,
+                                      ):
     # Part 6: Create output supergiant cube into which final product will be stashed
     output_working_file = f'{working_directory}/{cubename}_CubeMosaic.fits'
     output_file = f'{basepath}/mosaics/cubes/{cubename}_CubeMosaic.fits'
@@ -658,7 +729,8 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
         # Make a new file
         # https://docs.astropy.org/en/stable/generated/examples/io/skip_create-large-fits.html#sphx-glr-generated-examples-io-skip-create-large-fits-py
         hdu = fits.PrimaryHDU(data=np.ones([5, 5, 5], dtype=float),
-                              header=header,)
+                              header=header,
+                              )
         for kwd in ('NAXIS1', 'NAXIS2', 'NAXIS3'):
             hdu.header[kwd] = header[kwd]
 
@@ -727,7 +799,7 @@ def slurm_set_channels(nchan):
         return channels
 
 
-def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_dask=True):
+def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_dask=True, spectrally_too=True):
     """
     TODO: may need to dump-to-temp while reprojecting
     """
@@ -742,8 +814,12 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_
 
     print(f"Downsampling cube {cubename} -> {outcubename}")
     print(cube)
+    start = 0
     with ProgressBar():
-        dscube = cube[:, ::factor, ::factor]
+        dscube = cube[:, start::factor, start::factor]
+        # this is a hack; see https://github.com/astropy/astropy/pull/10897
+        # the spectral-cube approach is right normally, but we're cheating here and just taking every 9th pixel, we're not smoothing first.
+        dscube.wcs.celestial.wcs.crpix[:] = (dscube.wcs.celestial.wcs.crpix[:] - 1 - start) / factor + 1
         dscube.write(outcubename, overwrite=overwrite)
     # else:
     #     cube = SpectralCube.read(cubename, use_dask=False)
@@ -764,6 +840,11 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_
     #         #print("Writing")
     #         #dscube.write(outcubename, overwrite=overwrite)
 
+    if spectrally_too:
+        dscube_s = dscube.downsample_axis(factor=factor, axis=0)
+        assert outcubename.endswith('.fits')
+        dscube_s.write(outcubename.replace(".fits", "_spectrally.fits"), overwrite=True)
+
 
 def rms_map(img, kernel=Gaussian2DKernel(10)):
     """
@@ -781,9 +862,8 @@ def rms_map(img, kernel=Gaussian2DKernel(10)):
     return rms
 
 
-def rms(prefix='12m_continuum', threshold=2.5, nbeams=3, maxiter=50):
-    import glob
-    for fn in glob.glob(f'{basepath}/mosaics/{prefix}*mosaic.fits'):
+def rms(prefix='12m_continuum', folder='12m_flattened', threshold=2.5, nbeams=3, maxiter=50):
+    for fn in glob.glob(f'{basepath}/mosaics/{folder}/{prefix}*mosaic.fits'):
         if 'rms' in fn:
             # don't re-rms rms maps
             continue
