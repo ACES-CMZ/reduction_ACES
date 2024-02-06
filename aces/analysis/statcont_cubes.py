@@ -78,7 +78,7 @@ def main():
     print(f"tempdir is {tempfile.gettempdir()}")
 
     # kinda meant to be hacked
-    redo = False
+    redo = bool(os.getenv('REDO'))
 
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/cube_stats.ecsv')
 
