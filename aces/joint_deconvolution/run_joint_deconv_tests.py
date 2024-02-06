@@ -8,7 +8,7 @@ ACES_WORKDIR = Path(os.getenv('ACES_WORKDIR'))
 ACES_DATA = Path(os.getenv('ACES_DATA'))
 LINE_TABLE = (ACES_ROOTDIR / 'aces/data/tables/linelist.csv')
 
-### Set up the parameters for joint deconvolution ###
+# Set up the parameters for joint deconvolution
 LINES = ['hnco43']
 V_START = '-20 km/s'
 V_WIDTH = '1 km/s'

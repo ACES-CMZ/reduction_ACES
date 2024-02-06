@@ -87,12 +87,12 @@ def read_table(filename):
 def split_visfiles(visfiles, obs_dir, LINE_SPWS, LINE, ARRAY, field='Sgr_A_star'):
     split_files = []
     for visfile in visfiles:
-        outputvis = f"{obs_dir}/{Path(visfile).stem}_split.SPW{LINE_SPWS[LINE]['mol_'+ARRAY+'_spw']}.ms"
+        outputvis = f"{obs_dir}/{Path(visfile).stem}_split.SPW{LINE_SPWS[LINE]['mol_' + ARRAY + '_spw']}.ms"
         if not Path(outputvis).exists():
             try:
                 split(
                     vis=visfile,
-                    spw=LINE_SPWS[LINE]['mol_'+ARRAY+'_spw'],
+                    spw=LINE_SPWS[LINE]['mol_' + ARRAY + '_spw'],
                     field=field,
                     outputvis=outputvis,
                     datacolumn='corrected',
@@ -102,7 +102,7 @@ def split_visfiles(visfiles, obs_dir, LINE_SPWS, LINE, ARRAY, field='Sgr_A_star'
                 try:
                     split(
                         vis=visfile,
-                        spw=LINE_SPWS[LINE]['mol_'+ARRAY+'_spw'],
+                        spw=LINE_SPWS[LINE]['mol_' + ARRAY + '_spw'],
                         field=field,
                         outputvis=outputvis,
                         datacolumn='data',
@@ -115,7 +115,6 @@ def split_visfiles(visfiles, obs_dir, LINE_SPWS, LINE, ARRAY, field='Sgr_A_star'
     return split_files
 
 
-
 def do_mstransform(visfiles, obs_dir, RESTFREQ, V_START, V_WIDTH, NCHAN):
     for visfile in visfiles:
         if not Path(f"{obs_dir}/{Path(visfile).stem}.mstransform").exists():
@@ -126,7 +125,7 @@ def do_mstransform(visfiles, obs_dir, RESTFREQ, V_START, V_WIDTH, NCHAN):
                 mode='velocity',
                 veltype='radio',
                 datacolumn='data',
-                restfreq=str(RESTFREQ)+'GHz',
+                restfreq=str(RESTFREQ) + 'GHz',
                 start=V_START,
                 width=V_WIDTH,
                 nchan=NCHAN,
@@ -136,9 +135,9 @@ def do_mstransform(visfiles, obs_dir, RESTFREQ, V_START, V_WIDTH, NCHAN):
 
 def do_clean(ACES_ROOTDIR, obs_dir, obs_id, tp_cube, concatvis, LINE, DEEP_CLEAN, RELAXED_MASKING, TP_STARTMODEL):
 
-    ### THIS NEEDS TO BE UPDATED TO MERGE THE DEFAULT TCLEAN COMMANDS WITH THE OVERRIDE COMMANDS ###
+    # THIS NEEDS TO BE UPDATED TO MERGE THE DEFAULT TCLEAN COMMANDS WITH THE OVERRIDE COMMANDS
     tclean_commands = json.load(open(ACES_ROOTDIR / 'aces/pipeline_scripts/default_tclean_commands.json', 'r'))
-    tclean_pars = tclean_commands['Sgr_A_st_'+obs_id+'_03_TM1']['tclean_cube_pars']['spw31']
+    tclean_pars = tclean_commands['Sgr_A_st_' + obs_id + '_03_TM1']['tclean_cube_pars']['spw31']
     imagename_suffix = ''
 
     if DEEP_CLEAN:
@@ -181,6 +180,7 @@ def do_clean(ACES_ROOTDIR, obs_dir, obs_id, tp_cube, concatvis, LINE, DEEP_CLEAN
 
     if Path(tclean_pars['imagename'] + '.image.pbcor').exists() and not Path(tclean_pars['imagename'] + '.image.pbcor.fits').exists():
         export_fits(tclean_pars['imagename'] + '.image.pbcor', tclean_pars['imagename'] + '.image.pbcor.fits')
+
 
 def do_joint_deconvolution(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, REGION, LINE_SPWS, LINE, RESTFREQ, V_START, V_WIDTH, NCHAN, DEEP_CLEAN, RELAXED_MASKING, TP_STARTMODEL):
     generic_name = '.Sgr_A_star_sci.spw'
@@ -227,8 +227,8 @@ def do_joint_deconvolution(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, REGION, LINE_S
             if (not Path(f"{obs_dir}/Sgr_A_st_{obs_id}.{LINE}.12m7m.concat.ms").exists() and
                 len(seven_m_visfiles_mstransform) > 0 and
                     len(twelve_m_visfiles_mstransform) > 0):
-                concat(vis=seven_m_visfiles_mstransform + twelve_m_visfiles_mstransform,
-                            concatvis=f"{obs_dir}/Sgr_A_st_{obs_id}.{LINE}.12m7m.concat.ms")
+                concat(vis=seven_m_visfiles_mstransform + twelve_m_visfiles_mstransform, 
+                       concatvis=f"{obs_dir}/Sgr_A_st_{obs_id}.{LINE}.12m7m.concat.ms")
 
             concatvis = f"{obs_dir}/Sgr_A_st_{obs_id}.{LINE}.12m7m.concat.ms"
             do_clean(ACES_ROOTDIR, obs_dir, obs_id, tp_cube, concatvis, LINE, DEEP_CLEAN, RELAXED_MASKING, TP_STARTMODEL)
