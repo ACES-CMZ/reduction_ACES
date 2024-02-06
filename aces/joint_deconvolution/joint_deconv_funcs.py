@@ -227,7 +227,7 @@ def do_joint_deconvolution(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, REGION, LINE_S
             if (not Path(f"{obs_dir}/Sgr_A_st_{obs_id}.{LINE}.12m7m.concat.ms").exists() and
                 len(seven_m_visfiles_mstransform) > 0 and
                     len(twelve_m_visfiles_mstransform) > 0):
-                concat(vis=seven_m_visfiles_mstransform + twelve_m_visfiles_mstransform, 
+                concat(vis=seven_m_visfiles_mstransform + twelve_m_visfiles_mstransform,
                        concatvis=f"{obs_dir}/Sgr_A_st_{obs_id}.{LINE}.12m7m.concat.ms")
 
             concatvis = f"{obs_dir}/Sgr_A_st_{obs_id}.{LINE}.12m7m.concat.ms"
