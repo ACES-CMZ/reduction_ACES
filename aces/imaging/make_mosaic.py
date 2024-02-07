@@ -568,6 +568,10 @@ def check_channel(chanfn, verbose=True):
         if verbose:
             print(f"{chanfn} failed: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))}")
         return False
+    elif (not np.any(np.isnan(data))) and (np.nansum(data == 0) > 1000):
+        if verbose:
+            print(f"{chanfn} failed: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))} data.notfinite={np.sum(np.isnan(data))}")
+        return False
     else:
         if verbose:
             print(f"{chanfn} succeeded: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))}")
@@ -799,7 +803,7 @@ def slurm_set_channels(nchan):
         return channels
 
 
-def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_dask=True, spectrally_too=True):
+def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True, use_dask=True, spectrally_too=True):
     """
     TODO: may need to dump-to-temp while reprojecting
     """

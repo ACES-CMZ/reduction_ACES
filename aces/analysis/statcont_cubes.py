@@ -40,6 +40,18 @@ basepath = conf.basepath
 if not os.getenv('SLURM_TMPDIR'):
     os.environ['TMPDIR'] = '/blue/adamginsburg/adamginsburg/tmp'
 
+def check_fits_file(fn, remove=False, verbose=True):
+    with warnings.catch_warnings(record=True) as ww:
+        warnings.simplefilter('always')
+        if verbose:
+            print(f"Checking {fn} for warnings")
+        fits.open(fn)
+        for wi in ww:
+            if "File may have been truncated" in str(wi.message):
+                print(f"Removing truncated file {fn}")
+                os.remove(fn)
+                break
+
 
 def main():
     # need to be in main block for dask to work
@@ -122,6 +134,11 @@ def main():
         fileformat = 'fits'
         assert outfn.count('.fits') == 1
 
+        outcube = contsubfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.contsub.fits")
+
+        check_fits_file(outfn, remove=True)
+        check_fits_file(contsubfn, remove=True)
+
         if not os.path.exists(outfn) or redo:
             t0 = time.time()
 
@@ -181,7 +198,6 @@ def main():
                 print(f"{outfn} had size {os.path.getsize(outfn)}", flush=True)
                 os.remove(outfn)
 
-        outcube = contsubfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.contsub.fits")
         if os.path.exists(contsubfn):
             try:
                 print(f"Checking {contsubfn} for beam")
@@ -220,9 +236,11 @@ def main():
                 print(f"Found existing cube {outcube} and redo=False")
         else:
             print("Operated on a non-FITS file: no contsub cube was created")
+        print(f"Done with file {fn}")
         sys.stdout.flush()
         sys.stderr.flush()
 
 
 if __name__ == "__main__":
     main()
+    print("Done with statcont")
