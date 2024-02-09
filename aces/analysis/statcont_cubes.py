@@ -21,6 +21,7 @@ import spectral_cube
 from spectral_cube.utils import NoBeamError
 from astropy.io import fits
 import dask
+from tqdm.auto import tqdm
 
 from statcont.cont_finding import c_sigmaclip_scube
 
@@ -40,17 +41,70 @@ basepath = conf.basepath
 if not os.getenv('SLURM_TMPDIR'):
     os.environ['TMPDIR'] = '/blue/adamginsburg/adamginsburg/tmp'
 
+
+def get_size(start_path='.'):
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(start_path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+
+    return total_size
+
+
 def check_fits_file(fn, remove=False, verbose=True):
     with warnings.catch_warnings(record=True) as ww:
         warnings.simplefilter('always')
-        if verbose:
-            print(f"Checking {fn} for warnings")
-        fits.open(fn)
-        for wi in ww:
-            if "File may have been truncated" in str(wi.message):
-                print(f"Removing truncated file {fn}")
+        if os.path.exists(fn):
+            if verbose:
+                print(f"Checking {fn} for warnings")
+            try:
+                fits.open(fn)
+            except OSError:
+                print(f"Removing broken file {fn}")
                 os.remove(fn)
-                break
+            for wi in ww:
+                if "File may have been truncated" in str(wi.message):
+                    print(f"Removing truncated file {fn}")
+                    os.remove(fn)
+                    break
+
+
+def get_file_numbers(progressbar=tqdm):
+    """
+    For slurm jobs, just run through all the files that we're maybe going to statcont and check which ones need it
+    """
+
+    # kinda meant to be hacked
+    redo = bool(os.getenv('REDO'))
+
+    filenames = glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*cube*.image.pbcor.fits')
+
+    sizes = {ii: get_size(fn)
+             for ii, fn in enumerate(filenames)
+             }
+
+    numlist = []
+    for ii in tqdm(sorted(sizes, key=lambda x: sizes[x])):
+
+        fn = filenames[ii]
+
+        #outfn = fn+'.statcont.cont.fits'
+        outfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.cont.fits")
+        fileformat = 'fits'
+        assert outfn.count('.fits') == 1
+
+        outcube = contsubfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.contsub.fits")
+
+        check_fits_file(outfn, remove=True, verbose=False)
+        check_fits_file(contsubfn, remove=True, verbose=False)
+
+        if not os.path.exists(outfn) or not os.path.exists(contsubfn) or redo:
+            numlist.append(ii)
+    
+    return numlist
 
 
 def main():
@@ -93,17 +147,6 @@ def main():
     redo = bool(os.getenv('REDO'))
 
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/cube_stats.ecsv')
-
-    def get_size(start_path='.'):
-        total_size = 0
-        for dirpath, dirnames, filenames in os.walk(start_path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                # skip if it is symbolic link
-                if not os.path.islink(fp):
-                    total_size += os.path.getsize(fp)
-
-        return total_size
 
     # simpler approach
     #sizes = {fn: get_size(fn) for fn in glob.glob(f"{basepath}/*_12M_spw[0-9].image")}
