@@ -72,6 +72,18 @@ def check_fits_file(fn, remove=False, verbose=True):
                     break
 
 
+def check_cube(fn, zero_threshold=0, remove=False):
+    cube = SpectralCube.read(fn, use_dask=False)
+    # we only need to check a subset
+    scube = cube[::20, ::20, ::20]
+    spectra_with_zeros = (scube == 0*scube.unit).include().sum(axis=0).sum()
+    if spectra_with_zeros > zero_threshold:
+        print(f"{fn} was bad, it had {spectra_with_zeros} spectra containing zeros in the subsetted version")
+        if remove:
+            print(f"Removing {fn}")
+            os.remove(fn)
+
+
 def get_file_numbers(progressbar=tqdm):
     """
     For slurm jobs, just run through all the files that we're maybe going to statcont and check which ones need it
