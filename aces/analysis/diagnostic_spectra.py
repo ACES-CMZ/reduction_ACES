@@ -33,7 +33,7 @@ def make_diagnostic_spectra(fn):
                                     use_dask=True).with_spectral_unit(u.GHz)
     else:
         log.exception("File {0} does not exist".format(fn))
-        continue
+        return
 
     for operation in ('mean', 'max', 'median'):
         out_fn = f'{specdir}/{basename}.{operation}spec.fits'
@@ -60,41 +60,42 @@ def make_diagnostic_spectra(fn):
             sel = np.zeros(spec.size, dtype='int')
 
             cdatfile = os.path.join(memdir, 'calibration/cont.dat')
-            contfreqs = parse_contdotdat(cdatfile)
+            if os.path.exists(cdatfile):
+                contfreqs = parse_contdotdat(cdatfile)
 
-            for freqrange in contfreqs.split(";"):
-                low,high = freqrange.split("~")
-                high = u.Quantity(high)
-                low = u.Quantity(low, unit=high.unit)
-                sel += (spec.spectral_axis > low) & (spec.spectral_axis < high)
-                #print(f"{field}_{spw}: {low}-{high} count={sel.sum()}")
+                for freqrange in contfreqs.split(";"):
+                    low,high = freqrange.split("~")
+                    high = u.Quantity(high)
+                    low = u.Quantity(low, unit=high.unit)
+                    sel += (spec.spectral_axis > low) & (spec.spectral_axis < high)
+                    #print(f"{field}_{spw}: {low}-{high} count={sel.sum()}")
 
-            usel = np.unique(sel)
-            # 0 means 'not included in any windows', 1 means 'included in 1 window'
-            # 2 or more means included in 2 or more.
-            # The cases addressed here are:
-            # {0,1}: some continuum, some not
-            # {1}: all continuum
-            # {0,1,2,...} or {1,2,...}: some or all continuum, at least one pixel twice or more
-            if set(usel) in ({0, 1}, {1}):
-                sel = sel.astype('bool')
+                usel = np.unique(sel)
+                # 0 means 'not included in any windows', 1 means 'included in 1 window'
+                # 2 or more means included in 2 or more.
+                # The cases addressed here are:
+                # {0,1}: some continuum, some not
+                # {1}: all continuum
+                # {0,1,2,...} or {1,2,...}: some or all continuum, at least one pixel twice or more
+                if set(usel) in ({0, 1}, {1}):
+                    sel = sel.astype('bool')
 
-                dat_to_plot = spec.value.copy()
-                dat_to_plot[~sel] = np.nan
-                pl.plot(spec.spectral_axis, dat_to_plot, linewidth=4,
-                        zorder=-5, alpha=0.75, color='orange')
-            elif len(usel) > 1:
-                dat_to_plot = np.empty(spec.value.shape)
-                dat_to_plot[:] = np.nan
-                # skip zero
-                for selval in usel[1:]:
-                    dat_to_plot[sel == selval] = spec.value[sel == selval]
-                pl.plot(spec.spectral_axis, dat_to_plot, linewidth=4,
-                        zorder=selval-10, alpha=0.75, color='orange')
-            else:
-                log.error(f"No selected continuum for {basename}.{operation}: {sel.sum()} {usel}")
-                continue
-            print(f"{basename}: {sel.sum()} {usel}")
+                    dat_to_plot = spec.value.copy()
+                    dat_to_plot[~sel] = np.nan
+                    pl.plot(spec.spectral_axis, dat_to_plot, linewidth=4,
+                            zorder=-5, alpha=0.75, color='orange')
+                elif len(usel) > 1:
+                    dat_to_plot = np.empty(spec.value.shape)
+                    dat_to_plot[:] = np.nan
+                    # skip zero
+                    for selval in usel[1:]:
+                        dat_to_plot[sel == selval] = spec.value[sel == selval]
+                    pl.plot(spec.spectral_axis, dat_to_plot, linewidth=4,
+                            zorder=selval-10, alpha=0.75, color='orange')
+                else:
+                    log.error(f"No selected continuum for {basename}.{operation}: {sel.sum()} {usel}")
+                    continue
+                print(f"{basename}: {sel.sum()} {usel}")
             pl.title(f"{basename} {operation}")
             pl.savefig(fig_fn, bbox_inches='tight')
 
