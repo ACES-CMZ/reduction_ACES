@@ -541,6 +541,8 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                 raise ValueError("Empty channel found - re-run needed.")
         else:
             print(f"Starting mosaic_cubes for channel {chan}", flush=True)
+            #cubes=cubes[:2] # TEMP DEBUG
+            #weightcubes=weightcubes[:2] # TEMP DEBUG
             mosaic_cubes(cubes,
                          target_header=theader,
                          commonbeam=commonbeam,
@@ -552,6 +554,14 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                          fail_if_cube_dropped=fail_if_cube_dropped,
                          )
             print(f"\nChannel {chan} appears to have completed successfully, but we're checking first.", flush=True)
+
+            if not np.any(np.isnan(fits.getdata(chanfn))):
+                print(f"Channel {chan} had no nans but {(fits.getdata(chanfn)==0).sum()} zeros.  Setting 0->nan")
+                print("This is a bug that appeared sometime in Jan 2024 and I haven't been able to ID a cause")
+                fh = fits.open(chanfn, mode='update')
+                fh[0].data[fh[0].data == 0] = np.nan
+                fh.close()
+
             if not check_channel(chanfn, verbose=verbose):
                 raise ValueError("Produced an empty channel - raising exception as this is not expected")
             else:
