@@ -6,6 +6,8 @@ from astropy.table import Table
 from astropy.io import fits
 import pylab as pl
 from astropy.wcs import WCS
+from astropy import stats
+from scipy import ndimage
 
 
 from astropy.io import fits
@@ -91,11 +93,20 @@ def make_plot(sbname):
 
         ax1 = fig.add_subplot(2, 4, ii+1)
         ax1.plot(cube.spectral_axis, max_spec, color='k')
-        max_spec_masked = max_spec.copy()
         if contdat is not None:
+            max_spec_masked = max_spec.copy()
             max_spec_masked[~cont_arr_indiv.astype('bool')] = np.nan
             ax1.plot(cube.spectral_axis, max_spec_masked, color='r')
         ax1.set_title(str(spw))
+
+        new_contsel = ndimage.binary_dilation(
+            ndimage.binary_erosion(
+                max_spec < np.nanmedian(max_spec) + 2.5 * stats.mad_std(max_spec),
+                iterations=2),
+            iterations=1)
+        max_spec_masked2 = max_spec.copy()
+        max_spec_masked2[~new_contsel.astype('bool')] = np.nan
+        ax1.plot(cube.spectral_axis, max_spec_masked2, color='lime', alpha=0.75, linewidth=0.25, linestyle=':')
 
         # ax1.plot(cube.spectral_axis, mean_spec, color='k')
         # mean_spec_masked = mean_spec.copy()
