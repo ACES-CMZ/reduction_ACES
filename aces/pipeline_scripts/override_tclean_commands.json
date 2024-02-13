@@ -2307,6 +2307,13 @@
         "width": "",
         "threshold": "0.0153Jy",
         "cyclefactor": 3.0
+      },
+      "spw35": {
+        "nchan": -1,
+        "width": "",
+	"threshold": "0.0123Jy",
+	"cyclefactor": 3.0,
+	"weighting": "briggs"
       }
     }
   },
