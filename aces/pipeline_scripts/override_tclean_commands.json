@@ -2310,7 +2310,7 @@
       },
       "spw35": {
         "nchan": -1,
-        "width": "0.4883123MHz",
+        "width": "",
 	"threshold": "0.0123Jy",
 	"cyclefactor": 3.0,
 	"weighting": "briggs"
