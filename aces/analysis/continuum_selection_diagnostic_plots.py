@@ -115,3 +115,12 @@ def make_plot(sbname):
 
     pl.tight_layout()
     pl.savefig(f"{specdir}/{basename}_diagnostic_spectra.png")
+
+
+def id_continuum(spectrum, threshold=2.5):
+    new_contsel = ndimage.binary_dilation(
+        ndimage.binary_erosion(
+            spectrum < np.nanmedian(spectrum) + 2.5 * stats.mad_std(spectrum),
+            iterations=2),
+        iterations=1)
+    return new_contsel

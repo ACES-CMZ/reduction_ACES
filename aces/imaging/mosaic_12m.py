@@ -604,7 +604,7 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HC3N',
                            nchan=300,
-                           beam_threshold=2.3 * u.arcsec,
+                           beam_threshold=2.35 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HC3N_Channels/',
                            **kwargs,)
 
