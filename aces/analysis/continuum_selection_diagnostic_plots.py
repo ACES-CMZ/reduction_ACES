@@ -1,19 +1,25 @@
 import glob
-from astropy import units as u
 import os
 from spectral_cube import SpectralCube
+from spectral_cube.lower_dimensional_structures import OneDSpectrum
 from astropy.table import Table
 from astropy.io import fits
-import pylab as pl
 from astropy.wcs import WCS
+from astropy import units as u
+from astropy import constants
+import pylab as pl
 from astropy import stats
 from scipy import ndimage
 
+from casatools import ms as mstool
 
 from astropy.io import fits
 from astropy.wcs import WCS
 
-from aces.analysis.parse_contdotdat import parse_contdotdat
+from aces.pipeline_scripts.merge_tclean_commands import get_commands
+from aces.analysis.parse_contdotdat import parse_contdotdat, cont_channel_selection_to_contdotdat
+from aces import conf
+
 import numpy as np
 basepath = '/orange/adamginsburg/ACES/'
 
@@ -99,11 +105,7 @@ def make_plot(sbname):
             ax1.plot(cube.spectral_axis, max_spec_masked, color='r')
         ax1.set_title(str(spw))
 
-        new_contsel = ndimage.binary_dilation(
-            ndimage.binary_erosion(
-                max_spec < np.nanmedian(max_spec) + 2.5 * stats.mad_std(max_spec),
-                iterations=2),
-            iterations=1)
+        new_contsel = id_continuum(max_spec, threshold)
         max_spec_masked2 = max_spec.copy()
         max_spec_masked2[~new_contsel.astype('bool')] = np.nan
         ax1.plot(cube.spectral_axis, max_spec_masked2, color='lime', alpha=0.75, linewidth=0.25, linestyle=':')
@@ -124,3 +126,82 @@ def id_continuum(spectrum, threshold=2.5):
             iterations=2),
         iterations=1)
     return new_contsel
+
+
+def assemble_new_contsels():
+    cmds = get_commands()
+
+    ms = mstool()
+
+    spwsel = {}
+
+    datadir = f'{conf.basepath}/data/'
+    projcode = os.getenv('PROJCODE') or '2021.1.00172.L'
+    sous = os.getenv('SOUS') or 'A001_X1590_X30a8'
+    gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
+
+    for sbname, allpars in cmds.items():
+        if 'TM1' not in sbname:
+            # handle 7m separately
+            continue
+        mous_ = allpars['mous']
+        mous = mous_[6:].replace("/", "_")
+        assert len(mous) in (14, 15, 16)
+        workingpath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mous}/calibrated/working'
+        specdir = f'{workingpath}/spectra/'
+
+        spwsel[sbname] = {'tclean_cont_pars':
+                          {'aggregate': {'spw': []},
+                           'aggregate_high': {'spw': []}
+                            }}
+
+        for msname in allpars['tclean_cont_pars']['aggregate']['vis']:
+            vis = f'{workingpath}/{msname}'
+            if not os.path.exists(vis):
+                vis = vis.replace("targets", "target")
+                if not os.path.exists(vis):
+                    raise FileNotFoundError(f"{msname} does not exist in {workingpath}")
+            ms.open(vis)
+            selstrs = []
+            selstrs_high = []
+            for spw in (25, 27, 33, 35):
+
+                cubefns = (glob.glob(f'{workingpath}/*spw{spw}*.statcont.contsub.fits')
+                        + glob.glob(f'{workingpath}/*sci{spw}*.statcont.contsub.fits')
+                )
+                if len(cubefns) > 1:
+                    # filter out s12's
+                    cubefns = [x for x in cubefns if 's38' in x]
+                assert len(cubefns) == 1
+                cubefn = cubefns[0]
+                cube = SpectralCube.read(cubefn)
+
+                basename = os.path.splitext(os.path.basename(cubefn))[0]
+                max_fn = f'{specdir}/{basename}.maxspec.fits'
+
+                max_spec = OneDSpectrum.from_hdu(fits.open(max_fn))
+                contsel_bool = id_continuum(max_spec.value)
+                segments, nseg = ndimage.label(contsel_bool)
+                frqmins = u.Quantity(ndimage.labeled_comprehension(max_spec.spectral_axis, segments, np.arange(1, nseg+1), np.min, float, np.nan), max_spec.spectral_axis.unit)
+                frqmaxs = u.Quantity(ndimage.labeled_comprehension(max_spec.spectral_axis, segments, np.arange(1, nseg+1), np.max, float, np.nan), max_spec.spectral_axis.unit)
+
+                # calculate LSR offset from the data
+                native_frqs = ms.cvelfreqs(spw)
+                lsr_frqs = ms.cvelfreqs(spw, outframe='LSRK')
+                v_offset = np.mean((lsr_frqs - native_frqs) / lsr_frqs) * constants.c
+
+                frqmins_native = (frqmins * (1 - v_offset / constants.c)).to(u.GHz)
+                frqmaxs_native = (frqmaxs * (1 - v_offset / constants.c)).to(u.GHz)
+                frqpairs = [f'{mn}~{mx}GHz' for mn,mx in zip(frqmins_native.value, frqmaxs_native.value)]
+
+                selstr_ = f'{spw}:' + ";".join(frqpairs)
+                selstrs.append(selstr_)
+                if spw in (33, 35):
+                    selstrs_high.append(selstr_)
+            selstr = ",".join(selstrs)
+            selstr_high = ",".join(selstrs_high)
+            spwsel[sbname]['tclean_cont_pars']['aggregate']['spw'].append(selstr)
+            spwsel[sbname]['tclean_cont_pars']['aggregate_high']['spw'].append(selstr_high)
+
+    with open(f"{pipedir}/spw_selections.json", "w") as fh:
+        json.dump(fh, spwsel, indent=2)
