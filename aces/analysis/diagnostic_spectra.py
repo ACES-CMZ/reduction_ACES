@@ -9,6 +9,7 @@ from spectral_cube import SpectralCube, wcs_utils, tests, Projection, OneDSpectr
 from astropy.nddata import Cutout2D
 from aces.analysis.parse_contdotdat import parse_contdotdat
 from aces.analysis import continuum_selection_diagnostic_plots
+from aces import conf
 import glob
 
 import tempfile
@@ -18,6 +19,7 @@ pl.ioff()
 
 overwrite=False
 
+basepath = conf.basepath
 
 def make_diagnostic_spectra(fn):
     basedir = os.path.dirname(fn)
@@ -123,10 +125,9 @@ def main():
         pbar = ProgressBar()
         pbar.register()
 
-    basepath = '/orange/adamginsburg/ACES/'
     gpath = 'data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9'
     
-    files = glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*.statcont.contsub.fits')
+    files = sorted(glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*.statcont.contsub.fits'))
 
     if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
         slurm_array_task_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
@@ -136,10 +137,37 @@ def main():
     for ii, fn in enumerate(files):
         # either if the task ID is specified and matches this one, or if it's unspecified
         if slurm_array_task_id in (ii, None):
+            if slurm_array_task_id is not None:
+                print(ii, fn)
             make_diagnostic_spectra(fn)
 
             memberid = "_".join(fn.split("/")[-4].split("_")[-2:])
             continuum_selection_diagnostic_plots.make_plot(memberid)
+
+
+def get_file_numbers():
+    """
+    For slurm jobs, just run through all the files that we're maybe going to make diagnostic spectra for and check which ones need it
+    """
+
+    redo = bool(os.getenv('REDO'))
+
+    filenames = sorted(glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*statcont.contsub.fits'))
+
+    numlist = []
+    for ii, fn in enumerate(filenames):
+
+        basename = os.path.splitext(os.path.basename(fn))[0]
+        basedir = os.path.dirname(fn)
+        specdir = os.path.join(basedir, 'spectra')
+        for operation in ('max', 'mean', 'median'):
+            out_fn = f'{specdir}/{basename}.{operation}spec.fits'
+
+            if not os.path.exists(out_fn) or redo:
+                numlist.append(ii)
+    
+    return numlist
+
 
 
 if __name__ == "__main__":

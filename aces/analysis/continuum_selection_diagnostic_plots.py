@@ -20,8 +20,11 @@ from aces.pipeline_scripts.merge_tclean_commands import get_commands
 from aces.analysis.parse_contdotdat import parse_contdotdat, cont_channel_selection_to_contdotdat
 from aces import conf
 
+import json
+
 import numpy as np
 basepath = '/orange/adamginsburg/ACES/'
+pipedir = os.path.realpath(os.path.dirname(__file__) + "/../pipeline_scripts/")
 
 def make_plot(sbname):
 
@@ -60,6 +63,14 @@ def make_plot(sbname):
         if len(cubefns) > 1:
             # filter out s12's
             cubefns = [x for x in cubefns if 's38' in x]
+        if len(cubefns) == 0:
+            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+            continue
         assert len(cubefns) == 1
         cubefn = cubefns[0]
         cube = SpectralCube.read(cubefn)
@@ -105,7 +116,7 @@ def make_plot(sbname):
             ax1.plot(cube.spectral_axis, max_spec_masked, color='r')
         ax1.set_title(str(spw))
 
-        new_contsel = id_continuum(max_spec, threshold)
+        new_contsel = id_continuum(max_spec, threshold=2.5)
         max_spec_masked2 = max_spec.copy()
         max_spec_masked2[~new_contsel.astype('bool')] = np.nan
         ax1.plot(cube.spectral_axis, max_spec_masked2, color='lime', alpha=0.75, linewidth=0.25, linestyle=':')
@@ -160,7 +171,10 @@ def assemble_new_contsels():
             if not os.path.exists(vis):
                 vis = vis.replace("targets", "target")
                 if not os.path.exists(vis):
-                    raise FileNotFoundError(f"{msname} does not exist in {workingpath}")
+                    vis = vis.replace("_targets", "")
+                    vis = vis.replace("_target", "")
+                    if not os.path.exists(vis):
+                        raise FileNotFoundError(f"{msname} does not exist in {workingpath}")
             ms.open(vis)
             selstrs = []
             selstrs_high = []
@@ -172,12 +186,28 @@ def assemble_new_contsels():
                 if len(cubefns) > 1:
                     # filter out s12's
                     cubefns = [x for x in cubefns if 's38' in x]
+                if len(cubefns) == 0:
+                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+                    continue
                 assert len(cubefns) == 1
                 cubefn = cubefns[0]
                 cube = SpectralCube.read(cubefn)
 
                 basename = os.path.splitext(os.path.basename(cubefn))[0]
                 max_fn = f'{specdir}/{basename}.maxspec.fits'
+                if not os.path.exists(max_fn):
+                    print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
+                    print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
+                    print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
+                    print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
+                    print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
+                    print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
+                    continue
 
                 max_spec = OneDSpectrum.from_hdu(fits.open(max_fn))
                 contsel_bool = id_continuum(max_spec.value)
@@ -204,4 +234,4 @@ def assemble_new_contsels():
             spwsel[sbname]['tclean_cont_pars']['aggregate_high']['spw'].append(selstr_high)
 
     with open(f"{pipedir}/spw_selections.json", "w") as fh:
-        json.dump(fh, spwsel, indent=2)
+        json.dump(spwsel, fh, indent=2)
