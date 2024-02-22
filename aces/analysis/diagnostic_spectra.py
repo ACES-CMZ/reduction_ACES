@@ -126,7 +126,7 @@ def main():
         pbar.register()
 
     gpath = 'data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9'
-    
+
     files = sorted(glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*.statcont.contsub.fits'))
 
     if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
@@ -165,7 +165,7 @@ def get_file_numbers():
 
             if not os.path.exists(out_fn) or redo:
                 numlist.append(ii)
-    
+
     return numlist
 
 

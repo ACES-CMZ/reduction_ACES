@@ -16,9 +16,14 @@ if 'verbose' not in locals():
 
 pipedir = os.path.dirname(__file__)
 
+def merge_aggregate(commands):
+    from aces.pipeline_scripts import generate_aggregate_high_commands
+    generate_aggregate_high_commands.main()
 
-def merge_dict(commands, new_commands):
-    for sbname, allpars in new_commands.items():
+    with open(f"{pipedir}/aggregate_high_tclean_commands.json", "r") as fh:
+        aggregate_high_commands = json.load(fh)
+
+    for sbname, allpars in aggregate_high_commands.items():
         if sbname not in commands:
             log.warning(f"SB {sbname} was not in the default tclean commands; using aggregate before override")
             commands[sbname] = allpars
@@ -43,28 +48,65 @@ def merge_dict(commands, new_commands):
     return commands
 
 
-def merge_aggregate(commands):
-    from aces.pipeline_scripts import generate_aggregate_high_commands
-    generate_aggregate_high_commands.main()
-
-    with open(f"{pipedir}/aggregate_high_tclean_commands.json", "r") as fh:
-        aggregate_high_commands = json.load(fh)
-
-    return merge_dict(commands, aggregate_high_commands)
-
-
 def merge_override(commands):
     with open(f"{pipedir}/override_tclean_commands.json", "r") as fh:
         override_commands = json.load(fh)
 
-    return merge_dict(commands, override_commands)
+    for sbname, allpars in override_commands.items():
+        if sbname not in commands:
+            log.warning(f"SB {sbname} was not in the default tclean commands; using override only")
+            commands[sbname] = allpars
+            continue
+        for partype, replacements in allpars.items():
+            if partype in ('manual QA', ):
+                continue
+            if partype not in commands[sbname]:
+                commands[sbname][partype] = replacements
+            else:
+                for spwsel, tcpars in replacements.items():
+                    if spwsel in commands[sbname][partype]:
+                        # we're replacing/overriding arguments here
+                        for key, val in tcpars.items():
+                            orig = commands[sbname][partype][spwsel][key]
+                            if verbose:
+                                print(f"{sbname} {partype} {spwsel}: {key}: {orig} -> {val}")
+                            commands[sbname][partype][spwsel][key] = val
+                    else:
+                        # but if a spw was totally skipped, we replace it
+                        # with the override version
+                        if verbose:
+                            print(f"SPW {spwsel} was skipped in {sbname} and is being replaced")
+                        commands[sbname][partype][spwsel] = tcpars
+    return commands
 
 
 def merge_continuum(commands):
     with open(f"{pipedir}/spw_selections.json", "r") as fh:
         spw_selections = json.load(fh)
 
-    return merge_dict(commands, spw_selections)
+    for sbname, allpars in spw_selections.items():
+        if sbname not in commands:
+            log.warning(f"SB {sbname} was not in the tclean commands; skipping")
+            continue
+        for partype, replacements in allpars.items():
+            if partype not in commands[sbname]:
+                commands[sbname][partype] = replacements
+            else:
+                for spwsel, tcpars in replacements.items():
+                    if spwsel in commands[sbname][partype]:
+                        # we're replacing/overriding arguments here
+                        for key, val in tcpars.items():
+                            orig = commands[sbname][partype][spwsel][key]
+                            if verbose:
+                                print(f"{sbname} {partype} {spwsel}: {key}: {orig} -> {val}")
+                            commands[sbname][partype][spwsel][key] = val
+                    else:
+                        # but if a spw was totally skipped, we replace it
+                        # with the override version
+                        if verbose:
+                            print(f"SPW {spwsel} was skipped in {sbname} and is being replaced")
+                        commands[sbname][partype][spwsel] = tcpars
+    return commands
 
 
 def main():
@@ -74,6 +116,7 @@ def main():
 
     commands = merge_aggregate(default_commands)
     commands = merge_override(commands)
+    commands = merge_continuum(commands)
 
     return commands
 

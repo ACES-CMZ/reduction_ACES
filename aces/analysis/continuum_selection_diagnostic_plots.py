@@ -91,7 +91,7 @@ def make_plot(sbname):
         minfreq = cube.spectral_axis.min()
         maxfreq = cube.spectral_axis.max()
         frqarr = u.Quantity(np.linspace(minfreq, maxfreq, cube.shape[0]), u.GHz)
-        
+
         if contdat is not None:
             for frqline in contdat.split(";"):
                 fsplit = frqline.split("~")
@@ -126,6 +126,7 @@ def make_plot(sbname):
 
     pl.tight_layout()
     pl.savefig(f"{specdir}/{basename}_diagnostic_spectra.png")
+    fig.close()
 
 
 def id_continuum(spectrum, threshold=2.5):
@@ -161,7 +162,7 @@ def assemble_new_contsels():
 
         spwsel[sbname] = {'tclean_cont_pars':
                           {'aggregate': {'spw': []},
-                           'aggregate_high': {'spw': []}
+                           'aggregate_high': {'spw': []},
                            'aggregate_low': {'spw': []}
                             }}
 
@@ -177,6 +178,7 @@ def assemble_new_contsels():
             ms.open(vis)
             selstrs = []
             selstrs_high = []
+            selstrs_low = []
             for spw in (25, 27, 33, 35):
 
                 cubefns = (glob.glob(f'{workingpath}/*spw{spw}*.statcont.contsub.fits')
