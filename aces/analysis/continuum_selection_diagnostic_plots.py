@@ -28,7 +28,6 @@ pipedir = os.path.realpath(os.path.dirname(__file__) + "/../pipeline_scripts/")
 
 def make_plot(sbname):
 
-
     sbtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
     sbtb.add_index('12m MOUS ID')
 
@@ -37,7 +36,6 @@ def make_plot(sbname):
     except KeyError:
         print(f"Skipped {sbname} because it's not in the table (maybe it was a reobservation)")
         return
-
 
     flagmapfile = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_reimaged_field_number_map.fits')
     flagmap = flagmapfile[0].data[::10, ::10]
