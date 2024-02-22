@@ -162,6 +162,7 @@ def assemble_new_contsels():
         spwsel[sbname] = {'tclean_cont_pars':
                           {'aggregate': {'spw': []},
                            'aggregate_high': {'spw': []}
+                           'aggregate_low': {'spw': []}
                             }}
 
         for msname in allpars['tclean_cont_pars']['aggregate']['vis']:
@@ -226,10 +227,14 @@ def assemble_new_contsels():
                 selstrs.append(selstr_)
                 if spw in (33, 35):
                     selstrs_high.append(selstr_)
+                elif spw in (25, 27):
+                    selstrs_low.append(selstr_)
             selstr = ",".join(selstrs)
             selstr_high = ",".join(selstrs_high)
+            selstr_low = ",".join(selstrs_low)
             spwsel[sbname]['tclean_cont_pars']['aggregate']['spw'].append(selstr)
             spwsel[sbname]['tclean_cont_pars']['aggregate_high']['spw'].append(selstr_high)
+            spwsel[sbname]['tclean_cont_pars']['aggregate_low']['spw'].append(selstr_low)
 
     with open(f"{pipedir}/spw_selections.json", "w") as fh:
         json.dump(spwsel, fh, indent=2)
