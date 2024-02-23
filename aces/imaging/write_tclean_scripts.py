@@ -289,7 +289,9 @@ def main():
 
                                  def logprint(string):
                                      casalog.post(string, origin='tclean_script')
-                                     print(string)
+                                     print(string, flush=True)
+
+                                 logprint(f"Casalog file is {casalog.logfile()}")
 
                                  mpi_ntasks = os.getenv('mpi_ntasks')
                                  if mpi_ntasks is not None:

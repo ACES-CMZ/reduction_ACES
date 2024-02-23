@@ -7,6 +7,7 @@ This will create (or overwrite) existing tclean commands with label
 
 import json
 import os
+import copy
 from astropy import log
 
 from aces.pipeline_scripts.merge_tclean_commands import merge_override
@@ -46,8 +47,8 @@ def main():
                 aggregate_high_commands[key]['tclean_cont_pars'] = {}
             for hilo, spwstr in (('high', '33_35'), ('low', '25_27')):
                 if f'aggregate_{hilo}' not in commands[key]['tclean_cont_pars']:
-                    print(f"Adding {key}")
-                    pars = commands[key]['tclean_cont_pars']['aggregate']
+                    print(f"Adding {key}: aggregate_{hilo} -> {spwstr}")
+                    pars = copy.copy(commands[key]['tclean_cont_pars']['aggregate'])
                     pars['imagename'] = pars['imagename'].replace('25_27_29_31_33_35', spwstr)
 
                     # split all the spw selections such that only 33 and 35 are kept
