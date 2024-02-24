@@ -251,7 +251,8 @@ def main():
                                 if fn.endswith('.fits'):
                                     shutil.copy(fn, '{tempdir_name}/')
                                 else:
-                                    shutil.copytree(fn, '{tempdir_name}/')\n\n""")
+                                    assert not os.path.exists(target), "Copying a directory to /blue failed because the directory was not successfully deleted"
+                                    shutil.copytree(fn, target)\n\n""")
                         )
 
                         cleanupcmds = (textwrap.dedent(
@@ -291,7 +292,7 @@ def main():
                                      casalog.post(string, origin='tclean_script')
                                      print(string, flush=True)
 
-                                 logprint(f"Casalog file is {casalog.logfile()}")
+                                 logprint(f"Casalog file is {{casalog.logfile()}}")
 
                                  mpi_ntasks = os.getenv('mpi_ntasks')
                                  if mpi_ntasks is not None:
