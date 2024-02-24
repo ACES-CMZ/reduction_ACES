@@ -249,44 +249,45 @@ def reimaged(header):
 
 
 def reimaged_high(header):
-    logprint("12m continuum reimaged")
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*cont.I*image.tt0.pbcor')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33_35*cont*tt0.pbcor.fits')
+    for spw, name in zip(('33_35', '25_27'), ('reimaged_high', 'reimaged_low')):
+        logprint(f"12m continuum {name}")
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}*cont.I*image.tt0.pbcor')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw{spw}*cont*tt0.pbcor.fits')
 
-    check_files(filelist)
+        check_files(filelist)
 
-    print("Read as 2d for files: ", end=None, flush=True)
-    hdus = [read_as_2d(fn) for fn in filelist]
-    print(flush=True)
-    #weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
-    #weightfiles_ = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33_35*I.iter1.pb.tt0')
-    #weightfiles_ += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33_35*.pb.tt0.fits')
-    weightfiles = [fn.replace(".image.tt0.pbcor", ".weight.tt0").replace(".I.tt0.pbcor", ".I.weight.tt0") for fn in filelist]
-    #assert len(weightfiles) == len(filelist)
-    #for missing in set(weightfiles_) - set(weightfiles):
-    #    logprint(f"Missing {missing}")
-    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
-    print(flush=True)
-    make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged_spw33_35',
-                commonbeam='circular', weights=wthdus, cbar_unit='Jy/beam',
-                array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.008,
-                                 min_cut=-0.0002),
-                target_header=header,
-                folder='continuum'
-                )
-    print(flush=True)
-    make_mosaic(hdus, name='continuum_reimaged_spw33_35', weights=wthdus,
-                cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
-                target_header=header,
-                folder='continuum'
-                )
+        print("Read as 2d for files: ", end=None, flush=True)
+        hdus = [read_as_2d(fn) for fn in filelist]
+        print(flush=True)
+        #weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
+        #weightfiles_ = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}*I.iter1.pb.tt0')
+        #weightfiles_ += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw{spw}*.pb.tt0.fits')
+        weightfiles = [fn.replace(".image.tt0.pbcor", ".weight.tt0").replace(".I.tt0.pbcor", ".I.weight.tt0") for fn in filelist]
+        #assert len(weightfiles) == len(filelist)
+        #for missing in set(weightfiles_) - set(weightfiles):
+        #    logprint(f"Missing {missing}")
+        wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+        print(flush=True)
+        make_mosaic(hdus, name=f'continuum_commonbeam_circular_reimaged_spw{spw}',
+                    commonbeam='circular', weights=wthdus, cbar_unit='Jy/beam',
+                    array='12m', basepath=basepath,
+                    norm_kwargs=dict(stretch='asinh', max_cut=0.008,
+                                     min_cut=-0.0002),
+                    target_header=header,
+                    folder='continuum'
+                    )
+        print(flush=True)
+        make_mosaic(hdus, name=f'continuum_reimaged_spw{spw}', weights=wthdus,
+                    cbar_unit='Jy/beam', array='12m', basepath=basepath,
+                    norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
+                    target_header=header,
+                    folder='continuum'
+                    )
 
 
 def residuals(header):
     logprint("12m continuum residuals")
-    for spw, name in zip(('25_27_29_31_33_35', '33_35'), ('reimaged', 'reimaged_high')):
+    for spw, name in zip(('25_27_29_31_33_35', '33_35', '25_27'), ('reimaged', 'reimaged_high', 'reimaged_low')):
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}*cont.I.iter1.residual.tt0')
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}*cont.I.manual.residual.tt0')
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw{spw}*cont.I*.residual.tt0')
