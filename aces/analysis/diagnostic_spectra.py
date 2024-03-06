@@ -128,6 +128,7 @@ def main():
     gpath = 'data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9'
 
     files = sorted(glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*.statcont.contsub.fits'))
+    files = sorted(glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*.image'))
 
     if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
         slurm_array_task_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
@@ -152,7 +153,7 @@ def get_file_numbers():
 
     redo = bool(os.getenv('REDO'))
 
-    filenames = sorted(glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*statcont.contsub.fits'))
+    filenames = sorted(glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*image'))
 
     numlist = []
     for ii, fn in enumerate(filenames):
