@@ -55,8 +55,8 @@ def make_plot(sbname):
         contdat = None
 
     for ii, spw in enumerate((25, 27, 33, 35)):
-        cubefns = (glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*spw{spw}*.statcont.contsub.fits')
-                   + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*sci{spw}*.statcont.contsub.fits')
+        cubefns = (glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*spw{spw}*.cube.I.iter1.image')
+                   + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*sci{spw}*.cube.I.iter1.image')
         )
         if len(cubefns) > 1:
             # filter out s12's
@@ -74,7 +74,9 @@ def make_plot(sbname):
         cube = SpectralCube.read(cubefn)
 
         basedir = os.path.dirname(cubefn)
-        basename = os.path.splitext(os.path.basename(cubefn))[0]
+        # splitext is needed if we use .fits files
+        # basename = os.path.splitext(os.path.basename(cubefn))[0]
+        basename = os.path.basename(cubefn)
         specdir = os.path.join(basedir, 'spectra')
 
         max_fn = f'{specdir}/{basename}.maxspec.fits'
