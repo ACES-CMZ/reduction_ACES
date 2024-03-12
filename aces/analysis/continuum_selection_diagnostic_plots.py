@@ -128,7 +128,7 @@ def make_plot(sbname):
 
     pl.tight_layout()
     pl.savefig(f"{specdir}/{basename}_diagnostic_spectra.png")
-    fig.close()
+    pl.close(fig.number)
 
 
 def id_continuum(spectrum, threshold=2.5):
@@ -183,8 +183,8 @@ def assemble_new_contsels():
             selstrs_low = []
             for spw in (25, 27, 33, 35):
 
-                cubefns = (glob.glob(f'{workingpath}/*spw{spw}*.statcont.contsub.fits')
-                        + glob.glob(f'{workingpath}/*sci{spw}*.statcont.contsub.fits')
+                cubefns = (glob.glob(f'{workingpath}/*spw{spw}*.cube.I.iter1.image')
+                        + glob.glob(f'{workingpath}/*sci{spw}*.cube.I.iter1.image')
                 )
                 if len(cubefns) > 1:
                     # filter out s12's
