@@ -77,13 +77,18 @@ def make_plot(sbname):
         # splitext is needed if we use .fits files
         # basename = os.path.splitext(os.path.basename(cubefn))[0]
         basename = os.path.basename(cubefn)
+        if cubefn.endswith('.image'):
+            assert basename.endswith('.image')
         specdir = os.path.join(basedir, 'spectra')
 
         max_fn = f'{specdir}/{basename}.maxspec.fits'
         mean_fn = f'{specdir}/{basename}.meanspec.fits'
 
         if not os.path.exists(max_fn) or not os.path.exists(mean_fn):
+            print(max_fn, os.path.exists(max_fn))
+            print(mean_fn, os.path.exists(mean_fn))
             print(f"Skipping SPW {spw}.  Perhaps some of the max/mean spectra have been run for this field, but not for all windows?")
+            raise
             continue
 
         max_spec = fits.getdata(max_fn)
@@ -114,12 +119,16 @@ def make_plot(sbname):
             max_spec_masked = max_spec.copy()
             max_spec_masked[~cont_arr_indiv.astype('bool')] = np.nan
             ax1.plot(cube.spectral_axis, max_spec_masked, color='r')
-        ax1.set_title(str(spw))
 
         new_contsel = id_continuum(max_spec, threshold=2.5)
         max_spec_masked2 = max_spec.copy()
         max_spec_masked2[~new_contsel.astype('bool')] = np.nan
-        ax1.plot(cube.spectral_axis, max_spec_masked2, color='lime', alpha=0.75, linewidth=0.25, linestyle=':')
+        ax1.plot(cube.spectral_axis, max_spec_masked2, color='lime',
+                 alpha=0.75, linewidth=0.75, linestyle=':')
+
+        # include the number of channels and total bandwidth in the plot titles
+        tot_bw = np.mean(np.diff(frqarr)) * new_contsel.sum()
+        ax1.set_title(f'{spw}: {new_contsel.sum()}ch {tot_bw}')
 
         # ax1.plot(cube.spectral_axis, mean_spec, color='k')
         # mean_spec_masked = mean_spec.copy()
@@ -134,7 +143,7 @@ def make_plot(sbname):
 def id_continuum(spectrum, threshold=2.5):
     new_contsel = ndimage.binary_dilation(
         ndimage.binary_erosion(
-            spectrum < np.nanmedian(spectrum) + 2.5 * stats.mad_std(spectrum),
+            spectrum < np.nanmedian(spectrum) + 2.5 * stats.mad_std(spectrum, ignore_nan=True),
             iterations=2),
         iterations=1)
     return new_contsel
@@ -190,18 +199,23 @@ def assemble_new_contsels():
                     # filter out s12's
                     cubefns = [x for x in cubefns if 's38' in x]
                 if len(cubefns) == 0:
-                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
-                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
-                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
-                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
-                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
-                    print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CUBE FOUND FOR {sbname} {spw}")
+                    print(f"NO CUBE FOUND FOR {sbname} {spw}")
                     continue
                 assert len(cubefns) == 1
                 cubefn = cubefns[0]
                 cube = SpectralCube.read(cubefn)
 
-                basename = os.path.splitext(os.path.basename(cubefn))[0]
+                if cubefn.endswith('.image'):
+                    basename = os.path.basename(cubefn)
+                elif cubefn.endswith('.fits'):
+                    basename = os.path.splitext(os.path.basename(cubefn))[0]
+                else:
+                    raise ValueError("Unrecognized file type")
                 max_fn = f'{specdir}/{basename}.maxspec.fits'
                 if not os.path.exists(max_fn):
                     print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
@@ -210,6 +224,7 @@ def assemble_new_contsels():
                     print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
                     print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
                     print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
+                    raise ValueError("No max spectrum found.")
                     continue
 
                 max_spec = OneDSpectrum.from_hdu(fits.open(max_fn))

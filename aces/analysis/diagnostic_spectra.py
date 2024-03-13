@@ -17,13 +17,18 @@ import tempfile
 import pylab as pl
 pl.ioff()
 
-overwrite=False
+overwrite = False
 
 basepath = conf.basepath
 
 def make_diagnostic_spectra(fn):
     basedir = os.path.dirname(fn)
-    basename = os.path.splitext(os.path.basename(fn))[0]
+    if fn.endswith('.image'):
+        basename = os.path.basename(fn)
+    elif fn.endswith('.fits'):
+        basename = os.path.splitext(os.path.basename(fn))[0]
+    else:
+        raise ValueError("Unrecognized file type")
     memdir = os.path.split(os.path.split(basedir)[0])[0]
 
     specdir = os.path.join(basedir, 'spectra')
@@ -159,7 +164,12 @@ def get_file_numbers():
     numlist = []
     for ii, fn in enumerate(filenames):
 
-        basename = os.path.splitext(os.path.basename(fn))[0]
+        if fn.endswith('.image'):
+            basename = os.path.basename(fn)
+        elif fn.endswith('.fits'):
+            basename = os.path.splitext(os.path.basename(fn))[0]
+        else:
+            raise ValueError("Unrecognized file type")
         basedir = os.path.dirname(fn)
         specdir = os.path.join(basedir, 'spectra')
         for operation in ('max', 'mean', 'median'):
