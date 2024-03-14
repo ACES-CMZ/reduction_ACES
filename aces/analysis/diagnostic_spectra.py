@@ -3,6 +3,7 @@ import json
 import os
 import radio_beam
 import reproject
+import regions
 from astropy import constants, units as u, table, stats, coordinates, wcs, log
 from astropy.io import fits
 from spectral_cube import SpectralCube, wcs_utils, tests, Projection, OneDSpectrum
@@ -21,7 +22,7 @@ overwrite = False
 
 basepath = conf.basepath
 
-def make_diagnostic_spectra(fn):
+def make_diagnostic_spectra(fn, replot=False):
     basedir = os.path.dirname(fn)
     if fn.endswith('.image'):
         basename = os.path.basename(fn)
@@ -42,10 +43,23 @@ def make_diagnostic_spectra(fn):
         log.exception("File {0} does not exist".format(fn))
         return
 
+    # mask cubes if they are Sgr B2 or Sgr A*
+    sgrb2_a_fields = ['X15b4_X41', 'X15a0_Xa6', 'X15a0_X19c']
+    if any(x in fn for x in sgrb2_a_fields):
+        yy, xx = np.mgrid[:cube.shape[1], :cube.shape[2]]
+        regs = [regions.Regions.read(f'{basepath}/regions/sgramask.reg')[0],
+                regions.Regions.read(f'{basepath}/regions/sgrb2mask.reg')[0]]
+        exmask = np.zeros_like(xx)
+        for reg in regs:
+            exmask |= reg.to_pixel(cube.wcs.celestial).contains(regions.PixCoord(xx, yy))
+        cube = cube.with_mask(~exmask)
+
     for operation in ('mean', 'max', 'median'):
         out_fn = f'{specdir}/{basename}.{operation}spec.fits'
-        print(f"{operation}: {fn}->{out_fn}")
-        if overwrite or not os.path.exists(out_fn):
+        fits_exists = os.path.exists(out_fn)
+        print(f"{operation}: {fn}->{out_fn} Exists: {fits_exists}")
+
+        if overwrite or not fits_exists:
             spec = getattr(cube, operation)(axis=(1,2))
             spec.write(out_fn, overwrite=overwrite)
 
@@ -54,6 +68,8 @@ def make_diagnostic_spectra(fn):
             spec_jy = getattr(cube, operation)(axis=(1,2))
             spec_jy.write(out_fn, overwrite=True)
 
+        if fits_exists and not replot:
+            continue
         try:
             jtok = cube.jtok_factors()
         except AttributeError:
@@ -134,7 +150,11 @@ def main():
     gpath = 'data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9'
 
     #files = sorted(glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*.statcont.contsub.fits'))
-    files = sorted(glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*cube.I.iter1.image'))
+    files = sorted(glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*cube.I.iter1.image')
+                   + glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*cube.I.manual.image')
+                   + glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*cube.I.iter1.reclean.image')
+                   + glob.glob(f'{basepath}/{gpath}/member*/calibrated/working/*cube.I.manual.reclean.image')
+                  )
 
     if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
         slurm_array_task_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
@@ -147,9 +167,16 @@ def main():
             if slurm_array_task_id is not None:
                 print(ii, fn)
             make_diagnostic_spectra(fn)
+            print()
 
+    ## if we're doing this linearly, make all the spectra before any of the plots
+    #for ii, fn in enumerate(files):
+    #    if slurm_array_task_id in (ii, None):
+    #        if slurm_array_task_id is not None:
+    #            print(ii, fn)
             memberid = "_".join(fn.split("/")[-4].split("_")[-2:])
             continuum_selection_diagnostic_plots.make_plot(memberid)
+            print()
 
 
 def get_file_numbers():
@@ -159,7 +186,11 @@ def get_file_numbers():
 
     redo = bool(os.getenv('REDO'))
 
-    filenames = sorted(glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*.cube.I.iter1.image'))
+    filenames = sorted(glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*.cube.I.iter1.image')
+                       + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*.cube.I.manual.image')
+                       + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*.cube.I.iter1.reclean.image')
+                       + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*.cube.I.manual.reclean.image')
+                      )
 
     numlist = []
     for ii, fn in enumerate(filenames):

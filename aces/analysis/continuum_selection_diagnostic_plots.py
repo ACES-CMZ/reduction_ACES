@@ -57,17 +57,22 @@ def make_plot(sbname):
     for ii, spw in enumerate((25, 27, 33, 35)):
         cubefns = (glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*spw{spw}*.cube.I.iter1.image')
                    + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*sci{spw}*.cube.I.iter1.image')
+                   + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*sci{spw}*.cube.I.manual.image')
+                   + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*spw{spw}*.cube.I.manual.image')
+                   + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*sci{spw}*.cube.I.iter1.reclean.image')
+                   + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*spw{spw}*.cube.I.manual.reclean.image')
+                   + glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibrated/working/*spw{spw}*.cube.I.iter1.reclean.image')
         )
         if len(cubefns) > 1:
             # filter out s12's
             cubefns = [x for x in cubefns if 's38' in x]
         if len(cubefns) == 0:
-            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
-            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
-            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
-            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
-            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
-            print(f"NO CONTSUB CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CUBE FOUND FOR {sbname} {spw}")
+            print(f"NO CUBE FOUND FOR {sbname} {spw}")
             continue
         assert len(cubefns) == 1
         cubefn = cubefns[0]
@@ -88,7 +93,7 @@ def make_plot(sbname):
             print(max_fn, os.path.exists(max_fn))
             print(mean_fn, os.path.exists(mean_fn))
             print(f"Skipping SPW {spw}.  Perhaps some of the max/mean spectra have been run for this field, but not for all windows?")
-            raise
+            #raise
             continue
 
         max_spec = fits.getdata(max_fn)
@@ -128,7 +133,14 @@ def make_plot(sbname):
 
         # include the number of channels and total bandwidth in the plot titles
         tot_bw = np.mean(np.diff(frqarr)) * new_contsel.sum()
-        ax1.set_title(f'{spw}: {new_contsel.sum()}ch {tot_bw}')
+        ax1.set_title(f'{spw}: {new_contsel.sum()}ch {tot_bw:0.1f}')
+        # zoom the plot in to show the selection
+        mn = np.nanmin(max_spec_masked2)
+        std = np.nanstd(max_spec_masked2)
+        ylim = ax1.set_ylim(mn - 5 * std,
+                            np.nanmax(max_spec_masked2) + 5 * std)
+        if new_contsel.sum() == 0:
+            raise ValueError("Found no continuum")
 
         # ax1.plot(cube.spectral_axis, mean_spec, color='k')
         # mean_spec_masked = mean_spec.copy()
@@ -141,9 +153,13 @@ def make_plot(sbname):
 
 
 def id_continuum(spectrum, threshold=2.5):
+    med = np.nanmedian(spectrum)
+    mad = stats.mad_std(spectrum, ignore_nan=True)
+
     new_contsel = ndimage.binary_dilation(
         ndimage.binary_erosion(
-            spectrum < np.nanmedian(spectrum) + 2.5 * stats.mad_std(spectrum, ignore_nan=True),
+            ((spectrum < med + threshold * mad) &
+             (spectrum > med - threshold * mad)),
             iterations=2),
         iterations=1)
     return new_contsel
@@ -194,6 +210,11 @@ def assemble_new_contsels():
 
                 cubefns = (glob.glob(f'{workingpath}/*spw{spw}*.cube.I.iter1.image')
                         + glob.glob(f'{workingpath}/*sci{spw}*.cube.I.iter1.image')
+                        + glob.glob(f'{workingpath}/*sci{spw}*.cube.I.manual.image')
+                        + glob.glob(f'{workingpath}/*spw{spw}*.cube.I.manual.image')
+                        + glob.glob(f'{workingpath}/*sci{spw}*.cube.I.iter1.reclean.image')
+                        + glob.glob(f'{workingpath}/*spw{spw}*.cube.I.manual.reclean.image')
+                        + glob.glob(f'{workingpath}/*spw{spw}*.cube.I.iter1.reclean.image')
                 )
                 if len(cubefns) > 1:
                     # filter out s12's
