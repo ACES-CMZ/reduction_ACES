@@ -59,6 +59,9 @@ def main():
     check_syntax = '--check-syntax' in sys.argv
     use_parallel = '--parallel' in sys.argv
     aggregate_only = '--aggregate-only' in sys.argv
+    aggregate_high_only = '--aggregate-high-only' in sys.argv
+    aggregate_low_only = '--aggregate-low-only' in sys.argv
+    continue_started_only = '--continue-only' in sys.argv
 
     if debug:
         log.setLevel('DEBUG')
@@ -143,8 +146,15 @@ def main():
             for spw in imaging_status[mousname][config]:
                 log.debug(f"mous={mous} field={field} sbname={sbname} config={config} config_={config_} spw={spw}")
 
+                if aggregate_high_only and not ('aggregate_high' in spw):
+                    log.debug(f"Skipped spw {spw} because it is not aggregate and aggregate_high_only was set")
+                    continue
+                if aggregate_low_only and not ('aggregate_low' in spw):
+                    log.debug(f"Skipped spw {spw} because it is not aggregate and aggregate_low_only was set")
+                    continue
+
                 for imtype in imaging_status[mousname][config][spw]:
-                    if aggregate_only and not ('aggregate' in imtype or 'mfs' in imtype):
+                    if aggregate_only and not ('aggregate' in spw or 'mfs' in imtype):
                         log.debug(f"Skipped imtype {imtype} because it is not aggregate and aggregate_only was set")
                         continue
                     log.debug(f"spw={spw} imtype={imtype}{'**************AGGREGATE**********' if ('aggregate' in imtype) or ('mfs' in imtype) else ''}")
@@ -285,6 +295,14 @@ def main():
                         for tfn in old_tempfiles:
                             print(f"Removing {tfn}")
                             shutil.rmtree(tfn)
+
+                    if continue_started_only:
+                        msfiles = glob.glob(f'{workdir}/{tempdir_name}/*.ms')
+                        if len(msfiles) == 0:
+                            continue
+                        else:
+                            msfstr = '\n'.join(msfiles)
+                            print(f"Continuing already-started imaging with existing mses {msfstr}")
 
                     if spwpars['mpi']:
                         mpisuffix = '_mpi'
