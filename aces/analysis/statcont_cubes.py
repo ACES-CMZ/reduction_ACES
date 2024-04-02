@@ -76,7 +76,7 @@ def check_cube(fn, zero_threshold=0, remove=False):
     cube = SpectralCube.read(fn, use_dask=False)
     # we only need to check a subset
     scube = cube[::20, ::20, ::20]
-    spectra_with_zeros = (scube == 0*scube.unit).include().sum(axis=0).sum()
+    spectra_with_zeros = (scube == 0 * scube.unit).include().sum(axis=0).sum()
     if spectra_with_zeros > zero_threshold:
         print(f"{fn} was bad, it had {spectra_with_zeros} spectra containing zeros in the subsetted version")
         if remove:
@@ -105,17 +105,17 @@ def get_file_numbers(progressbar=tqdm):
 
         #outfn = fn+'.statcont.cont.fits'
         outfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.cont.fits")
-        fileformat = 'fits'
+        #fileformat = 'fits'
         assert outfn.count('.fits') == 1
 
-        outcube = contsubfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.contsub.fits")
+        contsubfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.contsub.fits")
 
         check_fits_file(outfn, remove=True, verbose=False)
         check_fits_file(contsubfn, remove=True, verbose=False)
 
         if not os.path.exists(outfn) or not os.path.exists(contsubfn) or redo:
             numlist.append(ii)
-    
+
     return numlist
 
 

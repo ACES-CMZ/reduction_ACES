@@ -36,7 +36,7 @@ parameters = {#'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': 
               #'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
               'member.uid___A001_X15a0_Xd0': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field i spw35: timeout
               'member.uid___A001_X15a0_X17e': {'mem': 256, 'ntasks': 1, 'mpi': False, 'nchan_per': 16},  # field al: try to avoid having subcubes
-              }
+}
 newpars = parameters.copy()
 
 # June 1, 2022: try using fewer tasks to see if it reduces likelihood of race condition
