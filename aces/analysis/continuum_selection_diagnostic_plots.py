@@ -13,9 +13,6 @@ from scipy import ndimage
 
 from casatools import ms as mstool
 
-from astropy.io import fits
-from astropy.wcs import WCS
-
 from aces.pipeline_scripts.merge_tclean_commands import get_commands
 from aces.analysis.parse_contdotdat import parse_contdotdat, cont_channel_selection_to_contdotdat
 from aces import conf
@@ -25,6 +22,7 @@ import json
 import numpy as np
 basepath = '/orange/adamginsburg/ACES/'
 pipedir = os.path.realpath(os.path.dirname(__file__) + "/../pipeline_scripts/")
+
 
 def make_plot(sbname):
 
@@ -43,11 +41,11 @@ def make_plot(sbname):
 
     fig = pl.figure(figsize=(10, 7))
     ax5 = fig.add_subplot(2, 1, 2, projection=target_wcs)
-    ax5.contour(flagmap, colors=['k']*int(flagmap.max()), levels=np.arange(flagmap.max()) + 0.5, )
+    ax5.contour(flagmap, colors=['k'] * int(flagmap.max()), levels=np.arange(flagmap.max()) + 0.5, )
 
-    ax5.contourf(flagmap==num, levels=[0.5, 1.5])
+    ax5.contourf(flagmap == num, levels=[0.5, 1.5])
 
-    contdotdatfn = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibration/cont.dat' 
+    contdotdatfn = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{sbname}/calibration/cont.dat'
     if os.path.exists(contdotdatfn):
         contdat = parse_contdotdat(contdotdatfn)
     else:

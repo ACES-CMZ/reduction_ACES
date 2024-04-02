@@ -22,6 +22,7 @@ overwrite = False
 
 basepath = conf.basepath
 
+
 def make_diagnostic_spectra(fn, replot=False):
     basedir = os.path.dirname(fn)
     if fn.endswith('.image'):
@@ -37,8 +38,7 @@ def make_diagnostic_spectra(fn, replot=False):
         os.mkdir(specdir)
         os.mkdir(os.path.join(specdir, 'pngs'))
     if os.path.exists(fn):
-        cube = SpectralCube.read(fn,
-                                    use_dask=True).with_spectral_unit(u.GHz)
+        cube = SpectralCube.read(fn, use_dask=True).with_spectral_unit(u.GHz)
     else:
         log.exception("File {0} does not exist".format(fn))
         return
@@ -60,12 +60,12 @@ def make_diagnostic_spectra(fn, replot=False):
         print(f"{operation}: {fn}->{out_fn} Exists: {fits_exists}")
 
         if overwrite or not fits_exists:
-            spec = getattr(cube, operation)(axis=(1,2))
+            spec = getattr(cube, operation)(axis=(1, 2))
             spec.write(out_fn, overwrite=overwrite)
 
         spec_jy = OneDSpectrum.from_hdu(fits.open(out_fn)).with_spectral_unit(u.GHz)
         if cube.shape[0] != spec_jy.size:
-            spec_jy = getattr(cube, operation)(axis=(1,2))
+            spec_jy = getattr(cube, operation)(axis=(1, 2))
             spec_jy.write(out_fn, overwrite=True)
 
         if fits_exists and not replot:
@@ -74,13 +74,13 @@ def make_diagnostic_spectra(fn, replot=False):
             jtok = cube.jtok_factors()
         except AttributeError:
             jtok = cube.beam.jtok(cube.spectral_axis)
-        spec_K = spec_jy * jtok*u.K / (u.Jy/u.beam)
+        spec_K = spec_jy * jtok * u.K / (u.Jy / u.beam)
 
         for spec, unit in zip((spec_jy, spec_K), ("", "K")):
             fig_fn = f'{specdir}/pngs/{basename}.{operation}spec.png'
             pl.clf()
             spec.quicklook(filename=fig_fn, color='k',
-                            linewidth=0.9, drawstyle='steps-mid')
+                           linewidth=0.9, drawstyle='steps-mid')
             sel = np.zeros(spec.size, dtype='int')
 
             cdatfile = os.path.join(memdir, 'calibration/cont.dat')
@@ -88,7 +88,7 @@ def make_diagnostic_spectra(fn, replot=False):
                 contfreqs = parse_contdotdat(cdatfile)
 
                 for freqrange in contfreqs.split(";"):
-                    low,high = freqrange.split("~")
+                    low, high = freqrange.split("~")
                     high = u.Quantity(high)
                     low = u.Quantity(low, unit=high.unit)
                     sel += (spec.spectral_axis > low) & (spec.spectral_axis < high)
@@ -210,7 +210,6 @@ def get_file_numbers():
                 numlist.append(ii)
 
     return sorted(set(numlist))
-
 
 
 if __name__ == "__main__":
