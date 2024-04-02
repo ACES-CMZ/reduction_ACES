@@ -1,6 +1,7 @@
 import numpy as np
 import string
 
+
 def parse_contdotdat(filepath):
 
     selections = []
@@ -10,8 +11,8 @@ def parse_contdotdat(filepath):
             if "LSRK" in line:
                 selections.append(line.split()[0])
 
-
     return ";".join(selections)
+
 
 try:
     try:
@@ -55,10 +56,10 @@ try:
             for selstr in contsel.split(";"):
                 lo, hi = selstr.strip(string.ascii_letters).split("~")
                 unit = selstr.lstrip(string.punctuation + string.digits)
-                flo = qq.convert({'value':float(lo), 'unit':unit}, 'Hz')['value']
-                fhi = qq.convert({'value':float(hi), 'unit':unit}, 'Hz')['value']
+                flo = qq.convert({'value': float(lo), 'unit': unit}, 'Hz')['value']
+                fhi = qq.convert({'value': float(hi), 'unit': unit}, 'Hz')['value']
                 if flo > fhi:
-                    flo,fhi = fhi,flo
+                    flo, fhi = fhi, flo
 
                 # only include selections that are at least partly in range
                 if fmin < fhi < fmax or fmax > flo > fmin:
@@ -138,8 +139,8 @@ try:
             if lo > hi:
                 lo, hi = hi, lo
 
-            flo = qq.convert({'value':float(lo), 'unit':unit}, 'Hz')['value']
-            fhi = qq.convert({'value':float(hi), 'unit':unit}, 'Hz')['value']
+            flo = qq.convert({'value': float(lo), 'unit': unit}, 'Hz')['value']
+            fhi = qq.convert({'value': float(hi), 'unit': unit}, 'Hz')['value']
 
             if ((fhi < fmax) and (fhi > fmin)) and ((flo > fmin) and (flo < fmax)):
                 # if the whole thing is in range...
@@ -165,6 +166,7 @@ try:
             fselstr = ",".join(str(x)+":"+ ";".join(freqsel[x]) for x in freqsel)
         """
 
+        ms = mstool()
         ms.open(msname)
 
         freqsels = {}
@@ -181,9 +183,9 @@ try:
             chansel = spwsel.split(":")[1]
             freqsels[spw] = []
             for chs in chansel.split(";"):
-                lo,hi = map(int, chs.split("~"))
-                freqsels[spw].append("{0}~{1}GHz".format(freqs[lo]/1e9,
-                                                         freqs[hi]/1e9))
+                lo, hi = map(int, chs.split("~"))
+                freqsels[spw].append("{0}~{1}GHz".format(freqs[lo] / 1e9,
+                                                         freqs[hi] / 1e9))
 
         ms.close()
 

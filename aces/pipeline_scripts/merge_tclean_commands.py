@@ -16,6 +16,7 @@ if 'verbose' not in locals():
 
 pipedir = os.path.dirname(__file__)
 
+
 def merge_aggregate(commands):
     from aces.pipeline_scripts import generate_aggregate_high_commands
     generate_aggregate_high_commands.main()
