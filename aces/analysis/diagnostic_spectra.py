@@ -115,7 +115,7 @@ def make_diagnostic_spectra(fn, replot=False):
                     for selval in usel[1:]:
                         dat_to_plot[sel == selval] = spec.value[sel == selval]
                     pl.plot(spec.spectral_axis, dat_to_plot, linewidth=4,
-                            zorder=selval-10, alpha=0.75, color='orange')
+                            zorder=selval - 10, alpha=0.75, color='orange')
                 else:
                     log.error(f"No selected continuum for {basename}.{operation}: {sel.sum()} {usel}")
                     continue
