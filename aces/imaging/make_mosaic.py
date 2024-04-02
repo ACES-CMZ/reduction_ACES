@@ -541,6 +541,8 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                 raise ValueError("Empty channel found - re-run needed.")
         else:
             print(f"Starting mosaic_cubes for channel {chan}", flush=True)
+            #cubes=cubes[:2] # TEMP DEBUG
+            #weightcubes=weightcubes[:2] # TEMP DEBUG
             mosaic_cubes(cubes,
                          target_header=theader,
                          commonbeam=commonbeam,
@@ -552,6 +554,14 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                          fail_if_cube_dropped=fail_if_cube_dropped,
                          )
             print(f"\nChannel {chan} appears to have completed successfully, but we're checking first.", flush=True)
+
+            if not np.any(np.isnan(fits.getdata(chanfn))):
+                print(f"Channel {chan} had no nans but {(fits.getdata(chanfn) == 0).sum()} zeros.  Setting 0->nan")
+                print("This is a bug that appeared sometime in Jan 2024 and I haven't been able to ID a cause")
+                fh = fits.open(chanfn, mode='update')
+                fh[0].data[fh[0].data == 0] = np.nan
+                fh.close()
+
             if not check_channel(chanfn, verbose=verbose):
                 raise ValueError("Produced an empty channel - raising exception as this is not expected")
             else:
@@ -567,6 +577,10 @@ def check_channel(chanfn, verbose=True):
     if np.all(np.isnan(data)) or np.nansum(data) == 0:
         if verbose:
             print(f"{chanfn} failed: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))}")
+        return False
+    elif (not np.any(np.isnan(data))) and (np.nansum(data == 0) > 1000):
+        if verbose:
+            print(f"{chanfn} failed: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))} data.notfinite={np.sum(np.isnan(data))}")
         return False
     else:
         if verbose:
@@ -799,7 +813,7 @@ def slurm_set_channels(nchan):
         return channels
 
 
-def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=False, use_dask=True, spectrally_too=True):
+def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True, use_dask=True, spectrally_too=True):
     """
     TODO: may need to dump-to-temp while reprojecting
     """

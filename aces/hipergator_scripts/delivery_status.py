@@ -89,7 +89,7 @@ def main():
                 if clean == 'cube':
                     spwlist_ = spwlist[config]
                 else:
-                    spwlist_ = ['aggregate', 'aggregate_high']
+                    spwlist_ = ['aggregate', 'aggregate_high', 'aggregate_low']
 
                 for spwn in sorted(spwlist_, key=lambda x: str(x)):
                     # /orange/adamginsburg/ACES/rawdata/2021.1.00172.L/
@@ -100,15 +100,15 @@ def main():
                     # (we search for spw_*.cont, but the name is 'aggregate)
                     spwkey = spw
 
+                    # the name in the files is cont, not mfs, for aggregate
+                    clean_ = 'cont'  # _not_ mfs
                     # aggregate continuum is named with the full list of spws
                     if spw == 'aggregate':
                         spw = "spw" + "_".join(str(x) for x in spwlist[config])
-                        # the name in the files is cont, not mfs, for aggregate
-                        clean_ = 'cont'  # _not_ mfs
                     elif spw == 'aggregate_high':
                         spw = "spw" + "_".join(str(x) for x in spwlist[config][-2:])
-                        # the name in the files is cont, not mfs, for aggregate
-                        clean_ = 'cont'  # _not_ mfs
+                    elif spw == 'aggregate_low':
+                        spw = "spw" + "_".join(str(x) for x in spwlist[config][:2])
                     else:
                         clean_ = clean
 

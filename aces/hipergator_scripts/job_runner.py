@@ -22,19 +22,21 @@ mouses = [os.path.basename(x)
           for x in
           glob.glob(f'{grouppath}/member.uid___A001_X15*_X*')]
 
-parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': True, },  # the usual MPI crash error is occurring
+# the memory/ntask overrides were important before we switched to full-parallel mode
+# they should never have been used for continuum
+parameters = {#'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': True, },  # the usual MPI crash error is occurring
               'member.uid___A001_X15a0_X142': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # ditto
               'member.uid___A001_X15a0_Xca': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # field ag: MPI crash
               'member.uid___A001_X15a0_X160': {'mem': 128, 'ntasks': 1, 'mpi': False, },
               'member.uid___A001_X15a0_X1a2': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field ar: timeout
               'member.uid___A001_X15a0_X1a8': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # write lock frozen spw33 OOMs; try MPI?.  MPI write-locks everything.
-              'member.uid___A001_X15a0_Xa6': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # spw33 is taking for-ev-er; try MPI?  created backup first: backup_20221108_beforempi/
+              #'member.uid___A001_X15a0_Xa6': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # spw33 is taking for-ev-er; try MPI?  created backup first: backup_20221108_beforempi/
               #'member.uid___A001_X15a0_X190': {'mem': 256, 'ntasks': 1, 'mpi': False,
               #                                 'jobtime': '200:00:00', 'burst': False},  # ao: same as above, too long.  But, MPI fails with writelock. NON-MPI also fails!?
-              'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
+              #'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
               'member.uid___A001_X15a0_Xd0': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field i spw35: timeout
               'member.uid___A001_X15a0_X17e': {'mem': 256, 'ntasks': 1, 'mpi': False, 'nchan_per': 16},  # field al: try to avoid having subcubes
-              }
+}
 newpars = parameters.copy()
 
 # June 1, 2022: try using fewer tasks to see if it reduces likelihood of race condition
@@ -57,6 +59,9 @@ def main():
     check_syntax = '--check-syntax' in sys.argv
     use_parallel = '--parallel' in sys.argv
     aggregate_only = '--aggregate-only' in sys.argv
+    aggregate_high_only = '--aggregate-high-only' in sys.argv
+    aggregate_low_only = '--aggregate-low-only' in sys.argv
+    continue_started_only = '--continue-only' in sys.argv
 
     if debug:
         log.setLevel('DEBUG')
@@ -141,8 +146,15 @@ def main():
             for spw in imaging_status[mousname][config]:
                 log.debug(f"mous={mous} field={field} sbname={sbname} config={config} config_={config_} spw={spw}")
 
+                if aggregate_high_only and not ('aggregate_high' in spw):
+                    log.debug(f"Skipped spw {spw} because it is not aggregate and aggregate_high_only was set")
+                    continue
+                if aggregate_low_only and not ('aggregate_low' in spw):
+                    log.debug(f"Skipped spw {spw} because it is not aggregate and aggregate_low_only was set")
+                    continue
+
                 for imtype in imaging_status[mousname][config][spw]:
-                    if aggregate_only and not ('aggregate' in imtype or 'mfs' in imtype):
+                    if aggregate_only and not ('aggregate' in spw or 'mfs' in imtype):
                         log.debug(f"Skipped imtype {imtype} because it is not aggregate and aggregate_only was set")
                         continue
                     log.debug(f"spw={spw} imtype={imtype}{'**************AGGREGATE**********' if ('aggregate' in imtype) or ('mfs' in imtype) else ''}")
@@ -283,6 +295,14 @@ def main():
                         for tfn in old_tempfiles:
                             print(f"Removing {tfn}")
                             shutil.rmtree(tfn)
+
+                    if continue_started_only:
+                        msfiles = glob.glob(f'{workdir}/{tempdir_name}/*.ms')
+                        if len(msfiles) == 0:
+                            continue
+                        else:
+                            msfstr = '\n'.join(msfiles)
+                            print(f"Continuing already-started imaging with existing mses {msfstr}")
 
                     if spwpars['mpi']:
                         mpisuffix = '_mpi'

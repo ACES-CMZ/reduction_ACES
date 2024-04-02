@@ -21,6 +21,7 @@ import spectral_cube
 from spectral_cube.utils import NoBeamError
 from astropy.io import fits
 import dask
+from tqdm.auto import tqdm
 
 from statcont.cont_finding import c_sigmaclip_scube
 
@@ -39,6 +40,83 @@ basepath = conf.basepath
 # for zarr storage
 if not os.getenv('SLURM_TMPDIR'):
     os.environ['TMPDIR'] = '/blue/adamginsburg/adamginsburg/tmp'
+
+
+def get_size(start_path='.'):
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(start_path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+
+    return total_size
+
+
+def check_fits_file(fn, remove=False, verbose=True):
+    with warnings.catch_warnings(record=True) as ww:
+        warnings.simplefilter('always')
+        if os.path.exists(fn):
+            if verbose:
+                print(f"Checking {fn} for warnings")
+            try:
+                fits.open(fn)
+            except OSError:
+                print(f"Removing broken file {fn}")
+                os.remove(fn)
+            for wi in ww:
+                if "File may have been truncated" in str(wi.message):
+                    print(f"Removing truncated file {fn}")
+                    os.remove(fn)
+                    break
+
+
+def check_cube(fn, zero_threshold=0, remove=False):
+    cube = SpectralCube.read(fn, use_dask=False)
+    # we only need to check a subset
+    scube = cube[::20, ::20, ::20]
+    spectra_with_zeros = (scube == 0 * scube.unit).include().sum(axis=0).sum()
+    if spectra_with_zeros > zero_threshold:
+        print(f"{fn} was bad, it had {spectra_with_zeros} spectra containing zeros in the subsetted version")
+        if remove:
+            print(f"Removing {fn}")
+            os.remove(fn)
+
+
+def get_file_numbers(progressbar=tqdm):
+    """
+    For slurm jobs, just run through all the files that we're maybe going to statcont and check which ones need it
+    """
+
+    # kinda meant to be hacked
+    redo = bool(os.getenv('REDO'))
+
+    filenames = glob.glob(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_*/calibrated/working/*cube*.image.pbcor.fits')
+
+    sizes = {ii: get_size(fn)
+             for ii, fn in enumerate(filenames)
+             }
+
+    numlist = []
+    for ii in tqdm(sorted(sizes, key=lambda x: sizes[x])):
+
+        fn = filenames[ii]
+
+        #outfn = fn+'.statcont.cont.fits'
+        outfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.cont.fits")
+        #fileformat = 'fits'
+        assert outfn.count('.fits') == 1
+
+        contsubfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.contsub.fits")
+
+        check_fits_file(outfn, remove=True, verbose=False)
+        check_fits_file(contsubfn, remove=True, verbose=False)
+
+        if not os.path.exists(outfn) or not os.path.exists(contsubfn) or redo:
+            numlist.append(ii)
+
+    return numlist
 
 
 def main():
@@ -78,20 +156,9 @@ def main():
     print(f"tempdir is {tempfile.gettempdir()}")
 
     # kinda meant to be hacked
-    redo = False
+    redo = bool(os.getenv('REDO'))
 
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/cube_stats.ecsv')
-
-    def get_size(start_path='.'):
-        total_size = 0
-        for dirpath, dirnames, filenames in os.walk(start_path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                # skip if it is symbolic link
-                if not os.path.islink(fp):
-                    total_size += os.path.getsize(fp)
-
-        return total_size
 
     # simpler approach
     #sizes = {fn: get_size(fn) for fn in glob.glob(f"{basepath}/*_12M_spw[0-9].image")}
@@ -121,6 +188,11 @@ def main():
         outfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.cont.fits")
         fileformat = 'fits'
         assert outfn.count('.fits') == 1
+
+        outcube = contsubfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.contsub.fits")
+
+        check_fits_file(outfn, remove=True)
+        check_fits_file(contsubfn, remove=True)
 
         if not os.path.exists(outfn) or redo:
             t0 = time.time()
@@ -181,7 +253,6 @@ def main():
                 print(f"{outfn} had size {os.path.getsize(outfn)}", flush=True)
                 os.remove(outfn)
 
-        outcube = contsubfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.contsub.fits")
         if os.path.exists(contsubfn):
             try:
                 print(f"Checking {contsubfn} for beam")
@@ -220,9 +291,11 @@ def main():
                 print(f"Found existing cube {outcube} and redo=False")
         else:
             print("Operated on a non-FITS file: no contsub cube was created")
+        print(f"Done with file {fn}")
         sys.stdout.flush()
         sys.stderr.flush()
 
 
 if __name__ == "__main__":
     main()
+    print("Done with statcont")
