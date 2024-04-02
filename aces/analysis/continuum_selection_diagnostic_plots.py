@@ -97,7 +97,7 @@ def make_plot(sbname):
             continue
 
         max_spec = fits.getdata(max_fn)
-        mean_spec = fits.getdata(mean_fn)
+        # mean_spec = fits.getdata(mean_fn)
 
         cont_arr_indiv = np.zeros(cube.shape[0])
         minfreq = cube.spectral_axis.min()
@@ -113,12 +113,12 @@ def make_plot(sbname):
                 if f1 == f2:
                     continue
                 if f1 > f2:
-                    f1,f2 = f2,f1
+                    f1, f2 = f2, f1
 
                 sel = (frqarr > f1) & (frqarr < f2)
                 cont_arr_indiv[sel] = 1
 
-        ax1 = fig.add_subplot(2, 4, ii+1)
+        ax1 = fig.add_subplot(2, 4, ii + 1)
         ax1.plot(cube.spectral_axis, max_spec, color='k')
         if contdat is not None:
             max_spec_masked = max_spec.copy()
@@ -137,8 +137,8 @@ def make_plot(sbname):
         # zoom the plot in to show the selection
         mn = np.nanmin(max_spec_masked2)
         std = np.nanstd(max_spec_masked2)
-        ylim = ax1.set_ylim(mn - 5 * std,
-                            np.nanmax(max_spec_masked2) + 5 * std)
+        ax1.set_ylim(mn - 5 * std,
+                     np.nanmax(max_spec_masked2) + 5 * std)
         if new_contsel.sum() == 0:
             raise ValueError("Found no continuum")
 
@@ -209,12 +209,12 @@ def assemble_new_contsels():
             for spw in (25, 27, 33, 35):
 
                 cubefns = (glob.glob(f'{workingpath}/*spw{spw}*.cube.I.iter1.image')
-                        + glob.glob(f'{workingpath}/*sci{spw}*.cube.I.iter1.image')
-                        + glob.glob(f'{workingpath}/*sci{spw}*.cube.I.manual.image')
-                        + glob.glob(f'{workingpath}/*spw{spw}*.cube.I.manual.image')
-                        + glob.glob(f'{workingpath}/*sci{spw}*.cube.I.iter1.reclean.image')
-                        + glob.glob(f'{workingpath}/*spw{spw}*.cube.I.manual.reclean.image')
-                        + glob.glob(f'{workingpath}/*spw{spw}*.cube.I.iter1.reclean.image')
+                           + glob.glob(f'{workingpath}/*sci{spw}*.cube.I.iter1.image')
+                           + glob.glob(f'{workingpath}/*sci{spw}*.cube.I.manual.image')
+                           + glob.glob(f'{workingpath}/*spw{spw}*.cube.I.manual.image')
+                           + glob.glob(f'{workingpath}/*sci{spw}*.cube.I.iter1.reclean.image')
+                           + glob.glob(f'{workingpath}/*spw{spw}*.cube.I.manual.reclean.image')
+                           + glob.glob(f'{workingpath}/*spw{spw}*.cube.I.iter1.reclean.image')
                 )
                 if len(cubefns) > 1:
                     # filter out s12's
@@ -229,7 +229,7 @@ def assemble_new_contsels():
                     continue
                 assert len(cubefns) == 1
                 cubefn = cubefns[0]
-                cube = SpectralCube.read(cubefn)
+                # cube = SpectralCube.read(cubefn)
 
                 if cubefn.endswith('.image'):
                     basename = os.path.basename(cubefn)
@@ -251,8 +251,8 @@ def assemble_new_contsels():
                 max_spec = OneDSpectrum.from_hdu(fits.open(max_fn))
                 contsel_bool = id_continuum(max_spec.value)
                 segments, nseg = ndimage.label(contsel_bool)
-                frqmins = u.Quantity(ndimage.labeled_comprehension(max_spec.spectral_axis, segments, np.arange(1, nseg+1), np.min, float, np.nan), max_spec.spectral_axis.unit)
-                frqmaxs = u.Quantity(ndimage.labeled_comprehension(max_spec.spectral_axis, segments, np.arange(1, nseg+1), np.max, float, np.nan), max_spec.spectral_axis.unit)
+                frqmins = u.Quantity(ndimage.labeled_comprehension(max_spec.spectral_axis, segments, np.arange(1, nseg + 1), np.min, float, np.nan), max_spec.spectral_axis.unit)
+                frqmaxs = u.Quantity(ndimage.labeled_comprehension(max_spec.spectral_axis, segments, np.arange(1, nseg + 1), np.max, float, np.nan), max_spec.spectral_axis.unit)
 
                 # calculate LSR offset from the data
                 native_frqs = ms.cvelfreqs(spw)
@@ -261,7 +261,7 @@ def assemble_new_contsels():
 
                 frqmins_native = (frqmins * (1 - v_offset / constants.c)).to(u.GHz)
                 frqmaxs_native = (frqmaxs * (1 - v_offset / constants.c)).to(u.GHz)
-                frqpairs = [f'{mn}~{mx}GHz' for mn,mx in zip(frqmins_native.value, frqmaxs_native.value)]
+                frqpairs = [f'{mn}~{mx}GHz' for mn, mx in zip(frqmins_native.value, frqmaxs_native.value)]
 
                 selstr_ = f'{spw}:' + ";".join(frqpairs)
                 selstrs.append(selstr_)

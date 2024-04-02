@@ -9,7 +9,6 @@ def main():
     if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
         slurm_array_task_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
-
         for ii, dirname in enumerate(dirnames):
             if ii == slurm_array_task_id:
                 print(dirname)
@@ -20,6 +19,7 @@ def main():
                     check_fits_file(fn, remove=True)
                     if os.path.exists(fn):
                         check_cube(fn, remove=True)
+
 
 if __name__ == "__main__":
     main()
