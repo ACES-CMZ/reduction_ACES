@@ -48,7 +48,7 @@ try:
 
         line_fraction = {}
 
-        for spw,freq in freqslist.items():
+        for spw, freq in freqslist.items():
             fmin, fmax = np.min(freq), np.max(freq)
             if fmin > fmax:
                 raise ValueError("this is literally impossible")
@@ -68,8 +68,6 @@ try:
                 elif fhi > fmax and flo < fmin:
                     selected[:] = True
 
-
-
             # invert from continuum to line
             invselected = ~selected
 
@@ -87,14 +85,14 @@ try:
                 # if the first index is 'True', then we start with selected
                 chans = [0] + chans
             if invselected[-1]:
-                chans = chans + [len(freq)-1]
+                chans = chans + [len(freq) - 1]
 
             if len(chans) % 2 > 0:
                 raise ValueError("Found an odd number of channel endpoints in "
                                  "line inclusion for spw {0}. ".format(spw))
 
             selchan = ("{0}:".format(spw) +
-                       ";".join(["{0}~{1}".format(lo,hi)
+                       ";".join(["{0}~{1}".format(lo, hi)
                                  for lo, hi in zip(chans[::2], chans[1::2])]))
 
             new_sel.append(selchan)
@@ -195,20 +193,17 @@ except ModuleNotFoundError:
     # if using this not in a casa6 environment
     pass
 
-
-    """
-    flagchannels='0:0~60;180~300;2790~2880;3280~3360;3460~3490;3830~3839,1:60~130;200~250;320~420;580~650;1000~1040;1200~1360;1420~1460;1720~1790;1860~1919,2:40~300;630~700;800~1000;1440~1640;1780~1919,3:100~150;470~540;640~820;920~980;1220~1260;1370~1420;1710~1780,4:0~60;180~300;2790~2880;3280~3360;3460~3490;3830~3839,5:60~130;200~250;320~420;580~650;1000~1040;1200~1360;1420~1460;1720~1790;1860~1919,6:40~300;630~700;800~1000;1440~1640;1780~1919,7:100~150;470~540;640~820;920~980;1220~1260;1370~1420;1710~1780,8:0~60;180~300;2790~2880;3280~3360;3460~3490;3830~3839,9:60~130;200~250;320~420;580~650;1000~1040;1200~1360;1420~1460;1720~1790;1860~1919,10:40~300;630~700;800~1000;1440~1640;1780~1919,11:100~150;470~540;640~820;920~980;1220~1260;1370~1420;1710~1780,12:0~60;180~300;900~1050;1860~1950;2100~2140;2230~2280;2790~2880;3050~3100;3280~3360;3460~3490;3590~3650;3830~3839,13:60~130;200~250;265~285;320~420;435~460;580~650;670~700;760~810;1000~1040;1200~1360;1420~1460;1720~1790;1800~1840;1860~1919,14:40~300;630~700;800~1000;1440~1640;1780~1919,15:100~150;470~540;640~820;920~980;1170~1190;1220~1260;1370~1420;1710~1780'
-    freqsel = cont_channel_selection_to_contdotdat(flagchannels, ('./science_goal.uid___A001_X1290_X44/group.uid___A001_X1290_X45/member.uid___A001_X1290_X46/calibrated/calibrated_final.ms/'), spw_mapping={0:25,1:27,2:29,3:31})
-    fselstr = ";".join( ";".join(freqsel[x]) for x in freqsel)
-    ms.open('./science_goal.uid___A001_X1290_X44/group.uid___A001_X1290_X45/member.uid___A001_X1290_X46/calibrated/calibrated_final.ms/')
-    freqs = {25: ms.cvelfreqs(25), 27: ms.cvelfreqs(27), 29:ms.cvelfreqs(29), 31:ms.cvelfreqs(31)}
-    ms.close()
-    contsel = contchannels_to_linechannels(fselstr, freqs)
-    contfreqsel = cont_channel_selection_to_contdotdat(contsel, ('./science_goal.uid___A001_X1290_X44/group.uid___A001_X1290_X45/member.uid___A001_X1290_X46/calibrated/calibrated_final.ms/'), spw_mapping={0:25,1:27,2:29,3:31})
-    print("Field: Sgr_B2_DS")
-    for entry in contfreqsel:
-        print()
-        print(f"SpectralWindow: {entry}")
-        for row in contfreqsel[entry]:
-            print(f"{row} LSRK")
-    """
+# flagchannels='0:0~60;180~300;2790~2880;3280~3360;3460~3490;3830~3839,1:60~130;200~250;320~420;580~650;1000~1040;1200~1360;1420~1460;1720~1790;1860~1919,2:40~300;630~700;800~1000;1440~1640;1780~1919,3:100~150;470~540;640~820;920~980;1220~1260;1370~1420;1710~1780,4:0~60;180~300;2790~2880;3280~3360;3460~3490;3830~3839,5:60~130;200~250;320~420;580~650;1000~1040;1200~1360;1420~1460;1720~1790;1860~1919,6:40~300;630~700;800~1000;1440~1640;1780~1919,7:100~150;470~540;640~820;920~980;1220~1260;1370~1420;1710~1780,8:0~60;180~300;2790~2880;3280~3360;3460~3490;3830~3839,9:60~130;200~250;320~420;580~650;1000~1040;1200~1360;1420~1460;1720~1790;1860~1919,10:40~300;630~700;800~1000;1440~1640;1780~1919,11:100~150;470~540;640~820;920~980;1220~1260;1370~1420;1710~1780,12:0~60;180~300;900~1050;1860~1950;2100~2140;2230~2280;2790~2880;3050~3100;3280~3360;3460~3490;3590~3650;3830~3839,13:60~130;200~250;265~285;320~420;435~460;580~650;670~700;760~810;1000~1040;1200~1360;1420~1460;1720~1790;1800~1840;1860~1919,14:40~300;630~700;800~1000;1440~1640;1780~1919,15:100~150;470~540;640~820;920~980;1170~1190;1220~1260;1370~1420;1710~1780'
+# freqsel = cont_channel_selection_to_contdotdat(flagchannels, ('./science_goal.uid___A001_X1290_X44/group.uid___A001_X1290_X45/member.uid___A001_X1290_X46/calibrated/calibrated_final.ms/'), spw_mapping={0:25,1:27,2:29,3:31})
+# fselstr = ";".join( ";".join(freqsel[x]) for x in freqsel)
+# ms.open('./science_goal.uid___A001_X1290_X44/group.uid___A001_X1290_X45/member.uid___A001_X1290_X46/calibrated/calibrated_final.ms/')
+# freqs = {25: ms.cvelfreqs(25), 27: ms.cvelfreqs(27), 29:ms.cvelfreqs(29), 31:ms.cvelfreqs(31)}
+# ms.close()
+# contsel = contchannels_to_linechannels(fselstr, freqs)
+# contfreqsel = cont_channel_selection_to_contdotdat(contsel, ('./science_goal.uid___A001_X1290_X44/group.uid___A001_X1290_X45/member.uid___A001_X1290_X46/calibrated/calibrated_final.ms/'), spw_mapping={0:25,1:27,2:29,3:31})
+# print("Field: Sgr_B2_DS")
+# for entry in contfreqsel:
+#     print()
+#     print(f"SpectralWindow: {entry}")
+#     for row in contfreqsel[entry]:
+#         print(f"{row} LSRK")
