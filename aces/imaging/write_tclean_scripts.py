@@ -153,18 +153,34 @@ def main():
 
                         if 'aggregate' in spwsel:
                             def rename(x):
+                                x = x.replace(".ms", f"_{spwsel}.ms")
                                 return os.path.join(tempdir_name, os.path.basename(x))
 
-                            splitcmd = copycmds = "\n".join(
+                            splitcmd = "\n".join(
+                                [textwrap.dedent(
+                                    f"""
+                                    split(vis="{x}",
+                                          outputvis="{rename(x)}",
+                                          spw="{spw_selection}",
+                                          width=10,
+                                          field='Sgr_A_star',
+                                    )\n
+                                    """)
+                                    for x, spw_selection in zip(tcpars['vis'], tcpars['spw'])
+                                ]
+                            )
+
+                            splitcmd = copycmds = splitcmd + "\n".join(
                                 ["import shutil"] +
                                 [textwrap.dedent(
                                     f"""
-                                    try:
-                                        logprint('Copying {x} to {rename(x)}.')
-                                        shutil.copytree('{x}', '{rename(x)}')
-                                        logprint('Successfully copied {x} to {rename(x)}.')
-                                    except FileExistsError as ex:
-                                        logprint(f'MS file already copied: {{ex}}.  Proceeding.')
+                                    if not os.path.exists("{rename(x)}"):
+                                        try:
+                                            logprint('Copying {x} to {rename(x)}.')
+                                            shutil.copytree('{x}', '{rename(x)}')
+                                            logprint('Successfully copied {x} to {rename(x)}.')
+                                        except FileExistsError as ex:
+                                            logprint(f'MS file already copied: {{ex}}.  Proceeding.')
                                     """)
                                  for x in tcpars['vis']
                                  ])
@@ -201,9 +217,9 @@ def main():
                                                 spw={spw})
                                                 """) for vis in tcpars['vis']]
 
-                            # ONLY for line cubes, which are individually split out:
-                            # the spw selection should now be 'everything in the MS'
-                            tcpars['spw'] = ''
+                        # for both aggregate & line:
+                        # the spw selection should now be 'everything in the MS'
+                        tcpars['spw'] = ''
 
                         # all 'vis' must be renamed because of their new locations
                         tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
