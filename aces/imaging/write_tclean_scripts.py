@@ -297,7 +297,7 @@ def main():
                         # use local name instead
                         #tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
 
-                    print(f"Creating script for {partype} tclean in {workingpath} for sb {sbname} ")
+                    print(f"Creating script for {partype} {spwsel} tclean in {workingpath} for sb {sbname}: {partype}_{sbname}_{spwsel}.py ")
                     # with kwargs: \n{tcpars}")
 
                     with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
