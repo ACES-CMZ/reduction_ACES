@@ -333,11 +333,16 @@ def main():
                                          else os.path.join(datapath, os.path.basename(vis)).replace("targets", "target")
                                          for vis in tcpars['vis']]
                         for ii, vis in enumerate(tcpars['vis']):
-                            try:
-                                assert os.path.exists(vis), vis
-                            except AssertionError:
-                                assert os.path.exists(vis.replace("_line", ""))
-                                tcpars['vis'][ii] = vis.replace("_line", "")
+                            if not os.path.exists(vis):
+                                if os.path.exists(vis.replace("_line", "")):
+                                    tcpars['vis'][ii] = vis.replace("_line", "")
+                                elif os.path.exists(vis.replace("_target_line", "")):
+                                    tcpars['vis'][ii] = vis.replace("_target_line", "")
+                                elif os.path.exists(vis.replace("_target", "")):
+                                    tcpars['vis'][ii] = vis.replace("_target", "")
+                                else:
+                                    matches = glob.glob(vis.replace(".ms", "*"))
+                                    raise IOError(f"MS {vis} does not exist, nor do any of its variants.  glob={matches}")
                         if 'nchan' not in tcpars:
                             print(tcpars)
                             print(sous, gous, mous)
