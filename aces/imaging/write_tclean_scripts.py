@@ -20,6 +20,7 @@ import textwrap
 import string
 from aces import conf
 from aces.pipeline_scripts.merge_tclean_commands import get_commands
+from aces.analysis import parse_contdotdat
 
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
@@ -155,25 +156,19 @@ def main():
                             def rename(x):
                                 # x = x.replace(".ms", f"_{spwsel}.ms")
                                 return os.path.join(tempdir_name, os.path.basename(x))
+                            def rename_agg(x):
+                                x = x.replace(".ms", f"_{spwsel}.ms")
+                                return os.path.join(tempdir_name, os.path.basename(x))
 
                             # This was a great idea, but it totally didn't work because there are multiple steps involved
                             # You can't just split out the channels you want, you have to flag them, then average them,
                             # then remove the flags.
-                            # splitcmd = "\n".join(
-                            #     [textwrap.dedent(
-                            #         f"""
-                            #         if not os.path.exists("{rename(x)}"):
-                            #             # split(), but w/mstransform
-                            #             mstransform(vis="{x}",
-                            #                         outputvis="{rename(x)}",
-                            #                         spw="{spw_selection}",
-                            #                         field='Sgr_A_star',
-                            #             )\n
-                            #         """)
-                            #         for x, spw_selection in zip(tcpars['vis'], tcpars['spw'])
-                            #     ]
-                            # )
-                            # splitcmd = copycmds = splitcmd + "\n".join(
+
+
+                            # Alternative approach:
+                            # copy over MS
+                            # flag out non-continuum channels [requires inverting selection]
+                            # split
 
                             splitcmd = copycmds = "\n".join(
                                 ["import shutil"] +
@@ -189,6 +184,50 @@ def main():
                                     """)
                                  for x in tcpars['vis']
                                  ])
+
+                            splitcmd += "\n\n################\n\n"
+
+
+                            splitcmd += "\n".join(
+                                [textwrap.dedent(
+                                    f"""
+                                    if not os.path.exists("{rename_agg(x)}"):
+                                        freqs = {{}}
+                                        visfile = "{x}"
+
+                                        spw_selection = "{spw_selection}"
+                                        spws_for_loop = [int(x.split(":")[0]) for x in spw_selection.split(",")]
+
+                                        ms.open(visfile)
+                                        for spw in spws_for_loop:
+                                            try:
+                                                freqs[spw] = ms.cvelfreqs(spwid=[spw], outframe='LSRK')
+                                            except TypeError:
+                                                freqs[spw] = ms.cvelfreqs(spwids=[spw], outframe='LSRK')
+
+                                        linechannels, linefracs = contchannels_to_linechannels(spw_selection, freqs, return_fractions=True)
+
+                                        logprint("Line fractions are: {{0}}".format(linefracs))
+                                        logprint("Cont channels are: {{0}}".format(cont_channel_selection))
+                                        logprint("Line channels are: {{0}}".format(linechannels))
+                                        flagdata(vis=visfile, mode='manual', spw=linechannels, flagbackup=False)
+
+                                        # split(), but w/mstransform
+                                        mstransform(vis=visfile,
+                                                    outputvis="{rename_agg(x)}",
+                                                    width=10,
+                                                    field='Sgr_A_star',
+                                        )
+
+                                        ms.close()
+
+                                        shutil.rmtree(visfile)
+                                    """)
+                                    for x, spw_selection in zip(tcpars['vis'], tcpars['spw'])
+                                ]
+                            )
+                            #splitcmd = copycmds = splitcmd + "\n".join(
+
 
                             # hard code that parallel = False for non-MPI runs
                             tcpars['parallel'] = False
@@ -296,6 +335,8 @@ def main():
                         )
                         # use local name instead
                         #tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
+                    else:
+                        raise ValueError("Script is no longer designed to work w/o a tempdir.  It might, but you should manually disable this and do some sanity checks")
 
                     print(f"Creating script for {partype} {spwsel} tclean in {workingpath} for sb {sbname}: {partype}_{sbname}_{spwsel}.py ")
                     # with kwargs: \n{tcpars}")
