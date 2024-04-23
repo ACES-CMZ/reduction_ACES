@@ -228,9 +228,14 @@ def main():
                             )
                             #splitcmd = copycmds = splitcmd + "\n".join(
 
+                            # now that we've split the data, we don't want to try to downselect again later
+                            tcpars['spw'] = ''
 
                             # hard code that parallel = False for non-MPI runs
                             tcpars['parallel'] = False
+
+                            # all 'vis' must be renamed because of their new locations
+                            tcpars['vis'] = [rename_agg(x) for x in tcpars["vis"]]
                         else:
                             spw = int(spwsel.lstrip('spw'))
 
@@ -264,8 +269,8 @@ def main():
                             # Only for lines
                             tcpars['spw'] = ''
 
-                        # all 'vis' must be renamed because of their new locations
-                        tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
+                            # all 'vis' must be renamed because of their new locations
+                            tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
 
                         savecmds = textwrap.dedent(
                             f"""
