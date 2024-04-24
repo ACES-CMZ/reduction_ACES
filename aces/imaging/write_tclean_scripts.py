@@ -20,7 +20,7 @@ import textwrap
 import string
 from aces import conf
 from aces.pipeline_scripts.merge_tclean_commands import get_commands
-from aces.analysis import parse_contdotdat
+from aces.analysis.parse_contdotdat import contchannels_to_linechannels
 
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
@@ -191,6 +191,8 @@ def main():
                             splitcmd += "\n".join(
                                 [textwrap.dedent(
                                     f"""
+                                    from aces.analysis.parse_contdotdat import contchannels_to_linechannels
+
                                     if not os.path.exists("{rename_agg(x)}"):
                                         freqs = {{}}
                                         visfile = "{x}"
