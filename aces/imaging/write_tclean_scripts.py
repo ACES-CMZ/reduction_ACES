@@ -195,7 +195,8 @@ def main():
 
                                     if not os.path.exists("{rename_agg(x)}"):
                                         freqs = {{}}
-                                        visfile = "{x}"
+                                        visfile = "{rename(x)}"
+                                        assert 'orange' not in visfile
 
                                         spw_selection = "{spw_selection}"
                                         spws_for_loop = [int(x.split(":")[0]) for x in spw_selection.split(",")]
@@ -224,6 +225,7 @@ def main():
 
                                         ms.close()
 
+                                        assert 'orange' not in visfile
                                         shutil.rmtree(visfile)
                                     """)
                                     for x, spw_selection in zip(tcpars['vis'], tcpars['spw'])
