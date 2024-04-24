@@ -299,6 +299,7 @@ def main():
                                                 logprint(f'Removing {{target}} because it exists')
                                                 assert 'iter1' in f'{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
                                                 assert realtarget != realfn
+                                                assert 'orange' not in target
                                                 shutil.rmtree(target)
                                             shutil.copytree(fn, target)\n\n
                             """)
@@ -316,6 +317,7 @@ def main():
                                     if fn.endswith('.fits'):
                                         os.remove(target)
                                     else:
+                                        assert 'orange' not in target
                                         shutil.rmtree(target)
                                 if fn.endswith('.fits'):
                                     shutil.copy(fn, '{tempdir_name}/')
@@ -339,6 +341,7 @@ def main():
                                     if fn.endswith('.fits'):
                                         os.remove(target)
                                     else:
+                                        assert 'orange' not in target
                                         shutil.rmtree(target)
                                 shutil.move(fn, '{workingpath}/')\n\n""") +
                             "\n".join([f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']])
