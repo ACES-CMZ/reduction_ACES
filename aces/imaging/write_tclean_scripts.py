@@ -199,6 +199,7 @@ def main():
 
                                         spw_selection = "{spw_selection}"
                                         spws_for_loop = [int(x.split(":")[0]) for x in spw_selection.split(",")]
+                                        contsel = ";".join([x.split(":")[1] for x in spw_selection.split(",")])
 
                                         ms.open(visfile)
                                         for spw in spws_for_loop:
@@ -207,10 +208,10 @@ def main():
                                             except TypeError:
                                                 freqs[spw] = ms.cvelfreqs(spwids=[spw], outframe='LSRK')
 
-                                        linechannels, linefracs = contchannels_to_linechannels(spw_selection, freqs, return_fractions=True)
+                                        linechannels, linefracs = contchannels_to_linechannels(contsel, freqs, return_fractions=True)
 
                                         logprint("Line fractions are: {{0}}".format(linefracs))
-                                        logprint("Cont channels are: {{0}}".format(cont_channel_selection))
+                                        logprint("Cont channels are: {{0}}".format(contsel))
                                         logprint("Line channels are: {{0}}".format(linechannels))
                                         flagdata(vis=visfile, mode='manual', spw=linechannels, flagbackup=False)
 
