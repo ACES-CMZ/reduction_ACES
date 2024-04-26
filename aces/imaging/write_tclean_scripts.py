@@ -216,12 +216,20 @@ def main():
                                         logprint("Line channels are: {{0}}".format(linechannels))
                                         flagdata(vis=visfile, mode='manual', spw=linechannels, flagbackup=False)
 
-                                        # split(), but w/mstransform
-                                        mstransform(vis=visfile,
-                                                    outputvis="{rename_agg(x)}",
-                                                    width=10,
-                                                    field='Sgr_A_star',
-                                        )
+                                        result = split(vis=visfile,
+                                                       outputvis="{rename_agg(x)}",
+                                                       width=10,
+                                                       field='Sgr_A_star',)
+
+                                        if not os.path.exists("{rename_agg(x)}"):
+                                            result = split(vis=visfile,
+                                                           outputvis="{rename_agg(x)}",
+                                                           width=10,
+                                                           datacolumn='data',
+                                                           field='Sgr_A_star',)
+
+                                        if not os.path.exists("{rename_agg(x)}"):
+                                            raise ValueError("Split failed")
 
                                         ms.close()
 
@@ -367,6 +375,7 @@ def main():
                                      print(string, flush=True)
 
                                  logprint(f"Casalog file is {{casalog.logfile()}}")
+                                 logprint(f'Started CASA in {os.getcwd()}')
 
                                  mpi_ntasks = os.getenv('mpi_ntasks')
                                  if mpi_ntasks is not None:
@@ -387,7 +396,7 @@ def main():
                                  logprint(f"Temporary directory used is {{tempdir_name}}")
 
                                  """))
-                        fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
+                        fh.write("logprint(f'Current directory is {os.getcwd()}')\n")
 
                         # tclean
                         if temp_workdir:
