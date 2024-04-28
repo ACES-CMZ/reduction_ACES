@@ -201,6 +201,7 @@ def main():
                                         spw_selection = "{spw_selection}"
                                         spws_for_loop = [int(x.split(":")[0]) for x in spw_selection.split(",")]
                                         contsel = ";".join([x.split(":")[1] for x in spw_selection.split(",")])
+                                        spws_to_split = ",".join(map(str, spws_for_loop))
 
                                         ms.open(visfile)
                                         for spw in spws_for_loop:
@@ -214,17 +215,21 @@ def main():
                                         logprint("Line fractions are: {{0}}".format(linefracs))
                                         logprint("Cont channels are: {{0}}".format(contsel))
                                         logprint("Line channels are: {{0}}".format(linechannels))
+                                        logprint("spws to split are: {{0}}".format(spws_to_split))
                                         flagdata(vis=visfile, mode='manual', spw=linechannels, flagbackup=False)
 
                                         result = split(vis=visfile,
                                                        outputvis="{rename_agg(x)}",
+                                                       spw=spws_to_split,
                                                        width=10,
                                                        field='Sgr_A_star',)
 
                                         if not os.path.exists("{rename_agg(x)}"):
+                                            logprint("USING DATACOLUMN=DATA!  This could be a problem!")
                                             result = split(vis=visfile,
                                                            outputvis="{rename_agg(x)}",
                                                            width=10,
+                                                           spw=spws_to_split,
                                                            datacolumn='data',
                                                            field='Sgr_A_star',)
 
@@ -243,6 +248,7 @@ def main():
 
                             # now that we've split the data, we don't want to try to downselect again later
                             tcpars['spw'] = ''
+                            #print(f"Reduced SPW selection to {tcpars['spw']} since the data should be appropriately split")
 
                             # hard code that parallel = False for non-MPI runs
                             tcpars['parallel'] = False
