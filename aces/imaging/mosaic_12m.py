@@ -107,6 +107,7 @@ def main():
 
     # do this _after_
     if not options.contonly:
+        print("Running all_lines")
         all_lines(header)
 
     if failure:

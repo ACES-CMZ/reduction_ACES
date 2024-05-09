@@ -434,6 +434,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
                            kwargs=dict(name=f'{line}_max', cbar_unit='K',
                            norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                            array=array, basepath=basepath, weights=wthdus if use_weights else None,
+                           folder=folder,
                            target_header=header))
             proc.start()
             processes.append(proc)
@@ -458,13 +459,16 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             proc = Process(target=make_mosaic, args=(m0hdus, ),
                            kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
                            norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                           folder=folder,
                            array=array, basepath=basepath, weights=wthdus if use_weights else None, target_header=header))
             proc.start()
             processes.append(proc)
         else:
             make_mosaic(m0hdus, name=f'{line}_m0', cbar_unit='K km/s',
                         norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
-                        array=array, basepath=basepath, weights=wthdus if use_weights else None, target_header=header)
+                        array=array, basepath=basepath,
+                        folder=folder,
+                        weights=wthdus if use_weights else None, target_header=header)
             del m0hdus
             if use_weights:
                 del wthdus

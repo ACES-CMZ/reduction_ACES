@@ -299,6 +299,7 @@ def main():
                     if continue_started_only:
                         msfiles = glob.glob(f'{workdir}/{tempdir_name}/*.ms')
                         if len(msfiles) == 0:
+                            print("No MS files found; skipping")
                             continue
                         else:
                             msfstr = '\n'.join(msfiles)
