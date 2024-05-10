@@ -413,10 +413,6 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
                     log.error(f"Missing file {wfn}")
                     filelist.remove(ifn)
                     weightfiles.remove(wfn)
-                elif np.nansum(fits.getdata(wfn)) == 0:
-                    log.error(f"{wfn} is all zeros")
-                    filelist.remove(ifn)
-                    weightfiles.remove(wfn)
 
         if parallel:
             pool = Pool()
