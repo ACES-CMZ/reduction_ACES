@@ -351,7 +351,7 @@ def main():
                                 target = f'{workingpath}/{{os.path.basename(fn)}}'
                                 if os.path.exists(target):
                                     logprint(f'Removing {{target}} because it exists')
-                                    assert 'iter1' in target  # sanity check - don't remove important directories!
+                                    assert ('iter1' in target) or ('cont.I.manual' in target)  # sanity check - don't remove important directories!
                                     if fn.endswith('.fits'):
                                         os.remove(target)
                                     else:

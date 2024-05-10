@@ -153,6 +153,20 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, fol
         return moment0
 
 
+def check_hdus(hdus):
+    bad = 0
+    for hdu in hdus:
+        if isinstance(hdu, fits.PrimaryHDU):
+            ttl = np.nansum(hdu.data)
+        else:
+            ttl = np.nansum(hdu)
+        if ttl == 0:
+            bad = bad + 1
+
+    if bad > 0:
+        raise ValueError(f"Found {bad} bad HDUs (all zero)")
+
+
 def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
     import pylab as pl
     from astropy import visualization
@@ -256,6 +270,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     header = target_wcs.to_header()
     if commonbeam is not None:
         header.update(cb.to_header_keywords())
+
+    assert not np.all(np.isnan(prjarr))
 
     outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.fits'
     log.info(f"Writing reprojected data to {outfile}")
@@ -397,6 +413,10 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
                     log.error(f"Missing file {wfn}")
                     filelist.remove(ifn)
                     weightfiles.remove(wfn)
+                elif np.nansum(fits.getdata(wfn)) == 0:
+                    log.error(f"{wfn} is all zeros")
+                    filelist.remove(ifn)
+                    weightfiles.remove(wfn)
 
         if parallel:
             pool = Pool()
@@ -408,6 +428,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
                             filelist,
                             )
             hdus = [x.hdu for x in hdus]
+            check_hdus(hdus)
             if use_weights:
                 wthdus = pool.map(partial(get_peak,
                                           **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
@@ -417,19 +438,22 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
                                           ),
                                   weightfiles)
                 wthdus = [x.hdu for x in wthdus]
+                check_hdus(wthdus)
         else:
             hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
                              rest_value=restf, suffix=f'_{line}').hdu for fn in filelist]
+            check_hdus(hdus)
             print(flush=True)
             if use_weights:
                 wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
                                    rest_value=restf, suffix=f'_{line}',
                                    threshold=0.5,  # pb limit
                                    ).hdu for fn in weightfiles]
+                check_hdus(wthdus)
                 print(flush=True)
 
         if parallel:
-            print(f"Starting function make_mosaic for {line} peak intensity")
+            print(f"Starting function make_mosaic for {line} peak intensity (parallel mode)")
             proc = Process(target=make_mosaic, args=(hdus, ),
                            kwargs=dict(name=f'{line}_max', cbar_unit='K',
                            norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
@@ -439,6 +463,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             proc.start()
             processes.append(proc)
         else:
+            print(f"Starting function make_mosaic for {line} peak intensity")
             make_mosaic(hdus, name=f'{line}_max', cbar_unit='K',
                         norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                         array=array, basepath=basepath, weights=wthdus if use_weights else None,
