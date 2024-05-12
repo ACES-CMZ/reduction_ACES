@@ -79,7 +79,7 @@ def read_as_2d(fn, minval=None):
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
-             folder=None, threshold=None):
+             folder=None, threshold=None, rel_threshold=None, fail_on_zeros=True):
     print(".", end='', flush=True)
     outfn = fn.replace(".fits", "") + f"{suffix}_max.fits"
     if folder is not None:
@@ -87,8 +87,13 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
     if os.path.exists(outfn):
         hdu = fits.open(outfn)
         proj = Projection.from_hdu(hdu)
+        if rel_threshold is not None:
+            threshold = rel_threshold * proj.max()
+            print(f"Set threshold to {threshold} based on rel_threshold={rel_threshold}")
         if threshold is not None:
             proj[proj < threshold] = 0
+        if fail_on_zeros and np.nansum(proj) == 0:
+            raise ValueError(f"File {fn} reduced to all zeros")
         return proj
     else:
         ft = 'fits' if fn.endswith(".fits") else "casa_image"
@@ -116,8 +121,14 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
                         mxjy = mxjy.with_beam(beam, raise_error_jybm=False)
 
                     mx = mxjy.to(u.K, equivalencies=equiv)
+        if fail_on_zeros and np.nansum(mx.value) == 0:
+            raise ValueError(f"File {fn} reduced to all zeros")
         if save_file:
             mx.hdu.writeto(outfn)
+
+        if rel_threshold is not None:
+            threshold = rel_threshold * proj.max()
+            print(f"Set threshold to {threshold} based on rel_threshold={rel_threshold}")
         if threshold is not None:
             mx[mx.value < threshold] = 0
         return mx
@@ -430,7 +441,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
                                           **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
                                              'rest_value': restf},
                                           suffix=f'_{line}',
-                                          threshold=0.5,  # pb limit
+                                          rel_threshold=0.25,  # pb limit
                                           ),
                                   weightfiles)
                 wthdus = [x.hdu for x in wthdus]
@@ -443,7 +454,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             if use_weights:
                 wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
                                    rest_value=restf, suffix=f'_{line}',
-                                   threshold=0.5,  # pb limit
+                                   rel_threshold=0.25,  # pb limit
                                    ).hdu for fn in weightfiles]
                 check_hdus(wthdus)
                 print(flush=True)
