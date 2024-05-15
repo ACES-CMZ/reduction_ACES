@@ -311,7 +311,7 @@ def main():
                                         else:
                                             if os.path.exists(target):
                                                 logprint(f'Removing {{target}} because it exists')
-                                                assert 'iter1' in f'{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
+                                                assert ('iter1' in target) or ('cont.I.manual' in target)  # sanity check - don't remove important directories!
                                                 assert realtarget != realfn
                                                 assert 'orange' not in target
                                                 shutil.rmtree(target)
@@ -327,7 +327,7 @@ def main():
                                 target = f'{tempdir_name}/{{os.path.basename(fn)}}'
                                 if os.path.exists(target):
                                     logprint(f'Removing {{target}} because it exists')
-                                    assert 'iter1' in target  # sanity check - don't remove important directories!
+                                    assert ('iter1' in target) or ('cont.I.manual' in target)  # sanity check - don't remove important directories!
                                     if fn.endswith('.fits'):
                                         os.remove(target)
                                     else:
@@ -466,6 +466,7 @@ def main():
                                                   calcres=True, # sadly must always calcres, even when redundant
                                                   **tclean_pars)
                                      savedata()\n
+                                 logprint("Done with clean loop")\n
                                  """))
 
                         expected_imname = (os.path.basename(tcpars['imagename']) +
