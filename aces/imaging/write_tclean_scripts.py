@@ -122,6 +122,9 @@ def main():
 
                     imtype = tcpars['specmode']
 
+                    # force pbcor
+                    tcpars['pbcor'] = True
+
                     tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}_{config}_{mous}'
                     assert any(x in tempdir_name for x in ('7M', 'TM1', 'TP'))
 
@@ -476,6 +479,7 @@ def main():
 
                         check_exists = textwrap.dedent(f"""
                                               if not os.path.exists('{expected_imname}'):
+                                                  print(os.listdir())
                                                   raise IOError('Expected output file {expected_imname} does not exist.')
                                                   sys.exit(1)
                                                   \n\n""")
