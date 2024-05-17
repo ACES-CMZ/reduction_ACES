@@ -139,7 +139,9 @@ def main_():
 def check_files(filelist):
     uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
     for row in uidtb:
-        matches = [row['12m MOUS ID'] in fn or f'_{row["Obs ID"]}_' in fn for fn in filelist]
+        matches = [(row['12m MOUS ID'] in fn) or
+                   (f'_{row["Obs ID"]}.' in os.path.basename(fn))
+                   for fn in filelist]
         print(row['Obs ID'], sum(matches))
         if sum(matches) != 1:
             for fn in filelist:
@@ -252,8 +254,8 @@ def reimaged(header):
 def reimaged_high(header):
     for spw, name in zip(('33_35', '25_27'), ('reimaged_high', 'reimaged_low')):
         logprint(f"12m continuum {name}")
-        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}*cont.I*image.tt0.pbcor')
-        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw{spw}*cont*tt0.pbcor.fits')
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}*cont.I*image.tt0.pbcor')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.spw{spw}*cont*tt0.pbcor.fits')
 
         check_files(filelist)
 
