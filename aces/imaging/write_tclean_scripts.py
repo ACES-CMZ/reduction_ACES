@@ -159,6 +159,7 @@ def main():
                             def rename(x):
                                 # x = x.replace(".ms", f"_{spwsel}.ms")
                                 return os.path.join(tempdir_name, os.path.basename(x))
+
                             def rename_agg(x):
                                 x = x.replace(".ms", f"_{spwsel}.ms")
                                 return os.path.join(tempdir_name, os.path.basename(x))
@@ -166,7 +167,6 @@ def main():
                             # This was a great idea, but it totally didn't work because there are multiple steps involved
                             # You can't just split out the channels you want, you have to flag them, then average them,
                             # then remove the flags.
-
 
                             # Alternative approach:
                             # copy over MS
@@ -189,7 +189,6 @@ def main():
                                  ])
 
                             splitcmd += "\n\n################\n\n"
-
 
                             splitcmd += "\n".join(
                                 [textwrap.dedent(
