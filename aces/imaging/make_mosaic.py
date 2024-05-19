@@ -127,7 +127,7 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
             mx.hdu.writeto(outfn)
 
         if rel_threshold is not None:
-            threshold = rel_threshold * proj.max()
+            threshold = rel_threshold * mx.max()
             print(f"Set threshold to {threshold} based on rel_threshold={rel_threshold}")
         if threshold is not None:
             mx[mx.value < threshold] = 0
