@@ -1703,6 +1703,32 @@
     }
   },
   "Sgr_A_st_aj_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "vis": [
+                "uid___A002_Xf89be2_Xe4fd.ms",
+                "uid___A002_Xf8b429_X1ea4.ms",
+                "uid___A002_Xf8b429_X2c01.ms"
+              ],
+              "datacolumn": "data"
+          },
+          "aggregate_high": {
+              "vis": [
+                "uid___A002_Xf89be2_Xe4fd.ms",
+                "uid___A002_Xf8b429_X1ea4.ms",
+                "uid___A002_Xf8b429_X2c01.ms"
+              ],
+              "datacolumn": "data"
+          },
+          "aggregate": {
+              "vis": [
+                "uid___A002_Xf89be2_Xe4fd.ms",
+                "uid___A002_Xf8b429_X1ea4.ms",
+                "uid___A002_Xf8b429_X2c01.ms"
+              ],
+              "datacolumn": "data"
+          }
+      },
     "tclean_cube_pars": {
       "spw33": {
         "vis": [

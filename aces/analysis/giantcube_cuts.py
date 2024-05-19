@@ -77,6 +77,16 @@ if __name__ == "__main__":
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
             stretch='asinh', min_percent=0.1, max_percent=99.9)
 
+    print(f"argmax.  dt={time.time() - t0}")
+    argmx = cube.argmax(axis=0, **howargs)
+    vmax = cube.spectral_axis[argmx]
+    hdu = mx.hdu
+    hdu.data = vmax.value
+    hdu.writeto(f"{mompath}/{molname}_CubeMosaic_vpeak.fits", overwrite=True)
+    # use mx.wcs
+    makepng(data=vmax.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_vpeak.png",
+            stretch='asinh', min_percent=0.1, max_percent=99.9)
+
     if dopv:
         print(f"PV max 2.  dt={time.time() - t0}")
         pv_max = cube.max(axis=2, **howargs)
