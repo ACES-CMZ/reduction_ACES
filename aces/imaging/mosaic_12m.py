@@ -180,6 +180,8 @@ def continuum(header):
     #weightfiles += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.pb.tt0.fits')
     weightfiles = [fn.replace(".image.tt0.pbcor", ".weight.tt0").replace(".I.tt0.pbcor", ".I.weight.tt0").replace('manual.pbcor.tt0', 'manual.weight.tt0')
                    for fn in filelist]
+    # for product version, we need to use what we're given...
+    weightfiles = [fn.replace(".weight.tt0", ".pb.fits.gz") for fn in weightfiles if not os.path.exists(fn)]
     assert len(weightfiles) == len(filelist)
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
