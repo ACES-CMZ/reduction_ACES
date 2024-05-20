@@ -136,7 +136,9 @@ def main_():
     all_lines(header)
 
 
-def check_files(filelist):
+def check_files(filelist, funcname=None):
+    if funcname is not None:
+        logprint(f"Checking files for {funcname}")
     uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
     for row in uidtb:
         matches = [(row['12m MOUS ID'] in fn) or
@@ -161,14 +163,14 @@ def check_files(filelist):
 
 
 def continuum(header):
-    logprint("12m continuum")
+    logprint("12m continuum: default/product version")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.tt0.pbcor.fits')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.manual.pbcor.tt0.fits')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*.tt0.pbcor.fits')
 
-    check_files(filelist)
+    check_files(filelist, funcname='continuum')
 
-    print("Read as 2d for files: ", end=None, flush=True)
+    print("CONTINUUM (default/product version) Read as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
     for hdu, fn in zip(hdus, filelist):
         if isinstance(hdu, fits.HDUList):
@@ -181,7 +183,7 @@ def continuum(header):
     weightfiles = [fn.replace(".image.tt0.pbcor", ".weight.tt0").replace(".I.tt0.pbcor", ".I.weight.tt0").replace('manual.pbcor.tt0', 'manual.weight.tt0')
                    for fn in filelist]
     # for product version, we need to use what we're given...
-    weightfiles = [fn.replace(".weight.tt0", ".pb.fits.gz") for fn in weightfiles if not os.path.exists(fn)]
+    weightfiles = [fn.replace(".weight.tt0.fits", ".pb.tt0.fits").replace(".weight.tt0", ".pb.tt0.fits") for fn in weightfiles if not os.path.exists(fn)]
     assert len(weightfiles) == len(filelist)
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
@@ -210,13 +212,13 @@ def continuum(header):
 
 
 def reimaged(header):
-    logprint("12m continuum reimaged")
+    logprint("12m continuum reimaged (glob is *.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor)")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
 
-    check_files(filelist)
+    check_files(filelist, funcname='reimaged')
 
-    print("Read as 2d for files: ", end=None, flush=True)
+    print("Read as 2d for files (reimaged): ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
     print(flush=True)
     logprint(filelist)
@@ -227,6 +229,7 @@ def reimaged(header):
     #assert len(weightfiles) == len(filelist)
     #for missing in set(weightfiles_) - set(weightfiles):
     #    logprint(f"Missing {missing}")
+    print("Read as 2d for weightfiles (reimaged): ", end=None, flush=True)
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
@@ -252,16 +255,24 @@ def reimaged(header):
                 folder='continuum'
                 )
 
+    # feather with non-reimaged 7m (never did 7m reimaging)
+    feath = uvcombine.feather_simple(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
+                                     f'{basepath}/mosaics/7m_flattened/7m_continuum_commonbeam_circular_mosaic.fits')
+    fits.PrimaryHDU(data=feath.real,
+                    header=fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_reimaged_mosaic.fits')
+                    ).writeto(f'{basepath}/mosaics/7m_flattened/feather_7m12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
+                              overwrite=True)
 
-def reimaged_high(header):
-    for spw, name in zip(('33_35', '25_27'), ('reimaged_high', 'reimaged_low')):
-        logprint(f"12m continuum {name}")
+
+def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', 'reimaged_low')):
+    for spw, name in zip(spws, spw_names):
+        logprint(f"12m continuum {name} in reimaged_high")
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}.cont.I*image.tt0.pbcor')
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.spw{spw}.cont*tt0.pbcor.fits')
 
-        check_files(filelist)
+        check_files(filelist, funcname='reimaged_high')
 
-        print("Read as 2d for files: ", end=None, flush=True)
+        print(f"Read as 2d for files (reimaged {name}): ", end=None, flush=True)
         hdus = [read_as_2d(fn) for fn in filelist]
         print(flush=True)
         #weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
@@ -293,11 +304,11 @@ def reimaged_high(header):
 def residuals(header):
     logprint("12m continuum residuals")
     for spw, name in zip(('25_27_29_31_33_35', '33_35', '25_27'), ('reimaged', 'reimaged_high', 'reimaged_low')):
-        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}*cont.I.iter1.residual.tt0')
-        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw{spw}*cont.I.manual.residual.tt0')
-        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw{spw}*cont.I*.residual.tt0')
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}*cont.I.iter1.residual.tt0')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}*cont.I.manual.residual.tt0')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.spw{spw}*cont.I*.residual.tt0')
 
-        check_files(filelist)
+        check_files(filelist, funcname='residuals')
 
         # check that field am, which is done, is included
         assert any([f'uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.residual.tt0' in fn

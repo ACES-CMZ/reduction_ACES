@@ -217,6 +217,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 array='7m',
                 folder=None,  # must be specified though
                 basepath='./'):
+    """
+    Given a long list of 2D HDUs and an output name, make a giant mosaic.
+    """
 
     if target_header is None:
         log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
@@ -394,7 +397,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         return cb
 
 
-def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.image.pbcor',
+def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.image.pbcor', 'cube.I.manual.image.pbcor'),
               lines='all', folder='',
               globdir='calibrated/working', use_weights=True):
 
@@ -415,7 +418,9 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
 
         log.info(f"{array} {line} {restf}")
 
-        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*spw{spwn}.{glob_suffix}')
+        filelist = []
+        for glob_suffix in glob_suffixes:
+            filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*spw{spwn}.{glob_suffix}')
         assert len(filelist) > 0
         if use_weights:
             weightfiles = [fn.replace("image.pbcor", "weight") for fn in filelist]
