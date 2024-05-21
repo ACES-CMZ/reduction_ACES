@@ -420,7 +420,9 @@ def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.
 
         filelist = []
         for glob_suffix in glob_suffixes:
-            filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*spw{spwn}.{glob_suffix}')
+            for spwpre in ('spw', 'sci'):
+                filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*{spwpre}{spwn}.{glob_suffix}')
+        log.debug(f"Filelist={filelist}")
         assert len(filelist) > 0
         if use_weights:
             weightfiles = [fn.replace("image.pbcor", "weight") for fn in filelist]

@@ -1863,6 +1863,17 @@
     }
   },
   "Sgr_A_st_p_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data"
+          },
+          "aggregate_high": {
+              "datacolumn": "data"
+          },
+          "aggregate": {
+              "datacolumn": "data"
+          }
+      },
     "tclean_cube_pars": {
       "spw25": {
         "usemask": "pb",
