@@ -2209,6 +2209,17 @@
     }
   },
   "Sgr_A_st_v_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data"
+          },
+          "aggregate_high": {
+              "datacolumn": "data"
+          },
+          "aggregate": {
+              "datacolumn": "data"
+          }
+      },
     "tclean_cube_pars": {
       "spw25": {
         "nchan": 1914,
@@ -2472,6 +2483,17 @@
     }
   },
   "Sgr_A_st_ah_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data"
+          },
+          "aggregate_high": {
+              "datacolumn": "data"
+          },
+          "aggregate": {
+              "datacolumn": "data"
+          }
+      },
     "tclean_cube_pars": {
       "spw25": {
         "nchan": 1912,
@@ -3471,6 +3493,17 @@
     }
   },
   "Sgr_A_st_l_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data"
+          },
+          "aggregate_high": {
+              "datacolumn": "data"
+          },
+          "aggregate": {
+              "datacolumn": "data"
+          }
+      },
     "tclean_cube_pars": {
       "spw25": {
         "nchan": 1912,
