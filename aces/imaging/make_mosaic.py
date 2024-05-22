@@ -397,7 +397,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         return cb
 
 
-def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.image.pbcor', 'cube.I.manual.image.pbcor'),
+def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.image.pbcor.statcont.contsub.fits', 'cube.I.manual.image.pbcor.statcont.contsub.fits'),
               lines='all', folder='',
               globdir='calibrated/working', use_weights=True):
 
@@ -425,7 +425,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.
         log.debug(f"Filelist={filelist}")
         assert len(filelist) > 0
         if use_weights:
-            weightfiles = [fn.replace("image.pbcor", "weight") for fn in filelist]
+            weightfiles = [fn.replace("image.pbcor.statcont.contsub.fits", "weight") for fn in filelist]
             for ii, (ifn, wfn) in enumerate(zip(list(filelist), list(weightfiles))):
                 if not os.path.exists(wfn):
                     log.error(f"Missing file {wfn}")
