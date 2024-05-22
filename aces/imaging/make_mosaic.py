@@ -287,7 +287,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
 
     assert not np.all(np.isnan(prjarr))
 
-    log.info(f"DEBUG: footprint[prjarr==0] = {footprint[prjarr==0]}")
+    log.info(f"DEBUG: footprint[prjarr==0] = {footprint[prjarr == 0]}")
 
     outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.fits'
     log.info(f"Writing reprojected data to {outfile}")
