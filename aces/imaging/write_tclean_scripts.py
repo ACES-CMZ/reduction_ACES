@@ -218,16 +218,20 @@ def main():
                                         logprint("Cont channels are: {{0}}".format(contsel))
                                         logprint("Line channels are: {{0}}".format(linechannels))
                                         logprint("spws to split are: {{0}}".format(spws_to_split))
-                                        flagdata(vis=visfile, mode='manual', spw=linechannels, flagbackup=False)
+                                        flagdata(vis=visfile, mode='manual', spw=linechannels, flagbackup=False,
+                                                 datacolumn='{tcpars['datacolumn'] if 'datacolumn' in tcpars else 'corrected'}')
 
                                         result = split(vis=visfile,
                                                        outputvis="{rename_agg(x)}",
                                                        spw=spws_to_split,
                                                        width=10,
+                                                       datacolumn='{tcpars['datacolumn'] if 'datacolumn' in tcpars else 'corrected'}',
                                                        field='Sgr_A_star',)
 
                                         if not os.path.exists("{rename_agg(x)}"):
+                                            logprint("Output vis {rename_agg(x)} does not exist - forcing datacolumn='data'")
                                             logprint("USING DATACOLUMN=DATA!  This could be a problem!")
+                                            flagdata(vis=visfile, mode='manual', spw=linechannels, flagbackup=False, datacolumn='data')
                                             result = split(vis=visfile,
                                                            outputvis="{rename_agg(x)}",
                                                            width=10,
