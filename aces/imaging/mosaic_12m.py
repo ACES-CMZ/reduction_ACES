@@ -501,6 +501,20 @@ def get_weightfile(filename, spw):
             flist += glob.glob(os.path.join(
                 os.path.dirname(filename),
                 f"*{pre}{spw}*{suf}"))
+
+    # dig through the sous/gous/mous for the appropriate weightfile
+    if len(flist) != 1:
+        uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
+        uidtb.add_index('Obs ID')
+        sgmpath = os.path.join(basepath, 'data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_')
+        if 'Sgr_A_st' in filename:
+            fieldid = filename.split("Sgr_A_st_")[-1].split(".")[0]
+            mousid = uidtb.loc[fieldid]['12m MOUS ID']
+            for pre in spw_pre:
+                for suf in suffixes:
+                    flist += glob.glob(f'{sgmpath}{mousid}/calibrated/working/*{pre}{spw}*{suf}')
+
+    # we have to have exactly 1 match
     assert len(flist) == 1, str(flist)
     return flist[0]
 
@@ -511,14 +525,14 @@ def make_giant_mosaic_cube_cs21(**kwargs):
     ad shouldn't be, but it is.
     """
 
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.manual*image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci33.cube.I.manual*image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.reclean*image.pbcor.statcont.contsub.fits')
+    #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci33.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.reclean*image.pbcor.statcont.contsub.fits')
     # this next line is only for field am and should be removed b/c we need the .pb/.weight
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*33.cube.I.manual.pbcor.fits')
     # TODO when feathered data are ready
-    # filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW33/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_33.image.statcont.contsub.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW33/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_33.image.statcont.contsub.fits')
 
     print(f"Found {len(filelist)} CS 2-1-containing spw33 files")
 
@@ -555,7 +569,7 @@ def make_giant_mosaic_cube_sio21(**kwargs):
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw27.cube.I.manual*image.pbcor.statcont.contsub.fits')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci27.cube.I.manual*image.pbcor.statcont.contsub.fits')
     # should exist in cal/working filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*27.cube.I.manual.pbcor.fits')
-    #filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW27/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_27.image.statcont.contsub.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW27/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_27.image.statcont.contsub.fits')
 
     print(f"Found {len(filelist)} SiO 2-1-containing spw27 files")
 
@@ -585,11 +599,11 @@ def make_giant_mosaic_cube_sio21(**kwargs):
 
 def make_giant_mosaic_cube_hnco(**kwargs):
 
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw31.cube.I.iter1.image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw31.cube.I.manual*image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci31.cube.I.manual*image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*31.cube.I.manual.pbcor.fits')
-    #filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW31/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.hnco43.image.statcont.contsub.fits')
+    # filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw31.cube.I.iter1.image.pbcor.statcont.contsub.fits')
+    # filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw31.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    # filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci31.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    # filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*31.cube.I.manual.pbcor.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW31/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.hnco43.image.statcont.contsub.fits')
 
     print(f"Found {len(filelist)} HNCO-containing spw31 files")
 
@@ -606,7 +620,7 @@ def make_giant_mosaic_cube_hnco(**kwargs):
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO',
-                           nchan=1200,
+                           nchan=1,
                            beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
                            fail_if_cube_dropped=False,
@@ -687,16 +701,17 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
 
 def make_giant_mosaic_cube_hcop(**kwargs):
 
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.iter1.image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.manual*image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci29.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.iter1.image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci29.cube.I.manual*image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW29/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.hco+10.image.statcont.contsub.fits')
 
     print(f"Found {len(filelist)} HCOP-containing spw29 files")
 
     check_files(filelist)
 
-    weightfilelist = [fn.replace(".image.pbcor.statcont.contsub.fits", ".weight").replace(".pbcor.statcont.contsub.fits", ".weight") for fn in filelist]
+    weightfilelist = [get_weightfile(fn, spw=29) for fn in filelist]
     for fn in weightfilelist:
         assert os.path.exists(fn)
 
@@ -759,18 +774,19 @@ def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
 
 def make_giant_mosaic_cube_so32(**kwargs):
 
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.manual*image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci33.cube.I.manual*image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.reclean*image.pbcor.statcont.contsub.fits')
-    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*33.cube.I.manual.pbcor.fits')
-    filelist = sorted(filelist)
+    #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci33.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.reclean*image.pbcor.statcont.contsub.fits')
+    ##filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*33.cube.I.manual.pbcor.fits')
+    #filelist = sorted(filelist)
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW33/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_33.image.statcont.contsub.fits'))
 
     print(f"Found {len(filelist)} SO 3-2-containing spw33 files")
 
     check_files(filelist)
 
-    weightfilelist = [fn.replace(".image.pbcor.statcont.contsub.fits", ".weight").replace(".pbcor.statcont.contsub.fits", ".weight") for fn in filelist]
+    weightfilelist = [get_weightfile(fn, spw=33) for fn in filelist]
     for fn in weightfilelist:
         assert os.path.exists(fn)
 

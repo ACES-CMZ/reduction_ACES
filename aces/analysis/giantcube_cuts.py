@@ -106,7 +106,13 @@ if __name__ == "__main__":
         make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits')
 
     print(f"masked mom0.  dt={time.time() - t0}")
-    std = cube.mad_std()
+    try:
+        std = cube.mad_std()
+    except ValueError:
+        # mad_std requires whole cube in memory; we can't afford that
+        # instead, do a cheap version of sigma clipping
+        std = cube.std()
+        std = cube.with_mask(cube < std * 5).std()
     mom0 = cube.with_mask(cube > std).moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
