@@ -70,7 +70,9 @@ def all_lines(*args, folder='12m_flattened', **kwargs):
 
 
 def rms_(*args, **kwargs):
-    return rms(prefix='12m_continuum', threshold=3, **kwargs)
+    return rms(prefix='12m_continuum',
+               folder='continuum',
+               threshold=3, **kwargs)
 
 
 def main():
@@ -587,6 +589,7 @@ def make_giant_mosaic_cube_sio21(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='SiO21',
                            nchan=350,
+                           # field am is 3.22"
                            beam_threshold=3.1 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/SiO21_Channels/',
                            **kwargs,)
@@ -634,12 +637,12 @@ def make_giant_mosaic_cube_hnco(**kwargs):
 
 def make_giant_mosaic_cube_hc3n(**kwargs):
 
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.iter1.image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.manual*image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci35.cube.I.manual*image.pbcor.statcont.contsub.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.iter1.reclean.image.pbcor.statcont.contsub.fits')
+    #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.iter1.image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci35.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.iter1.reclean.image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*35.cube.I.manual.pbcor.fits')
-    #filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW35/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_35.image.statcont.contsub.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW35/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_35.image.statcont.contsub.fits')
 
     print(f"Found {len(filelist)} HC3N-containing spw35 files")
 

@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
     from dask_image import ndmorph
     signal_mask = cube > std
-    signal_mask = ndmorph.binary_dilation(signal_mask, structure=np.ones([3, 3, 3]), iterations=1)
+    signal_mask = ndmorph.binary_dilation(signal_mask.include(), structure=np.ones([3, 3, 3]), iterations=1)
     mom0 = cube.with_mask(signal_mask).moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.png",
