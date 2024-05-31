@@ -29,6 +29,8 @@ export ACES_ROOTDIR="/orange/adamginsburg/ACES/"
 CASAVERSION=casa-6.2.1-7-pipeline-2021.2.0.128
 CASAVERSION=casa-6.4.3-2-pipeline-2021.3.0.17
 CASAVERSION=casa-6.4.1-12-pipeline-2022.2.0.68
+# required for QA3 version of field af
+CASAVERSION=casa-6.5.4-9-pipeline-2023.1.0.125
 
 export CASAPATH=/orange/adamginsburg/casa/${CASAVERSION}
 export MPICASA=${CASAPATH}/bin/mpicasa

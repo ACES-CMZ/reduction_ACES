@@ -8,8 +8,8 @@
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
 #SBATCH --qos=astronomy-dept-b
 #SBATCH --account=astronomy-dept
-#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/ACES_mosaic12m_cont_%j.log
-#SBATCH --job-name=ACES_mosaic12m_cont
+#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/ACES_mosaic12m_%j.log
+#SBATCH --job-name=ACES_mosaic12m
 #SBATCH --export=ALL
 
 
@@ -42,7 +42,7 @@ echo "test import"
 #echo "Make TP mosaic"
 #/orange/adamginsburg/miniconda3/envs/python39/bin/aces_mosaic_TP || exit 1
 echo "Make 12m mosaic"
-/orange/adamginsburg/miniconda3/envs/python39/bin/aces_mosaic_12m --contonly || exit 1
+/orange/adamginsburg/miniconda3/envs/python39/bin/aces_mosaic_12m || exit 1
 
 # technically shouldn't need to be re-run, but as I add new mosaics, it will
 # (but this causes a 'failed' error)

@@ -497,17 +497,24 @@ class MyEncoder(json.JSONEncoder):
 
 
 def savestats(basepath=basepath,
-              suffix='image.tt0*', filetype=".fits"):
+              suffix='image.tt0*', filetype=".fits",
+              verbose=True
+             ):
     """
     filtype : str
         ".fits" or "" for CASA image
     """
 
+    if verbose:
+        print("Assembling statistics")
     stats = assemble_stats(
         f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}",
         ditch_suffix=f".{suffix[:-1]}")
     with open(f'{basepath}/tables/metadata_{suffix}.json', 'w') as fh:
         json.dump(stats, fh, cls=MyEncoder)
+
+    if verbose:
+        print("Done assembling statistics & dumping them to file")
 
     requested = get_requested_sens()
 
@@ -520,6 +527,9 @@ def savestats(basepath=basepath,
                   ]
     req_keys = ['B3_res', 'B3_sens', ]
     req_keys_head = ['Req_Res', 'Req_Sens']
+
+    if verbose:
+        print("Assembling table rows")
 
     rows = []
     for entry in stats:
@@ -540,15 +550,20 @@ def savestats(basepath=basepath,
     tbl.add_column(Column(name='BeamVsReq', data=(tbl['bmaj'] * tbl['bmin'])**0.5 / tbl['Req_Res']))
     tbl.add_column(Column(name='BmajVsReq', data=tbl['bmaj'] / tbl['Req_Res']))
 
+    if verbose:
+        print("Writing tables")
     tbl.write(f'{basepath}/tables/metadata_{suffix.strip("*")}.ecsv', overwrite=True)
     tbl.write(f'{basepath}/tables/metadata_{suffix.strip("*")}.html',
               format='ascii.html', overwrite=True)
     tbl.write(f'{basepath}/tables/metadata_{suffix.strip("*")}.tex', overwrite=True)
     tbl.write(f'{basepath}/tables/metadata_{suffix.strip("*")}.js.html',
               format='jsviewer', overwrite=True)
+    if verbose:
+        print("Done writing tables")
 
     return tbl
 
 
 def main():
     return savestats()
+    print("Finished with imstats.main()")

@@ -10307,6 +10307,7 @@
           1400,
           3000
         ],
+        "pbcor": true,
         "cell": "0.3arcsec",
         "deconvolver": "mtmfs",
         "niter": 1000000,
@@ -10344,6 +10345,7 @@
           1400,
           3000
         ],
+        "pbcor": true,
         "cell": "0.3arcsec",
         "deconvolver": "mtmfs",
         "niter": 1000000,
