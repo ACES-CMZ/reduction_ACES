@@ -6,12 +6,13 @@ import os
 import sys
 
 
-def main():
-    if len(sys.argv) > 1:
-        username = sys.argv[1]
-        print(f"Using username {username}")
-    else:
-        username = six.moves.input("Username: ")
+def main(username=None):
+    if username is None:
+        if len(sys.argv) > 1:
+            username = sys.argv[1]
+            print(f"Using username {username}")
+        else:
+            username = six.moves.input("Username: ")
 
     for server_url in ('https://almascience.eso.org', 'https://almascience.nrao.edu', 'https://almascience.nao.ac.jp'):
         print(f"Logging in to ALMA at server {server_url}", flush=True)

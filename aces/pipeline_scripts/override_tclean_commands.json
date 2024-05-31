@@ -37,6 +37,7 @@
           1400,
           3000
         ],
+        "pbcor": true,
         "cell": "0.3arcsec",
         "deconvolver": "mtmfs",
         "niter": 1000000,
@@ -1104,6 +1105,13 @@
     }
   },
   "Sgr_A_st_ag_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data",
+              "niter": 20000,
+              "cyclefactor": 3
+          }
+      },
     "tclean_cube_pars": {
       "spw33": {
         "nchan": -1,
@@ -1559,10 +1567,16 @@
   "Sgr_A_st_b_03_TM1": {
     "tclean_cont_pars": {
       "aggregate": {
-        "threshold": "0.010Jy"
+        "threshold": "0.010Jy",
+        "datacolumn": "data"
+      },
+      "aggregate_low": {
+        "threshold": "0.010Jy",
+        "datacolumn": "data"
       },
       "aggregate_high": {
-        "threshold": "0.010Jy"
+        "threshold": "0.010Jy",
+        "datacolumn": "data"
       }
     },
     "tclean_cube_pars": {
@@ -1702,6 +1716,17 @@
     }
   },
   "Sgr_A_st_aj_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data"
+          },
+          "aggregate_high": {
+              "datacolumn": "data"
+          },
+          "aggregate": {
+              "datacolumn": "data"
+          }
+      },
     "tclean_cube_pars": {
       "spw33": {
         "vis": [
@@ -1851,6 +1876,17 @@
     }
   },
   "Sgr_A_st_p_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data"
+          },
+          "aggregate_high": {
+              "datacolumn": "data"
+          },
+          "aggregate": {
+              "datacolumn": "data"
+          }
+      },
     "tclean_cube_pars": {
       "spw25": {
         "usemask": "pb",
@@ -2008,6 +2044,13 @@
     }
   },
   "Sgr_A_st_i_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data",
+              "niter": 20000,
+              "cyclefactor": 3
+          }
+      },
     "tclean_cube_pars": {
       "spw25": {
         "nchan": 1912,
@@ -2186,6 +2229,17 @@
     }
   },
   "Sgr_A_st_v_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data"
+          },
+          "aggregate_high": {
+              "datacolumn": "data"
+          },
+          "aggregate": {
+              "datacolumn": "data"
+          }
+      },
     "tclean_cube_pars": {
       "spw25": {
         "nchan": 1914,
@@ -2339,6 +2393,21 @@
     }
   },
   "Sgr_A_st_aa_03_TM1": {
+    "tclean_cont_pars": {
+      "aggregate": {
+          "cyclefactor": 3,
+          "pblimit": 0.1
+      },
+      "aggregate_high": {
+          "cyclefactor": 3,
+          "pblimit": 0.1
+
+      },
+      "aggregate_low": {
+          "cyclefactor": 3,
+          "pblimit": 0.1
+      }
+    },
     "tclean_cube_pars": {
       "spw25": {
         "nchan": 1912,
@@ -2434,6 +2503,17 @@
     }
   },
   "Sgr_A_st_ah_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data"
+          },
+          "aggregate_high": {
+              "datacolumn": "data"
+          },
+          "aggregate": {
+              "datacolumn": "data"
+          }
+      },
     "tclean_cube_pars": {
       "spw25": {
         "nchan": 1912,
@@ -3433,6 +3513,17 @@
     }
   },
   "Sgr_A_st_l_03_TM1": {
+      "tclean_cont_pars": {
+          "aggregate_low": {
+              "datacolumn": "data"
+          },
+          "aggregate_high": {
+              "datacolumn": "data"
+          },
+          "aggregate": {
+              "datacolumn": "data"
+          }
+      },
     "tclean_cube_pars": {
       "spw25": {
         "nchan": 1912,

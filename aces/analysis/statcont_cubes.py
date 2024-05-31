@@ -261,9 +261,11 @@ def main():
                 try:
                     SpectralCube.read(fn).beam
                 except NoBeamError:
+                    print(f"Neither {fn} nor {contsubfn} have a beam")
                     raise ValueError(f"Neither {fn} nor {contsubfn} have a beam")
                 except AttributeError:
                     SpectralCube.read(fn).beams
+                    print(f"{fn} is a multi-beam cube")
                     raise AttributeError(f"{fn} is a multi-beam cube")
                 redo = True
             except AttributeError:

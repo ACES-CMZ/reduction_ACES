@@ -79,7 +79,7 @@ def read_as_2d(fn, minval=None):
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
-             folder=None, threshold=None):
+             folder=None, threshold=None, rel_threshold=None, fail_on_zeros=True):
     print(".", end='', flush=True)
     outfn = fn.replace(".fits", "") + f"{suffix}_max.fits"
     if folder is not None:
@@ -87,8 +87,13 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
     if os.path.exists(outfn):
         hdu = fits.open(outfn)
         proj = Projection.from_hdu(hdu)
+        if rel_threshold is not None:
+            threshold = rel_threshold * proj.max()
+            print(f"Set threshold to {threshold} based on rel_threshold={rel_threshold}")
         if threshold is not None:
             proj[proj < threshold] = 0
+        if fail_on_zeros and np.nansum(proj) == 0:
+            raise ValueError(f"File {fn} reduced to all zeros")
         return proj
     else:
         ft = 'fits' if fn.endswith(".fits") else "casa_image"
@@ -116,8 +121,14 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
                         mxjy = mxjy.with_beam(beam, raise_error_jybm=False)
 
                     mx = mxjy.to(u.K, equivalencies=equiv)
+        if fail_on_zeros and np.nansum(mx.value) == 0:
+            raise ValueError(f"File {fn} reduced to all zeros")
         if save_file:
             mx.hdu.writeto(outfn)
+
+        if rel_threshold is not None:
+            threshold = rel_threshold * mx.max()
+            print(f"Set threshold to {threshold} based on rel_threshold={rel_threshold}")
         if threshold is not None:
             mx[mx.value < threshold] = 0
         return mx
@@ -151,6 +162,20 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, fol
         if save_file:
             moment0.hdu.writeto(outfn)
         return moment0
+
+
+def check_hdus(hdus):
+    bad = 0
+    for hdu in hdus:
+        if isinstance(hdu, fits.PrimaryHDU):
+            ttl = np.nansum(hdu.data)
+        else:
+            ttl = np.nansum(hdu)
+        if ttl == 0:
+            bad = bad + 1
+
+    if bad > 0:
+        raise ValueError(f"Found {bad} bad HDUs (all zero)")
 
 
 def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
@@ -192,6 +217,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 array='7m',
                 folder=None,  # must be specified though
                 basepath='./'):
+    """
+    Given a long list of 2D HDUs and an output name, make a giant mosaic.
+    """
 
     if target_header is None:
         log.info(f"Finding WCS for {len(twod_hdus)} HDUs")
@@ -256,6 +284,10 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     header = target_wcs.to_header()
     if commonbeam is not None:
         header.update(cb.to_header_keywords())
+
+    assert not np.all(np.isnan(prjarr))
+
+    log.info(f"DEBUG: footprint[prjarr==0] = {footprint[prjarr == 0]}")
 
     outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.fits'
     log.info(f"Writing reprojected data to {outfile}")
@@ -367,7 +399,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         return cb
 
 
-def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.image.pbcor',
+def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.image.pbcor.statcont.contsub.fits', 'cube.I.manual.image.pbcor.statcont.contsub.fits'),
               lines='all', folder='',
               globdir='calibrated/working', use_weights=True):
 
@@ -388,10 +420,14 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
 
         log.info(f"{array} {line} {restf}")
 
-        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*spw{spwn}.{glob_suffix}')
+        filelist = []
+        for glob_suffix in glob_suffixes:
+            for spwpre in ('spw', 'sci'):
+                filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/{globdir}/*{spwpre}{spwn}.{glob_suffix}')
+        log.debug(f"Filelist={filelist}")
         assert len(filelist) > 0
         if use_weights:
-            weightfiles = [fn.replace("image.pbcor", "weight") for fn in filelist]
+            weightfiles = [fn.replace("image.pbcor.statcont.contsub.fits", "weight") for fn in filelist]
             for ii, (ifn, wfn) in enumerate(zip(list(filelist), list(weightfiles))):
                 if not os.path.exists(wfn):
                     log.error(f"Missing file {wfn}")
@@ -408,36 +444,42 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
                             filelist,
                             )
             hdus = [x.hdu for x in hdus]
+            check_hdus(hdus)
             if use_weights:
                 wthdus = pool.map(partial(get_peak,
                                           **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
                                              'rest_value': restf},
                                           suffix=f'_{line}',
-                                          threshold=0.5,  # pb limit
+                                          rel_threshold=0.25,  # pb limit
                                           ),
                                   weightfiles)
                 wthdus = [x.hdu for x in wthdus]
+                check_hdus(wthdus)
         else:
             hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
                              rest_value=restf, suffix=f'_{line}').hdu for fn in filelist]
+            check_hdus(hdus)
             print(flush=True)
             if use_weights:
                 wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
                                    rest_value=restf, suffix=f'_{line}',
-                                   threshold=0.5,  # pb limit
+                                   rel_threshold=0.25,  # pb limit
                                    ).hdu for fn in weightfiles]
+                check_hdus(wthdus)
                 print(flush=True)
 
         if parallel:
-            print(f"Starting function make_mosaic for {line} peak intensity")
+            print(f"Starting function make_mosaic for {line} peak intensity (parallel mode)")
             proc = Process(target=make_mosaic, args=(hdus, ),
                            kwargs=dict(name=f'{line}_max', cbar_unit='K',
                            norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                            array=array, basepath=basepath, weights=wthdus if use_weights else None,
+                           folder=folder,
                            target_header=header))
             proc.start()
             processes.append(proc)
         else:
+            print(f"Starting function make_mosaic for {line} peak intensity")
             make_mosaic(hdus, name=f'{line}_max', cbar_unit='K',
                         norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
                         array=array, basepath=basepath, weights=wthdus if use_weights else None,
@@ -458,13 +500,16 @@ def all_lines(header, parallel=False, array='12m', glob_suffix='cube.I.iter1.ima
             proc = Process(target=make_mosaic, args=(m0hdus, ),
                            kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
                            norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                           folder=folder,
                            array=array, basepath=basepath, weights=wthdus if use_weights else None, target_header=header))
             proc.start()
             processes.append(proc)
         else:
             make_mosaic(m0hdus, name=f'{line}_m0', cbar_unit='K km/s',
                         norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
-                        array=array, basepath=basepath, weights=wthdus if use_weights else None, target_header=header)
+                        array=array, basepath=basepath,
+                        folder=folder,
+                        weights=wthdus if use_weights else None, target_header=header)
             del m0hdus
             if use_weights:
                 del wthdus

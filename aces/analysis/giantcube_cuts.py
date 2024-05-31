@@ -77,6 +77,16 @@ if __name__ == "__main__":
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
             stretch='asinh', min_percent=0.1, max_percent=99.9)
 
+    print(f"argmax.  dt={time.time() - t0}")
+    argmx = cube.argmax(axis=0, **howargs)
+    vmax = cube.spectral_axis[argmx]
+    hdu = mx.hdu
+    hdu.data = vmax.value
+    hdu.writeto(f"{mompath}/{molname}_CubeMosaic_vpeak.fits", overwrite=True)
+    # use mx.wcs
+    makepng(data=vmax.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_vpeak.png",
+            stretch='asinh', min_percent=0.1, max_percent=99.9)
+
     if dopv:
         print(f"PV max 2.  dt={time.time() - t0}")
         pv_max = cube.max(axis=2, **howargs)
@@ -96,7 +106,13 @@ if __name__ == "__main__":
         make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits')
 
     print(f"masked mom0.  dt={time.time() - t0}")
-    std = cube.mad_std()
+    try:
+        std = cube.mad_std()
+    except ValueError:
+        # mad_std requires whole cube in memory; we can't afford that
+        # instead, do a cheap version of sigma clipping
+        std = cube.std()
+        std = cube.with_mask(cube < std * 5).std()
     mom0 = cube.with_mask(cube > std).moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
@@ -104,7 +120,7 @@ if __name__ == "__main__":
 
     from dask_image import ndmorph
     signal_mask = cube > std
-    signal_mask = ndmorph.binary_dilation(signal_mask, structure=np.ones([3, 3, 3]), iterations=1)
+    signal_mask = ndmorph.binary_dilation(signal_mask.include(), structure=np.ones([3, 3, 3]), iterations=1)
     mom0 = cube.with_mask(signal_mask).moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.png",
