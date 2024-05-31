@@ -660,7 +660,8 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HC3N',
                            nchan=300,
-                           beam_threshold=2.35 * u.arcsec,
+                           # 2.35 is OK except o (2.38) and am (2.64)
+                           beam_threshold=2.65 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HC3N_Channels/',
                            **kwargs,)
 
@@ -728,6 +729,7 @@ def make_giant_mosaic_cube_hcop(**kwargs):
                            nchan=1000,
                            beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HCOP_Channels/',
+                           fail_if_cube_dropped=False,
                            **kwargs,)
 
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
