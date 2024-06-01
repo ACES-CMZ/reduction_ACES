@@ -813,3 +813,99 @@ def make_giant_mosaic_cube_so32(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/SO32_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/SO32_CubeMosaic_downsampled9.fits',
                               )
+
+
+def make_giant_mosaic_cube_h13cn(**kwargs):
+
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW25/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_25.image.statcont.contsub.fits'))
+
+    print(f"Found {len(filelist)} H13CN-containing spw25 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=25) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfreq = 86.33992e9
+    cdelt_kms = 0.84455895
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfreq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='H13CN',
+                           nchan=350,
+                           beam_threshold=3.1 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/H13CN_Channels/',
+                           # we prefer to fail_if_dropped; enabling this for debugging
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/H13CN_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/H13CN_CubeMosaic_downsampled9.fits',
+                              )
+
+
+def make_giant_mosaic_cube_h13cop(**kwargs):
+
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW27/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_27.image.statcont.contsub.fits'))
+
+    print(f"Found {len(filelist)} h13cop-containing spw27 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=27) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfreq = 86.7543e9
+    cdelt_kms = 0.84455895
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfreq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='H13COp',
+                           nchan=350,
+                           beam_threshold=3.1 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/H13COp_Channels/',
+                           # we prefer to fail_if_dropped; enabling this for debugging
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/H13COp_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/H13COp_CubeMosaic_downsampled9.fits',
+                              )
+
+
+def make_giant_mosaic_cube_hn13c(**kwargs):
+
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW27/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_27.image.statcont.contsub.fits'))
+
+    print(f"Found {len(filelist)} hn13c-containing spw27 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=27) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfreq = 87.09085e9
+    cdelt_kms = 0.84455895
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfreq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HN13C',
+                           nchan=350,
+                           beam_threshold=3.1 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/HN13C_Channels/',
+                           # we prefer to fail_if_dropped; enabling this for debugging
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HN13C_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HN13C_CubeMosaic_downsampled9.fits',
+                              )
