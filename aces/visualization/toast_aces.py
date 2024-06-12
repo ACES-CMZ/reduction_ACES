@@ -119,7 +119,7 @@ def toast(imfn, targetdir='/orange/adamginsburg/web/public/ACES/toasts/'):
 
 def make_all_indexes():
     indexes = []
-    for imfn in (glob.glob("/orange/adamginsburg/ACES/mosaics/12m_flattened/*continuum*noaxes.png") +
+    for imfn in (glob.glob("/orange/adamginsburg/ACES/mosaics/continuum/*continuum*noaxes.png") +
                  glob.glob("/orange/adamginsburg/ACES/mosaics/cubes/moments/*png")):
         if 'residual' in imfn:
             continue
