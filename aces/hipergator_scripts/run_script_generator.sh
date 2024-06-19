@@ -26,8 +26,8 @@ which git
 git --version
 echo $?
 
-export PYPATH=/orange/adamginsburg/miniconda3/envs/python39/bin/
-export IPYTHON=/orange/adamginsburg/miniconda3/envs/python39/bin/ipython
+export PYPATH=/orange/adamginsburg/miniconda3/envs/python310/bin/
+export IPYTHON=/orange/adamginsburg/miniconda3/envs/python310/bin/ipython
 
 cd ${WORK_DIR}
 echo ${WORK_DIR}
