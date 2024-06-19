@@ -648,6 +648,8 @@ def make_giant_mosaic_cube(filelist,
                            fail_if_cube_dropped=True,
                            skip_channel_mosaicing=False,
                            skip_final_combination=False,
+                           use_reproject_cube=False,
+                           parallel=True,
                            ):
     """
     This takes too long as a full cube, so we have to do it slice-by-slice
@@ -740,33 +742,54 @@ def make_giant_mosaic_cube(filelist,
     elif channels == 'slurm':
         channels = slurm_set_channels(nchan)
 
-    # Part 5: make per-channel mosaics
-    if not skip_channel_mosaicing:
+    if use_reproject_cube:
+        # uses new (June 2024) feature of reproject to memmap intermediate steps
+        output_working_file = f'{working_directory}/{cubename}_CubeMosaic.fits'
+        output_file = f'{basepath}/mosaics/cubes/{cubename}_CubeMosaic.fits'
+        mosaic_cubes(cubes,
+                     target_header=header,
+                     commonbeam=commonbeam,
+                     weightcubes=weightcubes,
+                     output_file=output_working_file,
+                     method='cube',
+                     verbose=verbose,
+                     fail_if_cube_dropped=fail_if_cube_dropped,
+                     parallel=parallel,
+                     )
         if verbose:
-            print(f"Making the channels from our {len(cubes)} cubes and {len(weightcubes)} weightcubes for channels {channels}")
-        make_giant_mosaic_cube_channels(header, cubes, weightcubes,
-                                        commonbeam=commonbeam,
-                                        cubename=cubename,
-                                        verbose=verbose,
-                                        working_directory=working_directory,
-                                        channelmosaic_directory=channelmosaic_directory,
-                                        fail_if_cube_dropped=fail_if_cube_dropped,
-                                        channels=channels,
-                                        )
+            print(f"Moving {output_working_file} to {output_file}")
+        shutil.move(output_working_file, output_file)
+        assert os.path.exists(output_file), f"Failed to move {output_working_file} to {output_file}"
+        if verbose:
+            print(f"Successfully moved {output_working_file} to {output_file}")
     else:
-        print("Skipped channel mosaicking")
+        # Part 5: make per-channel mosaics
+        if not skip_channel_mosaicing:
+            if verbose:
+                print(f"Making the channels from our {len(cubes)} cubes and {len(weightcubes)} weightcubes for channels {channels}")
+            make_giant_mosaic_cube_channels(header, cubes, weightcubes,
+                                            commonbeam=commonbeam,
+                                            cubename=cubename,
+                                            verbose=verbose,
+                                            working_directory=working_directory,
+                                            channelmosaic_directory=channelmosaic_directory,
+                                            fail_if_cube_dropped=fail_if_cube_dropped,
+                                            channels=channels,
+                                            )
+        else:
+            print("Skipped channel mosaicking")
 
-    if not skip_final_combination and not test:
-        if verbose:
-            print("Combining channels into mosaic cube")
-        combine_channels_into_mosaic_cube(header,
-                                          cubename,
-                                          nchan,
-                                          channels=channels,
-                                          working_directory=working_directory,
-                                          channelmosaic_directory=channelmosaic_directory,
-                                          verbose=verbose,
-                                          )
+        if not skip_final_combination and not test:
+            if verbose:
+                print("Combining channels into mosaic cube")
+            combine_channels_into_mosaic_cube(header,
+                                              cubename,
+                                              nchan,
+                                              channels=channels,
+                                              working_directory=working_directory,
+                                              channelmosaic_directory=channelmosaic_directory,
+                                              verbose=verbose,
+                                              )
 
 
 def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
@@ -858,7 +881,9 @@ def slurm_set_channels(nchan):
         return channels
 
 
-def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True, use_dask=True, spectrally_too=True):
+def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
+                          smooth=False, smooth_beam=5*u.arcsec,
+                          use_dask=True, spectrally_too=True):
     """
     TODO: may need to dump-to-temp while reprojecting
     """
@@ -875,9 +900,14 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True, use_d
     print(cube)
     start = 0
     with ProgressBar():
+        if smooth:
+            scube = cube.convolve_to(Beam(smooth_beam))
+        else:
+            scube = cube
         dscube = cube[:, start::factor, start::factor]
         # this is a hack; see https://github.com/astropy/astropy/pull/10897
-        # the spectral-cube approach is right normally, but we're cheating here and just taking every 9th pixel, we're not smoothing first.
+        # the spectral-cube approach is right normally, but we're cheating here
+        # and just taking every 9th pixel, we're not smoothing first.
         dscube.wcs.celestial.wcs.crpix[:] = (dscube.wcs.celestial.wcs.crpix[:] - 1 - start) / factor + 1
         dscube.write(outcubename, overwrite=overwrite)
     # else:
@@ -900,6 +930,12 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True, use_d
     #         #dscube.write(outcubename, overwrite=overwrite)
 
     if spectrally_too:
+        if smooth:
+            from astropy.convolution import Gaussian1DKernel
+            # smooth with half the downsampling
+            kernel = Gaussian1DKernel(factor/2)
+            dscube = dscube.spectral_smooth(kernel)
+
         dscube_s = dscube.downsample_axis(factor=factor, axis=0)
         assert outcubename.endswith('.fits')
         dscube_s.write(outcubename.replace(".fits", "_spectrally.fits"), overwrite=True)
