@@ -203,8 +203,11 @@ def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
     ct[:, :, 3][sel] = 0
     img = PIL.Image.fromarray(ct[::-1, :, :])
     img.save(imfn)
-    avm = pyavm.AVM.from_wcs(wcs, shape=data.shape)
-    avm.embed(imfn, imfn)
+    try:
+        avm = pyavm.AVM.from_wcs(wcs, shape=data.shape)
+        avm.embed(imfn, imfn)
+    except Exception as ex:
+        print(ex)
 
 
 def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
