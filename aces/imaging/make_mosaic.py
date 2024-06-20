@@ -858,6 +858,8 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
             if verbose:
                 pbar.set_description('Channels (flushing)')
             hdu.flush()
+        else:
+            pbar.set_description("Channels (skip)")
 
     if verbose:
         print(f"Moving {output_working_file} to {output_file}")

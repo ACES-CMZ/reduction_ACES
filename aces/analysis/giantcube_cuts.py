@@ -104,15 +104,21 @@ if __name__ == "__main__":
         from aces.imaging.make_mosaic import make_downsampled_cube, basepath
         make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits')
 
+    print(f"Noisemap. dt={time.time() - t0}")
+    noise = cube.mad_std(axis=0)
+    noise.write(f"{mompath}/{molname}_CubeMosaic_madstd.fits", overwrite=True)
+    makepng(data=noise.value, wcs=noise.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_madstd.png",
+            stretch='asinh', min_percent=0.5, max_percent=99.5)
+
     print(f"masked mom0.  dt={time.time() - t0}")
-    try:
-        std = cube.mad_std()
-    except ValueError:
-        # mad_std requires whole cube in memory; we can't afford that
-        # instead, do a cheap version of sigma clipping
-        std = cube.std()
-        std = cube.with_mask(cube < std * 5).std()
-    mcube = cube.with_mask(cube > std)
+    #try:
+    #    std = cube.mad_std()
+    #except ValueError:
+    #    # mad_std requires whole cube in memory; we can't afford that
+    #    # instead, do a cheap version of sigma clipping
+    #    std = cube.std()
+    #    std = cube.with_mask(cube < std * 5).std()
+    mcube = cube.with_mask(cube > noise)
     mom0 = mcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
@@ -145,7 +151,7 @@ if __name__ == "__main__":
     TypeError: No dispatch for <class 'spectral_cube.masks.LazyComparisonMask'>
     """
     from dask_image import ndmorph
-    signal_mask = cube > std
+    signal_mask = cube > noise
     signal_mask = ndmorph.binary_dilation(signal_mask, structure=np.ones([3, 3, 3]), iterations=1)
     mdcube = cube.with_mask(signal_mask)
     mom0 = mdcube.moment0(axis=0, **howargs)
