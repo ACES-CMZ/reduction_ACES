@@ -239,7 +239,7 @@ def main():
                                     header=cube[0].header).writeto(outfn,
                                                                    overwrite=True)
 
-                    noise_to_write = result[2].compute()
+                    noise_to_write = result[2]
                     noise = noise_to_write.value
 
                     print(f"Writing noise to FITS {noisefn}", flush=True)
