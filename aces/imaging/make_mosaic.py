@@ -219,7 +219,9 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 cbar_unit=None,
                 array='7m',
                 folder=None,  # must be specified though
-                basepath='./'):
+                basepath='./',
+                footprint_threshold=1e-3
+               ):
     """
     Given a long list of 2D HDUs and an output name, make a giant mosaic.
     """
@@ -289,8 +291,12 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         header.update(cb.to_header_keywords())
 
     assert not np.all(np.isnan(prjarr))
+    below_threshold = footprint < footprint_threshold
+    print(f"Set {below_threshold.sum()} values to NaN in output image b/c they "
+          f"were below the footprint threshold {footprint_threshold}")
+    prjarr[below_threshold] = np.nan
 
-    log.info(f"DEBUG: footprint[prjarr==0] = {footprint[prjarr == 0]}")
+    log.info(f"DEBUG: sum(footprint[prjarr==0]) = {footprint[prjarr == 0].sum()}")
 
     outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.fits'
     log.info(f"Writing reprojected data to {outfile}")
