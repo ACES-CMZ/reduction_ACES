@@ -675,6 +675,8 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
 
 
 def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
+    from astropy import log
+    log.setLevel('INFO')
 
     filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Image_cubes/*.hnco43.image.fits'))
     weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Weight_cubes/*.hnco43.image.weight.fits'))
@@ -692,7 +694,7 @@ def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO_7m12mTP_minitest',
-                           nchan=100,
+                           nchan=50,
                            beam_threshold=3.2 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
