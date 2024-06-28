@@ -536,6 +536,7 @@ def make_giant_mosaic_cube_header(target_header,
                                   ):
     header = fits.Header.fromtextfile(target_header)
     header['NAXIS'] = 3
+    header['WCSAXES'] = 3
     header['CDELT3'] = cdelt_kms
     header['CUNIT3'] = 'km/s'
     header['CRVAL3'] = 0
