@@ -61,12 +61,12 @@ def make_figure(data, wavelength, beam, bins=50):
     else:
         ax2t.set_ticks([10,2,1,0.8,0.7,0.6,0.2])
     yl = pl.ylim()
-    #try:
-    #    pl.fill_betweenx(yl, beam_to_bl[0].value, beam_to_bl[1].value, zorder=-5, color='orange', alpha=0.5)
-    #except TypeError:
-    #    pl.axvline(beam_to_bl.value, color='orange', zorder=-5, alpha=0.5)
-    #pl.fill_betweenx(yl, np.percentile(uvcts, 25), np.percentile(uvcts, 75), zorder=-5, color='red', alpha=0.25)
-    pl.ylim(yl)
+    try:
+        ax2.fill_betweenx(yl, beam_to_bl[0].value, beam_to_bl[1].value, zorder=-5, color='orange', alpha=0.5)
+    except TypeError:
+        ax2.axvline(beam_to_bl.value, color='orange', zorder=-5, alpha=0.5)
+    ax2.fill_betweenx(yl, np.percentile(uvcts, 25), np.percentile(uvcts, 75), zorder=-5, color='red', alpha=0.25)
+    ax2.set_ylim(yl)
     #pl.subplots_adjust(wspace=0.3)
     pl.tight_layout()
 
