@@ -55,11 +55,11 @@ def make_figure(data, wavelength, beam, bins=50):
     ax2t = ax2.secondary_xaxis('top', functions=(forward, inverse))
     ax2t.set_xlabel("Angular size $\lambda/D$ (arcsec)")
     if ax2.get_xlim()[1] > 1000:
-        ax2t.set_ticks([10,1,0.5,0.4,0.3,0.2,0.1])
+        ax2t.set_ticks([10, 1, 0.5, 0.4, 0.3, 0.2, 0.1])
     elif ax2.get_xlim()[1] > 600:
-        ax2t.set_ticks([10,2,1,0.6,0.5,0.4,0.3])
+        ax2t.set_ticks([10, 2, 1, 0.6, 0.5, 0.4, 0.3])
     else:
-        ax2t.set_ticks([10,2,1,0.8,0.7,0.6,0.2])
+        ax2t.set_ticks([10, 2, 1, 0.8, 0.7, 0.6, 0.2])
     yl = pl.ylim()
     try:
         ax2.fill_betweenx(yl, beam_to_bl[0].value, beam_to_bl[1].value, zorder=-5, color='orange', alpha=0.5)
@@ -73,7 +73,7 @@ def make_figure(data, wavelength, beam, bins=50):
     print(f"25th pctile={forward(np.percentile(uvcts, 25))}, 75th pctile={forward(np.percentile(uvcts, 75))}")
     try:
         return (forward(np.percentile(uvcts,
-                                      [1,5,10,25,50,75,90,95,99])),
+                                      [1, 5, 10, 25, 50, 75, 90, 95, 99])), 
                 scipy.stats.percentileofscore(uvcts, beam_to_bl[0].value),
                 scipy.stats.percentileofscore(uvcts, beam_to_bl[1].value))
     except TypeError:
