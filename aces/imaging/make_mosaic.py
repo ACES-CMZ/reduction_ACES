@@ -894,7 +894,7 @@ def slurm_set_channels(nchan):
 
 
 def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
-                          smooth=False, smooth_beam=5*u.arcsec,
+                          smooth=False, smooth_beam=5 * u.arcsec,
                           use_dask=True, spectrally_too=True):
     """
     TODO: may need to dump-to-temp while reprojecting
@@ -913,10 +913,10 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
     start = 0
     with ProgressBar():
         if smooth:
-            scube = cube.convolve_to(Beam(smooth_beam))
+            scube = cube.convolve_to(radio_beam.Beam(smooth_beam))
         else:
             scube = cube
-        dscube = cube[:, start::factor, start::factor]
+        dscube = scube[:, start::factor, start::factor]
         # this is a hack; see https://github.com/astropy/astropy/pull/10897
         # the spectral-cube approach is right normally, but we're cheating here
         # and just taking every 9th pixel, we're not smoothing first.
@@ -945,7 +945,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
         if smooth:
             from astropy.convolution import Gaussian1DKernel
             # smooth with half the downsampling
-            kernel = Gaussian1DKernel(factor/2)
+            kernel = Gaussian1DKernel(factor / 2)
             dscube = dscube.spectral_smooth(kernel)
 
         dscube_s = dscube.downsample_axis(factor=factor, axis=0)
