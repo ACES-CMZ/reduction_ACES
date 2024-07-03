@@ -705,7 +705,6 @@ def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
                            **kwargs,)
 
 
-
 def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
 
     filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Image_cubes/*.hnco43.image.fits'))
@@ -1013,5 +1012,3 @@ def make_giant_mosaic_cube_hc15n(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HC15N_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HC15N_CubeMosaic_downsampled9.fits',
                               )
-
-
