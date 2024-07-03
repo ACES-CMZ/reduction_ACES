@@ -124,6 +124,11 @@ if __name__ == "__main__":
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
             stretch='asinh', min_cut=-0.1, max_percent=99.5)
 
+    mx = mcube.max(axis=0, **howargs)
+    mx.write(f"{mompath}/{molname}_CubeMosaic_masked_max.fits", overwrite=True)
+    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_max.png",
+            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+
     if dopv:
         print(f"PV mean.  dt={time.time() - t0}")
         pv_mean_masked = mcube.mean(axis=1, **howargs)
@@ -152,9 +157,14 @@ if __name__ == "__main__":
     """
     from dask_image import ndmorph
     signal_mask = cube > noise
-    signal_mask = ndmorph.binary_dilation(signal_mask, structure=np.ones([3, 3, 3]), iterations=1)
+    signal_mask = ndmorph.binary_dilation(signal_mask, structure=np.ones([1, 3, 3]), iterations=1)
     mdcube = cube.with_mask(signal_mask)
     mom0 = mdcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.png",
+            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+
+    mx = mdcube.max(axis=0, **howargs)
+    mx.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_max.fits", overwrite=True)
+    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_max.png",
             stretch='asinh', min_cut=-0.1, max_percent=99.5)
