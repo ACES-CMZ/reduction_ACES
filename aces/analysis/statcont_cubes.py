@@ -186,6 +186,7 @@ def main():
 
         #outfn = fn+'.statcont.cont.fits'
         outfn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.cont.fits")
+        noisefn = fn.replace(".image.pbcor.fits", ".image.pbcor.statcont.noise.fits")
         fileformat = 'fits'
         assert outfn.count('.fits') == 1
 
@@ -236,6 +237,14 @@ def main():
                     print(f"Writing to FITS {outfn}", flush=True)
                     fits.PrimaryHDU(data=cont,
                                     header=cube[0].header).writeto(outfn,
+                                                                   overwrite=True)
+
+                    noise_to_write = result[2]
+                    noise = noise_to_write.value
+
+                    print(f"Writing noise to FITS {noisefn}", flush=True)
+                    fits.PrimaryHDU(data=noise,
+                                    header=cube[0].header).writeto(noisefn,
                                                                    overwrite=True)
             print(f"{fn} -> {outfn} in {time.time() - t0}s", flush=True)
         else:

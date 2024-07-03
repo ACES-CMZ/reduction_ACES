@@ -52,19 +52,6 @@ if __name__ == "__main__":
 
     print(cube)
 
-    if dopv:
-        print(f"PV peak intensity.  dt={time.time() - t0}", flush=True)
-        pv_max = cube.max(axis=1, **howargs)
-        pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_max.fits", overwrite=True)
-        makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_max.png",
-                stretch='asinh', min_percent=1, max_percent=99.5)
-
-        print(f"PV mean.  dt={time.time() - t0}")
-        pv_mean = cube.mean(axis=1, **howargs)
-        pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
-        makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean.png",
-                stretch='asinh', min_percent=1, max_percent=99.5)
-
     print(f"mom0.  dt={time.time() - t0}")
     mom0 = cube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_mom0.fits", overwrite=True)
@@ -88,6 +75,18 @@ if __name__ == "__main__":
             stretch='asinh', min_percent=0.1, max_percent=99.9)
 
     if dopv:
+        print(f"PV peak intensity.  dt={time.time() - t0}", flush=True)
+        pv_max = cube.max(axis=1, **howargs)
+        pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_max.fits", overwrite=True)
+        makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_max.png",
+                stretch='asinh', min_percent=1, max_percent=99.5)
+
+        print(f"PV mean.  dt={time.time() - t0}")
+        pv_mean = cube.mean(axis=1, **howargs)
+        pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
+        makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean.png",
+                stretch='asinh', min_percent=1, max_percent=99.5)
+
         print(f"PV max 2.  dt={time.time() - t0}")
         pv_max = cube.max(axis=2, **howargs)
         pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_b_max.fits", overwrite=True)
@@ -105,23 +104,57 @@ if __name__ == "__main__":
         from aces.imaging.make_mosaic import make_downsampled_cube, basepath
         make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits')
 
+    print(f"Noisemap. dt={time.time() - t0}")
+    noise = cube.mad_std(axis=0)
+    noise.write(f"{mompath}/{molname}_CubeMosaic_madstd.fits", overwrite=True)
+    makepng(data=noise.value, wcs=noise.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_madstd.png",
+            stretch='asinh', min_percent=0.5, max_percent=99.5)
+
     print(f"masked mom0.  dt={time.time() - t0}")
-    try:
-        std = cube.mad_std()
-    except ValueError:
-        # mad_std requires whole cube in memory; we can't afford that
-        # instead, do a cheap version of sigma clipping
-        std = cube.std()
-        std = cube.with_mask(cube < std * 5).std()
-    mom0 = cube.with_mask(cube > std).moment0(axis=0, **howargs)
+    #try:
+    #    std = cube.mad_std()
+    #except ValueError:
+    #    # mad_std requires whole cube in memory; we can't afford that
+    #    # instead, do a cheap version of sigma clipping
+    #    std = cube.std()
+    #    std = cube.with_mask(cube < std * 5).std()
+    mcube = cube.with_mask(cube > noise)
+    mom0 = mcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
             stretch='asinh', min_cut=-0.1, max_percent=99.5)
 
+    if dopv:
+        print(f"PV mean.  dt={time.time() - t0}")
+        pv_mean_masked = mcube.mean(axis=1, **howargs)
+        pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
+        makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.png",
+                stretch='asinh', min_percent=1, max_percent=99.5)
+
+        print(f"PV mean 2.  dt={time.time() - t0}")
+        pv_mean_masked = mcube.mean(axis=2, **howargs)
+        pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
+        makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.png",
+                stretch='asinh', min_percent=1, max_percent=99.5)
+
+    # do last b/c it doens't work right now
+    """
+    Traceback (most recent call last):
+      File "/orange/adamginsburg/ACES/reduction_ACES/aces/analysis/giantcube_cuts.py", line 123, in <module>
+        signal_mask = ndmorph.binary_dilation(signal_mask, structure=np.ones([3, 3, 3]), iterations=1)
+      File "/orange/adamginsburg/miniconda3/envs/python39/lib/python3.9/site-packages/dask_image/ndmorph/__init__.py", line 57, in binary_dilation
+        dispatch_binary_dilation(image),
+      File "/orange/adamginsburg/miniconda3/envs/python39/lib/python3.9/site-packages/dask_image/dispatch/_dispatcher.py", line 23, in __call__
+        meth = self.dispatch(datatype)
+      File "/orange/adamginsburg/miniconda3/envs/python39/lib/python3.9/site-packages/dask/utils.py", line 635, in dispatch
+        raise TypeError(f"No dispatch for {cls}")
+    TypeError: No dispatch for <class 'spectral_cube.masks.LazyComparisonMask'>
+    """
     from dask_image import ndmorph
-    signal_mask = cube > std
-    signal_mask = ndmorph.binary_dilation(signal_mask.include(), structure=np.ones([3, 3, 3]), iterations=1)
-    mom0 = cube.with_mask(signal_mask).moment0(axis=0, **howargs)
+    signal_mask = cube > noise
+    signal_mask = ndmorph.binary_dilation(signal_mask, structure=np.ones([3, 3, 3]), iterations=1)
+    mdcube = cube.with_mask(signal_mask)
+    mom0 = mdcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.png",
             stretch='asinh', min_cut=-0.1, max_percent=99.5)

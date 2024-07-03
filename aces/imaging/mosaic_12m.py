@@ -623,12 +623,15 @@ def make_giant_mosaic_cube_hnco(**kwargs):
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO',
-                           nchan=1,
+                           nchan=1400,
                            beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
                            fail_if_cube_dropped=False,
+                           #use_reproject_cube=True,
+                           parallel=os.getenv('SLURM_NTASKS'),
                            **kwargs,)
 
+    # 2024-06-15: using reproject_cube; no final step needed
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HNCO_CubeMosaic_downsampled9.fits',
@@ -660,7 +663,8 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HC3N',
                            nchan=300,
-                           beam_threshold=2.35 * u.arcsec,
+                           # 2.35 is OK except o (2.38) and am (2.64)
+                           beam_threshold=2.65 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HC3N_Channels/',
                            **kwargs,)
 
@@ -668,6 +672,38 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HC3N_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HC3N_CubeMosaic_downsampled9.fits',
                               )
+
+
+def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
+    from astropy import log
+    log.setLevel('INFO')
+
+    filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Image_cubes/*.hnco43.image.fits'))
+    weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Weight_cubes/*.hnco43.image.weight.fits'))
+    print(f"Found {len(filelist)} HNCO 7m+12m+TP FITS files")
+    print(f"Found {len(weightfilelist)} HNCO 7m+12m+TP FITS weight files")
+    assert len(weightfilelist) == len(filelist)
+    for xx, yy in zip(filelist, weightfilelist):
+        print(f'Beginning of filenames: {os.path.basename(xx.split(".")[0])}, {os.path.basename(yy.split(".")[0])}')
+        assert os.path.basename(xx.split(".")[0]) == os.path.basename(yy.split(".")[0])
+
+    restfrq = 87.925238e9
+    #cdelt_kms = 0.10409296373
+    cdelt_kms = 0.20818593  # smooth by 2 chans
+    make_giant_mosaic_cube(filelist,
+                           reference_frequency=restfrq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HNCO_7m12mTP_minitest',
+                           nchan=50,
+                           beam_threshold=3.2 * u.arcsec,
+                           target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
+                           channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
+                           weightfilelist=weightfilelist,
+                           use_reproject_cube=True,
+                           parallel=os.getenv('SLURM_NTASKS'),
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
 
 
 def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
@@ -688,11 +724,13 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO_7m12mTP',
-                           nchan=1000,
+                           nchan=1400,
                            beam_threshold=3.2 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
                            weightfilelist=weightfilelist,
+                           #use_reproject_cube=True,
+                           parallel=os.getenv('SLURM_NTASKS'),
                            fail_if_cube_dropped=False,
                            **kwargs,)
 
@@ -725,9 +763,12 @@ def make_giant_mosaic_cube_hcop(**kwargs):
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
                            cubename='HCOP',
-                           nchan=1000,
+                           nchan=1400,
                            beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HCOP_Channels/',
+                           fail_if_cube_dropped=False,
+                           #use_reproject_cube=True,
+                           parallel=os.getenv('SLURM_NTASKS'),
                            **kwargs,)
 
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
@@ -760,7 +801,7 @@ def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO_7mTP',
-                           nchan=1000,
+                           nchan=1400,
                            beam_threshold=25 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_7m.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7mTP_Channels/',
@@ -811,3 +852,166 @@ def make_giant_mosaic_cube_so32(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/SO32_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/SO32_CubeMosaic_downsampled9.fits',
                               )
+
+
+def make_giant_mosaic_cube_h13cn(**kwargs):
+
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW25/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_25.image.statcont.contsub.fits'))
+
+    print(f"Found {len(filelist)} H13CN-containing spw25 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=25) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfreq = 86.33992e9
+    cdelt_kms = 0.84455895
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfreq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='H13CN',
+                           nchan=350,
+                           beam_threshold=3.1 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/H13CN_Channels/',
+                           # we prefer to fail_if_dropped; enabling this for debugging
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/H13CN_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/H13CN_CubeMosaic_downsampled9.fits',
+                              )
+
+
+def make_giant_mosaic_cube_h13cop(**kwargs):
+
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW27/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_27.image.statcont.contsub.fits'))
+
+    print(f"Found {len(filelist)} h13cop-containing spw27 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=27) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfreq = 86.7543e9
+    cdelt_kms = 0.84455895
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfreq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='H13COp',
+                           nchan=350,
+                           beam_threshold=3.1 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/H13COp_Channels/',
+                           # we prefer to fail_if_dropped; enabling this for debugging
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/H13COp_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/H13COp_CubeMosaic_downsampled9.fits',
+                              )
+
+
+def make_giant_mosaic_cube_hn13c(**kwargs):
+
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW27/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_27.image.statcont.contsub.fits'))
+
+    print(f"Found {len(filelist)} hn13c-containing spw27 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=27) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfreq = 87.09085e9
+    cdelt_kms = 0.84455895
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfreq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HN13C',
+                           nchan=350,
+                           beam_threshold=3.1 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/HN13C_Channels/',
+                           # we prefer to fail_if_dropped; enabling this for debugging
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HN13C_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HN13C_CubeMosaic_downsampled9.fits',
+                              )
+
+
+def make_giant_mosaic_cube_so21(**kwargs):
+
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW25/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_25.image.statcont.contsub.fits'))
+
+    print(f"Found {len(filelist)} SO 3-2-containing spw25 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=25) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfreq = 86.09395e9
+    cdelt_kms = 0.84455895
+
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfreq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='SO21',
+                           nchan=350,
+                           beam_threshold=3.1 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/SO21_Channels/',
+                           # we prefer to fail_if_dropped; enabling this for debugging
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/SO21_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/SO21_CubeMosaic_downsampled9.fits',
+                              )
+
+
+def make_giant_mosaic_cube_hc15n(**kwargs):
+
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW25/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_25.image.statcont.contsub.fits'))
+
+    print(f"Found {len(filelist)} HC15N-containing spw25 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=25) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfreq = 86.05496e9
+    cdelt_kms = 0.84455895
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfreq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HC15N',
+                           nchan=350,
+                           beam_threshold=3.1 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/HC15N_Channels/',
+                           # we prefer to fail_if_dropped; enabling this for debugging
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HC15N_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HC15N_CubeMosaic_downsampled9.fits',
+                              )
+
+
