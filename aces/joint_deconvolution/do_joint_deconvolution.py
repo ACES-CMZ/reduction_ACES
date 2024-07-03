@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm import tqdm
 from pathlib import Path
 from astropy.table import Table
-from casatasks import split, mstransform, tclean, feather, exportfits, immath, importfits, imregrid, imtrans, ia
+from casatasks import split, mstransform, tclean, feather, exportfits, immath, importfits, imregrid, imtrans, ia, concat
 
 ACES_ROOTDIR = None
 ACES_WORKDIR = None
@@ -154,10 +154,10 @@ def convert_jy_beam_to_jy_pixel(input_image, output_image):
             beam_info = ia.restoringbeam()
             if not beam_info:
                 raise ValueError("No beam information found in the image.")
-            
+
             bmaj = beam_info['major']['value']
             bmin = beam_info['minor']['value']
-            
+
             if beam_info['major']['unit'] == 'arcsec':
                 pass
             elif beam_info['major']['unit'] == 'deg':
@@ -165,20 +165,20 @@ def convert_jy_beam_to_jy_pixel(input_image, output_image):
                 bmin *= 3600
             else:
                 raise ValueError(f"Unexpected beam unit: {beam_info['major']['unit']}")
-            
+
             csys = ia.coordsys()
             increment = csys.increment()['numeric']
-            pixel_area = abs(increment[0] * increment[1]) * (3600 ** 2) * ((180/np.pi) ** 2)
+            pixel_area = abs(increment[0] * increment[1]) * (3600 ** 2) * ((180 / np.pi) ** 2)
             ia.close()
-            
+
             beam_area = (np.pi * bmaj * bmin) / (4 * np.log(2))
             conversion_factor = pixel_area / beam_area
-            
+
             immath(imagename=input_image,
                    mode='evalexpr',
                    expr=f'iif(IM0 > 0, IM0 * {conversion_factor}, 0)',
                    outfile=output_image)
-            
+
             print(f"Converted image saved as: {output_image}")
         except Exception as e:
             print(f"Error converting image to Jy/pixel: {str(e)}")
@@ -272,8 +272,8 @@ def do_clean(obs_dir, obs_id, tp_cube, concatvis, line, deep_clean, relaxed_mask
     dirty_image = create_dirty_image(obs_dir, obs_id, concatvis, line, tclean_pars)
 
     reordered_tp_cube = regrid_and_reorder_cube(
-        tp_cube, 
-        dirty_image, 
+        tp_cube,
+        dirty_image,
         str(obs_dir / f'tp_cube_{obs_id}.{line}.regridded.image')
     )
 
@@ -387,6 +387,7 @@ def do_joint_deconvolution(region, line, restfreq, v_start, v_width, nchan, deep
 
         do_clean(obs_dir, obs_id, tp_cube, concatvis, line, deep_clean, relaxed_masking, tp_startmodel, overwrite_clean)
 
+
 # TODO: Add cleanup functionality to remove intermediate files
 def main():
     aces_rootdir = os.getenv('ACES_ROOTDIR')
@@ -413,6 +414,7 @@ def main():
     for line in tqdm(lines, desc='LINES'):
         restfreq = LINE_SPWS[process_string(line)]['restfreq']
         do_joint_deconvolution(region, line, restfreq, v_start, v_width, nchan, deep_clean, relaxed_masking, tp_startmodel, overwrite_clean)
+
 
 if __name__ == "__main__":
     main()
