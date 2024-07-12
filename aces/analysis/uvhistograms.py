@@ -26,7 +26,9 @@ def make_figure(data, wavelength, beam, bins=50):
     uvcts = np.concatenate([data[spw]['uvdist'][~data[spw]['flag'].any(axis=(0, 1))] for spw in data]).ravel()
     uvwts = np.concatenate([data[spw]['weight'].mean(axis=0)[~data[spw]['flag'].any(axis=(0, 1))] for spw in data]).ravel()
 
-    beam_to_bl = (wavelength / beam).to(u.m, u.dimensionless_angles())
+    #beam_to_bl = (wavelength / beam).to(u.m, u.dimensionless_angles())
+    beam_major_bl = (wavelength / beam.major.to(u.rad).value).to(u.m, u.dimensionless_angles())
+    beam_minor_bl = (wavelength / beam.minor.to(u.rad).value).to(u.m, u.dimensionless_angles())
 
     pl.figure(figsize=(8, 4))
     ax1 = pl.subplot(1, 2, 1)
@@ -35,10 +37,10 @@ def make_figure(data, wavelength, beam, bins=50):
     pl.ylabel("Number of Visibilities")
     yl = pl.ylim()
 
-    #try:
-    #    pl.fill_betweenx(yl, beam_to_bl[0].value, beam_to_bl[1].value, zorder=-5, color='orange', alpha=0.5)
-    #except TypeError:
-    #    pl.axvline(beam_to_bl.value, color='orange', zorder=-5, alpha=0.5)
+    try:
+        pl.fill_betweenx(yl, beam_major_bl.value, beam_minor_bl.value, zorder=-5, color='orange', alpha=0.5)
+    except TypeError:
+        pl.axvline(beam_to_bl.major.value, color='orange', zorder=-5, alpha=0.5)
     pl.fill_betweenx(yl, np.percentile(uvcts, 25), np.percentile(uvcts, 75), zorder=-5, color='red', alpha=0.25)
 
     pl.ylim(yl)
@@ -68,7 +70,7 @@ def make_figure(data, wavelength, beam, bins=50):
         ax2t.set_ticks([10, 2, 1, 0.8, 0.7, 0.6, 0.2])
     yl = pl.ylim()
     try:
-        ax2.fill_betweenx(yl, beam_to_bl[0].value, beam_to_bl[1].value, zorder=-5, color='orange', alpha=0.5)
+        ax2.fill_betweenx(yl, beam_major_bl.value, beam_minor_bl.value, zorder=-5, color='orange', alpha=0.5)
     except TypeError:
         ax2.axvline(beam_to_bl.value, color='orange', zorder=-5, alpha=0.5)
     ax2.fill_betweenx(yl, np.percentile(uvcts, 25), np.percentile(uvcts, 75), zorder=-5, color='red', alpha=0.25)
@@ -80,13 +82,13 @@ def make_figure(data, wavelength, beam, bins=50):
     try:
         return (forward(np.percentile(uvcts,
                                       [1, 5, 10, 25, 50, 75, 90, 95, 99])),
-                scipy.stats.percentileofscore(uvcts, beam_to_bl[0].value),
-                scipy.stats.percentileofscore(uvcts, beam_to_bl[1].value))
+                scipy.stats.percentileofscore(uvcts, beam_major_bl.value),
+                scipy.stats.percentileofscore(uvcts, beam_minor_bl.value))
     except TypeError:
         return (forward(np.percentile(uvcts,
                                       [1, 5, 10, 25, 50, 75, 90, 95, 99])),
-                scipy.stats.percentileofscore(uvcts, beam_to_bl.value),
-                scipy.stats.percentileofscore(uvcts, beam_to_bl.value))
+                scipy.stats.percentileofscore(uvcts, beam_major_bl.value),
+                scipy.stats.percentileofscore(uvcts, beam_minor_bl.value))
 
 
 def main():
@@ -131,6 +133,14 @@ def main():
                     else:
                         data[spw] = newdata
                 ms.close()
+
+                # remove autocorrs
+                if spw in data:
+                    bad_uvdist = data[spw]['uvdist'] < 1
+                    if bad_uvdist.sum() > 0:
+                        print(f"Flagged {bad_uvdist.sum()} close UV spacings")
+                        for key in data[spw].keys():
+                            data[spw][key] = data[spw][key][..., ~bad_uvdist]
 
         if len(data) == 0:
             print(f"FAILURE FOR REGION {region}: len(data)=0")
@@ -224,7 +234,7 @@ def main():
     #axes.set_title(f'{band} UV distribution overview', fontsize=fontsize)
     axes.set_xlabel("Physical Scale (au)", fontsize=fontsize)
     axes.set_xlim(0, 200000)
-    axes.set_xticks([0, 2000, 10000, 20000, 30000, 40000, 50000])
+    axes.set_xticks([0, 10000, 50000, 1e5, 2e5, 3e5, 4e5])
     rad_to_as = u.radian.to(u.arcsec)
 
     def fcn(x):
@@ -232,7 +242,7 @@ def main():
 
     ax1t = axes.secondary_xaxis('top', functions=(fcn, fcn))
     ax1t.set_xlabel("Physical Scale (pc)")
-    ax1t.set_ticks([0.005, 0.1, 0.2])
+    ax1t.set_ticks([0.005, 0.1, 0.2, 0.3, 0.4, 0.5, 1, 1.5, 2])
     savefig(f'{basepath}/diagnostic_plots/uvhistograms/summary_uvdistribution_physicalscale.pdf', bbox_inches='tight')
 
 

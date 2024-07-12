@@ -42,7 +42,7 @@ echo "test import"
 #echo "Make TP mosaic"
 #/orange/adamginsburg/miniconda3/envs/python310/bin/aces_mosaic_TP || exit 1
 echo "Make 12m mosaic"
-/orange/adamginsburg/miniconda3/envs/python310/bin/aces_mosaic_12m || exit 1
+/orange/adamginsburg/miniconda3/envs/python310/bin/aces_mosaic_12m --remake-cache || exit 1
 
 # technically shouldn't need to be re-run, but as I add new mosaics, it will
 # (but this causes a 'failed' error)

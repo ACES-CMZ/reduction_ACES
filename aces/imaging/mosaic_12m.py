@@ -83,6 +83,12 @@ def main():
                       default=False,
                       action='store_true',
                       help="Run only continuum mosaicing?", metavar="contonly")
+    parser.add_option("--remake-cache", dest="remake_cache",
+                      default=False,
+                      action='store_true',
+                      help="Remake cached m0 and peak?", metavar="remake_cache")
+    parser.add_option('--skip-cont', dest='skip_cont', default=False,
+                      action='store_true',)
     (options, args) = parser.parse_args()
 
     np.seterr('ignore')
@@ -93,26 +99,27 @@ def main():
              if options.contonly else
              (residuals, reimaged, reimaged_high, continuum, rms_, cs21, hcop, hnco, h40a))
 
-    processes = []
-    for func in funcs:
-        print(f"Starting function {func}")
-        proc = Process(target=func, args=(header,))
-        proc.start()
-        processes.append(proc)
+    if not options.skip_cont:
+        processes = []
+        for func in funcs:
+            print(f"Starting function {func}")
+            proc = Process(target=func, args=(header,))
+            proc.start()
+            processes.append(proc)
 
-    failure = False
-    errors, tracebacks = [], []
-    for proc in processes:
-        proc.join()
-        if proc.exitcode != 0:
-            print(f"Exception caught from subprocess {proc}: exit code {proc.exitcode}")
+        failure = False
+        errors, tracebacks = [], []
+        for proc in processes:
+            proc.join()
+            if proc.exitcode != 0:
+                print(f"Exception caught from subprocess {proc}: exit code {proc.exitcode}")
 
     # do this _after_
     if not options.contonly:
         print("Running all_lines")
-        all_lines(header)
+        all_lines(header, use_cache=not options.remake_cache)
 
-    if failure:
+    if not options.skip_cont and failure:
         print(errors)
         print(tracebacks)
         raise errors
@@ -172,7 +179,7 @@ def continuum(header):
 
     check_files(filelist, funcname='continuum')
 
-    print("CONTINUUM (default/product version) Read as 2d for files: ", end=None, flush=True)
+    print("CONTINUUM (default/product version) Reading as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
     for hdu, fn in zip(hdus, filelist):
         if isinstance(hdu, fits.HDUList):
@@ -205,11 +212,11 @@ def continuum(header):
                 folder='continuum'
                 )
 
-    feath = uvcombine.feather_simple(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_mosaic.fits',
-                                     f'{basepath}/mosaics/7m_flattened/7m_continuum_commonbeam_circular_mosaic.fits')
+    feath = uvcombine.feather_simple(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_mosaic.fits',
+                                     f'{basepath}/mosaics/continuum/7m_continuum_commonbeam_circular_mosaic.fits')
     fits.PrimaryHDU(data=feath.real,
-                    header=fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_mosaic.fits')
-                    ).writeto(f'{basepath}/mosaics/7m_flattened/feather_7m12m_continuum_commonbeam_circular_mosaic.fits',
+                    header=fits.getheader(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_mosaic.fits')
+                    ).writeto(f'{basepath}/mosaics/continuum/feather_7m12m_continuum_commonbeam_circular_mosaic.fits',
                               overwrite=True)
 
 
@@ -220,7 +227,7 @@ def reimaged(header):
 
     check_files(filelist, funcname='reimaged')
 
-    print("Read as 2d for files (reimaged): ", end=None, flush=True)
+    print("Reading as 2d for files (reimaged): ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
     print(flush=True)
     logprint(filelist)
@@ -231,7 +238,7 @@ def reimaged(header):
     #assert len(weightfiles) == len(filelist)
     #for missing in set(weightfiles_) - set(weightfiles):
     #    logprint(f"Missing {missing}")
-    print("Read as 2d for weightfiles (reimaged): ", end=None, flush=True)
+    print("Reading as 2d for weightfiles (reimaged): ", end=None, flush=True)
     wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
@@ -258,11 +265,11 @@ def reimaged(header):
                 )
 
     # feather with non-reimaged 7m (never did 7m reimaging)
-    feath = uvcombine.feather_simple(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
-                                     f'{basepath}/mosaics/7m_flattened/7m_continuum_commonbeam_circular_mosaic.fits')
+    feath = uvcombine.feather_simple(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
+                                     f'{basepath}/mosaics/continuum/7m_continuum_commonbeam_circular_mosaic.fits')
     fits.PrimaryHDU(data=feath.real,
-                    header=fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_reimaged_mosaic.fits')
-                    ).writeto(f'{basepath}/mosaics/7m_flattened/feather_7m12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
+                    header=fits.getheader(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits')
+                    ).writeto(f'{basepath}/mosaics/continuum/feather_7m12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
                               overwrite=True)
 
 
@@ -274,7 +281,7 @@ def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', '
 
         check_files(filelist, funcname='reimaged_high')
 
-        print(f"Read as 2d for files (reimaged {name}): ", end=None, flush=True)
+        print(f"Reading as 2d for files (reimaged {name}): ", end=None, flush=True)
         hdus = [read_as_2d(fn) for fn in filelist]
         print(flush=True)
         #weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
@@ -306,9 +313,9 @@ def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', '
 def residuals(header):
     logprint("12m continuum residuals")
     for spw, name in zip(('25_27_29_31_33_35', '33_35', '25_27'), ('reimaged', 'reimaged_high', 'reimaged_low')):
-        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}*cont.I.iter1.residual.tt0')
-        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}*cont.I.manual.residual.tt0')
-        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.spw{spw}*cont.I*.residual.tt0')
+        filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}.*cont.I.iter1.residual.tt0')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}.*cont.I.manual.residual.tt0')
+        filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.spw{spw}.*cont.I*.residual.tt0')
 
         check_files(filelist, funcname='residuals')
 
@@ -332,9 +339,9 @@ def residuals(header):
                     )
         print(flush=True)
         if name == 'reimaged':
-            cb = radio_beam.Beam.from_fits_header(fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_reimaged_mosaic.fits'))
+            cb = radio_beam.Beam.from_fits_header(fits.getheader(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits'))
         elif name == 'reimaged_high':
-            cb = radio_beam.Beam.from_fits_header(fits.getheader(f'{basepath}/mosaics/12m_flattened/12m_continuum_commonbeam_circular_reimaged_spw33_35_mosaic.fits'))
+            cb = radio_beam.Beam.from_fits_header(fits.getheader(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw33_35_mosaic.fits'))
         else:
             raise NotImplementedError(f"name={name}")
         make_mosaic(hdus, name=f'continuum_residual_commonbeam_circular_{name}',
@@ -349,8 +356,9 @@ def residuals(header):
 
 def hcop(header):
     logprint("12m HCO+")
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw29.cube.I.pbcor.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw29.cube.I.pbcor.fits')
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw29.cube.I.iter1*.image.pbcor.statcont.contsub.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw29*pbcor.statcont.contsub.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*sci29.cube.I*.image.pbcor.statcont.contsub.fits')
 
     check_files(filelist)
 
@@ -376,8 +384,9 @@ def hcop(header):
 
 def hnco(header):
     logprint("12m HNCO")
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw31.cube.I.pbcor.fits')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw31.cube.I.pbcor.fits')
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw31.cube.I.iter1*.image.pbcor.statcont.contsub.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw31*pbcor.statcont.contsub.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*sci31.cube.I*.image.pbcor.statcont.contsub.fits')
 
     check_files(filelist)
 
@@ -403,8 +412,9 @@ def h40a(header):
     logprint("12m H40a")
     #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
-    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33*.image.pbcor.statcont.contsub.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33*pbcor.statcont.contsub.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*sci33.cube.I*.image.pbcor.statcont.contsub.fits')
 
     check_files(filelist)
 
@@ -440,7 +450,11 @@ def cs21(header):
     logprint("12m cs21")
     #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw33.cube.I.pbcor.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33.cube.I.pbcor.fits')
-    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
+    #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1.image.pbcor')
+    # can have 'reclean' files
+    filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*spw33.cube.I.iter1*.image.pbcor.statcont.contsub.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*spw33*pbcor.statcont.contsub.fits')
+    filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working//*sci33.cube.I*.image.pbcor.statcont.contsub.fits')
 
     check_files(filelist)
 

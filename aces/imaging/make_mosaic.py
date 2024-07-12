@@ -79,12 +79,14 @@ def read_as_2d(fn, minval=None):
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
-             folder=None, threshold=None, rel_threshold=None, fail_on_zeros=True):
+             folder=None, threshold=None, rel_threshold=None,
+             fail_on_zeros=True, use_cache=True
+             ):
     print(".", end='', flush=True)
     outfn = fn.replace(".fits", "") + f"{suffix}_max.fits"
     if folder is not None:
         outfn = os.path.join(folder, os.path.basename(outfn))
-    if os.path.exists(outfn):
+    if os.path.exists(outfn) and use_cache:
         hdu = fits.open(outfn)
         proj = Projection.from_hdu(hdu)
         if rel_threshold is not None:
@@ -97,7 +99,11 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
         return proj
     else:
         ft = 'fits' if fn.endswith(".fits") else "casa_image"
-        cube = SpectralCube.read(fn, use_dask=True, format=ft).with_spectral_unit(u.km / u.s, velocity_convention='radio', rest_value=rest_value)
+        cube = SpectralCube.read(fn,
+                                 use_dask=True,
+                                 format=ft).with_spectral_unit(u.km / u.s,
+                                                               velocity_convention='radio',
+                                                               rest_value=rest_value)
         if slab_kwargs is not None:
             cube = cube.spectral_slab(**slab_kwargs)
         with cube.use_dask_scheduler('threads'):
@@ -124,7 +130,7 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
         if fail_on_zeros and np.nansum(mx.value) == 0:
             raise ValueError(f"File {fn} reduced to all zeros")
         if save_file:
-            mx.hdu.writeto(outfn)
+            mx.hdu.writeto(outfn, overwrite=True)
 
         if rel_threshold is not None:
             threshold = rel_threshold * mx.max()
@@ -134,12 +140,13 @@ def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
         return mx
 
 
-def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, folder=None):
+def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
+           folder=None, use_cache=True):
     print(".", end='', flush=True)
     outfn = fn.replace(".fits", "") + f"{suffix}_mom0.fits"
     if folder is not None:
         outfn = os.path.join(folder, os.path.basename(outfn))
-    if os.path.exists(outfn):
+    if os.path.exists(outfn) and use_cache:
         hdu = fits.open(outfn)
         proj = Projection.from_hdu(hdu)
         return proj
@@ -160,7 +167,7 @@ def get_m0(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True, fol
         moment0 = (moment0 * u.s / u.km).to(u.K,
                                             equivalencies=equiv) * u.km / u.s
         if save_file:
-            moment0.hdu.writeto(outfn)
+            moment0.hdu.writeto(outfn, overwrite=True)
         return moment0
 
 
@@ -408,9 +415,14 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         return cb
 
 
-def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.image.pbcor.statcont.contsub.fits', 'cube.I.manual.image.pbcor.statcont.contsub.fits'),
+def all_lines(header, parallel=False, array='12m',
+              glob_suffixes=('cube.I.iter1.image.pbcor.statcont.contsub.fits',
+                             'cube.I.manual.image.pbcor.statcont.contsub.fits'
+                             ),
               lines='all', folder='',
-              globdir='calibrated/working', use_weights=True):
+              globdir='calibrated/working', use_weights=True,
+              use_cache=True
+              ):
 
     from astropy.table import Table
 
@@ -419,7 +431,10 @@ def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.
     if parallel:
         processes = []
 
-    for row in tbl:
+    for ii, row in enumerate(tbl):
+        if os.getenv("SLURM_ARRAY_TASK_ID") is not None and int(os.getenv('SLURM_ARRAY_TASK_ID')) != ii:
+            continue
+
         spwn = row[f'{array} SPW']
         line = row['Line'].replace(" ", "_").replace("(", "_").replace(")", "_")
         restf = row['Rest (GHz)'] * u.GHz
@@ -447,6 +462,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.
             pool = Pool()
             hdus = pool.map(partial(get_peak,
                                     **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
+                                       'use_cache': use_cache,
                                        'rest_value': restf},
                                     suffix=f'_{line}',
                                     ),
@@ -457,6 +473,7 @@ def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.
             if use_weights:
                 wthdus = pool.map(partial(get_peak,
                                           **{'slab_kwargs': {'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
+                                             'use_cache': use_cache,
                                              'rest_value': restf},
                                           suffix=f'_{line}',
                                           rel_threshold=0.25,  # pb limit
@@ -466,11 +483,13 @@ def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.
                 check_hdus(wthdus)
         else:
             hdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
+                             use_cache=use_cache,
                              rest_value=restf, suffix=f'_{line}').hdu for fn in filelist]
             check_hdus(hdus)
             print(flush=True)
             if use_weights:
                 wthdus = [get_peak(fn, slab_kwargs={'lo': -2 * u.km / u.s, 'hi': 2 * u.km / u.s},
+                                   use_cache=use_cache,
                                    rest_value=restf, suffix=f'_{line}',
                                    rel_threshold=0.25,  # pb limit
                                    ).hdu for fn in weightfiles]
@@ -498,10 +517,13 @@ def all_lines(header, parallel=False, array='12m', glob_suffixes=('cube.I.iter1.
 
         if parallel:
             pool = Pool()
-            m0hdus = pool.map(partial(get_m0, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, 'rest_value': restf}, suffix=f'_{line}'), filelist)
+            m0hdus = pool.map(partial(get_m0, **{'slab_kwargs': {'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
+                                                 'use_cache': use_cache,
+                                                 'rest_value': restf}, suffix=f'_{line}'), filelist)
             m0hdus = [x.hdu for x in m0hdus]
         else:
-            m0hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=restf, suffix=f'_{line}').hdu for fn in filelist]
+            m0hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
+                             use_cache=use_cache, rest_value=restf, suffix=f'_{line}').hdu for fn in filelist]
             print(flush=True)
 
         if parallel:
