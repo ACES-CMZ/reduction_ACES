@@ -558,6 +558,7 @@ def make_giant_mosaic_cube_cs21(**kwargs):
     for fn in weightfilelist:
         assert os.path.exists(fn)
 
+    # am has 2.83" beam
     restfrq = 97.98095330e9
     cdelt_kms = 1.4844932
     make_giant_mosaic_cube(filelist,
@@ -566,7 +567,7 @@ def make_giant_mosaic_cube_cs21(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='CS21',
                            nchan=300,
-                           beam_threshold=2.8 * u.arcsec,
+                           beam_threshold=2.9 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/CS21_Channels/',
                            **kwargs,)
 
@@ -678,7 +679,8 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
                            cubename='HC3N',
                            nchan=300,
                            # 2.35 is OK except o (2.38) and am (2.64)
-                           beam_threshold=2.65 * u.arcsec,
+                           # but am, despite its 2.64" beam, was excluded (??) with the 2.65" threshold.  As was o.  So maybe this is just a rerun?
+                           beam_threshold=2.75 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HC3N_Channels/',
                            **kwargs,)
 
@@ -919,7 +921,7 @@ def make_giant_mosaic_cube_h13cop(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='H13COp',
                            nchan=350,
-                           beam_threshold=3.1 * u.arcsec,
+                           beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/H13COp_Channels/',
                            # we prefer to fail_if_dropped; enabling this for debugging
                            fail_if_cube_dropped=False,
@@ -943,6 +945,7 @@ def make_giant_mosaic_cube_hn13c(**kwargs):
     for fn in weightfilelist:
         assert os.path.exists(fn)
 
+    # biggest beams are am & r (3.15")
     restfreq = 87.09085e9
     cdelt_kms = 0.84455895
     make_giant_mosaic_cube(filelist,
@@ -951,7 +954,7 @@ def make_giant_mosaic_cube_hn13c(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HN13C',
                            nchan=350,
-                           beam_threshold=3.1 * u.arcsec,
+                           beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HN13C_Channels/',
                            # we prefer to fail_if_dropped; enabling this for debugging
                            fail_if_cube_dropped=False,
@@ -967,7 +970,7 @@ def make_giant_mosaic_cube_so21(**kwargs):
 
     filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW25/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_25.image.statcont.contsub.fits'))
 
-    print(f"Found {len(filelist)} SO 3-2-containing spw25 files")
+    print(f"Found {len(filelist)} SO 2-1-containing spw25 files")
 
     check_files(filelist)
 
@@ -978,13 +981,14 @@ def make_giant_mosaic_cube_so21(**kwargs):
     restfreq = 86.09395e9
     cdelt_kms = 0.84455895
 
+    # biggest beams are am & r (3.15")
     make_giant_mosaic_cube(filelist,
                            weightfilelist=weightfilelist,
                            reference_frequency=restfreq,
                            cdelt_kms=cdelt_kms,
                            cubename='SO21',
                            nchan=350,
-                           beam_threshold=3.1 * u.arcsec,
+                           beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/SO21_Channels/',
                            # we prefer to fail_if_dropped; enabling this for debugging
                            fail_if_cube_dropped=False,
@@ -1016,7 +1020,7 @@ def make_giant_mosaic_cube_hc15n(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HC15N',
                            nchan=350,
-                           beam_threshold=3.1 * u.arcsec,
+                           beam_threshold=3.2 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HC15N_Channels/',
                            # we prefer to fail_if_dropped; enabling this for debugging
                            fail_if_cube_dropped=False,

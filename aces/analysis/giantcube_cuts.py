@@ -133,13 +133,13 @@ if __name__ == "__main__":
     if dopv:
         print(f"PV mean.  dt={time.time() - t0}")
         pv_mean_masked = mcube.mean(axis=1, **howargs)
-        pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
+        pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.fits", overwrite=True)
         makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.png",
                 stretch='asinh', min_percent=1, max_percent=99.5)
 
         print(f"PV mean 2.  dt={time.time() - t0}")
         pv_mean_masked = mcube.mean(axis=2, **howargs)
-        pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
+        pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.fits", overwrite=True)
         makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.png",
                 stretch='asinh', min_percent=1, max_percent=99.5)
 
@@ -159,7 +159,6 @@ if __name__ == "__main__":
     from dask_image import ndmorph
     signal_mask = cube > noise
     signal_mask = ndmorph.binary_dilation(signal_mask.include(), structure=np.ones([1, 3, 3]), iterations=1)
-    # TODO: trying to fix this; it might be that cube.with_mask doesn't yet accept dask arrays
     mdcube = cube.with_mask(BooleanArrayMask(mask=signal_mask, wcs=cube.wcs))
     mom0 = mdcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
@@ -170,3 +169,29 @@ if __name__ == "__main__":
     mx.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_max.fits", overwrite=True)
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_max.png",
             stretch='asinh', min_cut=-0.1, max_percent=99.5)
+
+    signal_mask_2p5 = cube > noise * 2.5
+    signal_mask_2p5 = ndmorph.binary_dilation(signal_mask_2p5.include(), structure=np.ones([1, 3, 3]), iterations=1)
+    mdcube_2p5 = cube.with_mask(BooleanArrayMask(mask=signal_mask_2p5, wcs=cube.wcs))
+    mom0 = mdcube_2p5.moment0(axis=0, **howargs)
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.fits", overwrite=True)
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.png",
+            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+
+    mx = mdcube_2p5.max(axis=0, **howargs)
+    mx.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_max.fits", overwrite=True)
+    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_max.png",
+            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+
+    if dopv:
+        print(f"PV mean.  dt={time.time() - t0}")
+        pv_mean_masked = mdcube_2p5.mean(axis=1, **howargs)
+        pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_mean_masked_2p5.fits", overwrite=True)
+        makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean_masked_2p5.png",
+                stretch='asinh', min_percent=1, max_percent=99.5)
+
+        print(f"PV mean 2.  dt={time.time() - t0}")
+        pv_mean_masked = mdcube_2p5.mean(axis=2, **howargs)
+        pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.fits", overwrite=True)
+        makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.png",
+                stretch='asinh', min_percent=1, max_percent=99.5)
