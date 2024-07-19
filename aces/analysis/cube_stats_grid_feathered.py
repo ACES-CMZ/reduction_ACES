@@ -156,11 +156,11 @@ def main(num_workers=None):
     for fullpath in glob.glob(f"{basepath}/upload/Feather_12m_7m_TP/SPW*/cubes/*"):
         fn = fullpath
         basename = os.path.basename(fullpath)
-        field = basename[10:12]
+        field = basename[9:11]
 
         config = 'TP_7M_12M_'
         suffix = '.image.statcont.contsub.fits'
-        spw = basename[38:40]
+        spw = fullpath.split("SPW")[1][:2]
 
         if tbl is not None:
             row_matches = ((tbl['Field'] == field) &
