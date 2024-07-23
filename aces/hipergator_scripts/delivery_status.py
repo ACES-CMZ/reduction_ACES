@@ -4,6 +4,7 @@ from astropy import log
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from aces import conf
 import time
+import datetime
 
 
 def get_mousmap_(**kwargs):
@@ -182,6 +183,7 @@ def main():
             rows=rows, names=['config.spw'] + list(ww.keys()))
 
     with open(f'{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.txt', 'w') as fh:
+        fh.write(f"Last run: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         for key, tb in tables.items():
             fh.write(f'SB {key}:\n')
             fh.write("\n".join(tb.pformat()))
