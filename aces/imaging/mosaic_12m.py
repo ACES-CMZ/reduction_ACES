@@ -723,15 +723,14 @@ def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
 
 def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
 
-    filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW31/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.hnco43.image.statcont.contsub.fits')
-
+    filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Image_cubes/*.hnco43.image.fits'))
+    weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Weight_cubes/*.hnco43.image.weight.fits'))
     print(f"Found {len(filelist)} HNCO 7m+12m+TP FITS files")
-
-    weightfilelist = [get_weightfile(fn, spw=31) for fn in filelist]
     print(f"Found {len(weightfilelist)} HNCO 7m+12m+TP FITS weight files")
     assert len(weightfilelist) == len(filelist)
-    for fn in weightfilelist:
-        assert os.path.exists(fn)
+    for xx, yy in zip(filelist, weightfilelist):
+        print(f'Beginning of filenames: {os.path.basename(xx.split(".")[0])}, {os.path.basename(yy.split(".")[0])}')
+        assert os.path.basename(xx.split(".")[0]) == os.path.basename(yy.split(".")[0])
 
     restfrq = 87.925238e9
     #cdelt_kms = 0.10409296373
