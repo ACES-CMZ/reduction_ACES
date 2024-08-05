@@ -691,17 +691,20 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
 
 
 def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
-    from astropy import log
-    log.setLevel('INFO')
-
-    filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Image_cubes/*.hnco43.image.fits'))
-    weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Weight_cubes/*.hnco43.image.weight.fits'))
+    filelist = sorted(glob.glob(f'{basepath}/upload/Feather_12m_7m_TP/HNCO/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.hnco43.image.statcont.contsub.fits'))
+    filelist = [x for x in filelist if any(y in x for y in ('_af.', '_s.', '_o.', '_f.'))]
+    # what if we reverse order?
+    filelist = filelist[::-1]
     print(f"Found {len(filelist)} HNCO 7m+12m+TP FITS files")
+
+    weightfilelist = [get_weightfile(fn, spw=31) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
     print(f"Found {len(weightfilelist)} HNCO 7m+12m+TP FITS weight files")
     assert len(weightfilelist) == len(filelist)
     for xx, yy in zip(filelist, weightfilelist):
-        print(f'Beginning of filenames: {os.path.basename(xx.split(".")[0])}, {os.path.basename(yy.split(".")[0])}')
-        assert os.path.basename(xx.split(".")[0]) == os.path.basename(yy.split(".")[0])
+        #print(f'Beginning of filenames: {os.path.basename(xx.split(".")[0])}, {os.path.basename(yy.split("/")[-1].split(".")[0])}')
+        print(f"Basenames: {os.path.basename(xx)}, {os.path.basename(yy)}")
 
     restfrq = 87.925238e9
     #cdelt_kms = 0.10409296373
@@ -715,7 +718,7 @@ def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
                            weightfilelist=weightfilelist,
-                           use_reproject_cube=True,
+                           #use_reproject_cube=True,
                            parallel=os.getenv('SLURM_NTASKS'),
                            fail_if_cube_dropped=False,
                            **kwargs,)
@@ -723,14 +726,20 @@ def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
 
 def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
 
-    filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Image_cubes/*.hnco43.image.fits'))
-    weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Weight_cubes/*.hnco43.image.weight.fits'))
+    #filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Image_cubes/*.hnco43.image.fits'))
+    filelist = sorted(glob.glob(f'{basepath}/upload/Feather_12m_7m_TP/HNCO/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.hnco43.image.statcont.contsub.fits'))
+    #weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/12m_7m_TP_feather_cubes/Weight_cubes/*.hnco43.image.weight.fits'))
     print(f"Found {len(filelist)} HNCO 7m+12m+TP FITS files")
+
+    weightfilelist = [get_weightfile(fn, spw=31) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
     print(f"Found {len(weightfilelist)} HNCO 7m+12m+TP FITS weight files")
     assert len(weightfilelist) == len(filelist)
     for xx, yy in zip(filelist, weightfilelist):
-        print(f'Beginning of filenames: {os.path.basename(xx.split(".")[0])}, {os.path.basename(yy.split(".")[0])}')
-        assert os.path.basename(xx.split(".")[0]) == os.path.basename(yy.split(".")[0])
+        print(f'Beginning of filenames: {os.path.basename(xx.split(".")[0])}, {os.path.basename(yy.split("/")[-1].split(".")[0])}')
+        # These won't match b/c some are from Dan's upload, some are not
+        #assert os.path.basename(xx.split(".")[0]) == os.path.basename(yy.split(".")[0])
 
     restfrq = 87.925238e9
     #cdelt_kms = 0.10409296373
