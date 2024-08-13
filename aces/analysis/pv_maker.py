@@ -94,12 +94,12 @@ def make_pv_mol(cube_fn):
     cube_fn : str
         Path to the fits file of the cube.
     """
-    
+
     cube = SpectralCube.read(cube_fn)
     mol = cube_fn.split('/')[-1].split('_')[0]
 
-    list_b = make_position_list(B_MIN, B_MAX, 0.5*u.arcmin, u.arcmin)
-    list_l = make_position_list(L_MIN, L_MAX, 0.5*u.arcmin, u.arcmin)
+    list_b = make_position_list(B_MIN, B_MAX)
+    list_l = make_position_list(L_MIN, L_MAX)
 
     for b in list_b:
         make_pv_b(cube, b, mol)
