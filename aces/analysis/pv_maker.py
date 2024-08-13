@@ -85,6 +85,44 @@ def make_pv_l(cube, l, mol):
     pv_max = subcube.max(axis=2)
     pv_max.save(f'{save_path}/{mol}_pv_l{round(l.value, 3)}_max.fits')
 
+def plot_pv(pv, mol, pos, longitude=True):
+    """
+    Plot the PV diagram.
+
+    Parameters
+    ----------
+    pv : SpectralCube
+        SpectralCube object of the PV diagram.
+    mol : str
+        Molecule name.
+    pos : Quantity
+        Position of the PV diagram.
+    longitude : bool
+        If True, the PV diagram is along a longitude (l=pos). If False, the PV diagram is along a latitude (b=pos).
+    """
+
+    fig = plt.figure(figsize=(10, 5))
+    ax = fig.add_subplot(111, projection=pv.wcs)
+    vmin = np.nanpercentile(pv.value, 1)
+    vmax = np.nanpercentile(pv.value, 99)
+    ax.imshow(pv.value, aspect='auto', vmin=vmin, vmax=vmax, cmap='inferno')
+
+    ax11 = ax.coords[1]
+    ax11.set_format_unit(u.km/u.s)
+    ax.set_ylabel('Velocity (km/s)')
+
+    if longitude:
+        ax.set_xlabel('Latitude (deg)')
+        ax.set_title(f'{mol} PV diagram at l={pos}')
+        plt.tight_layout()
+        plt.savefig(f'{save_path}/{mol}_pv_l{pos}.png')
+    else:
+        ax.set_xlabel('Longitude (deg)')
+        ax.set_title(f'{mol} PV diagram at b={pos}')
+        plt.tight_layout()
+        plt.savefig(f'{save_path}/{mol}_pv_b{pos}.png')
+    plt.close()
+
 def make_pv_mol(cube_fn):
     """
     Make PV diagrams for a given molecule.
