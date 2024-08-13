@@ -89,7 +89,7 @@ def make_pv_l(cube, l, mol):
     pv_max = subcube.max(axis=2)
     pv_max.write(f'{save_path}/{mol}_pv_l{round(l.value, 3)}_max.fits')
 
-def plot_pv(pv, mol, pos, longitude=True):
+def plot_pv(pv, mol, pos, longitude=True, mean='mean', close=True):
     """
     Plot the PV diagram.
 
@@ -104,12 +104,12 @@ def plot_pv(pv, mol, pos, longitude=True):
     longitude : bool
         If True, the PV diagram is along a longitude (l=pos). If False, the PV diagram is along a latitude (b=pos).
     """
-
+    ww = WCS(pv.header)
     fig = plt.figure(figsize=(10, 5))
-    ax = fig.add_subplot(111, projection=pv.wcs)
-    vmin = np.nanpercentile(pv.value, 1)
-    vmax = np.nanpercentile(pv.value, 99)
-    ax.imshow(pv.value, aspect='auto', vmin=vmin, vmax=vmax, cmap='inferno')
+    ax = fig.add_subplot(111, projection=ww)
+    vmin = np.nanpercentile(pv.data, 1)
+    vmax = np.nanpercentile(pv.data, 99)
+    ax.imshow(pv.data, aspect='auto', vmin=vmin, vmax=vmax, cmap='inferno')
 
     ax11 = ax.coords[1]
     ax11.set_format_unit(u.km/u.s)
@@ -117,15 +117,16 @@ def plot_pv(pv, mol, pos, longitude=True):
 
     if longitude:
         ax.set_xlabel('Latitude (deg)')
-        ax.set_title(f'{mol} PV diagram at l={pos}')
+        ax.set_title(f'{mol} {mean} PV diagram at l={pos.value}')
         plt.tight_layout()
-        plt.savefig(f'{save_path}/{mol}_pv_l{pos}.png')
+        plt.savefig(f'{save_path}/{mol}_{mean}_pv_l{pos.value}.png')
     else:
         ax.set_xlabel('Longitude (deg)')
-        ax.set_title(f'{mol} PV diagram at b={pos}')
+        ax.set_title(f'{mol} {mean} PV diagram at b={pos.value}')
         plt.tight_layout()
-        plt.savefig(f'{save_path}/{mol}_pv_b{pos}.png')
-    plt.close()
+        plt.savefig(f'{save_path}/{mol}_{mean}_pv_b{pos.value}.png')
+    if close: 
+        plt.close()
 
 def make_pv_mol(cube_fn):
     """
