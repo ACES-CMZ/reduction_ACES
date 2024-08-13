@@ -18,15 +18,14 @@ save_path = '/orange/adamginsburg/ACES/broadline_sources/EVFs/images/'
 # Latitude
 B_MIN = -0.27*u.deg
 B_MAX = 0.22*u.deg
-LIST_B = make_position_list(B_MIN, B_MAX, 0.5*u.arcmin, u.arcmin)
 
 # Longitude
 L_MIN = -0.59*u.deg
 L_MAX = 0.88*u.deg
-LIST_L = make_position_list(L_MIN, L_MAX, 0.5*u.arcmin, u.arcmin)
 
 def make_position_list(amin, amax, step, unit):
     return (np.arange(amin.to(unit).value, amax.to(unit).value+1, step.value)*unit).to(u.deg)
+
 
 def make_pv_b(cube, b, mol):
     reg = regions.RectangleSkyRegion(center=SkyCoord((L_MIN+L_MAX)/2., b, frame='galactic'), width=1.5*u.deg, height=1*u.arcmin)
@@ -47,6 +46,10 @@ def make_pv_l(cube, l, mol):
 def make_pv_mol(cube_fn):
     cube = SpectralCube.read(cube_fn)
     mol = cube_fn.split('/')[-1].split('_')[0]
+
+    list_b = make_position_list(B_MIN, B_MAX, 0.5*u.arcmin, u.arcmin)
+    list_l = make_position_list(L_MIN, L_MAX, 0.5*u.arcmin, u.arcmin)
+
 
     for b in list_b:
         make_pv_b(cube, b, mol)
