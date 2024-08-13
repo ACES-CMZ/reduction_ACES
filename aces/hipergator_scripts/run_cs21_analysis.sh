@@ -20,13 +20,15 @@ echo $GITHUB_TOKEN
 cd /blue/adamginsburg/adamginsburg/ACES/workdir/
 pwd
 
-if [ -e CS21_CubeMosaic.fits ]; then
+export USE_DASK=True
+
+if [ -e /orange/adamginsburg/ACES/mosaics/cubes/CS21_CubeMosaic.fits ]; then
 
     echo "test import"
-    /orange/adamginsburg/miniconda3/envs/python39/bin/python -c "import zipfile" || exit 1
+    /orange/adamginsburg/miniconda3/envs/python310/bin/python -c "import zipfile" || exit 1
 
     echo "Giant CS 21 cube"
-    /orange/adamginsburg/miniconda3/envs/python39/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/analysis/giantcube_cuts.py || exit 1
+    /orange/adamginsburg/miniconda3/envs/python310/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/analysis/giantcube_cuts.py || exit 1
 else
     echo "CS21_CubeMosaic.fits does not exist"
     ls -lh CS*fits

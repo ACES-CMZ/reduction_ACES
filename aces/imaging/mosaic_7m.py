@@ -1,7 +1,8 @@
 import glob
 from astropy import units as u
 from astropy.io import fits
-from aces.imaging.make_mosaic import make_mosaic, read_as_2d, get_peak, get_m0, all_lines
+from aces.imaging.make_mosaic import read_as_2d, get_peak, get_m0, rms
+from aces.imaging.make_mosaic import make_mosaic as make_mosaic_, all_lines as all_lines_
 
 from aces import conf
 
@@ -17,6 +18,14 @@ basepath = conf.basepath
 # header = target_wcs.to_header()
 # header['NAXIS1'] = 4000
 # header['NAXIS2'] = 4000
+
+
+def make_mosaic(*args, folder='7m_flattened', **kwargs):
+    return make_mosaic_(*args, folder=folder, **kwargs)
+
+
+def all_lines(*args, folder='12m_flattened', **kwargs):
+    return all_lines_(*args, folder=folder, **kwargs)
 
 
 def main():
@@ -36,13 +45,16 @@ def main():
                 max_cut=0.2, min_cut=-0.025), cbar_unit='Jy/beam', array='7m',
                 weights=wthdus,
                 target_header=header,
-                basepath=basepath)
+                basepath=basepath,
+                folder='continuum'
+                )
     make_mosaic(hdus, name='continuum_commonbeam_circular',
                 commonbeam='circular',
                 weights=wthdus,
                 cbar_unit='Jy/beam', array='7m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=0.2, min_cut=-0.025),
                 target_header=header,
+                folder='continuum'
                 )
 
     print("7m HCO+")
@@ -79,5 +91,7 @@ def main():
                 target_header=header,
                 norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
                 array='7m', basepath=basepath)
+
+    rms(prefix='7m_continuum', threshold=3)
 
     all_lines(header, array='7m', parallel=False)

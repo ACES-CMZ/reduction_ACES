@@ -22,19 +22,21 @@ mouses = [os.path.basename(x)
           for x in
           glob.glob(f'{grouppath}/member.uid___A001_X15*_X*')]
 
-parameters = {'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': True, },  # the usual MPI crash error is occurring
+# the memory/ntask overrides were important before we switched to full-parallel mode
+# they should never have been used for continuum
+parameters = {#'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': True, },  # the usual MPI crash error is occurring
               'member.uid___A001_X15a0_X142': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # ditto
               'member.uid___A001_X15a0_Xca': {'mem': 128, 'ntasks': 1, 'mpi': False, },  # field ag: MPI crash
               'member.uid___A001_X15a0_X160': {'mem': 128, 'ntasks': 1, 'mpi': False, },
               'member.uid___A001_X15a0_X1a2': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field ar: timeout
               'member.uid___A001_X15a0_X1a8': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # write lock frozen spw33 OOMs; try MPI?.  MPI write-locks everything.
-              'member.uid___A001_X15a0_Xa6': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # spw33 is taking for-ev-er; try MPI?  created backup first: backup_20221108_beforempi/
+              #'member.uid___A001_X15a0_Xa6': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # spw33 is taking for-ev-er; try MPI?  created backup first: backup_20221108_beforempi/
               #'member.uid___A001_X15a0_X190': {'mem': 256, 'ntasks': 1, 'mpi': False,
               #                                 'jobtime': '200:00:00', 'burst': False},  # ao: same as above, too long.  But, MPI fails with writelock. NON-MPI also fails!?
-              'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
+              #'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
               'member.uid___A001_X15a0_Xd0': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field i spw35: timeout
               'member.uid___A001_X15a0_X17e': {'mem': 256, 'ntasks': 1, 'mpi': False, 'nchan_per': 16},  # field al: try to avoid having subcubes
-              }
+}
 newpars = parameters.copy()
 
 # June 1, 2022: try using fewer tasks to see if it reduces likelihood of race condition
@@ -57,6 +59,9 @@ def main():
     check_syntax = '--check-syntax' in sys.argv
     use_parallel = '--parallel' in sys.argv
     aggregate_only = '--aggregate-only' in sys.argv
+    aggregate_high_only = '--aggregate-high-only' in sys.argv
+    aggregate_low_only = '--aggregate-low-only' in sys.argv
+    continue_started_only = '--continue-only' in sys.argv
 
     if debug:
         log.setLevel('DEBUG')
@@ -64,14 +69,14 @@ def main():
     with open(f'{basepath}/reduction_ACES/aces/data/tables/imaging_completeness_grid.json', 'r') as fh:
         imaging_status = json.load(fh)
 
-    mousmap = get_mous_to_sb_mapping('2021.1.00172.L')
-    mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
-
-    datadir = f'{conf.basepath}/data/'
+    datadir = os.getenv('BASEPATH') or f'{conf.basepath}/data/'
 
     projcode = os.getenv('PROJCODE') or '2021.1.00172.L'
     sous = os.getenv('SOUS') or 'A001_X1590_X30a8'
     gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
+
+    mousmap = get_mous_to_sb_mapping(projcode)
+    mousmap_ = {key.replace("/", "_").replace(":", "_"): val for key, val in mousmap.items()}
 
     sacct = subprocess.check_output(['/opt/slurm/bin/sacct',
                                      '--format=JobID,JobName%45,Account%15,QOS%17,State,Priority%8,ReqMem%8,CPUTime%15,Elapsed%15,Timelimit%15,NodeList%20'])
@@ -141,8 +146,15 @@ def main():
             for spw in imaging_status[mousname][config]:
                 log.debug(f"mous={mous} field={field} sbname={sbname} config={config} config_={config_} spw={spw}")
 
+                if aggregate_high_only and not ('aggregate_high' in spw):
+                    log.debug(f"Skipped spw {spw} because it is not aggregate and aggregate_high_only was set")
+                    continue
+                if aggregate_low_only and not ('aggregate_low' in spw):
+                    log.debug(f"Skipped spw {spw} because it is not aggregate and aggregate_low_only was set")
+                    continue
+
                 for imtype in imaging_status[mousname][config][spw]:
-                    if aggregate_only and not ('aggregate' in imtype or 'mfs' in imtype):
+                    if aggregate_only and not ('aggregate' in spw or 'mfs' in imtype):
                         log.debug(f"Skipped imtype {imtype} because it is not aggregate and aggregate_only was set")
                         continue
                     log.debug(f"spw={spw} imtype={imtype}{'**************AGGREGATE**********' if ('aggregate' in imtype) or ('mfs' in imtype) else ''}")
@@ -284,6 +296,15 @@ def main():
                             print(f"Removing {tfn}")
                             shutil.rmtree(tfn)
 
+                    if continue_started_only:
+                        msfiles = glob.glob(f'{workdir}/{tempdir_name}/*.ms')
+                        if len(msfiles) == 0:
+                            print("No MS files found; skipping")
+                            continue
+                        else:
+                            msfstr = '\n'.join(msfiles)
+                            print(f"Continuing already-started imaging with existing mses {msfstr}")
+
                     if spwpars['mpi']:
                         mpisuffix = '_mpi'
                         cpus_per_task = 1
@@ -307,15 +328,22 @@ def main():
                     if imtype == 'cube' and 'aggregate' not in spw and use_parallel:
                         datapath = f'{datadir}/{projcode}/science_goal.uid___{sous}/group.uid___{gous}/member.uid___{mousname[6:]}/calibrated/working'
                         tcpars = copy.copy(commands[sbname]['tclean_cube_pars'][spw])
-                        tcpars['vis'] = [os.path.join(datapath,
-                                                      os.path.basename(vis)).replace("targets", "target")
+                        # in at least one case (X15b4_X41), had to rename targets to target (linked).  But that might be incorrect.
+                        tcpars['vis'] = [os.path.join(datapath, os.path.basename(vis))
+                                         if os.path.exists(os.path.join(datapath, os.path.basename(vis)))
+                                         else os.path.join(datapath, os.path.basename(vis)).replace("targets", "target")
                                          for vis in tcpars['vis']]
                         for ii, vis in enumerate(tcpars['vis']):
-                            try:
-                                assert os.path.exists(vis), vis
-                            except AssertionError:
-                                assert os.path.exists(vis.replace("_line", ""))
-                                tcpars['vis'][ii] = vis.replace("_line", "")
+                            if not os.path.exists(vis):
+                                if os.path.exists(vis.replace("_line", "")):
+                                    tcpars['vis'][ii] = vis.replace("_line", "")
+                                elif os.path.exists(vis.replace("_target_line", "")):
+                                    tcpars['vis'][ii] = vis.replace("_target_line", "")
+                                elif os.path.exists(vis.replace("_target", "")):
+                                    tcpars['vis'][ii] = vis.replace("_target", "")
+                                else:
+                                    matches = glob.glob(vis.replace(".ms", "*"))
+                                    raise IOError(f"MS {vis} does not exist, nor do any of its variants.  glob={matches}")
                         if 'nchan' not in tcpars:
                             print(tcpars)
                             print(sous, gous, mous)

@@ -20,6 +20,7 @@ import textwrap
 import string
 from aces import conf
 from aces.pipeline_scripts.merge_tclean_commands import get_commands
+from aces.analysis.parse_contdotdat import contchannels_to_linechannels
 
 if os.getenv('DUMMYRUN'):
     def tclean(**kwargs):
@@ -121,6 +122,9 @@ def main():
 
                     imtype = tcpars['specmode']
 
+                    # force pbcor
+                    tcpars['pbcor'] = True
+
                     tempdir_name = f'{temp_workdir}/{field}_{spwsel}_{imtype}_{config}_{mous}'
                     assert any(x in tempdir_name for x in ('7M', 'TM1', 'TP'))
 
@@ -153,22 +157,110 @@ def main():
 
                         if 'aggregate' in spwsel:
                             def rename(x):
+                                # x = x.replace(".ms", f"_{spwsel}.ms")
                                 return os.path.join(tempdir_name, os.path.basename(x))
+
+                            def rename_agg(x):
+                                x = x.replace(".ms", f"_{spwsel}.ms")
+                                return os.path.join(tempdir_name, os.path.basename(x))
+
+                            # This was a great idea, but it totally didn't work because there are multiple steps involved
+                            # You can't just split out the channels you want, you have to flag them, then average them,
+                            # then remove the flags.
+
+                            # Alternative approach:
+                            # copy over MS
+                            # flag out non-continuum channels [requires inverting selection]
+                            # split
 
                             splitcmd = copycmds = "\n".join(
                                 ["import shutil"] +
                                 [textwrap.dedent(
                                     f"""
-                                    try:
-                                        shutil.copytree('{x}', '{rename(x)}')
-                                    except FileExistsError as ex:
-                                        print(f'MS file already copied: {{ex}}.  Proceeding.')
+                                    if not os.path.exists("{rename(x)}"):
+                                        try:
+                                            logprint('Copying {x} to {rename(x)}.')
+                                            shutil.copytree('{x}', '{rename(x)}')
+                                            logprint('Successfully copied {x} to {rename(x)}.')
+                                        except FileExistsError as ex:
+                                            logprint(f'MS file already copied: {{ex}}.  Proceeding.')
                                     """)
                                  for x in tcpars['vis']
                                  ])
 
+                            splitcmd += "\n\n################\n\n"
+
+                            splitcmd += "\n".join(
+                                [textwrap.dedent(
+                                    f"""
+                                    from aces.analysis.parse_contdotdat import contchannels_to_linechannels
+
+                                    if not os.path.exists("{rename_agg(x)}"):
+                                        freqs = {{}}
+                                        visfile = "{rename(x)}"
+                                        assert 'orange' not in visfile
+
+                                        spw_selection = "{spw_selection}"
+                                        spws_for_loop = [int(x.split(":")[0]) for x in spw_selection.split(",")]
+                                        contsel = ";".join([x.split(":")[1] for x in spw_selection.split(",")])
+                                        spws_to_split = ",".join(map(str, spws_for_loop))
+
+                                        ms.open(visfile)
+                                        for spw in spws_for_loop:
+                                            try:
+                                                freqs[spw] = ms.cvelfreqs(spwid=[spw], outframe='LSRK')
+                                            except TypeError:
+                                                freqs[spw] = ms.cvelfreqs(spwids=[spw], outframe='LSRK')
+
+                                        linechannels, linefracs = contchannels_to_linechannels(contsel, freqs, return_fractions=True)
+
+                                        logprint("Line fractions are: {{0}}".format(linefracs))
+                                        logprint("Cont channels are: {{0}}".format(contsel))
+                                        logprint("Line channels are: {{0}}".format(linechannels))
+                                        logprint("spws to split are: {{0}}".format(spws_to_split))
+                                        flagdata(vis=visfile, mode='manual', spw=linechannels, flagbackup=False,
+                                                 datacolumn='{tcpars['datacolumn'] if 'datacolumn' in tcpars else 'corrected'}')
+
+                                        result = split(vis=visfile,
+                                                       outputvis="{rename_agg(x)}",
+                                                       spw=spws_to_split,
+                                                       width=10,
+                                                       datacolumn='{tcpars['datacolumn'] if 'datacolumn' in tcpars else 'corrected'}',
+                                                       field='Sgr_A_star',)
+
+                                        if not os.path.exists("{rename_agg(x)}"):
+                                            logprint("Output vis {rename_agg(x)} does not exist - forcing datacolumn='data'")
+                                            logprint("USING DATACOLUMN=DATA!  This could be a problem!")
+                                            flagdata(vis=visfile, mode='manual', spw=linechannels, flagbackup=False, datacolumn='data')
+                                            result = split(vis=visfile,
+                                                           outputvis="{rename_agg(x)}",
+                                                           width=10,
+                                                           spw=spws_to_split,
+                                                           datacolumn='data',
+                                                           field='Sgr_A_star',)
+
+                                        if not os.path.exists("{rename_agg(x)}"):
+                                            raise ValueError("Split failed")
+
+                                        ms.close()
+
+                                        assert 'orange' not in visfile
+                                        shutil.rmtree(visfile)
+                                    """)
+                                    for x, spw_selection in zip(tcpars['vis'], tcpars['spw'])
+                                ]
+                            )
+                            #splitcmd = copycmds = splitcmd + "\n".join(
+
+                            # now that we've split the data, we don't want to try to downselect again later
+                            tcpars['spw'] = ''
+                            #print(f"Reduced SPW selection to {tcpars['spw']} since the data should be appropriately split")
+
                             # hard code that parallel = False for non-MPI runs
                             tcpars['parallel'] = False
+
+                            # all 'vis' must be renamed because of their new locations
+                            tcpars['vis'] = [rename_agg(x) for x in tcpars["vis"]]
                         else:
                             spw = int(spwsel.lstrip('spw'))
 
@@ -199,18 +291,18 @@ def main():
                                                 spw={spw})
                                                 """) for vis in tcpars['vis']]
 
-                            # ONLY for line cubes, which are individually split out:
-                            # the spw selection should now be 'everything in the MS'
+                            # Only for lines
                             tcpars['spw'] = ''
 
-                        # all 'vis' must be renamed because of their new locations
-                        tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
+                            # all 'vis' must be renamed because of their new locations
+                            tcpars['vis'] = [rename(x) for x in tcpars["vis"]]
 
                         savecmds = textwrap.dedent(
                             f"""
                             import numpy as np
                             import glob
                             def savedata():
+                                logprint("Running savedata")
                                 flist = glob.glob('{os.path.basename(tcpars['imagename'])}.*')
                                 for fn in flist:
                                     realfn = os.path.realpath(fn)
@@ -218,18 +310,41 @@ def main():
                                     realtarget = os.path.realpath(target)
                                     logprint(f'Copying {{fn}} to {savedir_name} ({{realfn}} to {{realtarget}})')
                                     if realfn == realtarget:
-                                       print("Skipping copy - source = destination")
+                                       logprint("Skipping copy - source = destination")
                                     else:
                                         if fn.endswith('.fits'):
                                             shutil.copy(fn, target)
                                         else:
                                             if os.path.exists(target):
                                                 logprint(f'Removing {{target}} because it exists')
-                                                assert 'iter1' in f'{{os.path.basename(fn)}}'  # sanity check - don't remove important directories!
+                                                assert ('iter1' in target) or ('cont.I.manual' in target)  # sanity check - don't remove important directories!
                                                 assert realtarget != realfn
+                                                assert 'orange' not in target
                                                 shutil.rmtree(target)
                                             shutil.copytree(fn, target)\n\n
                             """)
+
+                        setupcmds = (textwrap.dedent(
+                            f"""
+                            import glob
+                            flist = glob.glob('{workingpath}/{os.path.basename(tcpars['imagename'])}.*')
+                            for fn in flist:
+                                logprint(f'Copying {{fn}} to {tempdir_name}')
+                                target = f'{tempdir_name}/{{os.path.basename(fn)}}'
+                                if os.path.exists(target):
+                                    logprint(f'Removing {{target}} because it exists')
+                                    assert ('iter1' in target) or ('cont.I.manual' in target)  # sanity check - don't remove important directories!
+                                    if fn.endswith('.fits'):
+                                        os.remove(target)
+                                    else:
+                                        assert 'orange' not in target
+                                        shutil.rmtree(target)
+                                if fn.endswith('.fits'):
+                                    shutil.copy(fn, '{tempdir_name}/')
+                                else:
+                                    assert not os.path.exists(target), "Copying a directory to /blue failed because the directory was not successfully deleted"
+                                    shutil.copytree(fn, target)\n\n""")
+                        )
 
                         cleanupcmds = (textwrap.dedent(
                             f"""
@@ -242,18 +357,21 @@ def main():
                                 target = f'{workingpath}/{{os.path.basename(fn)}}'
                                 if os.path.exists(target):
                                     logprint(f'Removing {{target}} because it exists')
-                                    assert 'iter1' in target  # sanity check - don't remove important directories!
+                                    assert ('iter1' in target) or ('cont.I.manual' in target)  # sanity check - don't remove important directories!
                                     if fn.endswith('.fits'):
                                         os.remove(target)
                                     else:
+                                        assert 'orange' not in target
                                         shutil.rmtree(target)
                                 shutil.move(fn, '{workingpath}/')\n\n""") +
                             "\n".join([f"shutil.rmtree('{tempdir_name}/{os.path.basename(x)}')" for x in tcpars['vis']])
                         )
                         # use local name instead
                         #tcpars['imagename'] = os.path.join(tempdir_name, os.path.basename(tcpars['imagename']))
+                    else:
+                        raise ValueError("Script is no longer designed to work w/o a tempdir.  It might, but you should manually disable this and do some sanity checks")
 
-                    print(f"Creating script for {partype} tclean in {workingpath} for sb {sbname} ")
+                    print(f"Creating script for {partype} {spwsel} tclean in {workingpath} for sb {sbname}: {partype}_{sbname}_{spwsel}.py ")
                     # with kwargs: \n{tcpars}")
 
                     with open(f"{partype}_{sbname}_{spwsel}.py", "w") as fh:
@@ -266,7 +384,10 @@ def main():
 
                                  def logprint(string):
                                      casalog.post(string, origin='tclean_script')
-                                     print(string)
+                                     print(string, flush=True)
+
+                                 logprint(f"Casalog file is {{casalog.logfile()}}")
+                                 logprint(f'Started CASA in {os.getcwd()}')
 
                                  mpi_ntasks = os.getenv('mpi_ntasks')
                                  if mpi_ntasks is not None:
@@ -287,12 +408,13 @@ def main():
                                  logprint(f"Temporary directory used is {{tempdir_name}}")
 
                                  """))
-                        fh.write("logprint(f'Started CASA in {os.getcwd()}')\n")
+                        fh.write("logprint(f'Current directory is {os.getcwd()}')\n")
 
                         # tclean
                         if temp_workdir:
                             fh.write("".join(splitcmd))
                             fh.write("\n\n")
+                            fh.write(setupcmds)
                         fh.write(check_psf_exists)
                         print(f"tcpars['imagename'] = {tcpars['imagename']}")
                         fh.write(savecmds)
@@ -317,8 +439,10 @@ def main():
                         fh.write('logprint(f"calcpsf: {calcpsf}")\n\n')
                         # first major cycle
                         fh.write("ret = tclean(nmajor=1, calcpsf=calcpsf, fullsummary=True, interactive=False, **tclean_pars)\n\n")
+                        fh.write("logprint(f'ret={ret}')\n\n")
+                        fh.write("savedata()\n\n")
                         fh.write(textwrap.dedent("""
-                                     logprint(f"ret={ret}")
+                                     logprint(f"after savedata, ret={ret}")
                                      if ret is False:
                                         raise ValueError(f"tclean returned ret={ret}")
 
@@ -332,6 +456,7 @@ def main():
                         # remaining major cycles
                         fh.write(textwrap.dedent(f"""
                                  nmajors = 1
+                                 logprint(f"peakres = {{peakres}}, threshold={threshold}")
                                  while peakres > {threshold}:
                                      peakres = 0
                                      for val1 in ret['summaryminor'].values():
@@ -347,6 +472,7 @@ def main():
                                                   calcres=True, # sadly must always calcres, even when redundant
                                                   **tclean_pars)
                                      savedata()\n
+                                 logprint("Done with clean loop")\n
                                  """))
 
                         expected_imname = (os.path.basename(tcpars['imagename']) +
@@ -356,6 +482,7 @@ def main():
 
                         check_exists = textwrap.dedent(f"""
                                               if not os.path.exists('{expected_imname}'):
+                                                  print(os.listdir())
                                                   raise IOError('Expected output file {expected_imname} does not exist.')
                                                   sys.exit(1)
                                                   \n\n""")
@@ -408,7 +535,7 @@ def main():
     if runonce:
         print("Completed re-imaging run with RUNONCE enabled, but didn't run at all.")
 
-    print(f"Done with aces_write_tclean_scripts after t={time.time()-t0}")
+    print(f"Done with aces_write_tclean_scripts after t={time.time() - t0}")
     globals().update(locals())
 
 

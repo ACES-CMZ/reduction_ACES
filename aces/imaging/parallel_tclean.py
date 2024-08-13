@@ -12,11 +12,20 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          CASAVERSION='casa-6.4.3-2-pipeline-2021.3.0.17',
                          field='Sgr_A_star',
                          workdir='/blue/adamginsburg/adamginsburg/ACES/workdir',
+                         logdir='/blue/adamginsburg/adamginsburg/ACES/logs',
                          dry=False,
                          savedir=None,
                          remove_incomplete_psf=True,
                          remove_incomplete_weight=True,
                          **kwargs):
+    """
+    Parameters
+    ----------
+    savedir:
+        Where to put the files in the end
+    workdir:
+        Where to store the intermediate files
+    """
 
     print(f"Starting parallel clean in workdir={workdir} with casa={CASAVERSION}")
 
@@ -35,8 +44,10 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     tclean_kwargs = {'nchan': nchan_per, }
     tclean_kwargs.update(**kwargs)
     # can't be zero, even though docs say it can be
-    del tclean_kwargs['interactive']
-    del tclean_kwargs['parallel']
+    if 'interactive' in tclean_kwargs:
+        del tclean_kwargs['interactive']
+    if 'parallel' in tclean_kwargs:
+        del tclean_kwargs['parallel']
     assert 'interactive' not in tclean_kwargs
     tclean_kwargs['calcres'] = True
     tclean_kwargs['calcpsf'] = True
@@ -168,7 +179,15 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
             logprint(f"Already done with startchan={{startchan}}")
             sys.exit(0)
         elif os.path.exists(tclean_kwargs['imagename'] + ".residual"):
-            raise ValueError(f"{{tclean_kwargs['imagename']}}.residual exists.  Current state unclear.")
+            logprint(ValueError(f"{{tclean_kwargs['imagename']}}.residual exists.  Current state unclear."))
+            #sys.exit(0)
+            # assumption is: residual got made, but no major cycles completed
+            logprint("Attempting to continue anyway.")
+        elif os.path.exists(tclean_kwargs['imagename'] + ".model"):
+            # assumption is: could still be running
+            logprint(ValueError(f"{{tclean_kwargs['imagename']}}.model exists.  Current state unclear."))
+            logprint("Quitting.")
+            sys.exit(0)
         elif os.path.exists(tclean_kwargs['imagename'] + ".psf"):
             if {remove_incomplete_psf}:
                 shutil.rmtree(tclean_kwargs['imagename'] + ".psf")
@@ -179,6 +198,11 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                 shutil.rmtree(tclean_kwargs['imagename'] + ".weight")
             else:
                 raise ValueError(f"{{tclean_kwargs['imagename']}}.weight exists.  Remove it before continuing.")
+
+        # if we're continuing from a partially-completed run
+        # we still want calcres=True in case model components were made
+        if os.path.exists(tclean_kwargs['imagename'] + ".psf"):
+            tclean_kwargs['calcpsf'] = False
 
         logprint(f'tclean_kwargs: {{tclean_kwargs}}')
         logprint(tclean_kwargs['vis'])
@@ -194,11 +218,12 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     splitscriptname = os.path.join(workdir, f"{imagename}_parallel_split_script.py")
     with open(splitscriptname, 'w') as fh:
         fh.write(splitscript)
+    print(f"Wrote splitscript {splitscriptname}")
 
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
 
     runsplitcmd = ("#!/bin/bash\n"
-                   f'LOGFILENAME="casa_log_split_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_JOB_ID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
+                   f'LOGFILENAME="{logdir}/casa_log_split_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_JOB_ID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
                    'echo "Log file is $LOGFILENAME"\n'
                    f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                    ' --nologger --nogui '
@@ -208,9 +233,10 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     slurmsplitcmdsh = imagename + "_split_slurm_cmd.sh"
     with open(slurmsplitcmdsh, 'w') as fh:
         fh.write(runsplitcmd)
+    print(f"Wrote runsplit {slurmsplitcmdsh}")
 
     slurmsplitcmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
-                     f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log '
+                     f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_%j_%A_%a.log '
                      f'--job-name={jobname}_split --account={account} '
                      f'--qos={qos} --export=ALL --time={jobtime} {slurmsplitcmdsh}\n')
 
@@ -228,11 +254,12 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     scriptname = os.path.join(workdir, f"{imagename}_parallel_script.py")
     with open(scriptname, 'w') as fh:
         fh.write(script)
+    print(f"Wrote script {scriptname}")
 
 
 
     runcmd = ("#!/bin/bash\n"
-              f'LOGFILENAME="casa_log_line_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
+              f'LOGFILENAME="{logdir}/casa_log_line_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
               'echo "Log file is $LOGFILENAME"\n'
               f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
               ' --nologger --nogui '
@@ -242,9 +269,10 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     slurmcmd = imagename + "_slurm_cmd.sh"
     with open(slurmcmd, 'w') as fh:
         fh.write(runcmd)
+    print(f"Wrote command {slurmcmd}")
 
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
-           f'--mem-per-cpu={mem_per_cpu} --output={jobname}_%j_%A_%a.log '
+           f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_%j_%A_%a.log '
            f'--job-name={jobname}_arr --account={account} '
            f'--array=0-{NARRAY} '
            f'--dependency=afterok:{scriptjobid} '
@@ -266,8 +294,13 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     mergescript = textwrap.dedent(
 f"""
 import glob, os, shutil, datetime
+
+{logprint}
+
+
 savedir = '{savedir}'
 os.chdir('{workdir}')
+
 for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
     infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
@@ -295,11 +328,11 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
     if os.path.exists(outfile):
         backup_outfile = outfile+f".backup_{{now}}"
         print(f"Found existing file {{outfile}}.  Moving to {{backup_outfile}}")
-        shutil.move(outfile, backup_outfile)
+        os.rename(outfile, backup_outfile)
     if os.path.exists(outfile+".move"):
         backup_outfile = outfile+".move"+f".backup_{{now}}"
         print(f"Found existing file {{outfile+'.move'}}.  Moving to {{backup_outfile}}")
-        shutil.move(outfile+".move", backup_outfile)
+        os.rename(outfile+".move", backup_outfile)
 
     # reads much more efficiently, is consistent with other cubes
     ia.imageconcat(outfile=outfile,
@@ -309,28 +342,14 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
 
     # consolidates the remainder into a single virtual cube
     # (these files can be removed later)
-    ia.imageconcat(outfile=outfile+".move",
-                   infiles=infiles,
-                   mode='m')
+    #ia.imageconcat(outfile=outfile+".move",
+    #               infiles=infiles,
+    #               mode='m')
 
     exportfits(imagename=outfile,
                fitsimage=outfile+".fits",
                overwrite=True # don't want to crash here, and don't expect FITS files to be hanging around...
                )
-
-    if savedir and os.path.exists(savedir):
-        print(f"Moving {{outfile}} to {{savedir}}")
-        full_outfile = os.path.join(savedir, outfile)
-        if os.path.exists(full_outfile):
-            print("Outfile {{full_outfile}} already exists.  Check what's up.")
-        else:
-            shutil.move(outfile, savedir)
-            shutil.move(outfile+".fits", savedir)
-
-            if not os.path.exists(full_outfile):
-                print(f"FAILURE: attempt to move {{outfile}} to {{savedir}} had no effect")
-    else:
-        print(f"Savedir {{savedir}} does not exist")
 
 psffile = os.path.basename(f'{imagename}.psf')
 ia.open(psffile)
@@ -347,33 +366,64 @@ manybeam = False
 if 'beams' in rbeam:
     for beam in rbeam['beams'].values():
         if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
+            print(f"Manybeam: beam={{beam['*0']}}, commonbeam={{commonbeam}}")
             manybeam = True
             break
 
 if manybeam:
-    shutil.move(f'{imagename}.image', f'{imagename}.image.multibeam')
-    shutil.move(f'{imagename}.image.pbcor', f'{imagename}.image.pbcor.multibeam')
-    imsmooth(imagename=f'{imagename}.model',
-             outfile=f'{imagename}.convmodel',
-             beam=commonbeam)
-    ia.imagecalc(outfile=f'{os.path.basename(imagename)}.image',
-                 pixels=f'{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
-                 imagemd=f'{os.path.basename(imagename)}.convmodel',
-                 overwrite=True)
-    ia.close()
-    impbcor(imagename=f'{os.path.basename(imagename)}.image',
-            pbimage=f'{os.path.basename(imagename)}.pb',
-            outfile=f'{os.path.basename(imagename)}.image.pbcor',)
+    try:
+        os.rename('{imagename}.image', '{imagename}.image.multibeam')
+    except Exception as ex:
+        print("Failed to move {imagename}.image -> {imagename}.image.multibeam, probably because the latter exists")
+        print(ex)
+    try:
+        os.rename('{imagename}.image.pbcor', '{imagename}.image.pbcor.multibeam')
+    except Exception as ex:
+        print("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
+        print(ex)
+    if not os.path.exists('{imagename}.convmodel'):
+        logprint('Creating convmodel {os.path.basename(imagename)}.convmodel')
+        imsmooth(imagename='{imagename}.model',
+                outfile='{imagename}.convmodel',
+                beam=commonbeam)
+    if not os.path.exists('{os.path.basename(imagename)}.image'):
+        logprint('Creating image {os.path.basename(imagename)}.image')
+        ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
+                    pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
+                    imagemd='{os.path.basename(imagename)}.convmodel',
+                    overwrite=True)
+        ia.close()
+    if not os.path.exists('{os.path.basename(imagename)}.image.pbcor',):
+        logprint('Creating pbcor image {os.path.basename(imagename)}.image.pbcor')
+        impbcor(imagename='{os.path.basename(imagename)}.image',
+                pbimage='{os.path.basename(imagename)}.pb',
+                outfile='{os.path.basename(imagename)}.image.pbcor',)
 
-    exportfits(imagename=f'{os.path.basename(imagename)}.image.pbcor',
-               fitsimage=f'{os.path.basename(imagename)}.image.pbcor.fits',
+    exportfits(imagename='{os.path.basename(imagename)}.image.pbcor',
+               fitsimage='{os.path.basename(imagename)}.image.pbcor.fits',
                overwrite=True
                )
-    exportfits(imagename=f'{os.path.basename(imagename)}.image',
-               fitsimage=f'{os.path.basename(imagename)}.image.fits',
+    exportfits(imagename='{os.path.basename(imagename)}.image',
+               fitsimage='{os.path.basename(imagename)}.image.fits',
                overwrite=True
                )
 
+
+for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
+    outfile = os.path.basename(f'{imagename}.{{suffix}}')
+    if savedir and os.path.exists(savedir):
+        print(f"Moving {{outfile}} to {{savedir}}")
+        full_outfile = os.path.join(savedir, outfile)
+        if os.path.exists(full_outfile):
+            print(f"Outfile {{full_outfile}} already exists.  Check what's up.")
+        else:
+            shutil.move(outfile, savedir)
+            shutil.move(outfile+".fits", savedir)
+
+            if not os.path.exists(full_outfile):
+                print(f"FAILURE: attempt to move {{outfile}} to {{savedir}} had no effect")
+    else:
+        print(f"Savedir {{savedir}} does not exist")
 
 
 # Cleanup stage
@@ -381,7 +431,6 @@ if manybeam:
 os.chdir('{workdir}')
 tclean_kwargs = {tclean_kwargs}
 
-{logprint}
 {rename_vis}
 
 for vis in tclean_kwargs['vis']:
@@ -398,7 +447,7 @@ for vis in tclean_kwargs['vis']:
     #now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
     #LOGFILENAME = f"casa_log_line_{jobname}_merge_{now}.log"
     runcmd_merge = ("#!/bin/bash\n"
-                    f'LOGFILENAME="casa_log_merge_{jobname}_${{SLURM_JOBID}}_{now}.log"\n'
+                    f'LOGFILENAME="{logdir}/casa_log_merge_{jobname}_${{SLURM_JOBID}}_{now}.log"\n'
                     'echo "Log file is $LOGFILENAME"\n'
                     f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                     f' --nologger --nogui '
@@ -409,8 +458,8 @@ for vis in tclean_kwargs['vis']:
     with open(slurmcmd_merge, 'w') as fh:
         fh.write(runcmd_merge)
 
-    cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks*4} '
-           f'--mem-per-cpu={mem_per_cpu} --output={jobname}_merge_%j_%A_%a.log --job-name={jobname}_merge --account={account} '
+    cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks * 4} '
+           f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_merge_%j_%A_%a.log --job-name={jobname}_merge --account={account} '
            f'--dependency=afterok:{jobid} '
            f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd_merge}')
 

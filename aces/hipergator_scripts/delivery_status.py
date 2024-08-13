@@ -89,7 +89,7 @@ def main():
                 if clean == 'cube':
                     spwlist_ = spwlist[config]
                 else:
-                    spwlist_ = ['aggregate', 'aggregate_high']
+                    spwlist_ = ['aggregate', 'aggregate_high', 'aggregate_low']
 
                 for spwn in sorted(spwlist_, key=lambda x: str(x)):
                     # /orange/adamginsburg/ACES/rawdata/2021.1.00172.L/
@@ -100,34 +100,45 @@ def main():
                     # (we search for spw_*.cont, but the name is 'aggregate)
                     spwkey = spw
 
+                    # the name in the files is cont, not mfs, for aggregate
+                    clean_ = 'cont'  # _not_ mfs
                     # aggregate continuum is named with the full list of spws
                     if spw == 'aggregate':
                         spw = "spw" + "_".join(str(x) for x in spwlist[config])
-                        # the name in the files is cont, not mfs, for aggregate
-                        clean_ = 'cont'  # _not_ mfs
                     elif spw == 'aggregate_high':
                         spw = "spw" + "_".join(str(x) for x in spwlist[config][-2:])
-                        # the name in the files is cont, not mfs, for aggregate
-                        clean_ = 'cont'  # _not_ mfs
+                    elif spw == 'aggregate_low':
+                        spw = "spw" + "_".join(str(x) for x in spwlist[config][:2])
                     else:
                         clean_ = clean
 
-                    bn = f'{mous}.s*_0.Sgr_A_star_sci.{spw}.{clean_}.I'
-                    workingpath = f'{fullpath}/calibrated/working/'
+                    for stepglob in ("s*_0.", ""):
+                        for scidot in ('sci.', 'sci'):
+                            for spwtxt in ('spw', ''):
+                                bn = f'{mous}.{stepglob}Sgr_A_star_{scidot}{spw}.{clean_}.I'.replace('spw', spwtxt)
+                                workingpath = f'{fullpath}/calibrated/working/'
 
-                    tts = '.tt0' if 'aggregate' in spwkey else ''
+                                tts = '.tt0' if 'aggregate' in spwkey else ''
 
-                    for iter_or_manual in ('iter1', 'manual', 'iter1.reclean', 'manual.reclean'):
-                        imageglob = f'{workingpath}/{bn}.{iter_or_manual}.image{tts}'
-                        pbcorglob = f'{workingpath}/{bn}.{iter_or_manual}.image{tts}.pbcor'
-                        psfglob = f'{workingpath}/{bn}.{iter_or_manual}.psf{tts}'
+                                for iter_or_manual in ('iter1', 'manual', 'iter1.reclean', 'manual.reclean', 'iter2.reclean'):
+                                    imageglob = f'{workingpath}/{bn}.{iter_or_manual}.image{tts}'
+                                    pbcorglob = f'{workingpath}/{bn}.{iter_or_manual}.image{tts}.pbcor'
+                                    psfglob = f'{workingpath}/{bn}.{iter_or_manual}.psf{tts}'
 
-                        exists = (wildexists(pbcorglob) or
-                                  ("WIPim" if wildexists(imageglob)
-                                   else "WIPpsf" if wildexists(psfglob)
-                                   else False))
+                                    exists = (wildexists(pbcorglob) or
+                                              ("WIPim" if wildexists(imageglob)
+                                              else "WIPpsf" if wildexists(psfglob)
+                                              else False))
+                                    if exists:
+                                        break
+                                if exists:
+                                    break
+                            if exists:
+                                break
                         if exists:
                             break
+                    if 'X184' in mous:
+                        print(mous, bn, exists)
 
                     if mous not in datatable:
                         datatable[mous] = {}
@@ -179,7 +190,7 @@ def main():
     os.chdir(cwd)
 
     t1 = time.time()
-    print(f"delivery_status took {t1 - t0} seconds = {(t1-t0)/60} minutes = {(t1 - t0)/3600} hours")
+    print(f"delivery_status took {t1 - t0} seconds = {(t1 - t0) / 60} minutes = {(t1 - t0) / 3600} hours")
 
     # Hack for debugging
     globals().update(locals())

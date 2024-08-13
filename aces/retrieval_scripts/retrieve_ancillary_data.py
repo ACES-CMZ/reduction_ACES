@@ -5,14 +5,16 @@ import six
 import os
 import sys
 
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 
-def main(username=None):
-    if username is None:
-        if len(sys.argv) > 1:
-            username = sys.argv[1]
-            print(f"Using username {username}")
-        else:
-            username = six.moves.input("Username: ")
+
+def main():
+    if len(sys.argv) > 1:
+        username = sys.argv[1]
+        print(f"Using username {username}")
+    else:
+        username = six.moves.input("Username: ")
 
     for server_url in ('https://almascience.eso.org', 'https://almascience.nrao.edu', 'https://almascience.nao.ac.jp'):
         print(f"Logging in to ALMA at server {server_url}", flush=True)
@@ -26,7 +28,9 @@ def main(username=None):
             alma.login(username, auth_urls=['almascience.nrao.edu', 'almascience.eso.org', 'asa.alma.cl', 'rh-cas.alma.cl'])
             print(f"Logged in as {username}", flush=True)
 
-            results = alma.query(payload=dict(project_code='2021.1.00172.L'), public=None)
+            #results = alma.query(payload=dict(project_code='2012.1.00080.S'), public=None)
+            coord = SkyCoord("17:45:57.7530532310 -28:57:10.7694483833", unit=(u.h, u.deg), frame='icrs')
+            results = alma.query_region(coord, radius=5 * u.arcsec, public=None)
 
             release_dates = results['obs_release_date']
             # remove all 3000- dates

@@ -7,6 +7,7 @@ This will create (or overwrite) existing tclean commands with label
 
 import json
 import os
+import copy
 from astropy import log
 
 from aces.pipeline_scripts.merge_tclean_commands import merge_override
@@ -44,17 +45,21 @@ def main():
                 aggregate_high_commands[key] = {}
             if 'tclean_cont_pars' not in aggregate_high_commands[key]:
                 aggregate_high_commands[key]['tclean_cont_pars'] = {}
-            if 'aggregate_high' not in commands[key]['tclean_cont_pars']:
-                print(f"Adding {key}")
-                pars = commands[key]['tclean_cont_pars']['aggregate']
-                pars['imagename'] = pars['imagename'].replace('25_27_29_31_33_35', '33_35')
+            for hilo, spwstr in (('high', '33_35'), ('low', '25_27')):
+                if f'aggregate_{hilo}' not in commands[key]['tclean_cont_pars']:
+                    print(f"Adding {key}: aggregate_{hilo} -> {spwstr}")
+                    pars = copy.copy(commands[key]['tclean_cont_pars']['aggregate'])
+                    pars['imagename'] = pars['imagename'].replace('25_27_29_31_33_35', spwstr)
 
-                # split all the spw selections such that only 33 and 35 are kept
-                spwsel = pars['spw']
-                spwsel = ["33:" + x.split("33:")[-1] for x in spwsel]
-                pars['spw'] = spwsel
+                    # split all the spw selections such that only 33 and 35 are kept
+                    spwsel = pars['spw']
+                    if hilo == 'high':
+                        spwsel = ["33:" + x.split("33:")[-1] for x in spwsel]
+                    else:
+                        spwsel = [x.split("29:")[0].strip(",") for x in spwsel]
+                    pars['spw'] = spwsel
 
-                aggregate_high_commands[key]['tclean_cont_pars']['aggregate_high'] = pars
+                    aggregate_high_commands[key]['tclean_cont_pars'][f'aggregate_{hilo}'] = pars
 
     assert len(aggregate_high_commands) >= ncmds
 

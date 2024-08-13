@@ -10,7 +10,7 @@ from spectral_cube import SpectralCube
 from spectral_cube.cube_utils import mosaic_cubes
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
-from aces.imaging.make_mosaic import all_lines
+from aces.imaging.make_mosaic import all_lines as all_lines_
 
 from aces import conf
 
@@ -28,9 +28,13 @@ basepath = conf.basepath
 # header['NAXIS2'] = 4000
 
 
+def all_lines(*args, folder='TP_flattened', **kwargs):
+    return all_lines_(*args, folder=folder, **kwargs)
+
+
 def cube_mosaicing():
 
-    for spw in (17, 19, 21, 23, 25, 27)[::-1]:
+    for spw in (17, 19, 21, 23, 25, 27):
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*spw{spw}.cube.I.sd.fits')
 
         # cube0 = SpectralCube.read(filelist[0])
@@ -47,8 +51,21 @@ def cube_mosaicing():
         #                         -0.30 / output_wcs.wcs.cdelt[1],
         #                         cube0.wcs.wcs.crpix[2]]
 
-        result = mosaic_cubes([SpectralCube.read(fn) for fn in filelist], combine_header_kwargs=dict(frame='galactic'))
+        result = mosaic_cubes([SpectralCube.read(fn) for fn in filelist],
+                              combine_header_kwargs=dict(frame='galactic',
+                                                         spectral_dx_threshold=0.01))
         result.write(f'{basepath}/mosaics/cubes/ACES_TP_spw{spw}_mosaic.fits', overwrite=True)
+
+
+def noisemaps():
+    for fn in glob.glob(f"{basepath}/mosaics/cubes/ACES_TP_spw*mosaic.fits"):
+        outname = f"{basepath}/mosaics/cubes/moments/{fn.split('/')[-1].replace('mosaic.fits', 'mosaic_madstd.fits')}"
+        cube = SpectralCube.read(fn, use_dask=True)
+        mstd = cube.mad_std(axis=0)
+        try:
+            mstd.write(outname, overwrite=True)
+        except Exception as ex:
+            print(ex)
 
 
 def main():
@@ -139,14 +156,15 @@ def main():
             fsum = (flagmap == ii).sum()
             cy, cx = ((np.arange(flagmap.shape[0])[:, None] * (flagmap == ii)).sum() / fsum,
                       (np.arange(flagmap.shape[1])[None, :] * (flagmap == ii)).sum() / fsum)
-            pl.text(cx, cy, f"{ii}\n{tbl[ii-1]['Obs ID']}",
+            pl.text(cx, cy, f"{ii}\n{tbl[ii - 1]['Obs ID']}",
                     horizontalalignment='left', verticalalignment='center',
                     color=(1, 0.8, 0.5), transform=ax.get_transform('pixel'),
                     zorder=fronter)
 
     fig.savefig(f'{basepath}/mosaics/TP_spw17mx_mosaic_withgridandlabels.png', bbox_inches='tight')
 
+    cube_mosaicing()
+    noisemaps()
+
     all_lines(header, array='TP', glob_suffix='cube.I.sd.fits', globdir='product', use_weights=False,
               parallel=False)
-
-    cube_mosaicing()
