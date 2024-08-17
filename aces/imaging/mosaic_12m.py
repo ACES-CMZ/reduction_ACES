@@ -605,7 +605,7 @@ def make_giant_mosaic_cube_sio21(**kwargs):
                            cubename='SiO21',
                            nchan=350,
                            # field am is 3.22"
-                           beam_threshold=3.1 * u.arcsec,
+                           beam_threshold=3.3 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/SiO21_Channels/',
                            **kwargs,)
 
@@ -639,7 +639,7 @@ def make_giant_mosaic_cube_hnco(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO',
                            nchan=1400,
-                           beam_threshold=3.2 * u.arcsec,
+                           beam_threshold=3.3 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
                            fail_if_cube_dropped=False,
                            #use_reproject_cube=True,
@@ -714,7 +714,7 @@ def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO_7m12mTP_minitest',
                            nchan=50,
-                           beam_threshold=3.2 * u.arcsec,
+                           beam_threshold=3.3 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
                            weightfilelist=weightfilelist,
@@ -749,7 +749,7 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO_7m12mTP',
                            nchan=1400,
-                           beam_threshold=3.2 * u.arcsec,
+                           beam_threshold=3.3 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',
                            weightfilelist=weightfilelist,
@@ -788,7 +788,7 @@ def make_giant_mosaic_cube_hcop(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HCOP',
                            nchan=1400,
-                           beam_threshold=3.2 * u.arcsec,
+                           beam_threshold=3.3 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HCOP_Channels/',
                            fail_if_cube_dropped=False,
                            #use_reproject_cube=True,
@@ -930,7 +930,7 @@ def make_giant_mosaic_cube_h13cop(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='H13COp',
                            nchan=350,
-                           beam_threshold=3.2 * u.arcsec,
+                           beam_threshold=3.3 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/H13COp_Channels/',
                            # we prefer to fail_if_dropped; enabling this for debugging
                            fail_if_cube_dropped=False,
@@ -963,7 +963,7 @@ def make_giant_mosaic_cube_hn13c(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HN13C',
                            nchan=350,
-                           beam_threshold=3.2 * u.arcsec,
+                           beam_threshold=3.3 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HN13C_Channels/',
                            # we prefer to fail_if_dropped; enabling this for debugging
                            fail_if_cube_dropped=False,
@@ -997,7 +997,7 @@ def make_giant_mosaic_cube_so21(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='SO21',
                            nchan=350,
-                           beam_threshold=3.2 * u.arcsec,
+                           beam_threshold=3.3 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/SO21_Channels/',
                            # we prefer to fail_if_dropped; enabling this for debugging
                            fail_if_cube_dropped=False,
@@ -1029,7 +1029,7 @@ def make_giant_mosaic_cube_hc15n(**kwargs):
                            cdelt_kms=cdelt_kms,
                            cubename='HC15N',
                            nchan=350,
-                           beam_threshold=3.2 * u.arcsec,
+                           beam_threshold=3.3 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HC15N_Channels/',
                            # we prefer to fail_if_dropped; enabling this for debugging
                            fail_if_cube_dropped=False,

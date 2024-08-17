@@ -51,15 +51,15 @@ if __name__ == "__main__":
 
         howargs = {}
 
-    print(cube)
+    print(cube, flush=True)
 
-    print(f"mom0.  dt={time.time() - t0}")
+    print(f"mom0.  dt={time.time() - t0}", flush=True)
     mom0 = cube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_mom0.png",
             stretch='asinh', min_cut=-0.1, max_percent=99.5)
 
-    print(f"max.  dt={time.time() - t0}")
+    print(f"max.  dt={time.time() - t0}", flush=True)
     mx = cube.max(axis=0, **howargs)
     mx.write(f"{mompath}/{molname}_CubeMosaic_max.fits", overwrite=True)
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
