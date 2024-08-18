@@ -163,7 +163,7 @@ def id_continuum(spectrum, threshold=2.5):
     return new_contsel
 
 
-def assemble_new_contsels():
+def assemble_new_contsels(convert_to_native=False, allow_missing_maxspec=False):
     cmds = get_commands()
 
     ms = mstool()
@@ -243,8 +243,10 @@ def assemble_new_contsels():
                     print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
                     print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
                     print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
-                    raise ValueError("No max spectrum found.")
-                    continue
+                    if allow_missing_maxspec:
+                        continue
+                    else:
+                        raise ValueError("No max spectrum found.")
 
                 max_spec = OneDSpectrum.from_hdu(fits.open(max_fn))
                 contsel_bool = id_continuum(max_spec.value)
@@ -252,14 +254,17 @@ def assemble_new_contsels():
                 frqmins = u.Quantity(ndimage.labeled_comprehension(max_spec.spectral_axis, segments, np.arange(1, nseg + 1), np.min, float, np.nan), max_spec.spectral_axis.unit)
                 frqmaxs = u.Quantity(ndimage.labeled_comprehension(max_spec.spectral_axis, segments, np.arange(1, nseg + 1), np.max, float, np.nan), max_spec.spectral_axis.unit)
 
-                # calculate LSR offset from the data
-                native_frqs = ms.cvelfreqs(spw)
-                lsr_frqs = ms.cvelfreqs(spw, outframe='LSRK')
-                v_offset = np.mean((lsr_frqs - native_frqs) / lsr_frqs) * constants.c
+                if convert_to_native:
+                    # calculate LSR offset from the data
+                    native_frqs = ms.cvelfreqs(spw)
+                    lsr_frqs = ms.cvelfreqs(spw, outframe='LSRK')
+                    v_offset = np.mean((lsr_frqs - native_frqs) / lsr_frqs) * constants.c
 
-                frqmins_native = (frqmins * (1 - v_offset / constants.c)).to(u.GHz)
-                frqmaxs_native = (frqmaxs * (1 - v_offset / constants.c)).to(u.GHz)
-                frqpairs = [f'{mn}~{mx}GHz' for mn, mx in zip(frqmins_native.value, frqmaxs_native.value)]
+                    frqmins_native = (frqmins * (1 - v_offset / constants.c)).to(u.GHz)
+                    frqmaxs_native = (frqmaxs * (1 - v_offset / constants.c)).to(u.GHz)
+                    frqpairs = [f'{mn}~{mx}GHz' for mn, mx in zip(frqmins_native.value, frqmaxs_native.value)]
+                else:
+                    frqpairs = [f'{mn}~{mx}GHz' for mn, mx in zip(frqmins.value, frqmaxs.value)]
 
                 selstr_ = f'{spw}:' + ";".join(frqpairs)
                 selstrs.append(selstr_)
