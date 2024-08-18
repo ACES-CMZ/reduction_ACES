@@ -215,12 +215,6 @@ def main(num_workers=None):
             assert lowsignal.sum() > 0
             assert lowsignal.sum() < lowsignal.size
 
-            if False:
-                # this is an open to-do item: we need to create noise estimation regions
-                noiseregion = get_noise_region(field)
-                dt(f"Getting noise region {noiseregion}")
-                assert noiseregion is not None
-                noiseest_cube = cube.subcube_from_regions(regions.Regions.read(noiseregion))
             noiseest_cube = cube
 
             dt(cube)

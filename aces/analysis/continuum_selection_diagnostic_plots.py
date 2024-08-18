@@ -163,7 +163,7 @@ def id_continuum(spectrum, threshold=2.5):
     return new_contsel
 
 
-def assemble_new_contsels(convert_to_native=False):
+def assemble_new_contsels(convert_to_native=False, allow_missing_maxspec=False):
     cmds = get_commands()
 
     ms = mstool()
@@ -243,8 +243,10 @@ def assemble_new_contsels(convert_to_native=False):
                     print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
                     print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
                     print(f"NO MAX SPECTRUM FOUND FOR {sbname} {spw}")
-                    raise ValueError("No max spectrum found.")
-                    continue
+                    if allow_missing_maxspec:
+                        continue
+                    else:
+                        raise ValueError("No max spectrum found.")
 
                 max_spec = OneDSpectrum.from_hdu(fits.open(max_fn))
                 contsel_bool = id_continuum(max_spec.value)
