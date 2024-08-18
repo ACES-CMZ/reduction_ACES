@@ -264,13 +264,14 @@ def main(num_workers=None):
 
         jtok_equiv = beam.jtok_equiv(u.Quantity(minfreq + maxfreq, u.Hz) / 2)
 
-        row = ([field, config, spw, suffix, os.path.basename(fn), beam.major.to(u.arcsec), beam.minor.to(u.arcsec), beam.pa,
+        row = ([field, config, spw, suffix, os.path.basename(fn),
+                beam.major.to(u.arcsec), beam.minor.to(u.arcsec), beam.pa,
                 u.Quantity(restfreq, u.Hz), u.Quantity(minfreq, u.Hz), u.Quantity(maxfreq, u.Hz)] +
-                [history[key] if key in history else '' for key in colnames_fromheader] +
-                [min, max, std, sum, mean] +
-                list(map(lambda x: u.Quantity(x).to(u.K, jtok_equiv), [min, max, std, sum, mean])) +
-                [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean]
-                )
+               [history[key] if key in history else '' for key in colnames_fromheader] +
+               [min, max, std, sum, mean] +
+               list(map(lambda x: u.Quantity(x).to(u.K, jtok_equiv), [min, max, std, sum, mean])) +
+               [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean]
+               )
         assert len(row) == len(colnames) == NCOLS
         rows.append(row)
 
