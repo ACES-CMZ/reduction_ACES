@@ -88,9 +88,9 @@ def make_pv_l(cube, longitude, mol):
     subcube = cube.subcube_from_regions([reg])
     subcube.allow_huge_operations = True
     pv_mean = subcube.mean(axis=2)
-    pv_mean.write(f'{save_path}/{mol}_pv_l{round(longitude.value, 3)}_mean.fits')
+    pv_mean.write(f'{save_path}/{mol}_pv_l{round(longitude.value, 3)}_mean.fits', overwrite=True)
     pv_max = subcube.max(axis=2)
-    pv_max.write(f'{save_path}/{mol}_pv_l{round(longitude.value, 3)}_max.fits')
+    pv_max.write(f'{save_path}/{mol}_pv_l{round(longitude.value, 3)}_max.fits', overwrite=True)
 
 
 def plot_pv(pv, mol, pos, longitude=True, mean='mean', close=True):
