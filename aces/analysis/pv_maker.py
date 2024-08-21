@@ -65,9 +65,9 @@ def make_pv_b(cube, latitude, mol):
     subcube = cube.subcube_from_regions([reg])
     subcube.allow_huge_operations = True
     pv_mean = subcube.mean(axis=1)
-    pv_mean.write(f'{save_path}/{mol}_pv_b{round(latitude.value, 3)}_mean.fits')
+    pv_mean.write(f'{save_path}/{mol}_pv_b{round(latitude.value, 3)}_mean.fits', overwrite=True)
     pv_max = subcube.max(axis=1)
-    pv_max.write(f'{save_path}/{mol}_pv_b{round(latitude.value, 3)}_max.fits')
+    pv_max.write(f'{save_path}/{mol}_pv_b{round(latitude.value, 3)}_max.fits', overwrite=True)
 
 
 def make_pv_l(cube, longitude, mol):
