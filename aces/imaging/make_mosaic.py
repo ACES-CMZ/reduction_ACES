@@ -992,10 +992,10 @@ def rms_map(img, kernel=Gaussian2DKernel(10)):
 
 
 def rms(prefix='12m_continuum', folder='12m_flattened', threshold=2.5, nbeams=3, maxiter=50):
-    for fn in glob.glob(f'{basepath}/mosaics/{folder}/{prefix}*mosaic.fits'):
-        if 'rms' in fn:
-            # don't re-rms rms maps
-            continue
+    rms_targets = glob.glob(f'{basepath}/mosaics/{folder}/{prefix}*mosaic.fits')
+    rms_targets = [x for x in rms_targets if 'rms' not in x]
+    print("Making RMS maps for", rms_targets)
+    for fn in rms_targets:
         print(f"Computing RMS map for {fn}", flush=True)
         fh = fits.open(fn)
         ww = WCS(fh[0].header)
