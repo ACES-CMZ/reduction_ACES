@@ -220,8 +220,8 @@ def main(num_workers=None):
             dt(cube)
             dt(noiseest_cube)
 
-            minfreq = cube.spectral_axis.min()
-            maxfreq = cube.spectral_axis.max()
+            minfreq = cube.with_spectral_unit(u.GHz).spectral_axis.min()
+            maxfreq = cube.with_spectral_unit(u.GHz).spectral_axis.max()
             restfreq = cube.wcs.wcs.restfrq
 
             # print("getting filled data")

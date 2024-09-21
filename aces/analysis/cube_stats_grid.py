@@ -192,7 +192,7 @@ def main(num_workers=None):
             config = config.split(" ")[0]
         rerun = 'original' in sbname
 
-        for suffix in (".image", ):  # ".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
+        for suffix in (".image", ".image.pbcor.statcont.contsub.fits"):  # ".contsub.image"):#, ".contsub.JvM.image.fits", ".JvM.image.fits"):
             globblob = f'{fullpath}/calibrated/working/*.iter1{suffix}'
             fns = glob.glob(globblob)
             globblob2 = f'{fullpath}/reclean/*.iter1{suffix}'
