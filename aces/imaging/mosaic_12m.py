@@ -653,6 +653,38 @@ def make_giant_mosaic_cube_hnco(**kwargs):
                               )
 
 
+def make_giant_mosaic_cube_nsplus(**kwargs):
+
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW35/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_35.image.statcont.contsub.fits')
+
+    print(f"Found {len(filelist)} NSplus-containing spw35 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=35) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfrq = 100.198e9
+    cdelt_kms = 1.47015502
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfrq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='NSplus',
+                           nchan=350,
+                           # 2.35 is OK except o (2.38) and am (2.64)
+                           # but am, despite its 2.64" beam, was excluded (??) with the 2.65" threshold.  As was o.  So maybe this is just a rerun?
+                           beam_threshold=2.75 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/NSplus_Channels/',
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/NSplus_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/NSplus_CubeMosaic_downsampled9.fits',
+                              )
+
+
 def make_giant_mosaic_cube_hc3n(**kwargs):
 
     #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw35.cube.I.iter1.image.pbcor.statcont.contsub.fits')

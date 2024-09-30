@@ -167,7 +167,7 @@ def main(num_workers=None):
                            (tbl['Config'] == config) &
                            (tbl['spw'] == spw) &
                            (tbl['suffix'] == suffix))
-            if any(row_matches):
+            if any(row_matches) and not np.all(np.isfinite(tbl[row_matches]['min'])):
                 print(f"Skipping {fullpath} as complete: {tbl[row_matches]}", flush=True)
                 continue
 
@@ -237,6 +237,8 @@ def main(num_workers=None):
             dt("finished cube stats")
             min = stats['min']
             max = stats['max']
+            if np.isnan(min) or np.isnan(max):
+                raise ValueError("Cube stats reported a NAN min/max")
             std = stats['sigma']
             sum = stats['sum']
             mean = stats['mean']
