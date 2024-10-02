@@ -57,7 +57,7 @@ if __name__ == "__main__":
     mom0 = cube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_mom0.png",
-            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     print(f"max.  dt={time.time() - t0}", flush=True)
     mx = cube.max(axis=0, **howargs)
@@ -123,12 +123,12 @@ if __name__ == "__main__":
     mom0 = mcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
-            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     mx = mcube.max(axis=0, **howargs)
     mx.write(f"{mompath}/{molname}_CubeMosaic_masked_max.fits", overwrite=True)
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_max.png",
-            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     if dopv:
         print(f"PV mean.  dt={time.time() - t0}")
@@ -163,12 +163,12 @@ if __name__ == "__main__":
     mom0 = mdcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.png",
-            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     mx = mdcube.max(axis=0, **howargs)
     mx.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_max.fits", overwrite=True)
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_max.png",
-            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     signal_mask_2p5 = cube > noise * 2.5
     signal_mask_2p5 = ndmorph.binary_dilation(signal_mask_2p5.include(), structure=np.ones([1, 3, 3]), iterations=1)
@@ -176,12 +176,12 @@ if __name__ == "__main__":
     mom0 = mdcube_2p5.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.png",
-            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     mx = mdcube_2p5.max(axis=0, **howargs)
     mx.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_max.fits", overwrite=True)
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_max.png",
-            stretch='asinh', min_cut=-0.1, max_percent=99.5)
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     if dopv:
         print(f"PV mean.  dt={time.time() - t0}")

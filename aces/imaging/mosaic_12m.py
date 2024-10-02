@@ -505,7 +505,11 @@ def starstarmap_with_kwargs(pool, fn, kwargs_iter):
 
 
 def get_weightfile(filename, spw):
-    suffixes = ('.cube.I.iter1.reclean.weight',
+    suffixes = ('.cube.I.iter1.reclean.weight.fits',
+                '.cube.I.iter1.weight.fits',
+                '.cube.I.manual.weight.fits',
+                '.cube.I.manual.reclean.weight.fits',
+                '.cube.I.iter1.reclean.weight',
                 '.cube.I.iter1.weight',
                 '.cube.I.manual.weight',
                 '.cube.I.manual.reclean.weight',
@@ -513,10 +517,17 @@ def get_weightfile(filename, spw):
     spw_pre = ('.spw', '_sci')
     flist = []
     for pre in spw_pre:
+        match_pre = False
         for suf in suffixes:
-            flist += glob.glob(os.path.join(
+            matches = glob.glob(os.path.join(
                 os.path.dirname(filename),
                 f"*{pre}{spw}*{suf}"))
+            if len(matches) > 0:
+                flist += matches
+                match_pre = True
+                break
+        if match_pre:
+            break
 
     # dig through the sous/gous/mous for the appropriate weightfile
     if len(flist) != 1:
@@ -527,8 +538,15 @@ def get_weightfile(filename, spw):
             fieldid = filename.split("Sgr_A_st_")[-1].split(".")[0]
             mousid = uidtb.loc[fieldid]['12m MOUS ID']
             for pre in spw_pre:
+                match_pre = False
                 for suf in suffixes:
-                    flist += glob.glob(f'{sgmpath}{mousid}/calibrated/working/*{pre}{spw}*{suf}')
+                    matches = glob.glob(f'{sgmpath}{mousid}/calibrated/working/*{pre}{spw}*{suf}')
+                    if len(matches) > 0:
+                        flist += matches
+                        match_pre = True
+                        break
+                if match_pre:
+                    break
 
     # we have to have exactly 1 match
     assert len(flist) == 1, str(flist)
@@ -728,11 +746,13 @@ def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
     # what if we reverse order?
     filelist = filelist[::-1]
     print(f"Found {len(filelist)} HNCO 7m+12m+TP FITS files")
+    log.debug(f"Full names of files: {filelist}")
 
     weightfilelist = [get_weightfile(fn, spw=31) for fn in filelist]
     for fn in weightfilelist:
         assert os.path.exists(fn)
     print(f"Found {len(weightfilelist)} HNCO 7m+12m+TP FITS weight files")
+    log.debug(f"Full names of weights: {weightfilelist}")
     assert len(weightfilelist) == len(filelist)
     for xx, yy in zip(filelist, weightfilelist):
         #print(f'Beginning of filenames: {os.path.basename(xx.split(".")[0])}, {os.path.basename(yy.split("/")[-1].split(".")[0])}')
@@ -745,7 +765,7 @@ def make_giant_mosaic_cube_hnco_TP7m12m_minitest(**kwargs):
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
                            cubename='HNCO_7m12mTP_minitest',
-                           nchan=50,
+                           nchan=1400,
                            beam_threshold=3.3 * u.arcsec,
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix.hdr',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_Channels/',

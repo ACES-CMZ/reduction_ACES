@@ -639,6 +639,9 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                 fh[0].data[fh[0].data == 0] = np.nan
                 fh.close()
 
+                if np.any((fits.getdata(chanfn) == 0)):
+                    raise ValueError(f"Found zero-valued pixels in {chanfn} after nan->zero step")
+
             if not check_channel(chanfn, verbose=verbose):
                 raise ValueError("Produced an empty channel - raising exception as this is not expected")
             else:
@@ -661,7 +664,7 @@ def check_channel(chanfn, verbose=True):
         return False
     else:
         if verbose:
-            print(f"{chanfn} succeeded: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))}")
+            print(f"{chanfn} succeeded: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={np.nanstd(data)} data.finite={np.sum(~np.isnan(data))}")
         return True
 
 
@@ -916,7 +919,7 @@ def slurm_set_channels(nchan):
 
 
 def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
-                          smooth=False, smooth_beam=5 * u.arcsec,
+                          smooth=True, smooth_beam=5 * u.arcsec,
                           use_dask=True, spectrally_too=True):
     """
     TODO: may need to dump-to-temp while reprojecting
