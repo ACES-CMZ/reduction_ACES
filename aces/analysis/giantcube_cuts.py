@@ -95,11 +95,6 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
-    mx = mcube.max(axis=0, **howargs)
-    mx.write(f"{mompath}/{molname}_CubeMosaic_masked_max.fits", overwrite=True)
-    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_max.png",
-            stretch='asinh', vmin=-0.1, max_percent=99.5)
-
     if dopv:
         print(f"PV mean.  dt={time.time() - t0}")
         pv_mean_masked = mcube.mean(axis=1, **howargs)
@@ -127,6 +122,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     TypeError: No dispatch for <class 'spectral_cube.masks.LazyComparisonMask'>
     """
     from dask_image import ndmorph
+    print(f"Computing first signal mask (1-sigma). dt={time.time() - t0}")
     signal_mask = cube > noise
     signal_mask = ndmorph.binary_dilation(signal_mask.include(), structure=np.ones([1, 3, 3]), iterations=1)
 
@@ -134,17 +130,14 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     fits.PrimaryHDU(data=dilated_mask_space,
                     header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_mask.fits", overwrite=True)
 
+    print(f"Dilated mask moment 0. dt={time.time() - t0}")
     mdcube = cube.with_mask(BooleanArrayMask(mask=signal_mask, wcs=cube.wcs))
     mom0 = mdcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
-    mx = mdcube.max(axis=0, **howargs)
-    mx.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_max.fits", overwrite=True)
-    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_max.png",
-            stretch='asinh', vmin=-0.1, max_percent=99.5)
-
+    print(f"Second dilated mask (2.5-sigma). dt={time.time() - t0}")
     signal_mask_2p5 = cube > noise * 2.5
     signal_mask_2p5 = ndmorph.binary_dilation(signal_mask_2p5.include(), structure=np.ones([1, 3, 3]), iterations=1)
 
@@ -153,18 +146,15 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
                     header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_2p5sig_mask.fits", overwrite=True)
 
 
+    print(f"Dilated mask 2.5 sigma moment 0. dt={time.time() - t0}")
     mdcube_2p5 = cube.with_mask(BooleanArrayMask(mask=signal_mask_2p5, wcs=cube.wcs))
     mom0 = mdcube_2p5.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
-    mx = mdcube_2p5.max(axis=0, **howargs)
-    mx.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_max.fits", overwrite=True)
-    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_max.png",
-            stretch='asinh', vmin=-0.1, max_percent=99.5)
 
-
+    print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
     signal_mask_5p0 = cube > noise * 5.0
     signal_mask_5p0 = ndmorph.binary_dilation(signal_mask_5p0.include(), structure=np.ones([1, 3, 3]), iterations=1)
 
@@ -172,18 +162,12 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     fits.PrimaryHDU(data=dilated_mask_space_5p0,
                     header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_5p0sig_mask.fits", overwrite=True)
 
-
+    print(f"Dilated mask 5 sigma moment 0. dt={time.time() - t0}")
     mdcube_5p0 = cube.with_mask(BooleanArrayMask(mask=signal_mask_5p0, wcs=cube.wcs))
     mom0 = mdcube_5p0.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
-
-    mx = mdcube_5p0.max(axis=0, **howargs)
-    mx.write(f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_max.fits", overwrite=True)
-    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_max.png",
-            stretch='asinh', vmin=-0.1, max_percent=99.5)
-
 
 
     if dopv:
@@ -199,7 +183,8 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
         makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.png",
                 stretch='asinh', min_percent=1, max_percent=99.5)
 
-if __name__ == "__main__":
+
+def main():
     dodask = os.getenv('USE_DASK')
     if dodask and dodask.lower() == 'false':
         dodask = False
@@ -236,3 +221,7 @@ if __name__ == "__main__":
         howargs = {}
 
     do_all_stats(cube, molname=molname, dopv=dopv, dods=dods, howargs=howargs)
+
+
+if __name__ == "__main__":
+    main()
