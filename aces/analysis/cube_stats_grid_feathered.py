@@ -151,6 +151,11 @@ def main(num_workers=None):
     else:
         rows = []
 
+    if tbl is not None and np.any(np.isnan(tbl['min'])):
+        print(f"There are {np.isnan(tbl['min']).sum()} NaNs in the table.  Will recompute those. len(tbl)={len(tbl)}")
+        tbl = tbl[np.isfinite(tbl['min'])]
+        print(f"Cut-down table length = {len(tbl)}")
+
     cache_stats_file = open(tbldir / "feathered_cube_stats.txt", 'w')
 
     for fullpath in glob.glob(f"{basepath}/upload/Feather_12m_7m_TP/SPW*/cubes/*"):
@@ -281,6 +286,9 @@ def main(num_workers=None):
         cache_stats_file.flush()
         print(f'len(rows): {len(rows)}, len(colnames): {len(colnames)}')
         tbl = save_tbl(rows, colnames)
+
+        if np.any(np.isnan(tbl['min'])):
+            print(f"After processing {fn}, there are {np.isnan(tbl['min']).sum()} NaNs in the table.")
 
     cache_stats_file.close()
 

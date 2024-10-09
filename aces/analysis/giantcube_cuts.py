@@ -6,6 +6,7 @@ import time
 from spectral_cube import SpectralCube
 from spectral_cube import BooleanArrayMask
 import os
+from astropy.io import fits
 
 from aces import conf
 from aces.imaging.make_mosaic import makepng
@@ -13,45 +14,13 @@ from aces.imaging.make_mosaic import makepng
 basepath = conf.basepath
 
 cubepath = f'{basepath}/mosaics/cubes/'
-mompath = f'{basepath}/mosaics/cubes/moments/'
 
-if __name__ == "__main__":
-    dodask = os.getenv('USE_DASK')
-    if dodask and dodask.lower() == 'false':
-        dodask = False
-    dods = os.getenv('DOWNSAMPLE')
-    dopv = os.getenv('DO_PV')
 
-    if os.getenv('MOLNAME'):
-        molname = os.getenv('MOLNAME')
-    else:
-        molname = 'CS21'
-
-    if not dodask:
-        print("Before imports.  Slice-wise reduction", flush=True)
-
-        t0 = time.time()
-
-        cube = SpectralCube.read(f'{cubepath}/{molname}_CubeMosaic.fits')
-
-        howargs = {'how': 'slice'}
-    else:
-        print("Before imports (using dask)", flush=True)
-
-        import dask
-        #dask.config.set(scheduler='threads')
-        from dask.distributed import Client, LocalCluster
-        cluster = LocalCluster()
-        client = Client(cluster)
-        print(f"dashboard: {cluster.dashboard_link}", flush=True)
-
-        t0 = time.time()
-
-        cube = SpectralCube.read(f'{cubepath}/{molname}_CubeMosaic.fits', use_dask=True)
-
-        howargs = {}
-
+def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
+                 dopv=True, dods=True, howargs={}):
+    t0 = time.time()
     print(cube, flush=True)
+    print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
     print(f"mom0.  dt={time.time() - t0}", flush=True)
     mom0 = cube.moment0(axis=0, **howargs)
@@ -103,7 +72,8 @@ if __name__ == "__main__":
     if dods:
         print("Downsampling")
         from aces.imaging.make_mosaic import make_downsampled_cube, basepath
-        make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits')
+        make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits',
+                              smooth_beam=12*u.arcsec)
 
     print(f"Noisemap. dt={time.time() - t0}")
     noise = cube.mad_std(axis=0)
@@ -159,6 +129,11 @@ if __name__ == "__main__":
     from dask_image import ndmorph
     signal_mask = cube > noise
     signal_mask = ndmorph.binary_dilation(signal_mask.include(), structure=np.ones([1, 3, 3]), iterations=1)
+
+    dilated_mask_space = signal_mask.sum(axis=0)
+    fits.PrimaryHDU(data=dilated_mask_space,
+                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_mask.fits", overwrite=True)
+
     mdcube = cube.with_mask(BooleanArrayMask(mask=signal_mask, wcs=cube.wcs))
     mom0 = mdcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
@@ -172,6 +147,12 @@ if __name__ == "__main__":
 
     signal_mask_2p5 = cube > noise * 2.5
     signal_mask_2p5 = ndmorph.binary_dilation(signal_mask_2p5.include(), structure=np.ones([1, 3, 3]), iterations=1)
+
+    dilated_mask_space_2p5 = signal_mask_2p5.sum(axis=0)
+    fits.PrimaryHDU(data=dilated_mask_space_2p5,
+                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_2p5sig_mask.fits", overwrite=True)
+
+
     mdcube_2p5 = cube.with_mask(BooleanArrayMask(mask=signal_mask_2p5, wcs=cube.wcs))
     mom0 = mdcube_2p5.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.fits", overwrite=True)
@@ -182,6 +163,28 @@ if __name__ == "__main__":
     mx.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_max.fits", overwrite=True)
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_max.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
+
+
+    signal_mask_5p0 = cube > noise * 5.0
+    signal_mask_5p0 = ndmorph.binary_dilation(signal_mask_5p0.include(), structure=np.ones([1, 3, 3]), iterations=1)
+
+    dilated_mask_space_5p0 = signal_mask_5p0.sum(axis=0)
+    fits.PrimaryHDU(data=dilated_mask_space_5p0,
+                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_5p0sig_mask.fits", overwrite=True)
+
+
+    mdcube_5p0 = cube.with_mask(BooleanArrayMask(mask=signal_mask_5p0, wcs=cube.wcs))
+    mom0 = mdcube_5p0.moment0(axis=0, **howargs)
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.fits", overwrite=True)
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.png",
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
+
+    mx = mdcube_5p0.max(axis=0, **howargs)
+    mx.write(f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_max.fits", overwrite=True)
+    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_max.png",
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
+
+
 
     if dopv:
         print(f"PV mean.  dt={time.time() - t0}")
@@ -195,3 +198,41 @@ if __name__ == "__main__":
         pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.fits", overwrite=True)
         makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.png",
                 stretch='asinh', min_percent=1, max_percent=99.5)
+
+if __name__ == "__main__":
+    dodask = os.getenv('USE_DASK')
+    if dodask and dodask.lower() == 'false':
+        dodask = False
+    dods = os.getenv('DOWNSAMPLE')
+    dopv = os.getenv('DO_PV')
+
+    if os.getenv('MOLNAME'):
+        molname = os.getenv('MOLNAME')
+    else:
+        molname = 'CS21'
+
+    if not dodask:
+        print("Before imports.  Slice-wise reduction", flush=True)
+
+        t0 = time.time()
+
+        cube = SpectralCube.read(f'{cubepath}/{molname}_CubeMosaic.fits')
+
+        howargs = {'how': 'slice'}
+    else:
+        print("Before imports (using dask)", flush=True)
+
+        import dask
+        #dask.config.set(scheduler='threads')
+        from dask.distributed import Client, LocalCluster
+        cluster = LocalCluster()
+        client = Client(cluster)
+        print(f"dashboard: {cluster.dashboard_link}", flush=True)
+
+        t0 = time.time()
+
+        cube = SpectralCube.read(f'{cubepath}/{molname}_CubeMosaic.fits', use_dask=True)
+
+        howargs = {}
+
+    do_all_stats(cube, molname=molname, dopv=dopv, dods=dods, howargs=howargs)

@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --mem=256gb                     # Job memory request
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/cube_stats_grid_ACES_%j.log
+#SBATCH --output=/red/adamginsburg/ACES/logs/cube_stats_grid_ACES_%j.log
 #SBATCH --export=ALL
 #SBATCH --job-name=cube_stats_grid_ACES
 #SBATCH --qos=astronomy-dept-b
@@ -46,6 +46,8 @@ export DASK_THREADS=$SLURM_NTASKS
 
 env
 
+echo "Starting cube stats grid feathered"
 /orange/adamginsburg/miniconda3/envs/python310/bin/aces_cube_stats_grid_feathered
+echo "Done with cube stats grid feathered"
 
 /orange/adamginsburg/miniconda3/envs/python310/bin/aces_cube_stats_grid
