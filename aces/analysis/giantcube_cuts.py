@@ -7,6 +7,9 @@ from spectral_cube import SpectralCube
 from spectral_cube import BooleanArrayMask
 import os
 from astropy.io import fits
+from scipy import ndimage
+from radio_beam import Beam
+from astropy import units as u
 
 from aces import conf
 from aces.imaging.make_mosaic import makepng
@@ -15,6 +18,59 @@ basepath = conf.basepath
 
 cubepath = f'{basepath}/mosaics/cubes/'
 
+def get_noise(cube, niter=5, threshold1=3, threshold2=3, verbose=False):
+    noise = cube.mad_std(axis=0)
+    for i in range(niter):
+        if i == 0:
+            mcube = cube.with_mask(cube < threshold1*noise)
+        else:
+            mcube = mcube.with_mask(mcube < threshold2*noise)
+        noise = mcube.mad_std(axis=0)
+        if verbose:
+            print('Iteration', i, 'noise', np.nanmean(noise.value))
+
+    return noise
+
+def get_prunemask_velo(mask, npix=1):
+
+    if npix<1:
+        npix=1
+
+    roll1 = np.roll(mask, -1*npix, axis=0)
+    roll2 = np.roll(mask, 1*npix, axis=0)
+    mask_ = mask&roll1&roll2
+
+    return(mask_)
+
+def get_prunemask_space(mask, npix=10):
+
+    for k in range(mask.shape[0]):
+
+        mask_ = mask[k, :, :]
+        l, j = ndimage.label(mask_)
+        hist = ndimage.measurements.histogram(l, 0, j+1, j+1)
+        os = ndimage.find_objects(l)
+
+        for i in range(j):
+            if hist[i+1]<npix:
+                mask_[os[i]] = 0
+
+        mask[k, :, :] = mask_
+
+    return(mask)
+
+def get_beam_area_pix(cube):
+
+    beam = Beam(major=cube.header['BMAJ']*u.deg, 
+                    minor=cube.header['BMIN']*u.deg, 
+                    pa=cube.header['BPA']*u.deg)
+
+    pix = np.absolute(cube.header['CDELT1']) *u.deg
+    pix_area = pix**2
+
+    beam_area_pix = beam.sr/(pix_area.to(u.sr))
+
+    return beam_area_pix
 
 def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
                  dopv=True, dods=True, howargs={}):
@@ -76,7 +132,11 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
                               smooth_beam=12*u.arcsec)
 
     print(f"Noisemap. dt={time.time() - t0}")
-    noise = cube.mad_std(axis=0)
+    
+    noise = get_noise(cube)
+#     noise = cube.mad_std(axis=0)
+#     mcube = cube.with_mask(cube > noise)
+
     noise.write(f"{mompath}/{molname}_CubeMosaic_madstd.fits", overwrite=True)
     makepng(data=noise.value, wcs=noise.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_madstd.png",
             stretch='asinh', min_percent=0.5, max_percent=99.5)
@@ -169,6 +229,27 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
+    print(f"Fourth mask (high-to-low sigma). dt={time.time() - t0}")
+    signal_mask_l = cube > noise * 1.5
+    signal_mask_h = cube > noise * 3.0
+
+    # Not super obvious we want to include this for all cases... 
+    # As for the 3km/s having a +-1 connected pixels in velocity may be too aggressive.. 
+    # signal_mask_l = get_prunemask_velo(signal_mask_l.include(), npix=1)
+    # signal_mask_h = get_prunemask_velo(signal_mask_h.include(), npix=1)
+
+    # signal_mask_l = get_prunemask_space(signal_mask_l.include(), npix=5)
+    # signal_mask_h = get_prunemask_space(signal_mask_h.include(), npix=5)
+    beam_area_pix = get_beam_area_pix(cube) # Remove small islands of noise
+    signal_mask_l = get_prunemask_space(signal_mask_l.include(), npix=beam_area_pix*3)
+    signal_mask_h = get_prunemask_space(signal_mask_h.include(), npix=beam_area_pix*3)
+
+    signal_mask_both = ndmorph.binary_dilation(signal_mask_h, iterations=-1, mask=signal_mask_l)
+    
+    print(f"Dilated mask high-to-low sigma moment 0. dt={time.time() - t0}")
+    mdcube_both = cube.with_mask(signal_mask_both)
+    mom0 = mdcube_both.moment0(axis=0, **howargs)
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits", overwrite=True)
 
     if dopv:
         print(f"PV mean.  dt={time.time() - t0}")
