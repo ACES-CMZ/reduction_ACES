@@ -50,4 +50,4 @@ echo "Starting cube stats grid feathered"
 /orange/adamginsburg/miniconda3/envs/python310/bin/aces_cube_stats_grid_feathered
 echo "Done with cube stats grid feathered"
 
-/orange/adamginsburg/miniconda3/envs/python310/bin/aces_cube_stats_grid
+#/orange/adamginsburg/miniconda3/envs/python310/bin/aces_cube_stats_grid

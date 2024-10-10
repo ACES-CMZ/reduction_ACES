@@ -78,6 +78,12 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     print(cube, flush=True)
     print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
+    cube = cube.rechunk((-1, 200, 200))
+
+    print("Rechunked")
+    print(cube, flush=True)
+    print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
+
     print(f"mom0.  dt={time.time() - t0}", flush=True)
     mom0 = cube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_mom0.fits", overwrite=True)
@@ -184,11 +190,30 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     from dask_image import ndmorph
     print(f"Computing first signal mask (1-sigma). dt={time.time() - t0}")
     signal_mask = cube > noise
+
+    print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
+    signal_mask_5p0 = cube > noise * 5.0
+    signal_mask_5p0 = ndmorph.binary_dilation(signal_mask_5p0.include(), structure=np.ones([1, 3, 3]), iterations=1)
+
+    dilated_mask_space_5p0 = signal_mask_5p0.sum(axis=0)
+    fits.PrimaryHDU(data=dilated_mask_space_5p0,
+                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_5p0sig_mask.fits", overwrite=True)
+
+    print(f"Dilated mask 5 sigma moment 0. dt={time.time() - t0}")
+    mdcube_5p0 = cube.with_mask(BooleanArrayMask(mask=signal_mask_5p0, wcs=cube.wcs))
+    mom0 = mdcube_5p0.moment0(axis=0, **howargs)
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.fits", overwrite=True)
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.png",
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
+
+
+
     signal_mask = ndmorph.binary_dilation(signal_mask.include(), structure=np.ones([1, 3, 3]), iterations=1)
 
     dilated_mask_space = signal_mask.sum(axis=0)
     fits.PrimaryHDU(data=dilated_mask_space,
                     header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_mask.fits", overwrite=True)
+
 
     print(f"Dilated mask moment 0. dt={time.time() - t0}")
     mdcube = cube.with_mask(BooleanArrayMask(mask=signal_mask, wcs=cube.wcs))
@@ -298,6 +323,13 @@ def main():
         t0 = time.time()
 
         cube = SpectralCube.read(f'{cubepath}/{molname}_CubeMosaic.fits', use_dask=True)
+
+        # switch to our LocalCluster scheduler
+        scheduler = cube.use_dask_scheduler(client, num_workers=os.getenv('SLURM_NTASKS_PER_NODE'))
+        print(f"Using scheduler {scheduler}", flush=True)
+        print(f"Using dask scheduler {client}", flush=True)
+        print(f"Cleint info: {client.scheduler_info()}", flush=True)
+        print(f"Dask client number of workers: {len(client.scheduler_info()['workers'])}")
 
         howargs = {}
 
