@@ -76,13 +76,14 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
                  dopv=True, dods=True, howargs={}):
     t0 = time.time()
     print(cube, flush=True)
-    print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
+    if hasattr(cube, 'rechunk'):
+        print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
-    cube = cube.rechunk((-1, 200, 200))
+        cube = cube.rechunk((-1, 1000, 1000))
 
-    print("Rechunked")
-    print(cube, flush=True)
-    print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
+        print("Rechunked")
+        print(cube, flush=True)
+        print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
     print(f"mom0.  dt={time.time() - t0}", flush=True)
     mom0 = cube.moment0(axis=0, **howargs)
