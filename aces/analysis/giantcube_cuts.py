@@ -109,7 +109,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     if hasattr(cube, 'rechunk'):
         print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
-        cube = cube.rechunk((-1, 1000, 1000))
+        cube = cube.rechunk((-1, 1000, 1000), save_to_tmp_dir=True)
 
         print("Rechunked")
         print(cube, flush=True)
@@ -135,7 +135,10 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     del mx
 
     print(f"argmax.  dt={time.time() - t0}")
-    argmx = cube.argmax(axis=0, how='ray', progressbar=True)
+    if hasattr(cube, 'rechunk'):
+        argmx = cube.argmax(axis=0)
+    else:
+        argmx = cube.argmax(axis=0, how='ray', progressbar=True)
     print(f"Done computing argmax, now computing vmax. dt={time.time() - t0}")
     vmax = cube.spectral_axis[argmx]
     hdu = mx.hdu
