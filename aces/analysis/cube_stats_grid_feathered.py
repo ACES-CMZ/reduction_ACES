@@ -138,6 +138,12 @@ def main(num_workers=None):
     if start_from_cached and os.path.exists(tbldir / 'feathered_cube_stats.ecsv'):
         tbl = Table.read(tbldir / 'feathered_cube_stats.ecsv')
         print(tbl)
+
+        if np.any(np.isnan(tbl['min'])):
+            print(f"There are {np.isnan(tbl['min']).sum()} NaNs in the table.  Will recompute those. len(tbl)={len(tbl)}")
+            tbl = tbl[np.isfinite(tbl['min'])]
+            print(f"Cut-down table length = {len(tbl)}")
+
         if len(tbl.colnames) != NCOLS:
             warnings.warn("Cached file is BAD!  Moving it.")
             shutil.move(tbldir / 'feathered_cube_stats.ecsv',
@@ -150,11 +156,6 @@ def main(num_workers=None):
                     for ii in range(len(tbl))]
     else:
         rows = []
-
-    if tbl is not None and np.any(np.isnan(tbl['min'])):
-        print(f"There are {np.isnan(tbl['min']).sum()} NaNs in the table.  Will recompute those. len(tbl)={len(tbl)}")
-        tbl = tbl[np.isfinite(tbl['min'])]
-        print(f"Cut-down table length = {len(tbl)}")
 
     cache_stats_file = open(tbldir / "feathered_cube_stats.txt", 'w')
 

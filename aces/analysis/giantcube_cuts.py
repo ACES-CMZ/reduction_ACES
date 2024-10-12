@@ -11,6 +11,10 @@ from scipy import ndimage
 from radio_beam import Beam
 from astropy import units as u
 
+import shutil
+import os
+from tqdm import tqdm
+
 from aces import conf
 from aces.imaging.make_mosaic import makepng
 
@@ -18,59 +22,85 @@ basepath = conf.basepath
 
 cubepath = f'{basepath}/mosaics/cubes/'
 
-def get_noise(cube, niter=5, threshold1=3, threshold2=3, verbose=False):
+
+def copy_with_progress(src, dst, buffer_size=1024*1024):
+    if os.path.exists(dst):
+        print(f"Destination {dst} exists; skipping copy")
+        return
+    with open(src, 'rb') as fsrc:
+        with open(dst, 'wb') as fdst:
+            file_size = os.path.getsize(src)
+            with tqdm(total=file_size, unit='B', unit_scale=True, desc=f'Copying {src}') as pbar:
+                while True:
+                    buf = fsrc.read(buffer_size)
+                    if not buf:
+                        break
+                    fdst.write(buf)
+                    pbar.update(len(buf))
+
+
+def get_noise(cube, niter=5, threshold1=3, threshold2=3, verbose=True):
+    if verbose:
+        print(f"Computing mad_std for iteration 0.  time={time.time():0.1f}")
     noise = cube.mad_std(axis=0)
-    for i in range(niter):
-        if i == 0:
-            mcube = cube.with_mask(cube < threshold1*noise)
+    for ii in range(niter):
+        if ii == 0:
+            mcube = cube.with_mask(cube < threshold1 * noise)
         else:
-            mcube = mcube.with_mask(mcube < threshold2*noise)
+            mcube = mcube.with_mask(mcube < threshold2 * noise)
+        if verbose:
+            print(f"Computing mad_std for iteration {ii}")
+            t0 = time.time()
         noise = mcube.mad_std(axis=0)
         if verbose:
-            print('Iteration', i, 'noise', np.nanmean(noise.value))
+            print(f'Iteration {ii} noise: {np.nanmean(noise.value)}.  dt={time.time() - t0}')
 
     return noise
 
+
 def get_prunemask_velo(mask, npix=1):
 
-    if npix<1:
-        npix=1
+    if npix < 1:
+        npix = 1
 
-    roll1 = np.roll(mask, -1*npix, axis=0)
-    roll2 = np.roll(mask, 1*npix, axis=0)
-    mask_ = mask&roll1&roll2
+    roll1 = np.roll(mask, -1 * npix, axis=0)
+    roll2 = np.roll(mask, 1 * npix, axis=0)
+    mask_ = mask & roll1 & roll2
 
-    return(mask_)
+    return mask_
+
 
 def get_prunemask_space(mask, npix=10):
 
-    for k in range(mask.shape[0]):
+    for kk in tqdm.tqdm(range(mask.shape[0], desc='Prunemask')):
 
-        mask_ = mask[k, :, :]
-        l, j = ndimage.label(mask_)
-        hist = ndimage.measurements.histogram(l, 0, j+1, j+1)
-        os = ndimage.find_objects(l)
+        mask_ = mask[kk, :, :]
+        ll, jj = ndimage.label(mask_)
+        hist = ndimage.measurements.histogram(ll, 0, jj+1, jj+1)
+        os = ndimage.find_objects(ll)
 
-        for i in range(j):
-            if hist[i+1]<npix:
-                mask_[os[i]] = 0
+        for ii in range(jj):
+            if hist[ii + 1] < npix:
+                mask_[os[ii]] = 0
 
-        mask[k, :, :] = mask_
+        mask[kk, :, :] = mask_
 
-    return(mask)
+    return mask
+
 
 def get_beam_area_pix(cube):
 
-    beam = Beam(major=cube.header['BMAJ']*u.deg, 
-                    minor=cube.header['BMIN']*u.deg, 
-                    pa=cube.header['BPA']*u.deg)
+    beam = Beam(major=cube.header['BMAJ'] * u.deg,
+                    minor=cube.header['BMIN'] * u.deg,
+                    pa=cube.header['BPA'] * u.deg)
 
-    pix = np.absolute(cube.header['CDELT1']) *u.deg
+    pix = np.absolute(cube.header['CDELT1']) * u.deg
     pix_area = pix**2
 
-    beam_area_pix = beam.sr/(pix_area.to(u.sr))
+    beam_area_pix = beam.sr / (pix_area.to(u.sr))
 
     return beam_area_pix
+
 
 def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
                  dopv=True, dods=True, howargs={}):
@@ -87,23 +117,33 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     print(f"mom0.  dt={time.time() - t0}", flush=True)
     mom0 = cube.moment0(axis=0, **howargs)
+    print(f"Done computing mom0, now writing. dt={time.time() - t0}")
     mom0.write(f"{mompath}/{molname}_CubeMosaic_mom0.fits", overwrite=True)
+    print(f"Done writing mom0, now pnging. dt={time.time() - t0}")
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
+    del mom0
+
 
     print(f"max.  dt={time.time() - t0}", flush=True)
     mx = cube.max(axis=0, **howargs)
+    print(f"Done computing max, now writing. dt={time.time() - t0}")
     mx.write(f"{mompath}/{molname}_CubeMosaic_max.fits", overwrite=True)
+    print(f"Done writing max, now pnging. dt={time.time() - t0}")
     makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
             stretch='asinh', min_percent=0.1, max_percent=99.9)
+    del mx
 
     print(f"argmax.  dt={time.time() - t0}")
-    argmx = cube.argmax(axis=0, **howargs)
+    argmx = cube.argmax(axis=0, how='ray', progressbar=True)
+    print(f"Done computing argmax, now computing vmax. dt={time.time() - t0}")
     vmax = cube.spectral_axis[argmx]
     hdu = mx.hdu
     hdu.data = vmax.value
+    print(f"Done computing vmax, now writing. dt={time.time() - t0}")
     hdu.writeto(f"{mompath}/{molname}_CubeMosaic_vpeak.fits", overwrite=True)
     # use mx.wcs
+    print(f"Done writing vpeak, now pnging. dt={time.time() - t0}")
     makepng(data=vmax.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_vpeak.png",
             stretch='asinh', min_percent=0.1, max_percent=99.9)
 
@@ -133,18 +173,20 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
                 stretch='asinh', min_percent=1, max_percent=99.5)
 
     if dods:
-        print("Downsampling")
+        print(f"Downsampling.  dt={time.time() - t0}")
         from aces.imaging.make_mosaic import make_downsampled_cube, basepath
         make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits',
                               smooth_beam=12*u.arcsec)
 
     print(f"Noisemap. dt={time.time() - t0}")
-    
-    noise = get_noise(cube)
-#     noise = cube.mad_std(axis=0)
-#     mcube = cube.with_mask(cube > noise)
 
+    noise = get_noise(cube)
+    # noise = cube.mad_std(axis=0)
+    # mcube = cube.with_mask(cube > noise)
+
+    print(f"Done with noisemap. Writing noisemap to {mompath}/{molname}_CubeMosaic_madstd.fits.  dt={time.time() - t0}")
     noise.write(f"{mompath}/{molname}_CubeMosaic_madstd.fits", overwrite=True)
+    print("Done writing noisemap. dt={time.time() - t0}")
     makepng(data=noise.value, wcs=noise.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_madstd.png",
             stretch='asinh', min_percent=0.5, max_percent=99.5)
 
@@ -259,19 +301,20 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     signal_mask_l = cube > noise * 1.5
     signal_mask_h = cube > noise * 3.0
 
-    # Not super obvious we want to include this for all cases... 
-    # As for the 3km/s having a +-1 connected pixels in velocity may be too aggressive.. 
+    # Not super obvious we want to include this for all cases...
+    # As for the 3km/s having a +-1 connected pixels in velocity may be too aggressive..
     # signal_mask_l = get_prunemask_velo(signal_mask_l.include(), npix=1)
     # signal_mask_h = get_prunemask_velo(signal_mask_h.include(), npix=1)
 
     # signal_mask_l = get_prunemask_space(signal_mask_l.include(), npix=5)
     # signal_mask_h = get_prunemask_space(signal_mask_h.include(), npix=5)
+    print(f"Pruned mask. dt={time.time() - t0}")
     beam_area_pix = get_beam_area_pix(cube) # Remove small islands of noise
-    signal_mask_l = get_prunemask_space(signal_mask_l.include(), npix=beam_area_pix*3)
-    signal_mask_h = get_prunemask_space(signal_mask_h.include(), npix=beam_area_pix*3)
+    signal_mask_l = get_prunemask_space(signal_mask_l.include(), npix=beam_area_pix * 3)
+    signal_mask_h = get_prunemask_space(signal_mask_h.include(), npix=beam_area_pix * 3)
 
     signal_mask_both = ndmorph.binary_dilation(signal_mask_h, iterations=-1, mask=signal_mask_l)
-    
+
     print(f"Dilated mask high-to-low sigma moment 0. dt={time.time() - t0}")
     mdcube_both = cube.with_mask(signal_mask_both)
     mom0 = mdcube_both.moment0(axis=0, **howargs)
@@ -303,36 +346,61 @@ def main():
     else:
         molname = 'CS21'
 
+    cubefilename = f'{cubepath}/{molname}_CubeMosaic.fits'
+    if os.getenv("USE_LOCAL"):
+        src_cubefilename = cubefilename
+        cubefilename = os.path.join(os.getenv('TMPDIR'), os.path.basename(cubefilename))
+        copy_with_progress(src_cubefilename, cubefilename)
+
     if not dodask:
         print("Before imports.  Slice-wise reduction", flush=True)
 
         t0 = time.time()
 
-        cube = SpectralCube.read(f'{cubepath}/{molname}_CubeMosaic.fits')
+        cube = SpectralCube.read(cubefilename)
 
-        howargs = {'how': 'slice'}
+        howargs = {'how': 'slice', 'progressbar': True}
+        print(f"Non-Dask: how are we computing? {howargs}")
     else:
         print("Before imports (using dask)", flush=True)
+        nworkers = os.getenv('SLURM_NTASKS_PER_NODE')
+        if nworkers is None:
+            nworkers = 1
+        else:
+            nworkers = int(nworkers)
+        print(f"Using {nworkers} workers", flush=True)
+
+        memory_limit = os.getenv('SLURM_MEM_PER_CPU')
+        if memory_limit:
+            memory_limit = f"{memory_limit}MB"
+        print(f"Memory limit: {memory_limit}")
+
+        cube = SpectralCube.read(cubefilename, use_dask=True)
+
+        t0 = time.time()
 
         import dask
         #dask.config.set(scheduler='threads')
         from dask.distributed import Client, LocalCluster
-        cluster = LocalCluster()
+        threads = os.getenv('DASK_CLIENT') == 'threads'
+        threads_per_worker = nworkers if threads else 1
+        cluster = LocalCluster(n_workers=nworkers, memory_limit=memory_limit,
+                               processes=not threads, threads_per_worker=threads_per_worker)
         client = Client(cluster)
         print(f"dashboard: {cluster.dashboard_link}", flush=True)
 
-        t0 = time.time()
-
-        cube = SpectralCube.read(f'{cubepath}/{molname}_CubeMosaic.fits', use_dask=True)
-
         # switch to our LocalCluster scheduler
-        scheduler = cube.use_dask_scheduler(client, num_workers=os.getenv('SLURM_NTASKS_PER_NODE'))
-        print(f"Using scheduler {scheduler}", flush=True)
-        print(f"Using dask scheduler {client}", flush=True)
-        print(f"Cleint info: {client.scheduler_info()}", flush=True)
+        scheduler = cube.use_dask_scheduler(client, num_workers=nworkers)
+        print(f"Using dask scheduler {client} ({'threads' if threads else 'processes'})", flush=True)
+        print(f"Client info: {client.scheduler_info()}", flush=True)
         print(f"Dask client number of workers: {len(client.scheduler_info()['workers'])}")
+        print(f"Using scheduler {scheduler}", flush=True)
 
         howargs = {}
+
+        from dask.diagnostics import ProgressBar
+        from dask.diagnostics import ResourceProfiler
+        from dask.distributed import progress
 
     do_all_stats(cube, molname=molname, dopv=dopv, dods=dods, howargs=howargs)
 
