@@ -40,9 +40,13 @@ def copy_with_progress(src, dst, buffer_size=1024*1024):
 
 
 def get_noise(cube, niter=5, threshold1=3, threshold2=3, verbose=True):
+    if hasattr(cube, 'rechunk'):
+        howargs = {'how': 'ray', 'progressbar': True}
+    else:
+        howargs = {}
     if verbose:
         print(f"Computing mad_std for iteration 0.  time={time.time():0.1f}")
-    noise = cube.mad_std(axis=0)
+    noise = cube.mad_std(axis=0, **howargs)
     for ii in range(niter):
         if ii == 0:
             mcube = cube.with_mask(cube < threshold1 * noise)
@@ -51,7 +55,7 @@ def get_noise(cube, niter=5, threshold1=3, threshold2=3, verbose=True):
         if verbose:
             print(f"Computing mad_std for iteration {ii}")
             t0 = time.time()
-        noise = mcube.mad_std(axis=0)
+        noise = cube.mad_std(axis=0, **howargs)
         if verbose:
             print(f'Iteration {ii} noise: {np.nanmean(noise.value)}.  dt={time.time() - t0}')
 
@@ -91,8 +95,8 @@ def get_prunemask_space(mask, npix=10):
 def get_beam_area_pix(cube):
 
     beam = Beam(major=cube.header['BMAJ'] * u.deg,
-                    minor=cube.header['BMIN'] * u.deg,
-                    pa=cube.header['BPA'] * u.deg)
+                minor=cube.header['BMIN'] * u.deg,
+                pa=cube.header['BPA'] * u.deg)
 
     pix = np.absolute(cube.header['CDELT1']) * u.deg
     pix_area = pix**2
@@ -115,6 +119,34 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
         print(cube, flush=True)
         print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
+    print(f"max.  dt={time.time() - t0}", flush=True)
+    mx = cube.max(axis=0, **howargs)
+    print(f"Done computing max, now writing. dt={time.time() - t0}")
+    mx.write(f"{mompath}/{molname}_CubeMosaic_max.fits", overwrite=True)
+    print(f"Done writing max, now pnging. dt={time.time() - t0}")
+    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
+            stretch='asinh', min_percent=0.1, max_percent=99.9)
+    header = mx.header
+    wcs = mx.wcs
+    del mx
+
+    if hasattr(cube, 'rechunk'):
+        print(f"argmax (dask).  dt={time.time() - t0}")
+        argmx = cube.argmax(axis=0)
+    else:
+        print(f"argmax (numpy).  dt={time.time() - t0}")
+        argmx = cube.argmax(axis=0, how='ray', progressbar=True)
+    print(f"Done computing argmax, now computing vmax. dt={time.time() - t0}")
+    vmax = cube.spectral_axis[argmx]
+    hdu = fits.PrimaryHDU(data=vmax.value, header=header)
+    print(f"Done computing vmax, now writing. dt={time.time() - t0}")
+    hdu.writeto(f"{mompath}/{molname}_CubeMosaic_vpeak.fits", overwrite=True)
+    print(f"Done writing vpeak, now pnging. dt={time.time() - t0}")
+    makepng(data=vmax.value, wcs=wcs, imfn=f"{mompath}/{molname}_CubeMosaic_vpeak.png",
+            stretch='asinh', min_percent=0.1, max_percent=99.9)
+    del vmax
+
+
     print(f"mom0.  dt={time.time() - t0}", flush=True)
     mom0 = cube.moment0(axis=0, **howargs)
     print(f"Done computing mom0, now writing. dt={time.time() - t0}")
@@ -125,30 +157,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     del mom0
 
 
-    print(f"max.  dt={time.time() - t0}", flush=True)
-    mx = cube.max(axis=0, **howargs)
-    print(f"Done computing max, now writing. dt={time.time() - t0}")
-    mx.write(f"{mompath}/{molname}_CubeMosaic_max.fits", overwrite=True)
-    print(f"Done writing max, now pnging. dt={time.time() - t0}")
-    makepng(data=mx.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_max.png",
-            stretch='asinh', min_percent=0.1, max_percent=99.9)
-    del mx
 
-    print(f"argmax.  dt={time.time() - t0}")
-    if hasattr(cube, 'rechunk'):
-        argmx = cube.argmax(axis=0)
-    else:
-        argmx = cube.argmax(axis=0, how='ray', progressbar=True)
-    print(f"Done computing argmax, now computing vmax. dt={time.time() - t0}")
-    vmax = cube.spectral_axis[argmx]
-    hdu = mx.hdu
-    hdu.data = vmax.value
-    print(f"Done computing vmax, now writing. dt={time.time() - t0}")
-    hdu.writeto(f"{mompath}/{molname}_CubeMosaic_vpeak.fits", overwrite=True)
-    # use mx.wcs
-    print(f"Done writing vpeak, now pnging. dt={time.time() - t0}")
-    makepng(data=vmax.value, wcs=mx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_vpeak.png",
-            stretch='asinh', min_percent=0.1, max_percent=99.9)
 
     if dopv:
         print(f"PV peak intensity.  dt={time.time() - t0}", flush=True)
