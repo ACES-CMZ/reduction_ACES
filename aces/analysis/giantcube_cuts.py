@@ -13,6 +13,10 @@ from astropy import units as u
 import dask.array as da
 from dask_image import ndmorph, ndmeasure
 
+from dask.diagnostics import ProgressBar
+from dask.diagnostics import ResourceProfiler
+from dask.distributed import progress
+
 from tqdm import tqdm
 
 from aces import conf
@@ -158,7 +162,8 @@ def do_pvs(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     if hasattr(cube, 'rechunk'):
         print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
-        cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
+        print("Rechunking")
+        cube = cube.rechunk((-1, 500, 500))
 
         print("Rechunked")
         print(cube, flush=True)
@@ -230,6 +235,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     if hasattr(cube, 'rechunk'):
         print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
+        print("Rechunking to zarr")
         cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
 
         print("Rechunked")
@@ -322,21 +328,6 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
-    print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
-    signal_mask_5p0 = cube > noise * 5.0
-    signal_mask_5p0 = ndmorph.binary_dilation(signal_mask_5p0.include(), structure=np.ones([1, 3, 3]), iterations=1)
-
-    dilated_mask_space_5p0 = signal_mask_5p0.sum(axis=0)
-    fits.PrimaryHDU(data=dilated_mask_space_5p0,
-                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_5p0sig_mask.fits", overwrite=True)
-
-    print(f"Dilated mask 5 sigma moment 0. dt={time.time() - t0}")
-    mdcube_5p0 = cube.with_mask(BooleanArrayMask(mask=signal_mask_5p0, wcs=cube.wcs))
-    mom0 = mdcube_5p0.moment0(axis=0, **howargs)
-    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.fits", overwrite=True)
-    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.png",
-            stretch='asinh', vmin=-0.1, max_percent=99.5)
-
     print(f"Pruned mask. dt={time.time() - t0}")
     signal_mask_both = get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
     fits.PrimaryHDU(data=signal_mask_both, header=header).write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits", overwrite=True)
@@ -387,7 +378,11 @@ def main():
     cubefilename = f'{cubepath}/{molname}_CubeMosaic.fits'
     if os.getenv("USE_LOCAL"):
         src_cubefilename = cubefilename
-        cubefilename = os.path.join(os.getenv('TMPDIR'), os.path.basename(cubefilename))
+        if os.path.getsize(src_cubefilename) > 3e11:
+            # too big for local
+            cubefilename = os.path.join('/red/adamginsburg/ACES/workdir/', os.path.basename(src_cubefilename))
+        else:
+            cubefilename = os.path.join(os.getenv('TMPDIR'), os.path.basename(src_cubefilename))
         copy_with_progress(src_cubefilename, cubefilename)
 
     if not dodask:
@@ -402,7 +397,11 @@ def main():
     else:
         howargs = {}
         print("Before imports (using dask)", flush=True)
-        nworkers = os.getenv('SLURM_TASKS_PER_NODE')
+        for keyword in ("SLURM_NTASKS_PER_NODE", "SLURM_NTASKS", "SLURM_STEP_NUM_TASKS", "SLURM_TASKS_PER_NODE",):
+            nworkers = os.getenv(keyword)
+            if nworkers is not None:
+                nworkers = int(nworkers)
+                break
         if nworkers is None:
             nworkers = 1
         else:
@@ -424,6 +423,8 @@ def main():
             print("Using threaded scheduler (no dask.distributed LocalCluster)")
             scheduler = cube.use_dask_scheduler('threads', num_workers=nworkers)
             dask.config.set(scheduler='threads')
+            pbar = ProgressBar()
+            pbar.register()
         else:
             from dask.distributed import Client, LocalCluster
             threads_per_worker = nworkers if threads else 1
@@ -438,10 +439,6 @@ def main():
             print(f"Client info: {client.scheduler_info()}", flush=True)
             print(f"Dask client number of workers: {len(client.scheduler_info()['workers'])}")
             print(f"Using scheduler {scheduler}", flush=True)
-
-            from dask.diagnostics import ProgressBar
-            from dask.diagnostics import ResourceProfiler
-            from dask.distributed import progress
 
     do_all_stats(cube, molname=molname, howargs=howargs)
 
