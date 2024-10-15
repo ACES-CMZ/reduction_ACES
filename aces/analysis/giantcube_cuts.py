@@ -11,7 +11,7 @@ from scipy import ndimage
 from radio_beam import Beam
 from astropy import units as u
 import dask.array as da
-from dask_image import ndmorph
+from dask_image import ndmorph, ndmeasure
 
 from tqdm import tqdm
 
@@ -46,7 +46,7 @@ def copy_with_progress(src, dst, buffer_size=1024*1024):
                     pbar.update(len(buf))
 
 
-def get_noise(cube, noise=None, niter=2, threshold1=5, threshold2=5, verbose=True):
+def get_noise(cube, noise=None, niter=2, threshold1=5, threshold2=3, verbose=True):
     if hasattr(cube, 'rechunk'):
         howargs = {}
     else:
@@ -65,7 +65,7 @@ def get_noise(cube, noise=None, niter=2, threshold1=5, threshold2=5, verbose=Tru
             t0 = time.time()
         noise = cube.mad_std(axis=0, **howargs)
         if verbose:
-            print(f'Iteration {ii} noise: {np.nanmean(noise.value)}.  dt={time.time() - t0}')
+            print(f'Iteration {ii} noise: {np.nanmean(noise.value)} npix={mcube.mask.include().sum()}.  dt={time.time() - t0}')
 
     return noise
 
@@ -84,20 +84,56 @@ def get_prunemask_velo(mask, npix=1):
 
 def get_prunemask_space(mask, npix=10):
 
-    for kk in tqdm(range(mask.shape[0], desc='Prunemask')):
+    for kk in tqdm(range(mask.shape[0]), desc='Prunemask'):
 
         mask_ = mask[kk, :, :]
         ll, jj = ndimage.label(mask_)
-        hist = ndimage.measurements.histogram(ll, 0, jj+1, jj+1)
-        os = ndimage.find_objects(ll)
-
-        for ii in range(jj):
-            if hist[ii + 1] < npix:
-                mask_[os[ii]] = 0
-
-        mask[kk, :, :] = mask_
+        counts = ndimage.histogram(ll, 1, jj+1, jj)
+        good_inds = np.arange(1, jj+1)[counts >= npix]
+        mask[kk, :, :] = np.isin(ll, good_inds)
 
     return mask
+
+
+def get_prunemask_space_dask(mask, npix=10):
+
+    masks = []
+    for kk in tqdm(range(mask.shape[0]), desc='Prunemask'):
+
+        mask_ = mask[kk, :, :]
+        ll, jj = ndmeasure.label(mask_)
+        jj = jj.compute()
+        if jj > 0:
+            counts = ndmeasure.histogram(ll, 1, jj+1, jj)
+            good_inds = np.arange(1, jj+1)[counts >= npix]
+            masks.append(da.isin(ll, good_inds))
+        else:
+            masks.append(da.zeros_like(mask_))
+
+    return da.stack(masks)
+
+
+def get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0):
+    beam_area_pix = get_beam_area_pix(cube)
+
+    if hasattr(cube, 'rechunk'):
+        func = get_prunemask_space_dask
+        ndi = ndmorph
+        niter = 10 # TODO: figure out if this is enough
+    else:
+        func = get_prunemask_space
+        ndi = ndimage
+        niter = -1
+
+    signal_mask_l = (cube > noise * threshold1).include()
+    signal_mask_l = func(signal_mask_l, npix=beam_area_pix * 3)
+
+    signal_mask_h = (cube > noise * threshold2).include()
+    signal_mask_h = func(signal_mask_h, npix=beam_area_pix)
+
+    signal_mask_both = ndi.binary_dilation(signal_mask_h, iterations=niter, mask=signal_mask_l)
+
+    return signal_mask_both
 
 
 def get_beam_area_pix(cube):
@@ -213,7 +249,12 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     print(f"Noisemap. dt={time.time() - t0}")
 
-    noise_madstd = cube.mad_std(axis=0)
+    if hasattr(cube, 'rechunk'):
+        print(f"madstd (dask).  dt={time.time() - t0}")
+        noise_madstd = cube.mad_std(axis=0)
+    else:
+        print(f"madstd (numpy).  dt={time.time() - t0}")
+        noise_madstd = cube.mad_std(axis=0, how='ray', progressbar=True)
     print(f"Done with madstd. Writing noisemap to {mompath}/{molname}_CubeMosaic_madstd.fits.  dt={time.time() - t0}")
     noise_madstd.write(f"{mompath}/{molname}_CubeMosaic_madstd.fits", overwrite=True)
     makepng(data=noise_madstd.value, wcs=noise_madstd.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_madstd.png",
@@ -296,30 +337,9 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
-    print(f"Fourth mask (high-to-low sigma). dt={time.time() - t0}")
-    signal_mask_l = cube > noise * 1.5
-    signal_mask_h = cube > noise * 5.0
-
-    # Not super obvious we want to include this for all cases...
-    # As for the 3km/s having a +-1 connected pixels in velocity may be too aggressive..
-    # signal_mask_l = get_prunemask_velo(signal_mask_l.include(), npix=1)
-    # signal_mask_h = get_prunemask_velo(signal_mask_h.include(), npix=1)
-
-    # signal_mask_l = get_prunemask_space(signal_mask_l.include(), npix=5)
-    # signal_mask_h = get_prunemask_space(signal_mask_h.include(), npix=5)
     print(f"Pruned mask. dt={time.time() - t0}")
-    beam_area_pix = get_beam_area_pix(cube) # Remove small islands of noise
-
-    signal_mask_l = get_prunemask_space(signal_mask_l.include(), npix=beam_area_pix * 3)
-    print(f"Pruned mask low done. dt={time.time() - t0}")
-    mom0.write(f"{mompath}/{molname}_CubeMosaic_signal_mask_l.fits", overwrite=True)
-
-    signal_mask_h = get_prunemask_space(signal_mask_h.include(), npix=beam_area_pix * 3)
-    print(f"Pruned mask high done. dt={time.time() - t0}")
-    mom0.write(f"{mompath}/{molname}_CubeMosaic_signal_mask_h.fits", overwrite=True)
-
-    signal_mask_both = ndmorph.binary_dilation(signal_mask_h, iterations=-1, mask=signal_mask_l)
-    mom0.write(f"{mompath}/{molname}_CubeMosaic_signal_mask_both.fits", overwrite=True)
+    signal_mask_both = get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
+    fits.PrimaryHDU(data=signal_mask_both, header=header).write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits", overwrite=True)
 
     print(f"Dilated mask high-to-low sigma moment 0. dt={time.time() - t0}")
     mdcube_both = cube.with_mask(signal_mask_both)
@@ -382,16 +402,16 @@ def main():
     else:
         howargs = {}
         print("Before imports (using dask)", flush=True)
-        nworkers = os.getenv('SLURM_NTASKS_PER_NODE')
+        nworkers = os.getenv('SLURM_TASKS_PER_NODE')
         if nworkers is None:
             nworkers = 1
         else:
             nworkers = int(nworkers)
         print(f"Using {nworkers} workers", flush=True)
 
-        memory_limit = os.getenv('SLURM_MEM_PER_CPU')
+        memory_limit = os.getenv('SLURM_MEM_PER_NODE')
         if memory_limit:
-            memory_limit = f"{memory_limit}MB"
+            memory_limit = f"{int(int(memory_limit)/nworkers)}MB"
         print(f"Memory limit: {memory_limit}")
 
         cube = SpectralCube.read(cubefilename, use_dask=True)
@@ -436,4 +456,9 @@ def main():
 
 
 if __name__ == "__main__":
+    import os
+    for key in os.environ:
+        if 'SLURM' in key:
+            print(f"{key} = {os.getenv(key)}")
+    print("\n\n")
     main()
