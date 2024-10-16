@@ -714,6 +714,8 @@ def make_giant_mosaic_cube(filelist,
                                                                      velocity_convention='radio',
                                                                      rest_value=reference_frequency)
                  for fn in filelist]
+        for cube, fn in zip(cubes, filelist):
+            print(cube._scheduler_kwargs, fn)
         if weightfilelist is None:
             weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".weight"),
                                               format='fits' if fn.endswith('fits') else 'casa_image', use_dask=True)

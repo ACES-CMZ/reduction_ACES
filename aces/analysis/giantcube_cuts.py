@@ -239,7 +239,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
         if (cube.shape[1] > 3000) and cube.shape[2] > 5000:
             print("Rechunking")
-            cube = cube.rechunk((-1, 500, 500))
+            cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
             print("Rechunked")
         #print("Rechunking to zarr")
         #cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
@@ -291,7 +291,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     print(f"Pruned mask. dt={time.time() - t0}")
     signal_mask_both = get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
-    fits.PrimaryHDU(data=signal_mask_both, header=header).write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits", overwrite=True)
+    fits.PrimaryHDU(data=signal_mask_both.astype('int'), header=header).write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits", overwrite=True)
 
     print(f"Dilated mask high-to-low sigma moment 0. dt={time.time() - t0}")
     mdcube_both = cube.with_mask(signal_mask_both)
