@@ -61,13 +61,13 @@ def get_noise(cube, noise=None, niter=2, threshold1=5, threshold2=3, verbose=Tru
         noise = cube.mad_std(axis=0, **howargs)
     for ii in range(niter):
         if ii == 0:
-            mcube = cube.with_mask(cube < threshold1 * noise)
+            mcube = cube.with_mask((cube < threshold1 * noise) & (cube > -threshold1 * noise))
         else:
-            mcube = mcube.with_mask(mcube < threshold2 * noise)
+            mcube = mcube.with_mask((mcube < threshold2 * noise) & (mcube > -threshold2 * noise))
         if verbose:
             print(f"Computing mad_std for iteration {ii}")
             t0 = time.time()
-        noise = cube.mad_std(axis=0, **howargs)
+        noise = mcube.mad_std(axis=0, **howargs)
         if verbose:
             print(f'Iteration {ii} noise: {np.nanmean(noise.value)} npix={mcube.mask.include().sum()}.  dt={time.time() - t0}')
 
@@ -109,7 +109,8 @@ def get_prunemask_space_dask(mask, npix=10):
         jj = jj.compute()
         if jj > 0:
             counts = ndmeasure.histogram(ll, 1, jj+1, jj)
-            good_inds = np.arange(1, jj+1)[counts >= npix]
+            # .compute is required here because the dask type is not interpreted as a boolean index array
+            good_inds = np.arange(1, jj+1)[(counts >= npix).compute()]
             masks.append(da.isin(ll, good_inds))
         else:
             masks.append(da.zeros_like(mask_))
@@ -133,7 +134,7 @@ def get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0):
     signal_mask_l = func(signal_mask_l, npix=beam_area_pix * 3)
 
     signal_mask_h = (cube > noise * threshold2).include()
-    signal_mask_h = func(signal_mask_h, npix=beam_area_pix)
+    #signal_mask_h = func(signal_mask_h, npix=beam_area_pix)
 
     signal_mask_both = ndi.binary_dilation(signal_mask_h, iterations=niter, mask=signal_mask_l)
 
@@ -162,10 +163,11 @@ def do_pvs(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     if hasattr(cube, 'rechunk'):
         print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
-        print("Rechunking")
-        cube = cube.rechunk((-1, 500, 500))
+        if (cube.shape[1] > 3000) and cube.shape[2] > 5000:
+            print("Rechunking")
+            cube = cube.rechunk((-1, 500, 500))
+            print("Rechunked")
 
-        print("Rechunked")
         print(cube, flush=True)
         print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
@@ -235,8 +237,12 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     if hasattr(cube, 'rechunk'):
         print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
-        print("Rechunking to zarr")
-        cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
+        if (cube.shape[1] > 3000) and cube.shape[2] > 5000:
+            print("Rechunking")
+            cube = cube.rechunk((-1, 500, 500))
+            print("Rechunked")
+        #print("Rechunking to zarr")
+        #cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
 
         print("Rechunked")
         print(cube, flush=True)
@@ -282,8 +288,16 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
-    print(f"Computing first signal mask (1-sigma). dt={time.time() - t0}")
-    signal_mask = cube > noise
+
+    print(f"Pruned mask. dt={time.time() - t0}")
+    signal_mask_both = get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
+    fits.PrimaryHDU(data=signal_mask_both, header=header).write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits", overwrite=True)
+
+    print(f"Dilated mask high-to-low sigma moment 0. dt={time.time() - t0}")
+    mdcube_both = cube.with_mask(signal_mask_both)
+    mom0 = mdcube_both.moment0(axis=0, **howargs)
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits", overwrite=True)
+
 
     print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
     signal_mask_5p0 = cube > noise * 5.0
@@ -299,6 +313,9 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
+
+    print(f"Computing first signal mask (1-sigma). dt={time.time() - t0}")
+    signal_mask = cube > noise
 
     signal_mask = ndmorph.binary_dilation(daskarr(signal_mask.include()), structure=np.ones([1, 3, 3]), iterations=1)
 
@@ -327,15 +344,6 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
-
-    print(f"Pruned mask. dt={time.time() - t0}")
-    signal_mask_both = get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
-    fits.PrimaryHDU(data=signal_mask_both, header=header).write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits", overwrite=True)
-
-    print(f"Dilated mask high-to-low sigma moment 0. dt={time.time() - t0}")
-    mdcube_both = cube.with_mask(signal_mask_both)
-    mom0 = mdcube_both.moment0(axis=0, **howargs)
-    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits", overwrite=True)
 
     if hasattr(cube, 'rechunk'):
         print(f"argmax (dask).  dt={time.time() - t0}")
