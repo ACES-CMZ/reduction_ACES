@@ -16,6 +16,7 @@ from dask_image import ndmorph, ndmeasure
 from dask.diagnostics import ProgressBar
 from dask.diagnostics import ResourceProfiler
 from dask.distributed import progress
+import dafits
 
 from tqdm import tqdm
 
@@ -118,7 +119,7 @@ def get_prunemask_space_dask(mask, npix=10):
     return da.stack(masks)
 
 
-def get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0):
+def get_pruned_mask(cube, noise, threshold1=1.0, threshold2=5.0):
     beam_area_pix = get_beam_area_pix(cube)
 
     if hasattr(cube, 'rechunk'):
@@ -291,10 +292,18 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     print(f"Pruned mask. dt={time.time() - t0}")
     signal_mask_both = get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
-    fits.PrimaryHDU(data=signal_mask_both.astype('int'), header=header).write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits", overwrite=True)
+    if hasattr(signal_mask_both, 'compute'):
+        dafits.write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits",
+                     data=signal_mask_both.astype('int'),
+                     header=cube.header,
+                     overwrite=True)
+    else:
+        hdu = fits.PrimaryHDU(data=signal_mask_both.astype('int'), header=header)
+        hdu.writeto(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits", overwrite=True)
+        del hdu
 
     print(f"Dilated mask high-to-low sigma moment 0. dt={time.time() - t0}")
-    mdcube_both = cube.with_mask(signal_mask_both)
+    mdcube_both = cube.with_mask(BooleanArrayMask(signal_mask_both, cube.wcs))
     mom0 = mdcube_both.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits", overwrite=True)
 
