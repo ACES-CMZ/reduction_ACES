@@ -199,7 +199,7 @@ def do_pvs(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     # PHANGS-like cuts
     noise = fits.getdata(f"{mompath}/{molname}_CubeMosaic_noisemap.fits")
-    mcube = cube.with_mask(cube > noise)
+    mcube = cube.with_mask(cube > noise * cube.unit)
 
     print(f"PV mean.  dt={time.time() - t0}")
     pv_mean_masked = mcube.mean(axis=1, **howargs)
@@ -238,17 +238,19 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     if hasattr(cube, 'rechunk'):
         print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
-        if (cube.shape[1] > 3000) and cube.shape[2] > 5000:
-            print("Rechunking")
-            cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
-            print("Rechunked")
-        #print("Rechunking to zarr")
-        #cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
+        if False:
+            if (cube.shape[1] > 3000) and cube.shape[2] > 5000:
+                print("Rechunking")
+                cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
+                print("Rechunked")
+            #print("Rechunking to zarr")
+            #cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
 
-        print("Rechunked")
-        print(cube, flush=True)
+            print("Rechunked")
+            print(cube, flush=True)
         print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
+    print(f"Howargs: {howargs}")
     print(f"max.  dt={time.time() - t0}", flush=True)
     mx = cube.max(axis=0, **howargs)
     print(f"Done computing max, now writing. dt={time.time() - t0}")
@@ -292,6 +294,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     print(f"Pruned mask. dt={time.time() - t0}")
     signal_mask_both = get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
+    print(f"Done creating pruned mask. dt={time.time() - t0}")
     if hasattr(signal_mask_both, 'compute'):
         dafits.write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits",
                      data=signal_mask_both.astype('int'),
@@ -306,6 +309,8 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     mdcube_both = cube.with_mask(BooleanArrayMask(signal_mask_both, cube.wcs))
     mom0 = mdcube_both.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits", overwrite=True)
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom0.png",
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
 
 
     print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
