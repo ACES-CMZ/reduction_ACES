@@ -235,6 +235,7 @@ def reimaged(header):
     #weightfiles_ = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*I.iter1.pb.tt0')
     #weightfiles_ += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.pb.tt0.fits')
     weightfiles = [fn.replace(".image.tt0.pbcor", ".weight.tt0").replace(".I.tt0.pbcor", ".I.weight.tt0") for fn in filelist]
+    pbfiles = [fn.replace(".image.tt0.pbcor", ".pb.tt0").replace(".I.tt0.pbcor", ".I.pb.tt0") for fn in filelist]
     #assert len(weightfiles) == len(filelist)
     #for missing in set(weightfiles_) - set(weightfiles):
     #    logprint(f"Missing {missing}")
@@ -257,12 +258,22 @@ def reimaged(header):
                 folder='continuum'
                 )
     print(flush=True)
-    make_mosaic(wthdus, name='primarybeam_coverage', weights=wthdus,
+    make_mosaic(wthdus, name='average_weight',
+                cbar_unit='Average Weight', array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0002),
+                target_header=header,
+                folder='continuum'
+                )
+    print(flush=True)
+    print("Reading as 2d for pb (reimaged): ", end=None, flush=True)
+    pbhdus = [read_as_2d(fn, minval=0.5) for fn in pbfiles]
+    make_mosaic(pbhdus, name='primarybeam_coverage', weights=wthdus,
                 cbar_unit='PB Level', array='12m', basepath=basepath,
                 norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0002),
                 target_header=header,
                 folder='continuum'
                 )
+
 
     # feather with non-reimaged 7m (never did 7m reimaging)
     feath = uvcombine.feather_simple(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
