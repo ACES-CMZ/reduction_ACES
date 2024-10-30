@@ -216,7 +216,7 @@ def do_pvs(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     # 2.5 sigma cut
     noise_2p5 = fits.getdata(f"{mompath}/{molname}_CubeMosaic_dilated_2p5sig_mask.fits")
-    mdcube_2p5 = cube.with_mask(cube > noise_2p5)
+    mdcube_2p5 = cube.with_mask(cube > noise_2p5 * cube.unit)
 
     print(f"PV mean.  dt={time.time() - t0}")
     pv_mean_masked = mdcube_2p5.mean(axis=1, **howargs)

@@ -203,6 +203,9 @@ def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
     if 'min_cut' in norm_kwargs:
         norm.vmin = norm_kwargs['min_cut']
         assert norm.vmin == norm_kwargs['min_cut']
+    if 'vmin' in norm_kwargs:
+        norm.vmin = norm_kwargs['vmin']
+        assert norm.vmin == norm_kwargs['vmin']
 
     colordata = mymap(norm(data))
     ct = (colordata[:, :, :] * 256).astype('uint8')
@@ -342,6 +345,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.coords[0].set_ticks(spacing=0.1 * u.deg)
     ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
+    fig.tight_layout()
     fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.png', bbox_inches='tight')
     fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
 
@@ -500,7 +504,7 @@ def all_lines(header, parallel=False, array='12m',
             print(f"Starting function make_mosaic for {line} peak intensity (parallel mode)")
             proc = Process(target=make_mosaic, args=(hdus, ),
                            kwargs=dict(name=f'{line}_max', cbar_unit='K',
-                           norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
+                           norm_kwargs=dict(vmax=5, vmin=-0.01, stretch='asinh'),
                            array=array, basepath=basepath, weights=wthdus if use_weights else None,
                            folder=folder,
                            target_header=header))
@@ -509,7 +513,7 @@ def all_lines(header, parallel=False, array='12m',
         else:
             print(f"Starting function make_mosaic for {line} peak intensity")
             make_mosaic(hdus, name=f'{line}_max', cbar_unit='K',
-                        norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
+                        norm_kwargs=dict(vmax=5, vmin=-0.01, stretch='asinh'),
                         array=array, basepath=basepath, weights=wthdus if use_weights else None,
                         folder=folder,
                         target_header=header)
@@ -530,14 +534,14 @@ def all_lines(header, parallel=False, array='12m',
             print(f"Starting function make_mosaic for {line} moment 0")
             proc = Process(target=make_mosaic, args=(m0hdus, ),
                            kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
-                           norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                           norm_kwargs=dict(vmax=20, vmin=-1, stretch='asinh'),
                            folder=folder,
                            array=array, basepath=basepath, weights=wthdus if use_weights else None, target_header=header))
             proc.start()
             processes.append(proc)
         else:
             make_mosaic(m0hdus, name=f'{line}_m0', cbar_unit='K km/s',
-                        norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                        norm_kwargs=dict(vmax=20, vmin=-1, stretch='asinh'),
                         array=array, basepath=basepath,
                         folder=folder,
                         weights=wthdus if use_weights else None, target_header=header)
