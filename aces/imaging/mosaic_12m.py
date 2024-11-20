@@ -922,6 +922,38 @@ def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
                               )
 
 
+def make_giant_mosaic_cube_ch3cho(**kwargs):
+
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW33/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_33.image.statcont.contsub.fits'))
+
+    print(f"Found {len(filelist)} SO 3-2-containing spw33 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=33) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfreq = 98.900951e9
+    cdelt_kms = 1.4844932
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfreq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='CH3CHO',
+                           nchan=350,
+                           beam_threshold=3.1 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/CH3CHO_Channels/',
+                           # we prefer to fail_if_dropped; enabling this for debugging
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/CH3CHO_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/CH3CHO_CubeMosaic_downsampled9.fits',
+                              )
+
+
 def make_giant_mosaic_cube_so32(**kwargs):
 
     #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor.statcont.contsub.fits')
@@ -947,7 +979,7 @@ def make_giant_mosaic_cube_so32(**kwargs):
                            reference_frequency=restfreq,
                            cdelt_kms=cdelt_kms,
                            cubename='SO32',
-                           nchan=600,
+                           nchan=350,
                            beam_threshold=3.1 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/SO32_Channels/',
                            # we prefer to fail_if_dropped; enabling this for debugging
