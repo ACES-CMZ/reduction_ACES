@@ -767,6 +767,8 @@ def make_giant_mosaic_cube_hc3n(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HC3N_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HC3N_CubeMosaic_downsampled9.fits',
+                              overwrite=True,
+                              use_dask=False
                               )
 
 
@@ -1186,3 +1188,39 @@ def make_giant_mosaic_cube_h40a(**kwargs):
                               f'{basepath}/mosaics/cubes/H40a_CubeMosaic_downsampled9.fits',
                               )
 
+
+def make_giant_mosaic_cube_hcop_noTP(**kwargs):
+
+    #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.iter1.image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci29.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload//upload/HCOp_feather_images/TM_7M_only_feather/Sgr_A_st_*.7M_12M_feather.SPW_29.image.statcont.contsub.fits')
+
+    print(f"Found {len(filelist)} HCOP-containing spw29 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=29) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfrq = 89.188526e9
+    cdelt_kms = 0.20818593  # smooth by 2 chans
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfrq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HCOP_noTP',
+                           nchan=1400,
+                           beam_threshold=3.3 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/HCOP_Channels/',
+                           fail_if_cube_dropped=False,
+                           #use_reproject_cube=True,
+                           parallel=os.getenv('SLURM_NTASKS'),
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HCOP_noTP_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HCOP_noTP_CubeMosaic_downsampled9.fits',
+                              )
