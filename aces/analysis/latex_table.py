@@ -18,7 +18,8 @@ latexdict = latexdict.copy()
 def make_latex_table(savename='continuum_data_summary'):
 
     tbl = Table.read(f'{basepath}/tables/metadata_image.tt0.ecsv')
-    tbl['peak'] = tbl['peak/mad'] * tbl['mad']
+    tbl['mad'] = tbl['mad'] * 1000
+    tbl['peak'] = (tbl['peak/mad'] * tbl['mad'])
     tbl['casaversion'] = [[x for x in y.split() if 'CASA' not in x][0] for y in tbl['casaversion']]
 
     good = ((np.char.find(tbl['filename'], 'preQA3')==-1) |
