@@ -1,6 +1,3 @@
-#from dask.diagnostics import ProgressBar
-#pbar = ProgressBar(minimum=20) # don't show pbar <20s
-#pbar.register()
 import numpy as np
 import time
 from spectral_cube import SpectralCube
@@ -389,13 +386,19 @@ def main():
     dodask = os.getenv('USE_DASK')
     if dodask and dodask.lower() == 'false':
         dodask = False
-    dods = bool(os.getenv('DOWNSAMPLE'))
-    dopv = bool(os.getenv('DO_PV'))
+    dods = os.getenv('DOWNSAMPLE')
+    if dods and dods.lower() == 'false':
+        dods = False
+    dopv = os.getenv('DO_PV')
+    if do_pv and do_pv.lower() == 'false':
+        do_pv = False
 
     if os.getenv('MOLNAME'):
         molname = os.getenv('MOLNAME')
     else:
         molname = 'CS21'
+
+    print(f"giantcube_cuts main parameters: molname{molname} dodask={dodask} dods={dods} do_pv={do_pv}")
 
     cubefilename = f'{cubepath}/{molname}_CubeMosaic.fits'
     if os.getenv("USE_LOCAL"):
