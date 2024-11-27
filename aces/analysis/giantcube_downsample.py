@@ -31,7 +31,7 @@ else:
     molname = 'CS21'
 
 
-print(f"Downsampling {molname}.  dt={time.time() - t0}")
+print(f"Downsampling {molname}.")
 make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits',
                       f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits',
                       smooth_beam=12*u.arcsec,

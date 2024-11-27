@@ -6,6 +6,7 @@ import keyring
 import datetime
 from astropy import units as u
 import sigfig
+from radio_beam import Beam
 
 from aces import conf
 basepath = conf.basepath
@@ -21,6 +22,7 @@ def make_latex_table(savename='continuum_data_summary'):
     tbl['mad'] = tbl['mad'] * 1000
     tbl['peak'] = (tbl['peak/mad'] * tbl['mad'])
     tbl['casaversion'] = [[x for x in y.split() if 'CASA' not in x][0] for y in tbl['casaversion']]
+    tbl['spws'] = ['all' if x == '25,27,29,31,33,35' else x for x in tbl['spws']]
 
     good = ((np.char.find(tbl['filename'], 'preQA3')==-1) |
             (np.char.find(tbl['filename'], 'X15a0_X178')==-1) |
@@ -34,6 +36,12 @@ def make_latex_table(savename='continuum_data_summary'):
     tbl = tbl[good]
     assert len(tbl) > 0
 
+    # filter out v1 first
+    nueff = {'all': 97.271*u.GHz, '25,27': 86.539*u.GHz, '33,35': 99.543*u.GHz}
+    jtok = u.Quantity([Beam(x['bmaj']*u.arcsec, x['bmin']*u.arcsec, x['bpa']).jtok(nueff[x['spws']]) for x in tbl])
+    tbl['peak_K'] = (tbl['peak'] * jtok / 1000)
+    tbl['mad_K'] = (tbl['mad'] * jtok)
+
     cols_to_keep = {'region':'Region',
                     'bmaj':r'$\theta_{maj}$',
                     'bmin':r'$\theta_{min}$',
@@ -45,20 +53,25 @@ def make_latex_table(savename='continuum_data_summary'):
                     'casaversion': 'CASA Version',
                     'peak':'$S_{peak}$',
                     'mad':r'$\sigma_{MAD}$',
+                    'peak_K':'$T_{B,peak}$',
+                    'mad_K':r'$\sigma_{MAD,mK}$',
                     #'Req_Sens': r"$\sigma_{req}$",
-                    'SensVsReq': r"$\sigma_{MAD}/\sigma_{req}$",
+                    #'SensVsReq': r"$\sigma_{MAD}/\sigma_{req}$",
                     #'dr_pre': "DR$_{pre}$",
                     #'dr_post': "DR$_{post}$",
                     #'dr_improvement': "DR$_{post}$/DR$_{pre}$"
                     }
 
     units = {'$S_{peak}$':(u.mJy/u.beam).to_string(u.format.LatexInline),
+             '$T_{B,peak}$':(u.K).to_string(u.format.LatexInline),
              r'$\sigma_{MAD}$':(u.mJy/u.beam).to_string(u.format.LatexInline),
+             r'$\sigma_{MAD,mK}$':(u.mK).to_string(u.format.LatexInline),
              r'$\sigma_{req}$':(u.mJy/u.beam).to_string(u.format.LatexInline),
              r'$\theta_{req}$':u.arcsec.to_string(u.format.LatexInline),
              r'$\theta_{maj}$':u.arcsec.to_string(u.format.LatexInline),
              r'$\theta_{min}$':u.arcsec.to_string(u.format.LatexInline),
              r'PA':u.deg.to_string(u.format.LatexInline),
+             r'BPA':u.deg.to_string(u.format.LatexInline),
             }
     latexdict['units'] = units
 
@@ -76,7 +89,9 @@ def make_latex_table(savename='continuum_data_summary'):
      '$\\theta_{min}$',
      'BPA',
      '$S_{peak}$',
+     '$T_{B,peak}$',
      '$\\sigma_{MAD}$',
+     '$\\sigma_{MAD,mK}$',
      '$\\theta_{req}$',
      '\\sigma_{req}$',
      '$\\sigma_{MAD}/\\sigma_{req}$',
