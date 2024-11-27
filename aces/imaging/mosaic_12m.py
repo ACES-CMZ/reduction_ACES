@@ -274,7 +274,6 @@ def reimaged(header):
                 folder='continuum'
                 )
 
-
     # feather with non-reimaged 7m (never did 7m reimaging)
     feath = uvcombine.feather_simple(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
                                      f'{basepath}/mosaics/continuum/7m_continuum_commonbeam_circular_mosaic.fits')
@@ -336,8 +335,6 @@ def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', '
                     target_header=header,
                     folder='continuum'
                     )
-
-
 
 
 def residuals(header):
