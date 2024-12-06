@@ -149,7 +149,7 @@ def make_observation_table():
     def try_read_table(index):
         try:
             return ascii.read(configuration_schedules.text, format='html', htmldict={'table_id': index})
-        except Exception as ex:
+        except Exception as ex:  # noqa
             #print(ex)
             return
 
@@ -165,7 +165,7 @@ def make_observation_table():
         config_sched_tbl['End date'] = Time(config_sched_tbl['End date'])
 
     usub_meta['cycle_id'] = np.zeros(len(usub_meta), dtype='int')
-    usub_meta['config_id'] = ['x'*11 for x in range(len(usub_meta))]
+    usub_meta['config_id'] = ['x' * 11 for x in range(len(usub_meta))]
     usub_meta['block'] = ['xx' for x in range(len(usub_meta))]
     for row in usub_meta:
         for cycle_id, config_sched_tbl in config_sched_tbls.items():
@@ -214,7 +214,6 @@ def make_observation_table():
                                        formats=formats,
                                        overwrite=True,
                                        latexdict=latexdict)
-
 
 
 if __name__ == "__main__":

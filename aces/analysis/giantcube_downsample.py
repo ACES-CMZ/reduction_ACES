@@ -18,8 +18,7 @@ import dafits
 from tqdm import tqdm
 
 from aces import conf
-from aces.imaging.make_mosaic import makepng
-from aces.imaging.make_mosaic import make_downsampled_cube, basepath
+from aces.imaging.make_mosaic import makepng, make_downsampled_cube
 
 basepath = conf.basepath
 
@@ -34,7 +33,7 @@ else:
 print(f"Downsampling {molname}.")
 make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits',
                       f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits',
-                      smooth_beam=12*u.arcsec,
+                      smooth_beam=12 * u.arcsec,
                       overwrite=True,
                       use_dask=False
                       )

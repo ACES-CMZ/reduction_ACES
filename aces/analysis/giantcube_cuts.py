@@ -32,7 +32,7 @@ def daskarr(x):
         return x
 
 
-def copy_with_progress(src, dst, buffer_size=1024*1024):
+def copy_with_progress(src, dst, buffer_size=1024**2):
     if os.path.exists(dst):
         print(f"Destination {dst} exists; skipping copy")
         return
@@ -90,8 +90,8 @@ def get_prunemask_space(mask, npix=10):
 
         mask_ = mask[kk, :, :]
         ll, jj = ndimage.label(mask_)
-        counts = ndimage.histogram(ll, 1, jj+1, jj)
-        good_inds = np.arange(1, jj+1)[counts >= npix]
+        counts = ndimage.histogram(ll, 1, jj + 1, jj)
+        good_inds = np.arange(1, jj + 1)[counts >= npix]
         mask[kk, :, :] = np.isin(ll, good_inds)
 
     return mask
@@ -106,9 +106,9 @@ def get_prunemask_space_dask(mask, npix=10):
         ll, jj = ndmeasure.label(mask_)
         jj = jj.compute()
         if jj > 0:
-            counts = ndmeasure.histogram(ll, 1, jj+1, jj)
+            counts = ndmeasure.histogram(ll, 1, jj + 1, jj)
             # .compute is required here because the dask type is not interpreted as a boolean index array
-            good_inds = np.arange(1, jj+1)[(counts >= npix).compute()]
+            good_inds = np.arange(1, jj + 1)[(counts >= npix).compute()]
             masks.append(da.isin(ll, good_inds))
         else:
             masks.append(da.zeros_like(mask_))
@@ -193,7 +193,6 @@ def do_pvs(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
-
     # PHANGS-like cuts
     noise = fits.getdata(f"{mompath}/{molname}_CubeMosaic_noisemap.fits")
     mcube = cube.with_mask(cube > noise * cube.unit)
@@ -209,7 +208,6 @@ def do_pvs(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.fits", overwrite=True)
     makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
-
 
     # 2.5 sigma cut
     noise_2p5 = fits.getdata(f"{mompath}/{molname}_CubeMosaic_dilated_2p5sig_mask.fits")
@@ -240,8 +238,8 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
                 print("Rechunking")
                 cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
                 print("Rechunked")
-            #print("Rechunking to zarr")
-            #cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
+                # print("Rechunking to zarr")
+                # cube = cube.rechunk((-1, 500, 500), save_to_tmp_dir=True)
 
             print("Rechunked")
             print(cube, flush=True)
@@ -288,7 +286,6 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
-
     print(f"Pruned mask. dt={time.time() - t0}")
     signal_mask_both = get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
     print(f"Done creating pruned mask. dt={time.time() - t0}")
@@ -308,7 +305,6 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits", overwrite=True)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
-
 
     print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
     signal_mask_5p0 = cube > noise * 5.0
@@ -389,7 +385,7 @@ def main():
     dods = os.getenv('DOWNSAMPLE')
     if dods and dods.lower() == 'false':
         dods = False
-    dopv = os.getenv('DO_PV')
+    do_pv = os.getenv('DO_PV')
     if do_pv and do_pv.lower() == 'false':
         do_pv = False
 
@@ -435,7 +431,7 @@ def main():
 
         memory_limit = os.getenv('SLURM_MEM_PER_NODE')
         if memory_limit:
-            memory_limit = f"{int(int(memory_limit)/nworkers)}MB"
+            memory_limit = f"{int(int(memory_limit) / nworkers)}MB"
         print(f"Memory limit: {memory_limit}")
 
         cube = SpectralCube.read(cubefilename, use_dask=True)
@@ -454,7 +450,7 @@ def main():
             from dask.distributed import Client, LocalCluster
             threads_per_worker = nworkers if threads else 1
             cluster = LocalCluster(n_workers=nworkers, memory_limit=memory_limit,
-                                processes=not threads, threads_per_worker=threads_per_worker)
+                                   processes=not threads, threads_per_worker=threads_per_worker)
             client = Client(cluster)
             print(f"dashboard: {cluster.dashboard_link}", flush=True)
 
@@ -467,18 +463,17 @@ def main():
 
     do_all_stats(cube, molname=molname, howargs=howargs)
 
-    if dopv:
+    if do_pv:
         do_pvs(cube, molname=molname, howargs=howargs)
 
     if dods:
         print(f"Downsampling.  dt={time.time() - t0}")
         from aces.imaging.make_mosaic import make_downsampled_cube, basepath
         make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits',
-                              smooth_beam=12*u.arcsec)
+                              smooth_beam=12 * u.arcsec)
 
 
 if __name__ == "__main__":
-    import os
     for key in os.environ:
         if 'SLURM' in key:
             print(f"{key} = {os.getenv(key)}")
