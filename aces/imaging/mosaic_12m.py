@@ -95,9 +95,9 @@ def main():
 
     header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
 
-    funcs = ((residuals, reimaged, reimaged_high, continuum, rms_)
+    funcs = ((residuals, reimaged, reimaged_high, continuum, rms_, manual_alpha)
              if options.contonly else
-             (residuals, reimaged, reimaged_high, continuum, rms_, cs21, hcop, hnco, h40a))
+             (residuals, reimaged, reimaged_high, continuum, rms_, manual_alpha, cs21, hcop, hnco, h40a))
 
     if not options.skip_cont:
         processes = []
@@ -224,6 +224,7 @@ def reimaged(header):
     logprint("12m continuum reimaged (glob is *.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor)")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
+    tt1filelist = [x.replace("tt0", "tt1") for x in filelist]
 
     check_files(filelist, funcname='reimaged')
 
@@ -282,6 +283,32 @@ def reimaged(header):
                     ).writeto(f'{basepath}/mosaics/continuum/feather_7m12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
                               overwrite=True)
 
+    # pbcorrect & mosaic tt1 image
+    tt1hdus = [read_as_2d(fn) for fn in tt1filelist]
+    pbhdus = [read_as_2d(fn) for fn in pbfiles]
+    for tt1, pb in zip(tt1hdus, pbhdus):
+        tt1[0].data /= pb[0].data
+    make_mosaic(tt1hdus, name='continuum_commonbeam_circular_reimaged_tt1', weights=wthdus,
+                cbar_unit='?', array='12m', basepath=basepath,
+                norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0002),
+                target_header=header,
+                folder='continuum',
+                commonbeam='circular'
+                )
+
+    tt0 = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits')
+    tt1 = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_tt1_mosaic.fits')
+    alpha = tt1[0].data / tt0[0].data
+    fits.PrimaryHDU(data=alpha, header=tt0[0].header).writeto(
+        f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_alpha_mosaic.fits')
+
+    if os.path.exists(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_tt1_maskedrms_mosaic.fits'):
+        ett0 = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_maskedrms_mosaic.fits')
+        ett1 = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_tt1_maskedrms_mosaic.fits')
+        ealpha = alpha * ((ett0[0].data / tt0[0].data)**2 + (ett1[0].data / tt1[0].data)**2)**0.5
+        fits.PrimaryHDU(data=ealpha, header=tt0[0].header).writeto(
+            f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_alphaerror_mosaic.fits')
+
 
 def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', 'reimaged_low')):
     for spw, name in zip(spws, spw_names):
@@ -335,6 +362,22 @@ def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', '
                     target_header=header,
                     folder='continuum'
                     )
+
+
+def manual_alpha():
+    lofrqhdu = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_mosaic.fits')
+    hifrqhdu = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw33_35_mosaic.fits')
+    lorms = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_maskedrms_mosaic.fits')
+    lofrq = spectral_cube.Projection.from_hdu(lofrqhdu)
+    hifrq = spectral_cube.Projection.from_hdu(hifrqhdu)
+
+    hifrq_conv = hifrq.convolve_to(lofrq.beam)
+
+    # frequencies quoted from paper table
+    alpha = np.log10(hifrq_conv / lofrq) / np.log10(99.53 / 86.54)
+
+    fits.PrimaryHDU(data=alpha, header=lofrqhdu[0].header).writeto(
+        f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_manual_alpha_mosaic.fits')
 
 
 def residuals(header):

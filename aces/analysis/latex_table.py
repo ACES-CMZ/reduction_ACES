@@ -133,8 +133,12 @@ def make_observation_table():
     metadata['t_min'] = Time(metadata['t_min'], format='mjd')
     metadata['Observation Start Time'] = Time(metadata['t_min'], format='mjd')
     metadata['Observation Start Time'].format = 'fits'
+    metadata['Observation End Time'] = Time(metadata['t_max'], format='mjd')
+    metadata['Observation End Time'].format = 'fits'
 
-    sub_meta = metadata['schedblock_name', 'Observation Start Time', 'pwv', 't_exptime', 's_resolution', 'spatial_scale_max']
+    sub_meta = metadata['schedblock_name', 'Observation Start Time',
+                        'Observation End Time', 'pwv', 't_exptime',
+                        's_resolution', 'spatial_scale_max']
     usub_meta = Table(np.unique(sub_meta))
 
     tm = np.char.find(usub_meta['schedblock_name'], '_TM') > 0
@@ -214,6 +218,8 @@ def make_observation_table():
                                        formats=formats,
                                        overwrite=True,
                                        latexdict=latexdict)
+
+    return usub_meta, (tm, sm, tp)
 
 
 if __name__ == "__main__":
