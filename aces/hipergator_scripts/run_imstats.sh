@@ -1,15 +1,15 @@
 #!/bin/bash
 #SBATCH --mail-type=NONE          # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=adamginsburg@ufl.edu     # Where to send mail
-#SBATCH --ntasks=32
+#SBATCH --ntasks=16
 #SBATCH --nodes=1
 #SBATCH --mem=128gb                     # Job memory request
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
 #SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/imstats_ACES_%j.log
 #SBATCH --export=ALL
 #SBATCH --job-name=imstats_ACES
-#SBATCH --qos=adamginsburg-b
-#SBATCH --account=adamginsburg
+#SBATCH --qos=astronomy-dept-b
+#SBATCH --account=astronomy-dept
 pwd; hostname; date
 
 export WORK_DIR="/blue/adamginsburg/adamginsburg/ACES/workdir"

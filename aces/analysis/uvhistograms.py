@@ -96,6 +96,7 @@ def main():
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
 
     # /orange/adamginsburg/ACES//data//2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X1*/calibrated/working/*ms
+    # field r: created symlinks
     mslist = {row['Obs ID']:
               glob.glob(f'{basepath}/data//2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{row["12m MOUS ID"]}/calibrated/working/*target.ms')
               for row in tbl}
