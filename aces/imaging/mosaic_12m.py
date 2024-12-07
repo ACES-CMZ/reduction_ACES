@@ -24,6 +24,7 @@ from aces.imaging.make_mosaic import make_mosaic as make_mosaic_, all_lines as a
 from multiprocessing import Process, Pool
 import multiprocessing
 import numpy as np
+import spectral_cube
 from spectral_cube.cube_utils import mosaic_cubes
 import dask
 from functools import partial
@@ -300,14 +301,16 @@ def reimaged(header):
     tt1 = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_tt1_mosaic.fits')
     alpha = tt1[0].data / tt0[0].data
     fits.PrimaryHDU(data=alpha, header=tt0[0].header).writeto(
-        f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_alpha_mosaic.fits')
+        f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_alpha_mosaic.fits',
+        overwrite=True)
 
     if os.path.exists(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_tt1_maskedrms_mosaic.fits'):
         ett0 = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_maskedrms_mosaic.fits')
         ett1 = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_tt1_maskedrms_mosaic.fits')
         ealpha = alpha * ((ett0[0].data / tt0[0].data)**2 + (ett1[0].data / tt1[0].data)**2)**0.5
         fits.PrimaryHDU(data=ealpha, header=tt0[0].header).writeto(
-            f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_alphaerror_mosaic.fits')
+            f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_alphaerror_mosaic.fits',
+            overwrite=True)
 
 
 def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', 'reimaged_low')):
@@ -372,12 +375,15 @@ def manual_alpha():
     hifrq = spectral_cube.Projection.from_hdu(hifrqhdu)
 
     hifrq_conv = hifrq.convolve_to(lofrq.beam)
+    # convolving to lower resolution does not account for unit differences; both are in Jy/beam
+    beam_area_ratio = lofrq.beam.sr / hifrq.beam.sr
 
     # frequencies quoted from paper table
-    alpha = np.log10(hifrq_conv / lofrq) / np.log10(99.53 / 86.54)
+    alpha = np.log10(hifrq_conv * beam_area_ratio / lofrq) / np.log10(99.53 / 86.54)
 
-    fits.PrimaryHDU(data=alpha, header=lofrqhdu[0].header).writeto(
-        f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_manual_alpha_mosaic.fits')
+    fits.PrimaryHDU(data=alpha.value, header=lofrqhdu[0].header).writeto(
+        f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_manual_alpha_mosaic.fits',
+        overwrite=True)
 
 
 def residuals(header):
