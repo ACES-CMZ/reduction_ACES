@@ -49,6 +49,7 @@ def make_latex_table(savename='continuum_data_summary'):
                     'bmaj': r'$\theta_{maj}$',
                     'bmin': r'$\theta_{min}$',
                     'bpa': 'BPA',
+                    'robust': 'Robust',
                     'spws': 'SPWs',
                     #'Req_Res': r"$\theta_{req}$",
                     #'BeamVsReq': r"$\Omega_{syn}^{1/2}/\Omega_{req}^{1/2}$",
@@ -69,8 +70,8 @@ def make_latex_table(savename='continuum_data_summary'):
              '$T_{B,peak}$': (u.K).to_string(u.format.LatexInline),
              r'$\sigma_{MAD}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
              r'$\sigma_{MAD,mK}$': (u.mK).to_string(u.format.LatexInline),
-             r'$\sigma_{req}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
-             r'$\theta_{req}$': u.arcsec.to_string(u.format.LatexInline),
+             #r'$\sigma_{req}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
+             #r'$\theta_{req}$': u.arcsec.to_string(u.format.LatexInline),
              r'$\theta_{maj}$': u.arcsec.to_string(u.format.LatexInline),
              r'$\theta_{min}$': u.arcsec.to_string(u.format.LatexInline),
              r'PA': u.deg.to_string(u.format.LatexInline),
@@ -94,9 +95,9 @@ def make_latex_table(savename='continuum_data_summary'):
                   '$T_{B,peak}$',
                   '$\\sigma_{MAD}$',
                   '$\\sigma_{MAD,mK}$',
-                  '$\\theta_{req}$',
-                  '\\sigma_{req}$',
-                  '$\\sigma_{MAD}/\\sigma_{req}$',
+                  #'$\\theta_{req}$',
+                  #'\\sigma_{req}$',
+                  #'$\\sigma_{MAD}/\\sigma_{req}$',
                  ]
 
     formats = {key: lambda x: strip_trailing_zeros('{0:0.3f}'.format(round_to_n(x, 2)), nsf=2)
