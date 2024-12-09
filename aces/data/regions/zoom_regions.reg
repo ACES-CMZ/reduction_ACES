@@ -5,7 +5,7 @@ box(0.096993759, 0.024355304, 504.8203", 358.8801", 0) # color=#2EE6D6 width=2 t
 box(0.163727690, -0.070544532, 326.2236", 284.0760", 0) # color=#2EE6D6 width=2 text={Pistol Quintuplet} font="helvetica 10 normal roman"
 box(0.514917217, -0.052354790, 498.0334", 412.1990", 0) # color=#2EE6D6 width=2 text={Sgr B1} font="helvetica 10 normal roman"
 box(359.442350761, -0.096457228, 208.4775", 166.0009", 0) # color=#2EE6D6 width=2 text={Sgr C} font="helvetica 10 normal roman"
-box(359.974945550, -0.078751871, 98.2085", 82.4607", 0) # color=#2EE6D6 width=2 text={Sgr A south} font="helvetica 10 normal roman"
+box(359.974945550, -0.078751871, 98.2085", 82.4607", 0) # color=#2EE6D6 width=2 text={Sgr A East} font="helvetica 10 normal roman"
 box(359.994797898, 0.022759641, 148.1489", 150.3472", 0) # color=#2EE6D6 width=2 text={Sgr A North} font="helvetica 10 normal roman"
 box(359.871392140, -0.081856788, 192.3052", 137.8121", 0) # color=#2EE6D6 width=2 text={20 km/s Cloud} font="helvetica 10 normal roman"
 box(359.727376322, -0.034466231, 140.6533", 119.5834", 0) # color=#2EE6D6 width=2 text={G359.75-0.05} font="helvetica 10 normal roman"
