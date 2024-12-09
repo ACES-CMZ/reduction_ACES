@@ -28,12 +28,10 @@ def make_latex_table(savename='continuum_data_summary'):
     good = (((np.char.find(tbl['filename'], 'preQA3') == -1) |
             (np.char.find(tbl['filename'], 'X15a0_X178') == -1) |
              (np.char.find(tbl['filename'], 'obsolete') == -1) #| False # TODO: check for more
-             ) &
-            (
+             ) & (
              (np.char.find(tbl['spws'], 'v1') == -1) &
              ~(tbl['pbcor']) &
-             (tbl['array'] == '12M')
-            )
+             (tbl['array'] == '12M'))
     )
 
     tbl = tbl[good]
@@ -159,10 +157,10 @@ def make_observation_table():
             return
 
     config_sched_tbls = {ii:
-        try_read_table(ii)
-        for ii in range(1, 10)
-        if try_read_table(ii) is not None
-    }
+                         try_read_table(ii)
+                         for ii in range(1, 10)
+                         if try_read_table(ii) is not None
+                        }
     assert len(config_sched_tbls) > 0
 
     for ii, config_sched_tbl in config_sched_tbls.items():

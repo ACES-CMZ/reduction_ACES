@@ -282,7 +282,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             return rslt
 
         # parallelization of this failed
-        twod_hdus = [reprj(prj, scalefactor=cb.sr/prj.beam.sr) for prj in prjs]
+        twod_hdus = [reprj(prj, scalefactor=cb.sr / prj.beam.sr) for prj in prjs]
 
     log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
     # number of items to count in progress bar
