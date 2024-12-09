@@ -273,13 +273,16 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         log.info(f"Convolving HDUs to common beam {cb}\n")
         pb = ProgressBar(len(prjs))
 
-        def reprj(prj):
+        # when convolving to a new beam, but retainig Jy/beam units, the beam
+        # size is getting larger so the unit is too.
+        def reprj(prj, scalefactor=1):
             rslt = prj.convolve_to(cb).hdu
+            rslt.data = rslt.data * scalefactor
             pb.update()
             return rslt
 
         # parallelization of this failed
-        twod_hdus = [reprj(prj) for prj in prjs]
+        twod_hdus = [reprj(prj, scalefactor=cb.sr/prj.beam.sr) for prj in prjs]
 
     log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
     # number of items to count in progress bar
@@ -307,6 +310,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     prjarr[below_threshold] = np.nan
 
     log.info(f"DEBUG: sum(footprint[prjarr==0]) = {footprint[prjarr == 0].sum()}")
+
+    header['BUNIT'] = cbar_unit
 
     outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.fits'
     log.info(f"Writing reprojected data to {outfile}")
