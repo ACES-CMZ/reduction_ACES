@@ -60,6 +60,26 @@ def main():
                     pars['spw'] = spwsel
 
                     aggregate_high_commands[key]['tclean_cont_pars'][f'aggregate_{hilo}'] = pars
+        elif '7M' in key:
+            if key not in aggregate_high_commands:
+                aggregate_high_commands[key] = {}
+            if 'tclean_cont_pars' not in aggregate_high_commands[key]:
+                aggregate_high_commands[key]['tclean_cont_pars'] = {}
+            for hilo, spwstr in (('high', '24_26'), ('low', '16_18')):
+                if f'aggregate_{hilo}' not in commands[key]['tclean_cont_pars']:
+                    print(f"Adding {key}: aggregate_{hilo} -> {spwstr}")
+                    pars = copy.copy(commands[key]['tclean_cont_pars']['aggregate'])
+                    pars['imagename'] = pars['imagename'].replace('16_18_20_22_24_26', spwstr)
+
+                    # split all the spw selections such that only 33 and 35 are kept
+                    spwsel = pars['spw']
+                    if hilo == 'high':
+                        spwsel = ["24:" + x.split("24:")[-1] for x in spwsel]
+                    else:
+                        spwsel = [x.split("20:")[0].strip(",") for x in spwsel]
+                    pars['spw'] = spwsel
+
+                    aggregate_high_commands[key]['tclean_cont_pars'][f'aggregate_{hilo}'] = pars
 
     assert len(aggregate_high_commands) >= ncmds
 

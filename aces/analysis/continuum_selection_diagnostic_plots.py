@@ -176,9 +176,6 @@ def assemble_new_contsels(convert_to_native=False, allow_missing_maxspec=False):
     gous = os.getenv('GOUS') or 'A001_X1590_X30a9'
 
     for sbname, allpars in cmds.items():
-        if 'TM1' not in sbname:
-            # handle 7m separately
-            continue
         mous_ = allpars['mous']
         mous = mous_[6:].replace("/", "_")
         assert len(mous) in (14, 15, 16)

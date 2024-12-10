@@ -138,6 +138,12 @@ def main(num_workers=None):
     if start_from_cached and os.path.exists(tbldir / 'feathered_cube_stats.ecsv'):
         tbl = Table.read(tbldir / 'feathered_cube_stats.ecsv')
         print(tbl)
+
+        if np.any(np.isnan(tbl['min'])):
+            print(f"There are {np.isnan(tbl['min']).sum()} NaNs in the table.  Will recompute those. len(tbl)={len(tbl)}")
+            tbl = tbl[np.isfinite(tbl['min'])]
+            print(f"Cut-down table length = {len(tbl)}")
+
         if len(tbl.colnames) != NCOLS:
             warnings.warn("Cached file is BAD!  Moving it.")
             shutil.move(tbldir / 'feathered_cube_stats.ecsv',
@@ -167,7 +173,7 @@ def main(num_workers=None):
                            (tbl['Config'] == config) &
                            (tbl['spw'] == spw) &
                            (tbl['suffix'] == suffix))
-            if any(row_matches):
+            if any(row_matches) and not np.all(np.isfinite(tbl[row_matches]['min'])):
                 print(f"Skipping {fullpath} as complete: {tbl[row_matches]}", flush=True)
                 continue
 
@@ -220,8 +226,8 @@ def main(num_workers=None):
             dt(cube)
             dt(noiseest_cube)
 
-            minfreq = cube.spectral_axis.min()
-            maxfreq = cube.spectral_axis.max()
+            minfreq = cube.with_spectral_unit(u.GHz).spectral_axis.min()
+            maxfreq = cube.with_spectral_unit(u.GHz).spectral_axis.max()
             restfreq = cube.wcs.wcs.restfrq
 
             # print("getting filled data")
@@ -237,6 +243,8 @@ def main(num_workers=None):
             dt("finished cube stats")
             min = stats['min']
             max = stats['max']
+            if np.isnan(min) or np.isnan(max):
+                raise ValueError("Cube stats reported a NAN min/max")
             std = stats['sigma']
             sum = stats['sum']
             mean = stats['mean']
@@ -279,6 +287,9 @@ def main(num_workers=None):
         cache_stats_file.flush()
         print(f'len(rows): {len(rows)}, len(colnames): {len(colnames)}')
         tbl = save_tbl(rows, colnames)
+
+        if np.any(np.isnan(tbl['min'])):
+            print(f"After processing {fn}, there are {np.isnan(tbl['min']).sum()} NaNs in the table.")
 
     cache_stats_file.close()
 

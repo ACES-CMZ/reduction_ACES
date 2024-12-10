@@ -308,7 +308,8 @@ def imstats(fn, reg=None):
                 'fluxsum': imsum / ppbeam,
                 'sumgt5sig': sumgt5sig,
                 'sumgt3sig': sumgt3sig,
-                'cellsize': (pixscale**0.5).to(u.arcsec).value
+                'cellsize': (pixscale**0.5).to(u.arcsec).value,
+                'casaversion': casaversion,
                 }
 
     if reg is not None:
@@ -423,6 +424,7 @@ def assemble_stats(globstr, ditch_suffix=None):
             log.error(f"Failed to parse file {fn}: {ex}")
         meta['filename'] = fn
         stats = imstats(fn, reg=get_noise_region(meta['region'], meta['band']))
+        meta['casaversion'] = stats['casaversion']
         allstats.append({'meta': meta, 'stats': stats})
 
     return allstats
@@ -519,7 +521,7 @@ def savestats(basepath=basepath,
     requested = get_requested_sens()
 
     meta_keys = ['region', 'band', 'array', 'robust', 'suffix',
-                 'pbcor', 'spws', 'filename', ]
+                 'pbcor', 'spws', 'filename', 'casaversion', ]
     stats_keys = ['bmaj', 'bmin', 'bpa', 'beam_geomavg' 'peak', 'sum', 'fluxsum', 'sumgt3sig',
                   'sumgt5sig', 'mad', 'mad_sample', 'std_sample', 'peak/mad',
                   'psf_secondpeak', 'psf_secondpeak_radius',
@@ -565,5 +567,5 @@ def savestats(basepath=basepath,
 
 
 def main():
-    return savestats()
+    return savestats(filetype='')
     print("Finished with imstats.main()")

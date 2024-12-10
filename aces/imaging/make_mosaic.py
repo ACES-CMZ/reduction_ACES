@@ -203,6 +203,9 @@ def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
     if 'min_cut' in norm_kwargs:
         norm.vmin = norm_kwargs['min_cut']
         assert norm.vmin == norm_kwargs['min_cut']
+    if 'vmin' in norm_kwargs:
+        norm.vmin = norm_kwargs['vmin']
+        assert norm.vmin == norm_kwargs['vmin']
 
     colordata = mymap(norm(data))
     ct = (colordata[:, :, :] * 256).astype('uint8')
@@ -270,13 +273,16 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         log.info(f"Convolving HDUs to common beam {cb}\n")
         pb = ProgressBar(len(prjs))
 
-        def reprj(prj):
+        # when convolving to a new beam, but retainig Jy/beam units, the beam
+        # size is getting larger so the unit is too.
+        def reprj(prj, scalefactor=1):
             rslt = prj.convolve_to(cb).hdu
+            rslt.data = rslt.data * scalefactor
             pb.update()
             return rslt
 
         # parallelization of this failed
-        twod_hdus = [reprj(prj) for prj in prjs]
+        twod_hdus = [reprj(prj, scalefactor=cb.sr / prj.beam.sr) for prj in prjs]
 
     log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
     # number of items to count in progress bar
@@ -304,6 +310,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     prjarr[below_threshold] = np.nan
 
     log.info(f"DEBUG: sum(footprint[prjarr==0]) = {footprint[prjarr == 0].sum()}")
+
+    header['BUNIT'] = cbar_unit
 
     outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.fits'
     log.info(f"Writing reprojected data to {outfile}")
@@ -342,6 +350,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     ax.coords[0].set_ticks(spacing=0.1 * u.deg)
     ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
+    fig.tight_layout()
     fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.png', bbox_inches='tight')
     fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
 
@@ -500,7 +509,7 @@ def all_lines(header, parallel=False, array='12m',
             print(f"Starting function make_mosaic for {line} peak intensity (parallel mode)")
             proc = Process(target=make_mosaic, args=(hdus, ),
                            kwargs=dict(name=f'{line}_max', cbar_unit='K',
-                           norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
+                           norm_kwargs=dict(vmax=5, vmin=-0.01, stretch='asinh'),
                            array=array, basepath=basepath, weights=wthdus if use_weights else None,
                            folder=folder,
                            target_header=header))
@@ -509,7 +518,7 @@ def all_lines(header, parallel=False, array='12m',
         else:
             print(f"Starting function make_mosaic for {line} peak intensity")
             make_mosaic(hdus, name=f'{line}_max', cbar_unit='K',
-                        norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
+                        norm_kwargs=dict(vmax=5, vmin=-0.01, stretch='asinh'),
                         array=array, basepath=basepath, weights=wthdus if use_weights else None,
                         folder=folder,
                         target_header=header)
@@ -530,14 +539,14 @@ def all_lines(header, parallel=False, array='12m',
             print(f"Starting function make_mosaic for {line} moment 0")
             proc = Process(target=make_mosaic, args=(m0hdus, ),
                            kwargs=dict(name=f'{line}_m0', cbar_unit='K km/s',
-                           norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                           norm_kwargs=dict(vmax=20, vmin=-1, stretch='asinh'),
                            folder=folder,
                            array=array, basepath=basepath, weights=wthdus if use_weights else None, target_header=header))
             proc.start()
             processes.append(proc)
         else:
             make_mosaic(m0hdus, name=f'{line}_m0', cbar_unit='K km/s',
-                        norm_kwargs=dict(max_cut=20, min_cut=-1, stretch='asinh'),
+                        norm_kwargs=dict(vmax=20, vmin=-1, stretch='asinh'),
                         array=array, basepath=basepath,
                         folder=folder,
                         weights=wthdus if use_weights else None, target_header=header)
@@ -639,6 +648,9 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                 fh[0].data[fh[0].data == 0] = np.nan
                 fh.close()
 
+                if np.any((fits.getdata(chanfn) == 0)):
+                    raise ValueError(f"Found zero-valued pixels in {chanfn} after nan->zero step")
+
             if not check_channel(chanfn, verbose=verbose):
                 raise ValueError("Produced an empty channel - raising exception as this is not expected")
             else:
@@ -661,7 +673,7 @@ def check_channel(chanfn, verbose=True):
         return False
     else:
         if verbose:
-            print(f"{chanfn} succeeded: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={data.std()} data.finite={np.sum(~np.isnan(data))}")
+            print(f"{chanfn} succeeded: data.sum={data.sum()}, nansum={np.nansum(data)} data.std={np.nanstd(data)} data.finite={np.sum(~np.isnan(data))}")
         return True
 
 
@@ -916,7 +928,7 @@ def slurm_set_channels(nchan):
 
 
 def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
-                          smooth=False, smooth_beam=5 * u.arcsec,
+                          smooth=True, smooth_beam=5 * u.arcsec,
                           use_dask=True, spectrally_too=True):
     """
     TODO: may need to dump-to-temp while reprojecting
@@ -992,10 +1004,10 @@ def rms_map(img, kernel=Gaussian2DKernel(10)):
 
 
 def rms(prefix='12m_continuum', folder='12m_flattened', threshold=2.5, nbeams=3, maxiter=50):
-    for fn in glob.glob(f'{basepath}/mosaics/{folder}/{prefix}*mosaic.fits'):
-        if 'rms' in fn:
-            # don't re-rms rms maps
-            continue
+    rms_targets = glob.glob(f'{basepath}/mosaics/{folder}/{prefix}*mosaic.fits')
+    rms_targets = [x for x in rms_targets if 'rms' not in x]
+    print("Making RMS maps for", rms_targets)
+    for fn in rms_targets:
         print(f"Computing RMS map for {fn}", flush=True)
         fh = fits.open(fn)
         ww = WCS(fh[0].header)
