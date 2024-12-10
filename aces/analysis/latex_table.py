@@ -29,10 +29,10 @@ def make_latex_table(savename='continuum_data_summary'):
             (np.char.find(tbl['filename'], 'X15a0_X178') == -1) |
              (np.char.find(tbl['filename'], 'obsolete') == -1) #| False # TODO: check for more
              ) & (
-             (np.char.find(tbl['spws'], 'v1') == -1) &
-             ~(tbl['pbcor']) &
-             (tbl['array'] == '12M'))
-    )
+            (np.char.find(tbl['spws'], 'v1') == -1) &
+            ~(tbl['pbcor']) &
+            (tbl['array'] == '12M'))
+    ) # noqa
 
     tbl = tbl[good]
     assert len(tbl) > 0
