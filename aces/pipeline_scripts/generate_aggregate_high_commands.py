@@ -81,7 +81,6 @@ def main():
 
                     aggregate_high_commands[key]['tclean_cont_pars'][f'aggregate_{hilo}'] = pars
 
-
     assert len(aggregate_high_commands) >= ncmds
 
     log.debug(f"Overwriting to {aggregate_high_file}")
