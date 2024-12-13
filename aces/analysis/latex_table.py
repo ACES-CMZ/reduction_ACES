@@ -187,11 +187,25 @@ def make_observation_table():
     usub_meta.rename_column('spatial_scale_max', 'LAS')
     usub_meta.rename_column('config_id', 'Configuration')
 
+    updated = (np.char.find(usub_meta['schedblock_name'], 'updated') >= 0)
+    print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()}")
+    for fieldname in set(usub_meta['Field']):
+        for sub in (tm, sm, tp):
+            match = (usub_meta['Field'][sub] == fieldname)
+            if match.sum() > 1:
+                #print(fieldname, match.sum(), sub[sub].sum())
+                #sub[sub][match] = updated[sub][match]
+                # hard to parse logic, eh?  Just... talk yourself through it 5-10 times...
+                sub[sub] &= (~match) | (match & (updated[sub]))
+                #print(fieldname, match.sum(), sub[sub].sum())
+    print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()} (after filtering for updated)")
+
     colnames = ['Field', 'Observation Start Time', 'Configuration', 'PWV', 'Exposure Time', 'Resolution', 'LAS']
     usub_meta['LAS'].unit = u.arcsec
     usub_meta['Resolution'].unit = u.arcsec
     usub_meta['Exposure Time'].unit = u.s
     usub_meta['PWV'].unit = u.mm
+
     usub_meta[colnames][tm].write(f'{basepath}/tables/observation_metadata_12m.ecsv', format='ascii.ecsv', overwrite=True)
     usub_meta[colnames][sm].write(f'{basepath}/tables/observation_metadata_7m.ecsv', format='ascii.ecsv', overwrite=True)
     usub_meta[colnames][tp].write(f'{basepath}/tables/observation_metadata_TP.ecsv', format='ascii.ecsv', overwrite=True)
