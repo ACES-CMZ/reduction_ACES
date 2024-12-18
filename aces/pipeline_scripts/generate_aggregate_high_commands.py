@@ -67,7 +67,7 @@ def main():
                 aggregate_high_commands[key]['tclean_cont_pars'] = {}
             for hilo, spwstr in (('high', '24_26'), ('low', '16_18')):
                 if f'aggregate_{hilo}' not in commands[key]['tclean_cont_pars']:
-                    print(f"Adding {key}: aggregate_{hilo} -> {spwstr}")
+                    #print(f"Adding {key}: aggregate_{hilo} -> {spwstr}")
                     pars = copy.copy(commands[key]['tclean_cont_pars']['aggregate'])
                     pars['imagename'] = pars['imagename'].replace('16_18_20_22_24_26', spwstr)
 
