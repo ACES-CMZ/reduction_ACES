@@ -38,7 +38,8 @@ def make_latex_table(savename='continuum_data_summary'):
     assert len(tbl) > 0
 
     # filter out v1 first
-    nueff = {'all': 97.271 * u.GHz, '25,27': 86.539 * u.GHz, '33,35': 99.543 * u.GHz}
+    # 'cont' is a special-case for field am; it's... ?!!?
+    nueff = {'all': 97.271 * u.GHz, '25,27': 86.539 * u.GHz, '33,35': 99.543 * u.GHz, 'cont': 97.271 * u.GHz}
     jtok = u.Quantity([Beam(x['bmaj'] * u.arcsec, x['bmin'] * u.arcsec, x['bpa']).jtok(nueff[x['spws']]) for x in tbl])
     tbl['peak_K'] = (tbl['peak'] * jtok / 1000)
     tbl['mad_K'] = (tbl['mad'] * jtok)
@@ -249,7 +250,7 @@ def make_spw_table():
             }
     latexdict['units'] = units
 
-    cols_to_keep = {'12m SPW':"Spectral Window",
+    cols_to_keep = {'12m SPW':"SPW",
                     'F_Lower': r'$\nu_{L}$',
                     'F_Upper': r'$\nu_{U}$',
                     'F_Resolution': r'$\Delta\nu$',
@@ -275,10 +276,17 @@ def make_spw_table():
     #formats = {key: lambda x: str(sigfig.round(str(x), sigfigs=2))
     #           for key in float_cols}
 
-    lines = [", ".join([x for x in linetbl['Line'][(linetbl['12m SPW'] == row['Spectral Window']) & (np.char.find(linetbl['col9'], '**') != -1)]])
+    lines = [", ".join([x for x in linetbl['Line'][(linetbl['12m SPW'] == row['SPW']) & (np.char.find(linetbl['col9'], '**') != -1)]])
              for row in ftbl]
-    lines = [x.replace("HC3N", "HC$_3$N").replace("13", "$^{13}$").replace(" Alpha", r"$\alpha$") for x in lines]
-    ftbl['Lines'] = lines
+    lines = [x.replace("HC3N", "HC$_3$N").replace("13", "$^{13}$")
+             .replace(" Alpha", r"$\alpha$").replace("15", "$^{15}$")
+             .replace("CH3CHO", "CH$_3$CHO")
+             for x in lines]
+
+    linefreqs = [", ".join([str(x) for x in linetbl['Rest (GHz)'][(linetbl['12m SPW'] == row['SPW']) & (np.char.find(linetbl['col9'], '**') != -1)]])
+             for row in ftbl]
+
+    ftbl['Lines'] = [f'{x}\\\\ \n &&&&& {y}' for x,y in zip(lines, linefreqs)]
 
     # caption needs to be *before* preamble.
     #latexdict['caption'] = 'Continuum Source IDs and photometry'
@@ -288,7 +296,8 @@ def make_spw_table():
     latexdict['tabletype'] = 'table*'
     latexdict['tablefoot'] = ("}\\par\n"
     "ACES Spectral Configuration, including a non-exhaustive lists of prominent, "
-    "potentially continuum-affecting, lines."
+    "potentially continuum-affecting, lines.  The included lines are those that are, "
+    "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection})."
                              )
 
     ftbl.write(f"{basepath}/papers/continuum_data/spectral_setup.tex", formats=formats,

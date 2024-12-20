@@ -306,6 +306,12 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
+    print(f"Dilated mask high-to-low sigma moment 1. dt={time.time() - t0}")
+    mom1 = mdcube_both.moment1(axis=0, **howargs)
+    mom1.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom1.fits", overwrite=True)
+    makepng(data=mom1.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom1.png",
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
+
     print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
     signal_mask_5p0 = cube > noise * 5.0
     signal_mask_5p0 = ndmorph.binary_dilation(daskarr(signal_mask_5p0.include()), structure=np.ones([1, 3, 3]), iterations=1)

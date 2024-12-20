@@ -216,8 +216,7 @@ def assemble_new_contsels(convert_to_native=False, allow_missing_maxspec=False):
 
             for spw in spwset:
 
-                cubefns = [x if f'sci{spw}' in x or f'spw{spw}' in x
-                           for x in all_cubes]
+                cubefns = [x for x in all_cubes if f'sci{spw}' in x or f'spw{spw}' in x]
 
                 if len(cubefns) > 1:
                     # filter out s12's
