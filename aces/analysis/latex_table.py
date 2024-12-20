@@ -235,6 +235,68 @@ def make_observation_table():
     return usub_meta, (tm, sm, tp)
 
 
+def make_spw_table():
+
+    linetbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/linelist.csv')
+    for fcol in ['Bandwidth', 'F_Lower', 'F_Upper', 'F_Resolution']:
+        linetbl[fcol].unit = u.GHz
+    linetbl['F_Resolution'] = linetbl['F_Resolution'].to(u.MHz)
+
+    units = {'F_Lower': u.GHz.to_string(u.format.LatexInline),
+             'F_Upper': u.GHz.to_string(u.format.LatexInline),
+             'F_Resolution': u.MHz.to_string(u.format.LatexInline),
+             'Bandwidth': u.GHz.to_string(u.format.LatexInline),
+            }
+    latexdict['units'] = units
+
+    cols_to_keep = {'12m SPW':"Spectral Window",
+                    'F_Lower': r'$\nu_{L}$',
+                    'F_Upper': r'$\nu_{U}$',
+                    'F_Resolution': r'$\Delta\nu$',
+                    'Bandwidth':'Bandwidth',
+                    }
+    ftbl = linetbl[list(cols_to_keep.keys())]
+    ftbl = Table(np.unique(ftbl))
+
+    for old, new in cols_to_keep.items():
+        if old in linetbl.colnames:
+            #tbl[old].meta['description'] = description[old]
+            ftbl.rename_column(old, new)
+            if old in units:
+                ftbl[new].unit = units[old]
+
+    float_cols = ['Bandwidth',
+                  r'$\nu_{L}$',
+                  r'$\nu_{U}$',
+                  r'$\Delta\nu$']
+
+    formats = {key: lambda x: strip_trailing_zeros('{0:0.5f}'.format(round_to_n(x, 6)), nsf=4)
+               for key in float_cols}
+    #formats = {key: lambda x: str(sigfig.round(str(x), sigfigs=2))
+    #           for key in float_cols}
+
+    lines = [", ".join([x for x in linetbl['Line'][(linetbl['12m SPW'] == row['Spectral Window']) & (np.char.find(linetbl['col9'], '**') != -1)]])
+             for row in ftbl]
+    lines = [x.replace("HC3N", "HC$_3$N").replace("13", "$^{13}$").replace(" Alpha", r"$\alpha$") for x in lines]
+    ftbl['Lines'] = lines
+
+    # caption needs to be *before* preamble.
+    #latexdict['caption'] = 'Continuum Source IDs and photometry'
+    latexdict['header_start'] = '\\label{tab:spectral_setup}'#\n\\footnotesize'
+    latexdict['preamble'] = '\\caption{ACES Spectral Configuration}\n\\resizebox{\\textwidth}{!}{'
+    latexdict['col_align'] = 'l' * len(ftbl.columns)
+    latexdict['tabletype'] = 'table*'
+    latexdict['tablefoot'] = ("}\\par\n"
+    "ACES Spectral Configuration, including a non-exhaustive lists of prominent, "
+    "potentially continuum-affecting, lines."
+                             )
+
+    ftbl.write(f"{basepath}/papers/continuum_data/spectral_setup.tex", formats=formats,
+               overwrite=True, latexdict=latexdict)
+
+    return ftbl
+
+
 if __name__ == "__main__":
 
     result = make_latex_table()
