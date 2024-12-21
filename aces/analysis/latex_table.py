@@ -7,6 +7,7 @@ import datetime
 from astropy import units as u
 import sigfig
 from radio_beam import Beam
+from tqdm.auto import tqdm
 
 from aces.analysis.latex_info import (latexdict, format_float, round_to_n, rounded,
                                       rounded_arr, strip_trailing_zeros, exp_to_tex)
@@ -121,6 +122,77 @@ def make_latex_table(savename='continuum_data_summary'):
                overwrite=True, latexdict=latexdict)
 
     return ftbl
+
+
+def find_schedblock_elements(data, results=None):
+    """
+    Recursively search through JSON data to find elements with {'className': 'SchedBlock'}.
+
+    :param data: The JSON object (dict or list) to search.
+    :param results: A list to store the results (optional).
+    :return: A list of matching elements.
+    """
+    if results is None:
+        results = []
+
+    if isinstance(data, dict):
+        # Check if the current dictionary contains the key-value pair
+        if data.get('className') == 'SchedBlock':
+            results.append(data)
+        # Recursively search within each value
+        for value in data.values():
+            find_schedblock_elements(value, results)
+
+    elif isinstance(data, list):
+        # Recursively search within each item in the list
+        for item in data:
+            find_schedblock_elements(item, results)
+
+    return results
+
+
+def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290', username='keflavich', timeout=30, retry=5, access_token=None):
+    import requests
+    if access_token is None:
+        from astroquery.alma import Alma
+        import time
+        Alma.login(username)
+        self = Alma._auth
+        login_url = f'https://{self.get_valid_host()}{self._LOGIN_ENDPOINT}'
+
+        password=Alma._get_auth_info('keflavich')[1]
+        data = {'username': username,
+                'password': password,
+                'grant_type': self._GRANT_TYPE,
+                'client_id': self._CLIENT_ID}
+
+        login_response = self._request('POST', login_url, data=data, cache=False)
+        access_token = login_response.json()["access_token"]
+        print(login_response.json()['access_token'])
+        time.sleep(1)
+
+    project_uidstr = project_uid.replace("/", "%7C")
+    resp2 = requests.get(f'https://asa.alma.cl/snoopi/restapi/project/{project_uidstr}',
+                         params={'authormode': 'null'}, headers={'Authorization': f'Bearer {access_token}'})
+    resp2.raise_for_status()
+    project_meta = resp2.json()
+    schedblocks = {x['description']: x['archiveUID'] for  x in find_schedblock_elements(project_meta)}
+    schedblock_meta = {}
+
+    for key, sbuid in tqdm(schedblocks.items()):
+        uidstr = sbuid.replace("/", "%7C")
+
+        resp2 = requests.get(f'https://asa.alma.cl/snoopi/restapi/schedblock/{uidstr}',
+                                params={'authormode': 'pi'},
+                                headers={'Authorization': f'Bearer {access_token}'},
+                                timeout=timeout
+                                )
+        resp2.raise_for_status()
+        rslt = resp2.json()
+        schedblock_meta[key] = rslt
+
+    """totaltime, number_pointings, executions
+    return schedblock_meta
 
 
 def make_observation_table():

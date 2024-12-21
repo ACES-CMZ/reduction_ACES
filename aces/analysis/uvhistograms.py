@@ -97,9 +97,16 @@ def main():
 
     # /orange/adamginsburg/ACES//data//2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X1*/calibrated/working/*ms
     # field r: created symlinks
+    # field am: created symlinks (targets -> target) 2024/12/20
+    # field x: created symlink (.ms -> target.ms) 2024/12/20
+    # field af: created symlinks (targets -> target) 2024/12/20
     mslist = {row['Obs ID']:
               glob.glob(f'{basepath}/data//2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{row["12m MOUS ID"]}/calibrated/working/*target.ms')
               for row in tbl}
+
+    assert 'am' in mslist, "Missing field 'am'"
+    assert 'af' in mslist, "Missing field 'af'"
+    assert 'x' in mslist, "Missing field 'x'"
 
     msmd = msmetadata()
     ms = mstool()
@@ -145,6 +152,7 @@ def main():
 
         if len(data) == 0:
             print(f"FAILURE FOR REGION {region}: len(data)=0")
+            raise ValueError(f"FAILURE FOR REGION {region}: len(data)=0")
             continue
 
         try:
