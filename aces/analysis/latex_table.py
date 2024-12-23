@@ -191,11 +191,11 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290', username='k
         rslt = resp2.json()
         schedblock_meta[key] = rslt
 
-    """totaltime, number_pointings, executions
+    """totaltime, number_pointings, executions"""
     return schedblock_meta
 
 
-def make_observation_table():
+def make_observation_table(access_token=None):
     from astroquery.alma import Alma
     from astropy.time import Time
     import numpy as np
@@ -212,6 +212,16 @@ def make_observation_table():
                         'Observation End Time', 'pwv', 't_exptime',
                         's_resolution', 'spatial_scale_max']
     usub_meta = Table(np.unique(sub_meta))
+
+    schedblock_meta = retrieve_execution_metadata(access_token=access_token)
+
+    usub_meta['executions'] = [', '.join([x['date']
+                                      for x in schedblock_meta[schedblock_name]['executions']])
+                           for schedblock_name in usub_meta['schedblock_name']]
+    usub_meta['npointings'] = [int(schedblock_meta[schedblock_name]['number_pointings']) for schedblock_name in usub_meta['schedblock_name']]
+    usub_meta['time_per_pointing'] = [np.mean([float(x['time'])
+                                               for x in schedblock_meta[schedblock_name]['executions']])
+                                      for schedblock_name in usub_meta['schedblock_name']]
 
     tm = np.char.find(usub_meta['schedblock_name'], '_TM') > 0
     sm = np.char.find(usub_meta['schedblock_name'], '_7M') > 0
@@ -259,6 +269,9 @@ def make_observation_table():
     usub_meta.rename_column('s_resolution', 'Resolution')
     usub_meta.rename_column('spatial_scale_max', 'LAS')
     usub_meta.rename_column('config_id', 'Configuration')
+    usub_meta.rename_column('executions', 'Execution Dates')
+    usub_meta.rename_column('npointings', 'N(pointings)')
+    usub_meta.rename_column('time_per_pointing', 'Time per Pointing')
 
     updated = (np.char.find(usub_meta['schedblock_name'], 'updated') >= 0)
     print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()}")
@@ -273,7 +286,7 @@ def make_observation_table():
                 #print(fieldname, match.sum(), sub[sub].sum())
     print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()} (after filtering for updated)")
 
-    colnames = ['Field', 'Observation Start Time', 'Configuration', 'PWV', 'Exposure Time', 'Resolution', 'LAS']
+    colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'N(pointings)', 'Time per Pointing', 'Resolution', 'LAS']
     usub_meta['LAS'].unit = u.arcsec
     usub_meta['Resolution'].unit = u.arcsec
     usub_meta['Exposure Time'].unit = u.s
