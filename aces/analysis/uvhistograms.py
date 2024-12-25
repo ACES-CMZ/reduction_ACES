@@ -230,7 +230,7 @@ def main(redo=False):
     axes.bxp(stats, vert=False)
     #axes.set_title(f'{band} UV distribution overview', fontsize=fontsize)
     axes.set_xlabel("Angular Scale (\")", fontsize=fontsize)
-    axes.set_xlim(0.1, 20)
+    axes.set_xlim(0.1, 25)
     rad_to_as = u.radian.to(u.arcsec)
 
     def fcn(x):
