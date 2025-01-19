@@ -405,7 +405,7 @@ def make_observation_table(access_token=None):
     for sel, nm in ((tm, '12m'), (sm, '7m'), (tp, 'TP')):
         latexdict['header_start'] = f'\\label{{tab:observation_metadata_{nm}}}'#\n\\footnotesize'
         latexdict['preamble'] = f'\\caption{{{nm} Observation Metadata}}\n\\resizebox{{\\textwidth}}{{!}}{{'
-        usub_meta[colnames][sel].write(f"{basepath}/papers/continuum_data/observation_metadata_{nm}.tex",
+        usub_meta[colnames][sel].write(f"{basepath}/papers/continuum_data/tables/observation_metadata_{nm}.tex",
                                        formats=formats,
                                        overwrite=True,
                                        latexdict=latexdict)
