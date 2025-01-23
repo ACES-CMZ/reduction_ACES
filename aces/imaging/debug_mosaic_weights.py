@@ -92,5 +92,37 @@ def main():
                                 fail_if_cube_dropped=False,
                                 **kwargs,)
 
+        make_giant_mosaic_cube(weightfilelist,
+                                reference_frequency=restfrq,
+                                cdelt_kms=cdelt_kms,
+                                cubename='HNCO_7m12mTP_alarzas_order1_weights',
+                                nchan=4,
+                                beam_threshold=3.3 * u.arcsec,
+                                target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                                channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                                weightfilelist=weightfilelist,
+                                #use_reproject_cube=True,
+                                #parallel=4,
+                                channels=[ii],
+                                fail_if_cube_dropped=False,
+                                use_beams=False,
+                                **kwargs,)
+
+        make_giant_mosaic_cube(weightfilelist[::-1],
+                               reference_frequency=restfrq,
+                               cdelt_kms=cdelt_kms,
+                               cubename='HNCO_7m12mTP_alarzas_order2_weights',
+                               nchan=4,
+                               beam_threshold=3.3 * u.arcsec,
+                               target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                               channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                               weightfilelist=weightfilelist[::-1],
+                               #use_reproject_cube=True,
+                               #parallel=4,
+                               channels=[ii],
+                               fail_if_cube_dropped=False,
+                               use_beams=False,
+                               **kwargs,)
+
 if __name__ == "__main__":
     main()

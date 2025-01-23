@@ -25,8 +25,14 @@ pwd
 export USE_DASK=False
 export USE_LOCAL=True
 
-# 2025/01/16: attempt a different dask approach
-export DASK_CLIENT=threads
+if [ "$USE_DASK" == "True" ]; then
+    export DASK="_dask"
+    # 2025/01/16: attempt a different dask approach
+    export DASK_CLIENT="threads"
+else
+    export DASK=""
+    export DASK_CLIENT=""
+fi
 
 #for MOLNAME in HC3N; do
 for MOLNAME in CH3CHO NSplus H40a HC15N SO21 H13CN HN13C H13COp CS21 HC3N HCOP SiO21 SO32 HNCO_7m12mTP; do
@@ -43,8 +49,8 @@ for MOLNAME in CH3CHO NSplus H40a HC15N SO21 H13CN HN13C H13COp CS21 HC3N HCOP S
 
         echo "Giant ${MOLNAME} cube"
         #/red/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/analysis/giantcube_cuts.py || exit 1
-        sbatch --job-name=aces_giantcube_analysis_${MOLNAME}_dask${DASK_CLIENT} \
-               --output=/red/adamginsburg/ACES/logs/aces_giantcube_analysis_${MOLNAME}_dask${DASK_CLIENT}_%j.log \
+        sbatch --job-name=aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT} \
+               --output=/red/adamginsburg/ACES/logs/aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT}_%j.log \
                --account=astronomy-dept --qos=astronomy-dept-b --ntasks=64 --nodes=1 \
                --mem=256gb --time=96:00:00 \
                --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},USE_LOCAL=${USE_LOCAL},DASK_CLIENT=${DASK_CLIENT},DOWNSAMPLE=${DOWNSAMPLE},DO_PV=${DO_PV} \

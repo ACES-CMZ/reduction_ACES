@@ -694,6 +694,8 @@ def make_giant_mosaic_cube(filelist,
                            skip_final_combination=False,
                            use_reproject_cube=False,
                            parallel=True,
+                           use_beams=True,
+                           min_weight_fraction=0.05,
                            ):
     """
     This takes too long as a full cube, so we have to do it slice-by-slice
@@ -737,6 +739,10 @@ def make_giant_mosaic_cube(filelist,
                                                velocity_convention='radio',
                                                rest_value=reference_frequency)
                            for fn in weightfilelist]
+        if min_weight_fraction is not None:
+            # mask out the low-weight regions
+            weightcubes = [weightcube.with_mask(weightcube > min_weight_fraction * weightcube.max())
+                           for weightcube in weightcubes]
 
     # BUGFIX: there are FITS headers that incorrectly specify UTC in caps
     for cube in cubes + weightcubes:
@@ -749,21 +755,25 @@ def make_giant_mosaic_cube(filelist,
     # there are 2 as of writing
     if verbose:
         print("Filtering out cubes with sketchy beams", flush=True)
-    for cube, fn in zip(cubes, filelist):
-        try:
-            cube.beam if hasattr(cube, 'beam') else cube.beams
-        except NoBeamError as ex:
-            print(f"{fn} has no beam")
-            raise ex
-    beams = [get_common_beam(cube.beams) if hasattr(cube, 'beams') else cube.beam
-             for cube in cubes]
-    ok = [beam.major < beam_threshold for beam in beams]
-    if verbose:
-        if not all(ok):
-            print(f"Filtered down to {np.sum(ok)} of {len(ok)} cubes with beam major > {beam_threshold}")
-            print(f"Filtered cubes include: {[fn for fn, k in zip(filelist, ok) if not k]}")
-        else:
-            print(f"Found {np.sum(ok)} cubes with good beams (i.e., all of them)")
+    if use_beams:
+        for cube, fn in zip(cubes, filelist):
+            try:
+                cube.beam if hasattr(cube, 'beam') else cube.beams
+            except NoBeamError as ex:
+                print(f"{fn} has no beam")
+                use_beams = False
+    if use_beams:
+        beams = [get_common_beam(cube.beams) if hasattr(cube, 'beams') else cube.beam
+                for cube in cubes]
+        ok = [beam.major < beam_threshold for beam in beams]
+        if verbose:
+            if not all(ok):
+                print(f"Filtered down to {np.sum(ok)} of {len(ok)} cubes with beam major > {beam_threshold}")
+                print(f"Filtered cubes include: {[fn for fn, k in zip(filelist, ok) if not k]}")
+            else:
+                print(f"Found {np.sum(ok)} cubes with good beams (i.e., all of them)")
+    else:
+        ok = [True for _ in cubes]
 
     cubes = [cube for k, cube in zip(ok, cubes) if k]
     weightcubes = [cube for k, cube in zip(ok, weightcubes) if k]
@@ -772,14 +782,17 @@ def make_giant_mosaic_cube(filelist,
         print(f"There are {len(cubes)} cubes and {len(weightcubes)} weightcubes.", flush=True)
 
     # Part 4: Determine common beam
-    if verbose:
-        print("Determining common beam")
-    beams = radio_beam.Beams(beams=[cube.beam
-                                    if hasattr(cube, 'beam')
-                                    else get_common_beam(cube.beams)
-                                    for cube in cubes])
-    commonbeam = get_common_beam(beams)
-    header.update(commonbeam.to_header_keywords())
+    if use_beams:
+        if verbose:
+            print("Determining common beam")
+        beams = radio_beam.Beams(beams=[cube.beam
+                                        if hasattr(cube, 'beam')
+                                        else get_common_beam(cube.beams)
+                                        for cube in cubes])
+        commonbeam = get_common_beam(beams)
+        header.update(commonbeam.to_header_keywords())
+    else:
+        commonbeam = None
 
     if channels == 'all':
         channels = range(header['NAXIS3'])
