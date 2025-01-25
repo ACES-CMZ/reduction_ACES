@@ -794,6 +794,8 @@ def make_giant_mosaic_cube(filelist,
     weightcubes = [slice_cube_to_match_cube(wcube, cube)
                    for wcube, cube in zip(weightcubes, cubes)]
 
+    assert [0 not in wtcube.shape for wtcube in weightcubes], "Found a weight cube with a zero dimension"
+
     if verbose:
         print(f"Cube, weightcube shapes after cut: {[(c1.shape, c2.shape) for c1, c2 in zip(cubes, weightcubes)]}")
 
@@ -1144,8 +1146,27 @@ def overlap_slices(overlap_sky, wcs):
     Returns:
         slices
     """
-    ypoints, xpoints = np.array(wcs.world_to_pixel(overlap_sky)).T
-    slices = [slice(ypoints[0], ypoints[2]), slice(xpoints[0], xpoints[2])]
+    ypoints, xpoints = np.array(wcs.world_to_pixel(overlap_sky))
+    # since we need integers, just floor everything then add 1 to the upper end
+    ypoints = list(map(int, np.floor(ypoints)))
+    xpoints = list(map(int, np.floor(xpoints)))
+    
+    # RA, lon increase to the left, so the default is wrong
+    ymin, ymax = ypoints[0], ypoints[2]
+    xmin, xmax = xpoints[0], xpoints[2]
+    if ymin > ymax:
+        ymin, ymax = ymax, ymin
+    if xmin > xmax:
+        xmin, xmax = xmax, xmin
+
+    if ymin < 0:
+        ymin = 0
+        warnings.warn("Matched cube is smaller than target cube in y-direction")
+    if xmin < 0:
+        xmin = 0
+        warnings.warn("Matched cube is smaller than target cube in x-direction")
+
+    slices = [slice(ymin, ymax+1), slice(xmin, xmax+1)]
     return slices
 
 
@@ -1165,5 +1186,8 @@ def slice_cube_to_match_cube(cube, target_cube):
     overlap_corners = get_overlap_region(cube.wcs.celestial, cube.shape[1:],
                                          target_cube.wcs.celestial, target_cube.shape[1:])
     slcs = overlap_slices(overlap_corners, cube.wcs.celestial)
-    return cube[:, slcs[0], slcs[1]]
+    print('slices:', slcs)
+    rslt = cube[:, slcs[0], slcs[1]]
+    assert all(x > 1 for x in cube.shape[1:]), 'failure: slicing reduced dimension to 0 or 1'
+    return rslt
 
