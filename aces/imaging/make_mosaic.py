@@ -18,6 +18,7 @@ from astropy.wcs import WCS
 from astropy import log
 from astropy.utils.console import ProgressBar
 from astropy.convolution import convolve_fft, convolve, Gaussian2DKernel
+from astropy.coordinates import SkyCoord
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 import os
@@ -683,7 +684,7 @@ def make_giant_mosaic_cube(filelist,
                            cubename,
                            nchan,
                            test=False, verbose=True,
-                           weightfilelist=None,
+                           weightfilelist='auto',
                            target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr',
                            working_directory='/red/adamginsburg/ACES/workdir/mosaics/',
                            channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
@@ -706,6 +707,9 @@ def make_giant_mosaic_cube(filelist,
         Cubes with beams larger than this will be excldued
     """
 
+    if verbose:
+        print(f"Mosaicing files {filelist} with weightfilelist={weightfilelist}", flush=True)
+
     reference_frequency = u.Quantity(reference_frequency, u.Hz)
 
     # Part 1: Make the header
@@ -725,23 +729,27 @@ def make_giant_mosaic_cube(filelist,
                                                                      velocity_convention='radio',
                                                                      rest_value=reference_frequency)
                  for fn in filelist]
-        if weightfilelist is None:
+        if weightfilelist == 'auto':
             weightcubes = [(SpectralCube.read(fn.replace(".image.pbcor", ".weight"),
                                               format='fits' if fn.endswith('fits') else 'casa_image', use_dask=True)
                             .with_spectral_unit(u.km / u.s,
                                                 velocity_convention='radio',
                                                 rest_value=reference_frequency)
                             ) for fn in filelist]
-        else:
+        elif weightfilelist is not None:
             weightcubes = [SpectralCube.read(fn, format='fits' if fn.endswith('fits') else 'casa_image',
                                              use_dask=True)
                            .with_spectral_unit(u.km / u.s,
                                                velocity_convention='radio',
                                                rest_value=reference_frequency)
                            for fn in weightfilelist]
-        if min_weight_fraction is not None:
+        else:
+            weightcubes = []
+        if len(weightcubes) == len(cubes) and min_weight_fraction is not None:
             # mask out the low-weight regions
-            weightcubes = [weightcube.with_mask(weightcube > min_weight_fraction * weightcube.max())
+            print(f"Masking out regions with weight < {min_weight_fraction} * max(weight)", flush=True)
+            # assume the middle of the cube is safe to save time
+            weightcubes = [weightcube.with_mask(weightcube > min_weight_fraction * weightcube[weightcube.shape[0]//2, :, :].max())
                            for weightcube in weightcubes]
 
     # BUGFIX: there are FITS headers that incorrectly specify UTC in caps
@@ -760,11 +768,11 @@ def make_giant_mosaic_cube(filelist,
             try:
                 cube.beam if hasattr(cube, 'beam') else cube.beams
             except NoBeamError as ex:
-                print(f"{fn} has no beam")
+                print(f"{fn} has no beam [ex={ex}]")
                 use_beams = False
     if use_beams:
         beams = [get_common_beam(cube.beams) if hasattr(cube, 'beams') else cube.beam
-                for cube in cubes]
+                 for cube in cubes]
         ok = [beam.major < beam_threshold for beam in beams]
         if verbose:
             if not all(ok):
@@ -780,6 +788,14 @@ def make_giant_mosaic_cube(filelist,
 
     if verbose:
         print(f"There are {len(cubes)} cubes and {len(weightcubes)} weightcubes.", flush=True)
+        print(f"Cube, weightcube shapes before cut: {[(c1.shape, c2.shape) for c1, c2 in zip(cubes, weightcubes)]}")
+
+    # Cut weight cubes to match data cubes - the data cubes were pre-cut
+    weightcubes = [slice_cube_to_match_cube(wcube, cube)
+                   for wcube, cube in zip(weightcubes, cubes)]
+
+    if verbose:
+        print(f"Cube, weightcube shapes after cut: {[(c1.shape, c2.shape) for c1, c2 in zip(cubes, weightcubes)]}")
 
     # Part 4: Determine common beam
     if use_beams:
@@ -806,7 +822,7 @@ def make_giant_mosaic_cube(filelist,
         mosaic_cubes(cubes,
                      target_header=header,
                      commonbeam=commonbeam,
-                     weightcubes=weightcubes,
+                     weightcubes=weightcubes if len(weightcubes) == len(cubes) else None,
                      output_file=output_working_file,
                      method='cube',
                      verbose=verbose,
@@ -824,7 +840,8 @@ def make_giant_mosaic_cube(filelist,
         if not skip_channel_mosaicing:
             if verbose:
                 print(f"Making the channels from our {len(cubes)} cubes and {len(weightcubes)} weightcubes for channels {channels}")
-            make_giant_mosaic_cube_channels(header, cubes, weightcubes,
+            make_giant_mosaic_cube_channels(header, cubes,
+                                            weightcubes=weightcubes if len(weightcubes) == len(cubes) else None,
                                             commonbeam=commonbeam,
                                             cubename=cubename,
                                             verbose=verbose,
@@ -1059,3 +1076,94 @@ def rms(prefix='12m_continuum', folder='12m_flattened', threshold=2.5, nbeams=3,
         outname = fn.replace("_mosaic.fits", "_maskedrms_mosaic.fits")
         fits.PrimaryHDU(data=rms, header=fh[0].header).writeto(outname, overwrite=True)
         print(f"Finished masked RMS map for {fn}.  Detections iterated: {ndet}")
+
+
+def get_wcs_footprint(wcs, shape):
+    """
+    Get the sky footprint of a WCS object given the image shape.
+
+    Parameters:
+        wcs: astropy.wcs.WCS
+            The WCS object.
+        shape: tuple
+            The shape of the image (ny, nx).
+
+    Returns:
+        SkyCoord: Sky coordinates of the corners.
+    """
+    ny, nx = shape
+    corners = np.array([[0, 0], [0, nx], [ny, nx], [ny, 0]])
+    world_coords = wcs.pixel_to_world(corners[:, 1], corners[:, 0])
+    return SkyCoord(world_coords)
+
+
+def get_overlap_region(wcs1, shape1, wcs2, shape2):
+    """
+    Compute the overlapping region of two WCS objects in sky coordinates.
+
+    Parameters:
+        wcs1, wcs2: astropy.wcs.WCS
+            The two WCS objects to compare.
+        shape1, shape2: tuple
+            The shapes of the two images (ny, nx).
+
+    Returns:
+        SkyCoord: Sky coordinates of the overlapping region's approximate corners.
+    """
+
+    assert wcs1.celestial.world_axis_physical_types == wcs2.celestial.world_axis_physical_types
+
+    # Get the sky footprints
+    footprint1 = get_wcs_footprint(wcs1, shape1)
+    footprint2 = get_wcs_footprint(wcs2, shape2)
+
+    # Find the common bounding box in the sky (RA, Dec)
+    ra_min = max(footprint1.spherical.lon.min(), footprint2.spherical.lon.min())
+    ra_max = min(footprint1.spherical.lon.max(), footprint2.spherical.lon.max())
+    dec_min = max(footprint1.spherical.lat.min(), footprint2.spherical.lat.min())
+    dec_max = min(footprint1.spherical.lat.max(), footprint2.spherical.lat.max())
+
+    # Check if there is overlap
+    if ra_min < ra_max and dec_min < dec_max:
+        return SkyCoord([ra_min, ra_max, ra_max, ra_min],
+                        [dec_min, dec_min, dec_max, dec_max], unit='deg')
+    else:
+        raise ValueError("No overlap")
+
+
+def overlap_slices(overlap_sky, wcs):
+    """
+    Convert the sky overlap region back to pixel coordinates.
+
+    Parameters:
+        overlap_sky: SkyCoord
+            The sky coordinates of the overlapping region.
+        wcs: astropy.wcs.WCS
+            The WCS to use for pixel conversion.
+
+    Returns:
+        slices
+    """
+    ypoints, xpoints = np.array(wcs.world_to_pixel(overlap_sky)).T
+    slices = [slice(ypoints[0], ypoints[2]), slice(xpoints[0], xpoints[2])]
+    return slices
+
+
+def slice_cube_to_match_cube(cube, target_cube):
+    """
+    Slice a cube to match the shape of another cube.
+
+    Parameters:
+        cube: SpectralCube
+            The cube to slice.
+        target_cube: SpectralCube
+            The cube to match.
+
+    Returns:
+        SpectralCube: The sliced cube.
+    """
+    overlap_corners = get_overlap_region(cube.wcs.celestial, cube.shape[1:],
+                                         target_cube.wcs.celestial, target_cube.shape[1:])
+    slcs = overlap_slices(overlap_corners, cube.wcs.celestial)
+    return cube[:, slcs[0], slcs[1]]
+
