@@ -791,8 +791,9 @@ def make_giant_mosaic_cube(filelist,
         print(f"Cube, weightcube shapes before cut: {[(c1.shape, c2.shape) for c1, c2 in zip(cubes, weightcubes)]}")
 
     # Cut weight cubes to match data cubes - the data cubes were pre-cut
-    weightcubes = [slice_cube_to_match_cube(wcube, cube)
-                   for wcube, cube in zip(weightcubes, cubes)]
+    # weightcubes = [slice_cube_to_match_cube(wcube, cube)
+    #                for wcube, cube in zip(weightcubes, cubes)]
+    # this step is not needed any more, though - cube_utils properly crops the weight cubes
 
     assert [0 not in wtcube.shape for wtcube in weightcubes], "Found a weight cube with a zero dimension"
 
@@ -968,7 +969,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
     cube = SpectralCube.read(cubename, use_dask=use_dask)
     if use_dask:
         import dask.array as da
-        from dask.diagnostics import ProgressBar
+        from dask.diagnostics import ProgressBar as DaskProgressBar
     else:
         cube.allow_huge_operations = True
         import contextlib
@@ -977,7 +978,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
     print(f"Downsampling cube {cubename} -> {outcubename}")
     print(cube)
     start = 0
-    with ProgressBar():
+    with DaskProgressBar():
         if smooth:
             scube = cube.convolve_to(radio_beam.Beam(smooth_beam))
         else:
@@ -1146,7 +1147,7 @@ def overlap_slices(overlap_sky, wcs):
     Returns:
         slices
     """
-    ypoints, xpoints = np.array(wcs.world_to_pixel(overlap_sky))
+    xpoints, ypoints = wcs.world_to_pixel(overlap_sky)
     # since we need integers, just floor everything then add 1 to the upper end
     ypoints = list(map(int, np.floor(ypoints)))
     xpoints = list(map(int, np.floor(xpoints)))
