@@ -34,7 +34,7 @@ else
     export DASK_CLIENT=""
 fi
 
-#for MOLNAME in HC3N; do
+#for MOLNAME in SO32; do
 for MOLNAME in CH3CHO NSplus H40a HC15N SO21 H13CN HN13C H13COp CS21 HC3N HCOP SiO21 SO32 HNCO_7m12mTP; do
 
     if [ -e /orange/adamginsburg/ACES/mosaics/cubes/${MOLNAME}_CubeMosaic.fits ]; then

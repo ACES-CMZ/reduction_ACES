@@ -639,6 +639,7 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                          method='channel',
                          verbose=verbose,
                          fail_if_cube_dropped=fail_if_cube_dropped,
+                         extrapolation_tolerance=1e-5,
                          )
             print(f"\nChannel {chan} appears to have completed successfully, but we're checking first.", flush=True)
 
