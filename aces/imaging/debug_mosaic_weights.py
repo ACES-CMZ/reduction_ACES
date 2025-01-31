@@ -63,141 +63,146 @@ def main():
     restfrq = 87.925238e9
     #cdelt_kms = 0.10409296373
     cdelt_kms = 0.20818593  # smooth by 2 chans
-    for ii in range(4):
-        if False:
-            # experiment for comparison: unweighted combination
-            print("\nUnweighted mosaic")
-            make_giant_mosaic_cube(filelist,
+    for mode in ('mean', 'sum'):
+        for ii in range(4):
+            if False:
+                # experiment for comparison: unweighted combination
+                print("\nUnweighted mosaic")
+                make_giant_mosaic_cube(filelist,
+                                        reference_frequency=restfrq,
+                                        cdelt_kms=cdelt_kms,
+                                        cubename=f'HNCO_7m12mTP_alarzas_unweighted_{mode}',
+                                        nchan=4,
+                                        beam_threshold=3.3 * u.arcsec,
+                                        target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                                        channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                                        weightfilelist=None,
+                                        #use_reproject_cube=True,
+                                        #parallel=4,
+                                        channels=[ii],
+                                        verbose=True,
+                                        fail_if_cube_dropped=True,
+                                        reproject_kwargs={'combine_function': mode})
+
+            flatvalue_filelist = [fn.replace(".fits", ".flat-value.fits") for fn in filelist]
+            for jj, (oldfn, fn) in enumerate(zip(filelist, flatvalue_filelist)):
+                assert fn.endswith(".flat-value.fits")
+                if not os.path.exists(fn):
+                    shutil.copy(oldfn, fn)
+                    with fits.open(fn, mode='update') as fh:
+                        fh[0].data[:] = jj
+                        fh.flush()
+
+            if True:
+                print("\nFlat (ones) mosaic")
+                make_giant_mosaic_cube(flatvalue_filelist,
                                     reference_frequency=restfrq,
                                     cdelt_kms=cdelt_kms,
-                                    cubename='HNCO_7m12mTP_alarzas_unweighted',
+                                    cubename=f'HNCO_7m12mTP_alarzas_ones_{mode}',
                                     nchan=4,
                                     beam_threshold=3.3 * u.arcsec,
                                     target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
                                     channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
-                                    weightfilelist=None,
+                                    weightfilelist=weightfilelist,
                                     #use_reproject_cube=True,
                                     #parallel=4,
                                     channels=[ii],
-                                    verbose=True,
                                     fail_if_cube_dropped=True,
-                                    **kwargs,)
+                                    verbose=True,
+                                    reproject_kwargs={'combine_function': mode},
+                                    )
 
-        flatvalue_filelist = [fn.replace(".fits", ".flat-value.fits") for fn in filelist]
-        for jj, (oldfn, fn) in enumerate(zip(filelist, flatvalue_filelist)):
-            assert fn.endswith(".flat-value.fits")
-            if not os.path.exists(fn):
-                shutil.copy(oldfn, fn)
-                with fits.open(fn, mode='update') as fh:
-                    fh[0].data[:] = jj
-                    fh.flush()
-
-        if True:
-            print("\nFlat (ones) mosaic")
-            make_giant_mosaic_cube(flatvalue_filelist,
-                                reference_frequency=restfrq,
-                                cdelt_kms=cdelt_kms,
-                                cubename='HNCO_7m12mTP_alarzas_ones',
-                                nchan=4,
-                                beam_threshold=3.3 * u.arcsec,
-                                target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
-                                channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
-                                weightfilelist=weightfilelist,
-                                #use_reproject_cube=True,
-                                #parallel=4,
-                                channels=[ii],
-                                fail_if_cube_dropped=True,
-                                verbose=True,
-                                **kwargs,)
-
-        if True:
-            print("\nOrder 1")
-            make_giant_mosaic_cube(filelist,
-                                   reference_frequency=restfrq,
-                                   cdelt_kms=cdelt_kms,
-                                   cubename='HNCO_7m12mTP_alarzas_order1',
-                                   nchan=4,
-                                   beam_threshold=3.3 * u.arcsec,
-                                   target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
-                                   channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
-                                   weightfilelist=weightfilelist,
-                                   #use_reproject_cube=True,
-                                   #parallel=4,
-                                   channels=[ii],
-                                   fail_if_cube_dropped=True,
-                                   verbose=True,
-                                   **kwargs,)
-
-
-            # experiment: reverse order.  Result: null
-            # make_giant_mosaic_cube(filelist[::-1],
-            #                         reference_frequency=restfrq,
-            #                         cdelt_kms=cdelt_kms,
-            #                         cubename='HNCO_7m12mTP_alarzas_order2',
-            #                         nchan=4,
-            #                         beam_threshold=3.3 * u.arcsec,
-            #                         target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
-            #                         channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
-            #                         weightfilelist=weightfilelist[::-1],
-            #                         #use_reproject_cube=True,
-            #                         #parallel=4,
-            #                         channels=[ii],
-            #                         fail_if_cube_dropped=True,
-            #                         **kwargs,)
-
-            # use_reproject_cube does not complete in finite time
-            if False:
-                print("\nUse reproject cube")
+            if True:
+                print("\nOrder 1")
                 make_giant_mosaic_cube(filelist,
-                                       reference_frequency=restfrq,
-                                       cdelt_kms=cdelt_kms,
-                                       cubename='HNCO_7m12mTP_alarzas_usereprojectcube',
-                                       nchan=4,
-                                       beam_threshold=3.3 * u.arcsec,
-                                       target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
-                                       channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
-                                       weightfilelist=weightfilelist,
-                                       use_reproject_cube=True,
-                                       parallel=4,
-                                       channels=[ii],
-                                       fail_if_cube_dropped=True,
-                                       verbose=True,
-                                       **kwargs,)
+                                    reference_frequency=restfrq,
+                                    cdelt_kms=cdelt_kms,
+                                    cubename=f'HNCO_7m12mTP_alarzas_order1_{mode}',
+                                    nchan=4,
+                                    beam_threshold=3.3 * u.arcsec,
+                                    target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                                    channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                                    weightfilelist=weightfilelist,
+                                    #use_reproject_cube=True,
+                                    #parallel=4,
+                                    channels=[ii],
+                                    fail_if_cube_dropped=True,
+                                    verbose=True,
+                                    reproject_kwargs={'combine_function': mode},
+                                    )
 
-            # no need to do two weights
-            # make_giant_mosaic_cube(weightfilelist,
-            #                         reference_frequency=restfrq,
-            #                         cdelt_kms=cdelt_kms,
-            #                         cubename='HNCO_7m12mTP_alarzas_order1_weights',
-            #                         nchan=4,
-            #                         beam_threshold=3.3 * u.arcsec,
-            #                         target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
-            #                         channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
-            #                         weightfilelist=weightfilelist,
-            #                         #use_reproject_cube=True,
-            #                         #parallel=4,
-            #                         channels=[ii],
-            #                         fail_if_cube_dropped=True,
-            #                         use_beams=False,
-            #                         **kwargs,)
 
-            print("\nMosaiced weighted-average weights")
-            make_giant_mosaic_cube(weightfilelist[::-1],
-                                reference_frequency=restfrq,
-                                cdelt_kms=cdelt_kms,
-                                cubename='HNCO_7m12mTP_alarzas_order2_weights',
-                                nchan=4,
-                                beam_threshold=3.3 * u.arcsec,
-                                target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
-                                channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
-                                weightfilelist=weightfilelist[::-1],
-                                #use_reproject_cube=True,
-                                #parallel=4,
-                                channels=[ii],
-                                fail_if_cube_dropped=True,
-                                verbose=True,
-                                use_beams=False,
-                                **kwargs,)
+                # experiment: reverse order.  Result: null
+                # make_giant_mosaic_cube(filelist[::-1],
+                #                         reference_frequency=restfrq,
+                #                         cdelt_kms=cdelt_kms,
+                #                         cubename='HNCO_7m12mTP_alarzas_order2',
+                #                         nchan=4,
+                #                         beam_threshold=3.3 * u.arcsec,
+                #                         target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                #                         channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                #                         weightfilelist=weightfilelist[::-1],
+                #                         #use_reproject_cube=True,
+                #                         #parallel=4,
+                #                         channels=[ii],
+                #                         fail_if_cube_dropped=True,
+                #                         **kwargs,)
+
+                # use_reproject_cube does not complete in finite time
+                if False:
+                    print("\nUse reproject cube")
+                    make_giant_mosaic_cube(filelist,
+                                        reference_frequency=restfrq,
+                                        cdelt_kms=cdelt_kms,
+                                        cubename=f'HNCO_7m12mTP_alarzas_usereprojectcube_{mode}',
+                                        nchan=4,
+                                        beam_threshold=3.3 * u.arcsec,
+                                        target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                                        channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                                        weightfilelist=weightfilelist,
+                                        use_reproject_cube=True,
+                                        parallel=4,
+                                        channels=[ii],
+                                        fail_if_cube_dropped=True,
+                                        verbose=True,
+                                        reproject_kwargs={'combine_function': mode},
+                                        )
+
+                # no need to do two weights
+                # make_giant_mosaic_cube(weightfilelist,
+                #                         reference_frequency=restfrq,
+                #                         cdelt_kms=cdelt_kms,
+                #                         cubename='HNCO_7m12mTP_alarzas_order1_weights',
+                #                         nchan=4,
+                #                         beam_threshold=3.3 * u.arcsec,
+                #                         target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                #                         channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                #                         weightfilelist=weightfilelist,
+                #                         #use_reproject_cube=True,
+                #                         #parallel=4,
+                #                         channels=[ii],
+                #                         fail_if_cube_dropped=True,
+                #                         use_beams=False,
+                #                         **kwargs,)
+
+                print("\nMosaiced weighted-average weights")
+                make_giant_mosaic_cube(weightfilelist[::-1],
+                                    reference_frequency=restfrq,
+                                    cdelt_kms=cdelt_kms,
+                                    cubename=f'HNCO_7m12mTP_alarzas_order2_weights_{mode}',
+                                    nchan=4,
+                                    beam_threshold=3.3 * u.arcsec,
+                                    target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                                    channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                                    weightfilelist=weightfilelist[::-1],
+                                    #use_reproject_cube=True,
+                                    #parallel=4,
+                                    channels=[ii],
+                                    fail_if_cube_dropped=True,
+                                    verbose=True,
+                                    use_beams=False,
+                                    reproject_kwargs={'combine_function': mode},
+                                    )
 
 if __name__ == "__main__":
     main()

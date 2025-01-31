@@ -588,7 +588,9 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                                     working_directory='/red/adamginsburg/ACES/workdir/mosaics/',
                                     channelmosaic_directory=f'{basepath}/mosaics/HNCO_Channels/',
                                     fail_if_cube_dropped=True,
-                                    channels='all'):
+                                    channels='all',
+                                    **kwargs
+                                    ):
     ww = WCS(header)
     wws = ww.spectral
 
@@ -640,6 +642,7 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
                          verbose=verbose,
                          fail_if_cube_dropped=fail_if_cube_dropped,
                          extrapolation_tolerance=1e-5,
+                         **kwargs
                          )
             print(f"\nChannel {chan} appears to have completed successfully, but we're checking first.", flush=True)
 
@@ -698,6 +701,7 @@ def make_giant_mosaic_cube(filelist,
                            parallel=True,
                            use_beams=True,
                            min_weight_fraction=0.05,
+                           **kwargs
                            ):
     """
     This takes too long as a full cube, so we have to do it slice-by-slice
@@ -709,7 +713,7 @@ def make_giant_mosaic_cube(filelist,
     """
 
     if verbose:
-        print(f"Mosaicing files {filelist} with weightfilelist={weightfilelist}", flush=True)
+        print(f"Mosaicing files {filelist} with weightfilelist={weightfilelist} and {nchan} channels", flush=True)
 
     reference_frequency = u.Quantity(reference_frequency, u.Hz)
 
@@ -832,6 +836,7 @@ def make_giant_mosaic_cube(filelist,
                      verbose=verbose,
                      fail_if_cube_dropped=fail_if_cube_dropped,
                      parallel=parallel,
+                     **kwargs
                      )
         if verbose:
             print(f"Moving {output_working_file} to {output_file}")
@@ -853,6 +858,7 @@ def make_giant_mosaic_cube(filelist,
                                             channelmosaic_directory=channelmosaic_directory,
                                             fail_if_cube_dropped=fail_if_cube_dropped,
                                             channels=channels,
+                                            **kwargs
                                             )
         else:
             print("Skipped channel mosaicking")
@@ -958,7 +964,10 @@ def slurm_set_channels(nchan):
         nchan_per = int(nchan_per)
         channels = list(range(slurm_array_task_id * nchan_per,
                               (slurm_array_task_id + 1) * nchan_per))
+        print(f'slurm_array_task_id={slurm_array_task_id}, slurm_array_task_count={slurm_array_task_count}, nchan={nchan}, nchan_per={nchan_per}, channels={channels}')
         return channels
+    else:
+        raise ValueError("This function is only intended for use in a SLURM array job")
 
 
 def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
@@ -974,7 +983,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
     else:
         cube.allow_huge_operations = True
         import contextlib
-        ProgressBar = contextlib.nullcontext
+        DaskProgressBar = contextlib.nullcontext
 
     print(f"Downsampling cube {cubename} -> {outcubename}")
     print(cube)
