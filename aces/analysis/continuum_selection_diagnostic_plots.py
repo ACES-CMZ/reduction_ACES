@@ -205,10 +205,10 @@ def assemble_new_contsels(convert_to_native=False, allow_missing_maxspec=False):
             all_cubes = glob.glob(f'{workingpath}/*cube*image')
             first_spw = int(all_cubes[0].split("spw")[-1].split("sci")[-1][:2])
             if first_spw in (16, 18, 20, 22, 24, 26):
-                array = '7m'
+                array = '7m'  # noqa
                 spwset = (16, 18, 24, 26)
             elif first_spw in (25, 27, 29, 31, 33, 35):
-                array = '12m'
+                array = '12m'  # noqa
                 spwset = (25, 27, 33, 35)
             else:
                 print(f"first_spw = {first_spw}, which is not a known SPW")

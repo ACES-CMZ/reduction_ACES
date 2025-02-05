@@ -126,7 +126,7 @@ def main(redo=False):
     for row in tbl:
         region = row['Obs ID']
         if region in [row['region'] for row in uvtbl]:
-            print(f'Skipping completed region {region}: {uvdata[np.where(uvtbl["region"]==region)[0][0]]}')
+            print(f'Skipping completed region {region}: {uvdata[np.where(uvtbl["region"] == region)[0][0]]}')
             continue
 
         datapath = f'{basepath}/data//2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{row["12m MOUS ID"]}/calibrated/working'

@@ -401,8 +401,8 @@ def main():
         molname = 'CS21'
 
     print("Relevant environment variables: "
-    f"MOLNAME={os.getenv('MOLNAME')} USE_DASK={os.getenv('USE_DASK')} DOWNSAMPLE={os.getenv('DOWNSAMPLE')} DO_PV={os.getenv('DO_PV') }"
-    f"DASK_CLIENT={os.getenv('DASK_CLIENT')} SLURM_MEM_PER_NODE={os.getenv('SLURM_MEM_PER_NODE')} SLURM_NTASKS_PER_NODE={os.getenv('SLURM_NTASKS_PER_NODE')} SLURM_NTASKS={os.getenv('SLURM_NTASKS')} SLURM_STEP_NUM_TASKS={os.getenv('SLURM_STEP_NUM_TASKS')} SLURM_TASKS_PER_NODE={os.getenv('SLURM_TASKS_PER_NODE')}"
+          f"MOLNAME={os.getenv('MOLNAME')} USE_DASK={os.getenv('USE_DASK')} DOWNSAMPLE={os.getenv('DOWNSAMPLE')} DO_PV={os.getenv('DO_PV')}"
+          f"DASK_CLIENT={os.getenv('DASK_CLIENT')} SLURM_MEM_PER_NODE={os.getenv('SLURM_MEM_PER_NODE')} SLURM_NTASKS_PER_NODE={os.getenv('SLURM_NTASKS_PER_NODE')} SLURM_NTASKS={os.getenv('SLURM_NTASKS')} SLURM_STEP_NUM_TASKS={os.getenv('SLURM_STEP_NUM_TASKS')} SLURM_TASKS_PER_NODE={os.getenv('SLURM_TASKS_PER_NODE')}"
     )
 
     print(f"giantcube_cuts main parameters: molname{molname} dodask={dodask} dods={dods} do_pv={do_pv}")

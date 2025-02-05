@@ -4,12 +4,14 @@ from astropy.io import fits
 import glob
 files = glob.glob('/orange/adamginsburg/ACES//rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_*/calibrated/working/*.statcont.contsub.fits')
 
+
 def has_beam(cube):
     try:
         cube.beam
         return True
     except (AttributeError, NoBeamError):
         return False
+
 
 for fn in files:
     try:
@@ -21,9 +23,9 @@ for fn in files:
     elif not has_beam(cube):
         print(fn)
         try:
-            bcube = SpectralCube.read(fn.replace(".statcont.contsub",""))
+            bcube = SpectralCube.read(fn.replace(".statcont.contsub", ""))
         except Exception as ex:
-            print(f'Cube {fn.replace(".statcont.contsub","")} failed with error {ex}')
+            print(f'Cube {fn.replace(".statcont.contsub", "")} failed with error {ex}')
             continue
         if has_beam(bcube):
             beam = bcube.beam
