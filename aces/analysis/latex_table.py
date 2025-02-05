@@ -177,7 +177,7 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
         self = Alma._auth
         login_url = f'https://{self.get_valid_host()}{self._LOGIN_ENDPOINT}'
 
-        password=Alma._get_auth_info('keflavich')[1]
+        password = Alma._get_auth_info('keflavich')[1]
         data = {'username': username,
                 'password': password,
                 'grant_type': self._GRANT_TYPE,
@@ -192,7 +192,7 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
                          params={'authormode': 'null'}, headers={'Authorization': f'Bearer {access_token}'})
     resp2.raise_for_status()
     project_meta = resp2.json()
-    schedblocks = {x['description']: x['archiveUID'] for  x in find_schedblock_elements(project_meta)}
+    schedblocks = {x['description']: x['archiveUID'] for x in find_schedblock_elements(project_meta)}
 
     for key, sbuid in tqdm(schedblocks.items()):
         uidstr = sbuid.replace("/", "%7C")
@@ -200,10 +200,10 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
         if key not in schedblock_meta:
 
             resp2 = requests.get(f'https://asa.alma.cl/snoopi/restapi/schedblock/{uidstr}',
-                                    params={'authormode': 'pi'},
-                                    headers={'Authorization': f'Bearer {access_token}'},
-                                    timeout=timeout
-                                    )
+                                 params={'authormode': 'pi'},
+                                 headers={'Authorization': f'Bearer {access_token}'},
+                                 timeout=timeout
+                                 )
             resp2.raise_for_status()
             rslt = resp2.json()
             schedblock_meta[key] = rslt
@@ -240,10 +240,10 @@ def make_observation_table(access_token=None):
                                          for x in schedblock_meta[schedblock_name]['executions']
                                          if x['status'] == 'Pass'
                                          ])
-                           for schedblock_name in usub_meta['schedblock_name']]
+                               for schedblock_name in usub_meta['schedblock_name']]
     usub_meta['npointings'] = [int(schedblock_meta[schedblock_name]['number_pointings'])
                                for schedblock_name in usub_meta['schedblock_name']]
-    timefmt = lambda x: f"{x:0.1f}"
+    timefmt = lambda x: f"{x:0.1f}"  # noqa
     usub_meta['time_per_eb'] = [rf'\makecell{{{",\\\\".join([timefmt(float(x['time']))
                                                    for x in schedblock_meta[schedblock_name]['executions']
                                                    if x['status'] == 'Pass'
@@ -253,11 +253,11 @@ def make_observation_table(access_token=None):
     # get PWVs
     execution_uids = {schedblock_name: [x['execblockuid'] for x in schedblock_meta[schedblock_name]['executions']
                                         if x['status'] == 'Pass']
-                    for schedblock_name in usub_meta['schedblock_name']}
-    schedblock_to_mous = {schedblock_name: schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']
-                        for schedblock_name in usub_meta['schedblock_name']}
+                      for schedblock_name in usub_meta['schedblock_name']}
+    # schedblock_to_mous = {schedblock_name: schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']
+    #                       for schedblock_name in usub_meta['schedblock_name']}
     mous_to_schedblock = {schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']: schedblock_name
-                        for schedblock_name in usub_meta['schedblock_name']}
+                          for schedblock_name in usub_meta['schedblock_name']}
 
     pwv_cache_fn = f'{basepath}/reduction_ACES/aces/data/pwv_measurements.json'
     if os.path.exists(pwv_cache_fn):
@@ -266,7 +266,7 @@ def make_observation_table(access_token=None):
     else:
         pwv_measurements = {}
     pwvs = []
-    pwvfmt = lambda x: f"{x:0.2f}"
+    pwvfmt = lambda x: f"{x:0.2f}"  # noqa
     for mous in tqdm(usub_meta['member_ous_uid'], desc='PWV'):
         sbname = mous_to_schedblock[mous]
         mousstr = mous.replace('/', '_').replace(':', '_')
@@ -278,19 +278,19 @@ def make_observation_table(access_token=None):
                 xidstr = xid.replace("/", "_").replace(":", "_")
                 path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/working/{xidstr}.ms'
                 try:
-                    tbl = Table.read(path+"/ASDM_CALWVR")
-                    these_pwvs.append(np.median(tbl['water'])*1000)
+                    tbl = Table.read(path + "/ASDM_CALWVR")
+                    these_pwvs.append(np.median(tbl['water']) * 1000)
                 except ValueError:
-                    lltbl = casa_formats_io.table_reader.CASATable.read(path+"/ASDM_CALWVR")
+                    lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
                     tbl = lltbl.as_astropy_table(include_columns=['water'])
-                    these_pwvs.append(np.median(tbl['water'])*1000)
+                    these_pwvs.append(np.median(tbl['water']) * 1000)
                 except IOError as ex:
                     if 'TP' not in sbname:
                         path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/{xidstr}.ms'
                         if os.path.exists(path):
-                            lltbl = casa_formats_io.table_reader.CASATable.read(path+"/ASDM_CALWVR")
+                            lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
                             tbl = lltbl.as_astropy_table(include_columns=['water'])
-                            these_pwvs.append(np.median(tbl['water'])*1000)
+                            these_pwvs.append(np.median(tbl['water']) * 1000)
                         else:
                             these_pwvs.append(np.nan)
                             if 'TM1' in sbname:
@@ -387,13 +387,13 @@ def make_observation_table(access_token=None):
     latexdict['col_align'] = 'l' * len(usub_meta.columns)
     latexdict['tabletype'] = 'table*'
     latexdict['tablefoot'] = ("}\\par\n"
-    """
-    The \\emph{Time} column gives the execution time of each execution block.
-    The \\emph{PWV} is the median of the water column in he \\texttt{ASDM\\_CALWVR} table.
-    \\emph{Res.} is the resolution in arcseconds.
-    \\emph{N(P)} is the number of pointings.
-    """
-                             )
+        """
+        The \\emph{Time} column gives the execution time of each execution block.
+        The \\emph{PWV} is the median of the water column in he \\texttt{ASDM\\_CALWVR} table.
+        \\emph{Res.} is the resolution in arcseconds.
+        \\emph{N(P)} is the number of pointings.
+        """
+        )
 
     float_cols = ['Res.', 'LAS']
 
@@ -427,11 +427,11 @@ def make_spw_table():
             }
     latexdict['units'] = units
 
-    cols_to_keep = {'12m SPW':"SPW",
+    cols_to_keep = {'12m SPW': "SPW",
                     'F_Lower': r'$\nu_{L}$',
                     'F_Upper': r'$\nu_{U}$',
                     'F_Resolution': r'$\Delta\nu$',
-                    'Bandwidth':'Bandwidth',
+                    'Bandwidth': 'Bandwidth',
                     }
     ftbl = linetbl[list(cols_to_keep.keys())]
     ftbl = Table(np.unique(ftbl))
@@ -460,10 +460,13 @@ def make_spw_table():
              .replace("CH3CHO", "CH$_3$CHO")
              for x in lines]
 
-    linefreqs = [", ".join([str(x) for x in linetbl['Rest (GHz)'][(linetbl['12m SPW'] == row['SPW']) & (np.char.find(linetbl['col9'], '**') != -1)]])
-             for row in ftbl]
+    linefreqs = [", ".join(
+                           [str(x)
+                            for x in linetbl['Rest (GHz)'][((linetbl['12m SPW'] == row['SPW']) &
+                                                            (np.char.find(linetbl['col9'], '**') != -1))]])
+                 for row in ftbl]
 
-    ftbl['Lines'] = [f'{x}\\\\ \n &&&&& {y}' for x,y in zip(lines, linefreqs)]
+    ftbl['Lines'] = [f'{x}\\\\ \n &&&&& {y}' for x, y in zip(lines, linefreqs)]
 
     # caption needs to be *before* preamble.
     #latexdict['caption'] = 'Continuum Source IDs and photometry'
@@ -472,10 +475,10 @@ def make_spw_table():
     latexdict['col_align'] = 'l' * len(ftbl.columns)
     latexdict['tabletype'] = 'table*'
     latexdict['tablefoot'] = ("}\\par\n"
-    "ACES Spectral Configuration, including a non-exhaustive lists of prominent, "
-    "potentially continuum-affecting, lines.  The included lines are those that are, "
-    "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection})."
-                             )
+        "ACES Spectral Configuration, including a non-exhaustive lists of prominent, "
+        "potentially continuum-affecting, lines.  The included lines are those that are, "
+        "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection})."
+        )
 
     ftbl.write(f"{basepath}/papers/continuum_data/spectral_setup.tex", formats=formats,
                overwrite=True, latexdict=latexdict)

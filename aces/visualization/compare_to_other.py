@@ -5,14 +5,12 @@ from radio_beam import Beam
 from astropy.convolution import convolve, convolve_fft
 from astropy.wcs import WCS
 from aces import conf
-from spectral_cube import SpectralCube
 
 import reproject
 
 import matplotlib.colors as mcolors
 import numpy as np
 from astropy.visualization import simple_norm
-from astropy.wcs import WCS
 from astropy import units as u
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -49,7 +47,7 @@ def format_ax(ax, label="", cb=True, hidey=False, hidex=False):
     if hidex:
         ax.coords[0].set_ticklabel_visible(False)
         ax.coords[0].set_axislabel("")
-        
+
     return cb
 
 
@@ -60,7 +58,7 @@ def compare_to_other_data(otherfn,
                           norm_kwargs={},
                           hspace=0.01,
                           wspace=0.1,
-                          figsize=(12,10),
+                          figsize=(12, 10),
                           diffnorm_kwargs={'min_percent': 0.1, 'max_percent': 99.9, 'stretch': 'linear'},
                           ):
 
@@ -85,24 +83,24 @@ def compare_to_other_data(otherfn,
     convkernel = ACESbeam.deconvolve(otherBeam).as_kernel(pixscale)
     other_conv_ACES = convolve_fft(otherfh[0].data.squeeze(), convkernel)
 
-    jtok_ACES = ACESbeam.jtok(97.21*u.GHz)
+    jtok_ACES = ACESbeam.jtok(97.21 * u.GHz)
     jtok_other = otherBeam.jtok(nueff_other)
 
-    beam_ratio = (ACESbeam.sr / otherBeam.sr)
-    fig = pl.figure(figsize=figsize)
-    ax1 = pl.subplot(2,2,1, projection=ww)
+    beam_ratio = (ACESbeam.sr / otherBeam.sr)  # noqa [I want beam_ratio defined]
+    fig = pl.figure(figsize=figsize)  # noqa [I want fig defined]
+    ax1 = pl.subplot(2, 2, 1, projection=ww)
     otherdata = otherfh[0].data.squeeze() * jtok_other.value
     norm = simple_norm(otherdata, **norm_kwargs)
     pl.imshow(otherdata, cmap=mymap, norm=norm)
-    ax2 = pl.subplot(2,2,2, projection=ww)
+    ax2 = pl.subplot(2, 2, 2, projection=ww)
     pl.imshow(other_conv_ACES * jtok_other.value, cmap=mymap, norm=norm)
-    ax3 = pl.subplot(2,2,3, projection=ww)
+    ax3 = pl.subplot(2, 2, 3, projection=ww)
     pl.imshow(aces_to_other * jtok_ACES.value, cmap=mymap, norm=norm)
-    ax4 = pl.subplot(2,2,4, projection=ww)
-    diff = aces_to_other*jtok_ACES.value - other_conv_ACES*jtok_other.value
+    ax4 = pl.subplot(2, 2, 4, projection=ww)
+    diff = aces_to_other * jtok_ACES.value - other_conv_ACES * jtok_other.value
     diff[np.isnan(other_conv_ACES) | (other_conv_ACES == 0) | np.isnan(otherdata)] = np.nan
     pl.imshow(diff, cmap='RdBu', norm=simple_norm(diff, **diffnorm_kwargs))
-        
+
     format_ax(ax1, label="", hidex=True)
     format_ax(ax3, label="")
     format_ax(ax2, label="T$_B$ [K]", cb=True, hidey=True, hidex=True)

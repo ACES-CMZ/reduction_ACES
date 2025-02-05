@@ -1,8 +1,12 @@
+import os
 import glob
 from astropy import units as u
 from astropy.io import fits
 from aces.imaging.make_mosaic import read_as_2d, get_peak, get_m0, rms
-from aces.imaging.make_mosaic import make_mosaic as make_mosaic_, all_lines as all_lines_
+from aces.imaging.make_mosaic import (make_mosaic as make_mosaic_,
+                                      all_lines as all_lines_,
+                                      make_giant_mosaic_cube,
+                                      make_downsampled_cube)
 
 from aces import conf
 
@@ -65,8 +69,6 @@ def make_giant_mosaic_cube_hcop_TP7m(**kwargs):
                               f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic_downsampled9.fits',
                               overwrite=True
                               )
-
-
 
 
 def main():
