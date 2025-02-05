@@ -754,7 +754,7 @@ def make_giant_mosaic_cube(filelist,
             # mask out the low-weight regions
             print(f"Masking out regions with weight < {min_weight_fraction} * max(weight)", flush=True)
             # assume the middle of the cube is safe to save time
-            weightcubes = [weightcube.with_mask(weightcube > min_weight_fraction * weightcube[weightcube.shape[0]//2, :, :].max())
+            weightcubes = [weightcube.with_mask(weightcube > min_weight_fraction * weightcube[weightcube.shape[0] // 2, :, :].max())
                            for weightcube in weightcubes]
 
     # BUGFIX: there are FITS headers that incorrectly specify UTC in caps
@@ -1161,7 +1161,7 @@ def overlap_slices(overlap_sky, wcs):
     # since we need integers, just floor everything then add 1 to the upper end
     ypoints = list(map(int, np.floor(ypoints)))
     xpoints = list(map(int, np.floor(xpoints)))
-    
+
     # RA, lon increase to the left, so the default is wrong
     ymin, ymax = ypoints[0], ypoints[2]
     xmin, xmax = xpoints[0], xpoints[2]
@@ -1177,7 +1177,7 @@ def overlap_slices(overlap_sky, wcs):
         xmin = 0
         warnings.warn("Matched cube is smaller than target cube in x-direction")
 
-    slices = [slice(ymin, ymax+1), slice(xmin, xmax+1)]
+    slices = [slice(ymin, ymax + 1), slice(xmin, xmax + 1)]
     return slices
 
 
@@ -1201,4 +1201,3 @@ def slice_cube_to_match_cube(cube, target_cube):
     rslt = cube[:, slcs[0], slcs[1]]
     assert all(x > 1 for x in cube.shape[1:]), 'failure: slicing reduced dimension to 0 or 1'
     return rslt
-

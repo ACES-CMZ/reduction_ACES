@@ -28,6 +28,7 @@ from itertools import repeat
 from aces import conf
 import uvcombine
 
+from aces.imaging.mosaic_12m import get_weightfile
 
 #if os.getenv('NO_PROGRESSBAR') is None and not (os.getenv('ENVIRON') == 'BATCH'):
 #    from dask.diagnostics import ProgressBar
@@ -36,10 +37,8 @@ import uvcombine
 
 basepath = conf.basepath
 
-from aces.imaging.mosaic_12m import get_weightfile
 
 def main():
-    kwargs = {}
 
     filelist = sorted(glob.glob(f'{basepath}/upload/Feather_12m_7m_TP/HNCO/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.hnco43.image.statcont.contsub.fits'))
     filelist = [x for x in filelist if any(y in x for y in ('_al.', '_ar.', '_z.', '_as.'))]
@@ -115,22 +114,21 @@ def main():
             if True:
                 print("\nOrder 1")
                 make_giant_mosaic_cube(filelist,
-                                    reference_frequency=restfrq,
-                                    cdelt_kms=cdelt_kms,
-                                    cubename=f'HNCO_7m12mTP_alarzas_order1_{mode}',
-                                    nchan=4,
-                                    beam_threshold=3.3 * u.arcsec,
-                                    target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
-                                    channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
-                                    weightfilelist=weightfilelist,
-                                    #use_reproject_cube=True,
-                                    #parallel=4,
-                                    channels=[ii],
-                                    fail_if_cube_dropped=True,
-                                    verbose=True,
-                                    reproject_kwargs={'combine_function': mode},
-                                    )
-
+                                       reference_frequency=restfrq,
+                                       cdelt_kms=cdelt_kms,
+                                       cubename=f'HNCO_7m12mTP_alarzas_order1_{mode}',
+                                       nchan=4,
+                                       beam_threshold=3.3 * u.arcsec,
+                                       target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                                       channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                                       weightfilelist=weightfilelist,
+                                       #use_reproject_cube=True,
+                                       #parallel=4,
+                                       channels=[ii],
+                                       fail_if_cube_dropped=True,
+                                       verbose=True,
+                                       reproject_kwargs={'combine_function': mode},
+                                       )
 
                 # experiment: reverse order.  Result: null
                 # make_giant_mosaic_cube(filelist[::-1],
@@ -152,21 +150,21 @@ def main():
                 if False:
                     print("\nUse reproject cube")
                     make_giant_mosaic_cube(filelist,
-                                        reference_frequency=restfrq,
-                                        cdelt_kms=cdelt_kms,
-                                        cubename=f'HNCO_7m12mTP_alarzas_usereprojectcube_{mode}',
-                                        nchan=4,
-                                        beam_threshold=3.3 * u.arcsec,
-                                        target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
-                                        channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
-                                        weightfilelist=weightfilelist,
-                                        use_reproject_cube=True,
-                                        parallel=4,
-                                        channels=[ii],
-                                        fail_if_cube_dropped=True,
-                                        verbose=True,
-                                        reproject_kwargs={'combine_function': mode},
-                                        )
+                                           reference_frequency=restfrq,
+                                           cdelt_kms=cdelt_kms,
+                                           cubename=f'HNCO_7m12mTP_alarzas_usereprojectcube_{mode}',
+                                           nchan=4,
+                                           beam_threshold=3.3 * u.arcsec,
+                                           target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                                           channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                                           weightfilelist=weightfilelist,
+                                           use_reproject_cube=True,
+                                           parallel=4,
+                                           channels=[ii],
+                                           fail_if_cube_dropped=True,
+                                           verbose=True,
+                                           reproject_kwargs={'combine_function': mode},
+                                           )
 
                 # no need to do two weights
                 # make_giant_mosaic_cube(weightfilelist,
@@ -187,22 +185,23 @@ def main():
 
                 print("\nMosaiced weighted-average weights")
                 make_giant_mosaic_cube(weightfilelist[::-1],
-                                    reference_frequency=restfrq,
-                                    cdelt_kms=cdelt_kms,
-                                    cubename=f'HNCO_7m12mTP_alarzas_order2_weights_{mode}',
-                                    nchan=4,
-                                    beam_threshold=3.3 * u.arcsec,
-                                    target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
-                                    channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
-                                    weightfilelist=weightfilelist[::-1],
-                                    #use_reproject_cube=True,
-                                    #parallel=4,
-                                    channels=[ii],
-                                    fail_if_cube_dropped=True,
-                                    verbose=True,
-                                    use_beams=False,
-                                    reproject_kwargs={'combine_function': mode},
-                                    )
+                                       reference_frequency=restfrq,
+                                       cdelt_kms=cdelt_kms,
+                                       cubename=f'HNCO_7m12mTP_alarzas_order2_weights_{mode}',
+                                       nchan=4,
+                                       beam_threshold=3.3 * u.arcsec,
+                                       target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_12m_bigpix_alarzas.hdr',
+                                       channelmosaic_directory=f'{basepath}/mosaics/HNCO_7m12mTP_minitest_Channels/',
+                                       weightfilelist=weightfilelist[::-1],
+                                       #use_reproject_cube=True,
+                                       #parallel=4,
+                                       channels=[ii],
+                                       fail_if_cube_dropped=True,
+                                       verbose=True,
+                                       use_beams=False,
+                                       reproject_kwargs={'combine_function': mode},
+                                       )
+
 
 if __name__ == "__main__":
     main()

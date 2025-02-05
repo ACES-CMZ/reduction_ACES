@@ -245,10 +245,10 @@ def make_observation_table(access_token=None):
                                for schedblock_name in usub_meta['schedblock_name']]
     timefmt = lambda x: f"{x:0.1f}"  # noqa
     usub_meta['time_per_eb'] = [rf'\makecell{{{",\\\\".join([timefmt(float(x['time']))
-                                                   for x in schedblock_meta[schedblock_name]['executions']
-                                                   if x['status'] == 'Pass'
-                                                   ])}}}'
-                                      for schedblock_name in usub_meta['schedblock_name']]
+                                                             for x in schedblock_meta[schedblock_name]['executions']
+                                                             if x['status'] == 'Pass'
+                                                             ])}}}'
+                                for schedblock_name in usub_meta['schedblock_name']]
 
     # get PWVs
     execution_uids = {schedblock_name: [x['execblockuid'] for x in schedblock_meta[schedblock_name]['executions']
@@ -386,14 +386,15 @@ def make_observation_table(access_token=None):
     #latexdict['preamble'] = '\\caption{12m Observation Metadata}\n\\resizebox{\\textwidth}{!}{'
     latexdict['col_align'] = 'l' * len(usub_meta.columns)
     latexdict['tabletype'] = 'table*'
-    latexdict['tablefoot'] = ("}\\par\n"
+    latexdict['tablefoot'] = (
+        "}\\par\n"
         """
         The \\emph{Time} column gives the execution time of each execution block.
         The \\emph{PWV} is the median of the water column in he \\texttt{ASDM\\_CALWVR} table.
         \\emph{Res.} is the resolution in arcseconds.
         \\emph{N(P)} is the number of pointings.
         """
-        )
+    )
 
     float_cols = ['Res.', 'LAS']
 
@@ -474,11 +475,12 @@ def make_spw_table():
     latexdict['preamble'] = '\\caption{ACES Spectral Configuration}\n\\resizebox{\\textwidth}{!}{'
     latexdict['col_align'] = 'l' * len(ftbl.columns)
     latexdict['tabletype'] = 'table*'
-    latexdict['tablefoot'] = ("}\\par\n"
+    latexdict['tablefoot'] = (
+        "}\\par\n"
         "ACES Spectral Configuration, including a non-exhaustive lists of prominent, "
         "potentially continuum-affecting, lines.  The included lines are those that are, "
         "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection})."
-        )
+    )
 
     ftbl.write(f"{basepath}/papers/continuum_data/spectral_setup.tex", formats=formats,
                overwrite=True, latexdict=latexdict)
