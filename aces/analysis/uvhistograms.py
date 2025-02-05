@@ -91,23 +91,44 @@ def make_figure(data, wavelength, beam, bins=50):
                 scipy.stats.percentileofscore(uvcts, beam_minor_bl.value))
 
 
-def main():
+def tryvalue(x):
+    try:
+        return x.value
+    except AttributeError:
+        return x
+
+
+def main(redo=False):
     basepath = '/orange/adamginsburg/ACES/'
     tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
+    if redo:
+        uvdata = []
+    else:
+        uvtbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/uvspacings.ecsv')
+        uvdata = [{col: tryvalue(row[col]) for col in uvtbl.colnames} for row in uvtbl]
 
     # /orange/adamginsburg/ACES//data//2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X1*/calibrated/working/*ms
     # field r: created symlinks
+    # field am: created symlinks (targets -> target) 2024/12/20
+    # field x: created symlink (.ms -> target.ms) 2024/12/20
+    # field af: created symlinks (targets -> target) 2024/12/20
     mslist = {row['Obs ID']:
               glob.glob(f'{basepath}/data//2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{row["12m MOUS ID"]}/calibrated/working/*target.ms')
               for row in tbl}
 
+    assert 'am' in mslist, "Missing field 'am'"
+    assert 'af' in mslist, "Missing field 'af'"
+    assert 'x' in mslist, "Missing field 'x'"
+
     msmd = msmetadata()
     ms = mstool()
 
-    uvdata = []
-
     for row in tbl:
         region = row['Obs ID']
+        if region in [row['region'] for row in uvtbl]:
+            print(f'Skipping completed region {region}: {uvdata[np.where(uvtbl["region"] == region)[0][0]]}')
+            continue
+
         datapath = f'{basepath}/data//2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{row["12m MOUS ID"]}/calibrated/working'
         data = {}
         for msname in mslist[region]:
@@ -117,7 +138,7 @@ def main():
             freqs = np.concatenate([msmd.chanfreqs(spw) for spw in spws])
             freqweights = np.concatenate([msmd.chanfreqs(spw) for spw in spws])
             msmd.close()
-            print(msname)
+            print(region, msname)
 
             avfreq = np.average(freqs, weights=freqweights)
             wavelength = (avfreq * u.Hz).to(u.m, u.spectral())
@@ -145,13 +166,15 @@ def main():
 
         if len(data) == 0:
             print(f"FAILURE FOR REGION {region}: len(data)=0")
+            raise ValueError(f"FAILURE FOR REGION {region}: len(data)=0")
             continue
 
         try:
-            fname = glob.glob(f'{datapath}/*.spw25_27_29_31_33_35.cont.I.iter1.image.tt0.pbcor.fits')[0]
+            # * is 'iter1' or 'manual'
+            fname = glob.glob(f'{datapath}/*.spw25_27_29_31_33_35.cont.I.*.image.tt0.pbcor.fits')[0]
             beam = Beam.from_fits_header(fits.getheader(fname))
         except IndexError:
-            fname = glob.glob(f'{datapath}/*.spw25_27_29_31_33_35.cont.I.iter1.image.tt0.pbcor')[0]
+            fname = glob.glob(f'{datapath}/*.spw25_27_29_31_33_35.cont.I.*.image.tt0.pbcor')[0]
             bmaj = imhead(fname, mode='get', hdkey='beammajor')['value']
             bmin = imhead(fname, mode='get', hdkey='beamminor')['value']
             bpa = imhead(fname, mode='get', hdkey='beampa')['value']
@@ -173,8 +196,8 @@ def main():
                        '90%': pctiles[6],
                        '95%': pctiles[7],
                        '99%': pctiles[8],
-                       'beam_major': beam.major,
-                       'beam_minor': beam.minor,
+                       'beam_major': beam.major.to(u.arcsec).value,
+                       'beam_minor': beam.minor.to(u.arcsec).value,
                        'beam_major_pctile': majpct,
                        'beam_minor_pctile': minpct,
                        'wavelength': wavelength.to(u.um).value,
@@ -207,7 +230,7 @@ def main():
     axes.bxp(stats, vert=False)
     #axes.set_title(f'{band} UV distribution overview', fontsize=fontsize)
     axes.set_xlabel("Angular Scale (\")", fontsize=fontsize)
-    axes.set_xlim(0.1, 20)
+    axes.set_xlim(0.1, 25)
     rad_to_as = u.radian.to(u.arcsec)
 
     def fcn(x):

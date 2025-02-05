@@ -1,4 +1,6 @@
+import os
 import numpy as np
+import json
 from astropy.table import Table, Column
 from astropy import table
 import requests
@@ -7,6 +9,8 @@ import datetime
 from astropy import units as u
 import sigfig
 from radio_beam import Beam
+from tqdm.auto import tqdm
+import casa_formats_io
 
 from aces.analysis.latex_info import (latexdict, format_float, round_to_n, rounded,
                                       rounded_arr, strip_trailing_zeros, exp_to_tex)
@@ -38,7 +42,8 @@ def make_latex_table(savename='continuum_data_summary'):
     assert len(tbl) > 0
 
     # filter out v1 first
-    nueff = {'all': 97.271 * u.GHz, '25,27': 86.539 * u.GHz, '33,35': 99.543 * u.GHz}
+    # 'cont' is a special-case for field am; it's... ?!!?
+    nueff = {'all': 97.271 * u.GHz, '25,27': 86.539 * u.GHz, '33,35': 99.543 * u.GHz, 'cont': 97.271 * u.GHz}
     jtok = u.Quantity([Beam(x['bmaj'] * u.arcsec, x['bmin'] * u.arcsec, x['bpa']).jtok(nueff[x['spws']]) for x in tbl])
     tbl['peak_K'] = (tbl['peak'] * jtok / 1000)
     tbl['mad_K'] = (tbl['mad'] * jtok)
@@ -122,7 +127,96 @@ def make_latex_table(savename='continuum_data_summary'):
     return ftbl
 
 
-def make_observation_table():
+def find_schedblock_elements(data, results=None):
+    """
+    Recursively search through JSON data to find elements with {'className': 'SchedBlock'}.
+
+    :param data: The JSON object (dict or list) to search.
+    :param results: A list to store the results (optional).
+    :return: A list of matching elements.
+    """
+    if results is None:
+        results = []
+
+    if isinstance(data, dict):
+        # Check if the current dictionary contains the key-value pair
+        if data.get('className') == 'SchedBlock':
+            results.append(data)
+        # Recursively search within each value
+        for value in data.values():
+            find_schedblock_elements(value, results)
+
+    elif isinstance(data, list):
+        # Recursively search within each item in the list
+        for item in data:
+            find_schedblock_elements(item, results)
+
+    return results
+
+
+def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
+                                username='keflavich', timeout=30, retry=5, access_token=None,
+                                cache='/red/adamginsburg/ACES/logs/execution_metadata.json'
+                                ):
+
+    if cache and os.path.exists(cache):
+        with open(cache, 'r') as fh:
+            schedblock_meta = json.load(fh)
+    else:
+        schedblock_meta = {}
+
+    # hard-coded to avoid re-logging-in
+    if len(schedblock_meta) == 152:
+        return schedblock_meta
+
+    import requests
+    if access_token is None:
+        from astroquery.alma import Alma
+        import time
+        Alma.login(username)
+        self = Alma._auth
+        login_url = f'https://{self.get_valid_host()}{self._LOGIN_ENDPOINT}'
+
+        password = Alma._get_auth_info('keflavich')[1]
+        data = {'username': username,
+                'password': password,
+                'grant_type': self._GRANT_TYPE,
+                'client_id': self._CLIENT_ID}
+
+        login_response = self._request('POST', login_url, data=data, cache=False)
+        access_token = login_response.json()["access_token"]
+        print(login_response.json()['access_token'])
+        time.sleep(1)
+    project_uidstr = project_uid.replace("/", "%7C")
+    resp2 = requests.get(f'https://asa.alma.cl/snoopi/restapi/project/{project_uidstr}',
+                         params={'authormode': 'null'}, headers={'Authorization': f'Bearer {access_token}'})
+    resp2.raise_for_status()
+    project_meta = resp2.json()
+    schedblocks = {x['description']: x['archiveUID'] for x in find_schedblock_elements(project_meta)}
+
+    for key, sbuid in tqdm(schedblocks.items()):
+        uidstr = sbuid.replace("/", "%7C")
+
+        if key not in schedblock_meta:
+
+            resp2 = requests.get(f'https://asa.alma.cl/snoopi/restapi/schedblock/{uidstr}',
+                                 params={'authormode': 'pi'},
+                                 headers={'Authorization': f'Bearer {access_token}'},
+                                 timeout=timeout
+                                 )
+            resp2.raise_for_status()
+            rslt = resp2.json()
+            schedblock_meta[key] = rslt
+
+    if cache:
+        with open(cache, 'w') as fh:
+            json.dump(schedblock_meta, fh)
+
+    """totaltime, number_pointings, executions"""
+    return schedblock_meta
+
+
+def make_observation_table(access_token=None):
     from astroquery.alma import Alma
     from astropy.time import Time
     import numpy as np
@@ -137,8 +231,80 @@ def make_observation_table():
 
     sub_meta = metadata['schedblock_name', 'Observation Start Time',
                         'Observation End Time', 'pwv', 't_exptime',
-                        's_resolution', 'spatial_scale_max']
+                        's_resolution', 'spatial_scale_max', 'member_ous_uid']
     usub_meta = Table(np.unique(sub_meta))
+
+    schedblock_meta = retrieve_execution_metadata(access_token=access_token)
+
+    usub_meta['executions'] = [', '.join([x['date']
+                                         for x in schedblock_meta[schedblock_name]['executions']
+                                         if x['status'] == 'Pass'
+                                         ])
+                               for schedblock_name in usub_meta['schedblock_name']]
+    usub_meta['npointings'] = [int(schedblock_meta[schedblock_name]['number_pointings'])
+                               for schedblock_name in usub_meta['schedblock_name']]
+    timefmt = lambda x: f"{x:0.1f}"  # noqa
+    usub_meta['time_per_eb'] = [rf'\makecell{{{",\\\\".join([timefmt(float(x['time']))
+                                                             for x in schedblock_meta[schedblock_name]['executions']
+                                                             if x['status'] == 'Pass'
+                                                             ])}}}'
+                                for schedblock_name in usub_meta['schedblock_name']]
+
+    # get PWVs
+    execution_uids = {schedblock_name: [x['execblockuid'] for x in schedblock_meta[schedblock_name]['executions']
+                                        if x['status'] == 'Pass']
+                      for schedblock_name in usub_meta['schedblock_name']}
+    # schedblock_to_mous = {schedblock_name: schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']
+    #                       for schedblock_name in usub_meta['schedblock_name']}
+    mous_to_schedblock = {schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']: schedblock_name
+                          for schedblock_name in usub_meta['schedblock_name']}
+
+    pwv_cache_fn = f'{basepath}/reduction_ACES/aces/data/pwv_measurements.json'
+    if os.path.exists(pwv_cache_fn):
+        with open(pwv_cache_fn, 'r') as fh:
+            pwv_measurements = json.load(fh)
+    else:
+        pwv_measurements = {}
+    pwvs = []
+    pwvfmt = lambda x: f"{x:0.2f}"  # noqa
+    for mous in tqdm(usub_meta['member_ous_uid'], desc='PWV'):
+        sbname = mous_to_schedblock[mous]
+        mousstr = mous.replace('/', '_').replace(':', '_')
+        these_pwvs = []
+        if sbname in pwv_measurements:
+            these_pwvs = pwv_measurements[sbname]
+        else:
+            for xid in execution_uids[sbname]:
+                xidstr = xid.replace("/", "_").replace(":", "_")
+                path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/working/{xidstr}.ms'
+                try:
+                    tbl = Table.read(path + "/ASDM_CALWVR")
+                    these_pwvs.append(np.median(tbl['water']) * 1000)
+                except ValueError:
+                    lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
+                    tbl = lltbl.as_astropy_table(include_columns=['water'])
+                    these_pwvs.append(np.median(tbl['water']) * 1000)
+                except IOError as ex:
+                    if 'TP' not in sbname:
+                        path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/{xidstr}.ms'
+                        if os.path.exists(path):
+                            lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
+                            tbl = lltbl.as_astropy_table(include_columns=['water'])
+                            these_pwvs.append(np.median(tbl['water']) * 1000)
+                        else:
+                            these_pwvs.append(np.nan)
+                            if 'TM1' in sbname:
+                                print(sbname, mous, xid, ex)
+                except Exception as ex:
+                    these_pwvs.append(np.nan)
+                    if 'TM1' in sbname:
+                        print(sbname, mous, xid, ex)
+            pwv_measurements[sbname] = these_pwvs
+        pwvs.append(fr"\makecell{{{',\\\\ '.join(map(pwvfmt, these_pwvs))}}}".replace('nan', '-'))
+    with open(pwv_cache_fn, 'w') as fh:
+        json.dump(pwv_measurements, fh)
+    del usub_meta['pwv']
+    usub_meta['pwv'] = pwvs
 
     tm = np.char.find(usub_meta['schedblock_name'], '_TM') > 0
     sm = np.char.find(usub_meta['schedblock_name'], '_7M') > 0
@@ -183,27 +349,54 @@ def make_observation_table():
     usub_meta['Field'] = [x.split("_")[3] for x in usub_meta['schedblock_name']]
     usub_meta.rename_column('pwv', 'PWV')
     usub_meta.rename_column('t_exptime', 'Exposure Time')
-    usub_meta.rename_column('s_resolution', 'Resolution')
+    usub_meta.rename_column('s_resolution', 'Res.')
     usub_meta.rename_column('spatial_scale_max', 'LAS')
     usub_meta.rename_column('config_id', 'Configuration')
+    usub_meta.rename_column('executions', 'Execution Dates')
+    usub_meta.rename_column('npointings', 'N(P)')
+    usub_meta.rename_column('time_per_eb', 'Time')
 
-    colnames = ['Field', 'Observation Start Time', 'Configuration', 'PWV', 'Exposure Time', 'Resolution', 'LAS']
+    updated = (np.char.find(usub_meta['schedblock_name'], 'updated') >= 0)
+    print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()}")
+    for fieldname in set(usub_meta['Field']):
+        for sub in (tm, sm, tp):
+            match = (usub_meta['Field'][sub] == fieldname)
+            if match.sum() > 1:
+                #print(fieldname, match.sum(), sub[sub].sum())
+                #sub[sub][match] = updated[sub][match]
+                # hard to parse logic, eh?  Just... talk yourself through it 5-10 times...
+                sub[sub] &= (~match) | (match & (updated[sub]))
+                #print(fieldname, match.sum(), sub[sub].sum())
+    print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()} (after filtering for updated)")
+
+    colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
     usub_meta['LAS'].unit = u.arcsec
-    usub_meta['Resolution'].unit = u.arcsec
-    usub_meta['Exposure Time'].unit = u.s
+    usub_meta['Res.'].unit = u.arcsec
+    #usub_meta['Exposure Time'].unit = u.s
+    usub_meta['Time'].unit = u.min
     usub_meta['PWV'].unit = u.mm
+
     usub_meta[colnames][tm].write(f'{basepath}/tables/observation_metadata_12m.ecsv', format='ascii.ecsv', overwrite=True)
     usub_meta[colnames][sm].write(f'{basepath}/tables/observation_metadata_7m.ecsv', format='ascii.ecsv', overwrite=True)
     usub_meta[colnames][tp].write(f'{basepath}/tables/observation_metadata_TP.ecsv', format='ascii.ecsv', overwrite=True)
+
+    usub_meta['Execution Dates'] = [fr'\makecell{{{",\\\\ ".join([x for x in ed.split(", ")])}.}}' for ed in usub_meta['Execution Dates']]
 
     #latexdict['header_start'] = '\\label{tab:observation_metadata_12m}'#\n\\footnotesize'
     #latexdict['preamble'] = '\\caption{12m Observation Metadata}\n\\resizebox{\\textwidth}{!}{'
     latexdict['col_align'] = 'l' * len(usub_meta.columns)
     latexdict['tabletype'] = 'table*'
-    latexdict['tablefoot'] = ("}\\par\n"
-                             )
+    latexdict['tablefoot'] = (
+        "}\\par\n"
+        """
+        The \\emph{Time} column gives the execution time of each execution block.
+        The \\emph{PWV} is the median of the water column in he \\texttt{ASDM\\_CALWVR} table.
+        \\emph{Res.} is the resolution in arcseconds.
+        \\emph{N(P)} is the number of pointings.
+        """
+    )
 
-    float_cols = ['PWV', 'Exposure Time', 'Resolution', 'LAS']
+    float_cols = ['Res.', 'LAS']
 
     formats = {key: lambda x: strip_trailing_zeros('{0:0.3f}'.format(round_to_n(x, 2)), nsf=2)
                for key in float_cols}
@@ -213,12 +406,86 @@ def make_observation_table():
     for sel, nm in ((tm, '12m'), (sm, '7m'), (tp, 'TP')):
         latexdict['header_start'] = f'\\label{{tab:observation_metadata_{nm}}}'#\n\\footnotesize'
         latexdict['preamble'] = f'\\caption{{{nm} Observation Metadata}}\n\\resizebox{{\\textwidth}}{{!}}{{'
-        usub_meta[colnames][sel].write(f"{basepath}/papers/continuum_data/observation_metadata_{nm}.tex",
+        usub_meta[colnames][sel].write(f"{basepath}/papers/continuum_data/tables/observation_metadata_{nm}.tex",
                                        formats=formats,
                                        overwrite=True,
                                        latexdict=latexdict)
 
     return usub_meta, (tm, sm, tp)
+
+
+def make_spw_table():
+
+    linetbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/linelist.csv')
+    for fcol in ['Bandwidth', 'F_Lower', 'F_Upper', 'F_Resolution']:
+        linetbl[fcol].unit = u.GHz
+    linetbl['F_Resolution'] = linetbl['F_Resolution'].to(u.MHz)
+
+    units = {'F_Lower': u.GHz.to_string(u.format.LatexInline),
+             'F_Upper': u.GHz.to_string(u.format.LatexInline),
+             'F_Resolution': u.MHz.to_string(u.format.LatexInline),
+             'Bandwidth': u.GHz.to_string(u.format.LatexInline),
+            }
+    latexdict['units'] = units
+
+    cols_to_keep = {'12m SPW': "SPW",
+                    'F_Lower': r'$\nu_{L}$',
+                    'F_Upper': r'$\nu_{U}$',
+                    'F_Resolution': r'$\Delta\nu$',
+                    'Bandwidth': 'Bandwidth',
+                    }
+    ftbl = linetbl[list(cols_to_keep.keys())]
+    ftbl = Table(np.unique(ftbl))
+
+    for old, new in cols_to_keep.items():
+        if old in linetbl.colnames:
+            #tbl[old].meta['description'] = description[old]
+            ftbl.rename_column(old, new)
+            if old in units:
+                ftbl[new].unit = units[old]
+
+    float_cols = ['Bandwidth',
+                  r'$\nu_{L}$',
+                  r'$\nu_{U}$',
+                  r'$\Delta\nu$']
+
+    formats = {key: lambda x: strip_trailing_zeros('{0:0.5f}'.format(round_to_n(x, 6)), nsf=4)
+               for key in float_cols}
+    #formats = {key: lambda x: str(sigfig.round(str(x), sigfigs=2))
+    #           for key in float_cols}
+
+    lines = [", ".join([x for x in linetbl['Line'][(linetbl['12m SPW'] == row['SPW']) & (np.char.find(linetbl['col9'], '**') != -1)]])
+             for row in ftbl]
+    lines = [x.replace("HC3N", "HC$_3$N").replace("13", "$^{13}$")
+             .replace(" Alpha", r"$\alpha$").replace("15", "$^{15}$")
+             .replace("CH3CHO", "CH$_3$CHO")
+             for x in lines]
+
+    linefreqs = [", ".join(
+                           [str(x)
+                            for x in linetbl['Rest (GHz)'][((linetbl['12m SPW'] == row['SPW']) &
+                                                            (np.char.find(linetbl['col9'], '**') != -1))]])
+                 for row in ftbl]
+
+    ftbl['Lines'] = [f'{x}\\\\ \n &&&&& {y}' for x, y in zip(lines, linefreqs)]
+
+    # caption needs to be *before* preamble.
+    #latexdict['caption'] = 'Continuum Source IDs and photometry'
+    latexdict['header_start'] = '\\label{tab:spectral_setup}'#\n\\footnotesize'
+    latexdict['preamble'] = '\\caption{ACES Spectral Configuration}\n\\resizebox{\\textwidth}{!}{'
+    latexdict['col_align'] = 'l' * len(ftbl.columns)
+    latexdict['tabletype'] = 'table*'
+    latexdict['tablefoot'] = (
+        "}\\par\n"
+        "ACES Spectral Configuration, including a non-exhaustive lists of prominent, "
+        "potentially continuum-affecting, lines.  The included lines are those that are, "
+        "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection})."
+    )
+
+    ftbl.write(f"{basepath}/papers/continuum_data/spectral_setup.tex", formats=formats,
+               overwrite=True, latexdict=latexdict)
+
+    return ftbl
 
 
 if __name__ == "__main__":

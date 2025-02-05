@@ -1,8 +1,12 @@
+import os
 import glob
 from astropy import units as u
 from astropy.io import fits
 from aces.imaging.make_mosaic import read_as_2d, get_peak, get_m0, rms
-from aces.imaging.make_mosaic import make_mosaic as make_mosaic_, all_lines as all_lines_
+from aces.imaging.make_mosaic import (make_mosaic as make_mosaic_,
+                                      all_lines as all_lines_,
+                                      make_giant_mosaic_cube,
+                                      make_downsampled_cube)
 
 from aces import conf
 
@@ -26,6 +30,45 @@ def make_mosaic(*args, folder='7m_flattened', **kwargs):
 
 def all_lines(*args, folder='12m_flattened', **kwargs):
     return all_lines_(*args, folder=folder, **kwargs)
+
+
+def make_giant_mosaic_cube_hcop_TP7m(**kwargs):
+    """
+    Not 12m!
+    """
+
+    filelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/*.hnco43.image'))
+    filelist += sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/*.HNCO.image.fits'))
+    filelist = sorted(filelist)
+
+    weightfilelist = sorted(glob.glob(f'{basepath}/upload/HNCO_comb_fits/7m_TP_feather_cubes/HNCO_7M_weights/*.hnco43.image.weight.fits'))
+    print(f"Found {len(filelist)} HNCO 7m+TP FITS files")
+    print(f"Found {len(weightfilelist)} HNCO 7m+TP FITS weight files")
+    assert len(weightfilelist) == len(filelist)
+    for xx, yy in zip(filelist, weightfilelist):
+        print(f'Beginning of filenames: {os.path.basename(xx.split(".")[0])}, {os.path.basename(yy.split(".")[0])}')
+        assert os.path.basename(xx.split(".")[0]) == os.path.basename(yy.split(".")[0])
+
+    restfrq = 87.925238e9
+    #cdelt_kms = 0.10409296373
+    cdelt_kms = 0.20818593  # smooth by 2 chans
+    make_giant_mosaic_cube(filelist,
+                           reference_frequency=restfrq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HNCO_7mTP',
+                           nchan=1400,
+                           beam_threshold=25 * u.arcsec,
+                           target_header=f'{basepath}/reduction_ACES/aces/imaging/data/header_7m.hdr',
+                           channelmosaic_directory=f'{basepath}/mosaics/HNCO_7mTP_Channels/',
+                           weightfilelist=weightfilelist,
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic_downsampled9.fits',
+                              overwrite=True
+                              )
 
 
 def main():

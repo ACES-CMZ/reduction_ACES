@@ -306,6 +306,12 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
+    print(f"Dilated mask high-to-low sigma moment 1. dt={time.time() - t0}")
+    mom1 = mdcube_both.moment1(axis=0, **howargs)
+    mom1.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom1.fits", overwrite=True)
+    makepng(data=mom1.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom1.png",
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
+
     print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
     signal_mask_5p0 = cube > noise * 5.0
     signal_mask_5p0 = ndmorph.binary_dilation(daskarr(signal_mask_5p0.include()), structure=np.ones([1, 3, 3]), iterations=1)
@@ -394,6 +400,11 @@ def main():
     else:
         molname = 'CS21'
 
+    print("Relevant environment variables: "
+          f"MOLNAME={os.getenv('MOLNAME')} USE_DASK={os.getenv('USE_DASK')} DOWNSAMPLE={os.getenv('DOWNSAMPLE')} DO_PV={os.getenv('DO_PV')}"
+          f"DASK_CLIENT={os.getenv('DASK_CLIENT')} SLURM_MEM_PER_NODE={os.getenv('SLURM_MEM_PER_NODE')} SLURM_NTASKS_PER_NODE={os.getenv('SLURM_NTASKS_PER_NODE')} SLURM_NTASKS={os.getenv('SLURM_NTASKS')} SLURM_STEP_NUM_TASKS={os.getenv('SLURM_STEP_NUM_TASKS')} SLURM_TASKS_PER_NODE={os.getenv('SLURM_TASKS_PER_NODE')}"
+    )
+
     print(f"giantcube_cuts main parameters: molname{molname} dodask={dodask} dods={dods} do_pv={do_pv}")
 
     cubefilename = f'{cubepath}/{molname}_CubeMosaic.fits'
@@ -401,8 +412,10 @@ def main():
         src_cubefilename = cubefilename
         if os.path.getsize(src_cubefilename) > 3e11:
             # too big for local
+            print("Using local (copying to /red)")
             cubefilename = os.path.join('/red/adamginsburg/ACES/workdir/', os.path.basename(src_cubefilename))
         else:
+            print("Using local (copying to /tmp)")
             cubefilename = os.path.join(os.getenv('TMPDIR'), os.path.basename(src_cubefilename))
         copy_with_progress(src_cubefilename, cubefilename)
 
@@ -440,7 +453,32 @@ def main():
 
         import dask
         threads = os.getenv('DASK_CLIENT') == 'threads'
-        if threads:
+        # dask_does_slurm supercedes threads
+        dask_does_slurm = os.getenv('DASK_CLIENT') == 'slurm'
+
+        from dask.config import set as dask_set
+
+        dask_set({"array.chunk-size": "1GB"})
+
+        if dask_does_slurm:
+            from dask_jobqueue import SLURMCluster
+            from dask.distributed import Client
+            cluster = SLURMCluster(
+                job_extra_directives=['--qos="astronomy-dept-b"'],
+                account="astronomy-dept",
+                cores=16,
+                memory="64 GB"
+            )
+            cluster.scale(jobs=10)  # ask for 10 jobs
+            client = Client(cluster)
+            scheduler = cube.use_dask_scheduler(client, num_workers=nworkers)
+            print("Dask-Slurm")
+            print(f"dashboard: {cluster.dashboard_link}", flush=True)
+            print(f"Using dask scheduler {client} ({'threads' if threads else 'processes'})", flush=True)
+            print(f"Client info: {client.scheduler_info()}", flush=True)
+            print(f"Dask client number of workers: {len(client.scheduler_info()['workers'])}")
+            print(f"Using scheduler {scheduler}", flush=True)
+        elif threads:
             print("Using threaded scheduler (no dask.distributed LocalCluster)")
             scheduler = cube.use_dask_scheduler('threads', num_workers=nworkers)
             dask.config.set(scheduler='threads')

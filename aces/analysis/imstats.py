@@ -401,13 +401,15 @@ def parse_fn(fn):
             }
 
 
-def assemble_stats(globstr, ditch_suffix=None):
+def assemble_stats(globstrs, ditch_suffix=None):
     import glob
     from astropy.utils.console import ProgressBar
 
     allstats = []
 
-    for fn in ProgressBar(glob.glob(globstr)):
+    flist = [x for globstr in globstrs for x in glob.glob(globstr)]
+
+    for fn in ProgressBar(flist):
         if fn.endswith('diff.fits') or fn.endswith('bsens-cleanest.fits'):
             continue
         if fn.count('.fits') > 1:
@@ -510,7 +512,10 @@ def savestats(basepath=basepath,
     if verbose:
         print("Assembling statistics")
     stats = assemble_stats(
-        f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}",
+        globstrs=(f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}",
+                  f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cube.I.manual.{suffix}{filetype}",
+                  f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.manual.{suffix}{filetype}",
+                  ),
         ditch_suffix=f".{suffix[:-1]}")
     with open(f'{basepath}/tables/metadata_{suffix}.json', 'w') as fh:
         json.dump(stats, fh, cls=MyEncoder)
@@ -567,5 +572,6 @@ def savestats(basepath=basepath,
 
 
 def main():
-    return savestats(filetype='')
+    tbl = savestats(filetype='')
     print("Finished with imstats.main()")
+    return tbl

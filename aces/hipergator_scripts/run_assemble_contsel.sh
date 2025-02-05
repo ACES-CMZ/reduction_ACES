@@ -3,13 +3,13 @@
 #SBATCH --mail-user=adamginsburg@ufl.edu     # Where to send mail
 #SBATCH --ntasks=16
 #SBATCH --nodes=1
-#SBATCH --mem=128gb                     # Job memory request
+#SBATCH --mem=64gb                     # Job memory request
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --output=/red/adamginsburg/ACES/logs/imstats_ACES_%j.log
+#SBATCH --output=/red/adamginsburg/ACES/logs/ACES_assemble_contsel_%j.log
 #SBATCH --export=ALL
-#SBATCH --job-name=imstats_ACES
-#SBATCH --qos=astronomy-dept-b
-#SBATCH --account=astronomy-dept
+#SBATCH --job-name=ACES_assemble_contsel
+#SBATCH --qos=adamginsburg-b
+#SBATCH --account=adamginsburg
 pwd; hostname; date
 
 export WORK_DIR="/blue/adamginsburg/adamginsburg/ACES/workdir"
@@ -33,8 +33,8 @@ export PYTHONPATH=$SCRIPT_DIR
 
 echo $LOGFILENAME
 
-export NO_PROGRESSBAR='True'
-export ENVIRON='BATCH'
+#export NO_PROGRESSBAR='True'
+#export ENVIRON='BATCH'
 
 # TODO: get this from ntasks?
 #export DASK_THREADS=8
@@ -42,4 +42,4 @@ export DASK_THREADS=$SLURM_NTASKS
 
 env
 
-/orange/adamginsburg/miniconda3/envs/python310/bin/aces_imstats
+/orange/adamginsburg/miniconda3/envs/python310/bin/python -c "from aces.analysis import continuum_selection_diagnostic_plots; continuum_selection_diagnostic_plots.assemble_new_contsels()"
