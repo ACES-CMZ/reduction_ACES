@@ -1241,7 +1241,7 @@ def make_giant_mosaic_cube_hcop_noTP(**kwargs):
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.manual*image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci29.cube.I.manual*image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
-    filelist = glob.glob('/orange/adamginsburg/ACES/upload//upload/HCOp_feather_images/TM_7M_only_feather/Sgr_A_st_*.7M_12M_feather.SPW_29.image.statcont.contsub.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/HCOp_feather_images/TM_7M_only_feather/Sgr_A_st_*.7M_12M_feather.SPW_29.image.statcont.contsub.fits')
 
     print(f"Found {len(filelist)} HCOP-containing spw29 files")
 

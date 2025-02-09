@@ -116,6 +116,28 @@ def get_prunemask_space_dask(mask, npix=10):
     return da.stack(masks)
 
 
+def get_noedge_mask(cube, iterations=35):
+    """
+    Erode the edges on a channel-by-channel basis
+
+    Empirically, there are ~35ish pixels along the edge of fields with visibily inflated noise
+    """
+    good = cube.mask.include()
+
+    if hasattr(cube, 'rechunk'):
+        ndi = ndmorph
+    else:
+        ndi = ndimage
+
+    struct = ndi.generate_binary_structure(3, 1)
+    # make cubic binary structure, but ignore the spectral dimension
+    struct[0, :, :] = False
+    struct[-1, :, :] = False
+    good = ndi.binary_erosion(good, structure=struct, iterations=iterations)
+
+    return good
+
+
 def get_pruned_mask(cube, noise, threshold1=1.0, threshold2=5.0):
     beam_area_pix = get_beam_area_pix(cube)
 
@@ -153,7 +175,7 @@ def get_beam_area_pix(cube):
     return beam_area_pix
 
 
-def do_pvs(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
+def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/',
            howargs={}):
 
     t0 = time.time()
@@ -195,7 +217,11 @@ def do_pvs(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     # PHANGS-like cuts
     noise = fits.getdata(f"{mompath}/{molname}_CubeMosaic_noisemap.fits")
-    mcube = cube.with_mask(cube > noise * cube.unit)
+    if mask is None:
+        mcube = cube.with_mask(cube > noise * cube.unit)
+    else:
+        mcube = cube.with_mask(mask)
+
 
     print(f"PV mean.  dt={time.time() - t0}")
     pv_mean_masked = mcube.mean(axis=1, **howargs)
@@ -384,6 +410,32 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     del mom0
 
 
+    print(f"Computing no-edge mask. dt={time.time() - t0}")
+    noedge = get_noedge_mask(cube)
+
+    print(f"no-edge max.  dt={time.time() - t0}", flush=True)
+    nemx = cube.with_mask(noedge).max(axis=0, **howargs)
+    print(f"Done computing no-edge max, now writing. dt={time.time() - t0}")
+    nemx.write(f"{mompath}/{molname}_CubeMosaic_edgelessmax.fits", overwrite=True)
+    print(f"Done writing no-edge max, now pnging. dt={time.time() - t0}")
+    makepng(data=nemx.value, wcs=nemx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_edgelessmax.png",
+            stretch='asinh', min_percent=0.1, max_percent=99.9)
+
+    print(f"No-edge Noisemap. dt={time.time() - t0}")
+
+    if hasattr(cube, 'rechunk'):
+        print(f"no-edge madstd (dask).  dt={time.time() - t0}")
+        noise_madstd = cube.with_mask(noedge).mad_std(axis=0)
+    else:
+        print(f"no-edge madstd (numpy).  dt={time.time() - t0}")
+        noise_madstd = cube.with_mask(noedge).mad_std(axis=0, how='ray', progressbar=True)
+    print(f"Done with no-edge madstd. Writing noisemap to {mompath}/{molname}_CubeMosaic_madstd.fits.  dt={time.time() - t0}")
+    noise_madstd.write(f"{mompath}/{molname}_CubeMosaic_edgelessmadstd.fits", overwrite=True)
+    makepng(data=noise_madstd.value, wcs=noise_madstd.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_edgelessmadstd.png",
+            stretch='asinh', min_percent=0.5, max_percent=99.5)
+
+    return signal_mask_both
+
 def main():
     dodask = os.getenv('USE_DASK')
     if dodask and dodask.lower() == 'false':
@@ -499,10 +551,10 @@ def main():
             print(f"Dask client number of workers: {len(client.scheduler_info()['workers'])}")
             print(f"Using scheduler {scheduler}", flush=True)
 
-    do_all_stats(cube, molname=molname, howargs=howargs)
+    signal_mask_both = do_all_stats(cube, molname=molname, howargs=howargs)
 
     if do_pv:
-        do_pvs(cube, molname=molname, howargs=howargs)
+        do_pvs(cube, molname=molname, howargs=howargs, mask=signal_mask_both)
 
     if dods:
         print(f"Downsampling.  dt={time.time() - t0}")
