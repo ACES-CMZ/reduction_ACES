@@ -180,7 +180,7 @@ def feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, MOLECULE
                     except Exception as e:
                         print(f"Feather task failed again with 12M data smoothed to a common beam. Skipping feathering: {e}")
 
-        if OUTPUT_TP_7M_12M.is_dir() and not os.path.isfile(str(OUTPUT_TP_7M_12M)+'.fits'):
+        if OUTPUT_TP_7M_12M.is_dir() and not os.path.isfile(str(OUTPUT_TP_7M_12M) + '.fits'):
             # Export the feathered cubes and the 12m weights to FITS files
             export_fits(
                 imagename=str(OUTPUT_TP_7M_12M),
