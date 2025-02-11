@@ -145,7 +145,7 @@ def prepare_sd_cube(sd_cube, base_sd_name):
     if not os.path.exists(sd_cube_eq_fits):
         exportfits(imagename=sd_cube_eq, fitsimage=sd_cube_eq_fits,
                    dropdeg=True, overwrite=True)
- 
+
     return sd_cube_eq_fits
 
 
