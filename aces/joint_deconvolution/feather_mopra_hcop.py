@@ -144,8 +144,8 @@ def prepare_sd_cube(sd_cube, base_sd_name):
 
     if not os.path.exists(sd_cube_eq_fits):
         exportfits(imagename=sd_cube_eq, fitsimage=sd_cube_eq_fits,
-                  dropdeg=True, overwrite=True)
-        
+                   dropdeg=True, overwrite=True)
+ 
     return sd_cube_eq_fits
 
 
@@ -166,7 +166,7 @@ def prepare_and_feather(obs_dir, obs_id, sd_cube_eq_fits, seven_m_cube, twelve_m
         commonbeam = seven_m_cube.replace('.fits', '.image.commonbeam')
         if not os.path.isdir(commonbeam):
             imsmooth(imagename=seven_m_cube, kernel='commonbeam',
-                   targetres=True, outfile=commonbeam)
+                     targetres=True, outfile=commonbeam)
         if not os.path.isfile(commonbeam + '.fits'):
             exportfits(imagename=commonbeam, fitsimage=commonbeam + '.fits', dropdeg=True)
         seven_m_cube = commonbeam + '.fits'
@@ -189,11 +189,11 @@ def prepare_and_feather(obs_dir, obs_id, sd_cube_eq_fits, seven_m_cube, twelve_m
 
     if not os.path.exists(str(OUTPUT_SD_7M)):
         feather(imagename=str(OUTPUT_SD_7M), highres=seven_m_cube_im,
-               lowres=sd_cube_matched_im, sdfactor=1.0)
+                lowres=sd_cube_matched_im, sdfactor=1.0)
 
     if not os.path.isfile(str(OUTPUT_SD_7M) + '.fits'):
         exportfits(imagename=str(OUTPUT_SD_7M), fitsimage=str(OUTPUT_SD_7M) + '.fits',
-                 dropdeg=True)
+                   dropdeg=True)
 
     # Clean up temporary files from first feathering step
     if cleanup:
@@ -210,7 +210,7 @@ def prepare_and_feather(obs_dir, obs_id, sd_cube_eq_fits, seven_m_cube, twelve_m
             commonbeam = twelve_m_cube.replace('.fits', '.image.commonbeam')
             if not os.path.isdir(commonbeam):
                 imsmooth(imagename=twelve_m_cube, kernel='commonbeam',
-                        targetres=True, outfile=commonbeam)
+                         targetres=True, outfile=commonbeam)
             if not os.path.isfile(commonbeam + '.fits'):
                 exportfits(imagename=commonbeam, fitsimage=commonbeam + '.fits', dropdeg=True)
             twelve_m_cube = commonbeam + '.fits'
@@ -229,11 +229,11 @@ def prepare_and_feather(obs_dir, obs_id, sd_cube_eq_fits, seven_m_cube, twelve_m
 
         if not os.path.exists(str(OUTPUT_ALL)):
             feather(imagename=str(OUTPUT_ALL), highres=twelve_m_cube_im,
-                   lowres=str(OUTPUT_SD_7M), sdfactor=1.0)
+                    lowres=str(OUTPUT_SD_7M), sdfactor=1.0)
 
         if not os.path.isfile(str(OUTPUT_ALL) + '.fits'):
             exportfits(imagename=str(OUTPUT_ALL), fitsimage=str(OUTPUT_ALL) + '.fits',
-                      dropdeg=True)
+                       dropdeg=True)
 
         # Clean up temporary files from second feathering step
         if cleanup:
