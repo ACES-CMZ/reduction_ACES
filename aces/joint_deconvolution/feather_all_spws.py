@@ -21,7 +21,7 @@ def get_file(filename):
     files = glob.glob(filename)
     if len(files) == 0:
         print(f"[INFO] No files matching '{filename}' were found.")
-        return None
+        return
     if len(files) > 1:
         files.sort()
         print(f"[INFO] Too many files matching '{filename}' were found - taking lowest pipeline stage number.")
@@ -218,32 +218,30 @@ def create_feathercubes(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, line_spws, MOLECU
     # Define common parts of the file naming scheme
     generic_name = '.Sgr_A_star_sci.spw'
     prefix = 'member.uid___A001_'
-    regions = ['ap']
 
     # Loop over each SB
     for i in tqdm(range(len(sb_names)), desc='EBs'):
         obs_id = sb_names['Obs ID'][i]
-        if obs_id in regions:
-            obs_dir = ACES_WORKDIR / f'Sgr_A_st_{obs_id}'
-            obs_dir.mkdir(exist_ok=True)
-            tp_mous_id = sb_names['TP MOUS ID'][i]
-            seven_m_mous_id = sb_names['7m MOUS ID'][i]
-            TM_SPW = 'SPW_' + line_spws[MOLECULE]['mol_12m_spw']
+        obs_dir = ACES_WORKDIR / f'Sgr_A_st_{obs_id}'
+        obs_dir.mkdir(exist_ok=True)
+        tp_mous_id = sb_names['TP MOUS ID'][i]
+        seven_m_mous_id = sb_names['7m MOUS ID'][i]
+        TM_SPW = 'SPW_' + line_spws[MOLECULE]['mol_12m_spw']
 
-            seven_m_cube = get_file(
-                f"{ACES_DATA / (prefix + seven_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_7m_spw']}.cube.I.iter1.image.pbcor.statcont.contsub.fits"
+        seven_m_cube = get_file(
+            f"{ACES_DATA / (prefix + seven_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_7m_spw']}.cube.I.iter1.image.pbcor.statcont.contsub.fits"
+        )
+        tp_cube = get_file(
+            f"{ACES_DATA / (prefix + tp_mous_id) / 'product'}/*{generic_name}{line_spws[MOLECULE]['mol_TP_spw']}.cube.I.sd.fits"
+        )
+
+        if process_12M:
+            twelve_m_mous_id = sb_names['12m MOUS ID'][i]
+            twelve_m_cube = get_file(
+                f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.image.pbcor.statcont.contsub.fits"
             )
-            tp_cube = get_file(
-                f"{ACES_DATA / (prefix + tp_mous_id) / 'product'}/*{generic_name}{line_spws[MOLECULE]['mol_TP_spw']}.cube.I.sd.fits"
-            )
 
-            if process_12M:
-                twelve_m_mous_id = sb_names['12m MOUS ID'][i]
-                twelve_m_cube = get_file(
-                    f"{ACES_DATA / (prefix + twelve_m_mous_id) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.image.pbcor.statcont.contsub.fits"
-                )
-
-                feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, TM_SPW)
+            feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, TM_SPW)
 
 
 ###_______________________________________________________________________________________________________________________

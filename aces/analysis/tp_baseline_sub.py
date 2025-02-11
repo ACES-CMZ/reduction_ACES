@@ -5,6 +5,7 @@ import scipy.optimize
 import matplotlib.pyplot as plt
 import spectral_cube
 import astropy.units as u
+from astropy.stats import mad_std
 
 warnings.filterwarnings("ignore", module="spectral_cube")
 
@@ -94,8 +95,7 @@ def auto_select_line_free_ranges_sigma_clip(spectrum_arr, min_range_length=10, s
     while iteration < max_iter and not np.array_equal(mask, previous_mask):
         previous_mask = mask.copy()
         median_val = np.median(spectrum_arr[mask])
-        mad = np.median(np.abs(spectrum_arr[mask] - median_val))
-        sigma = 1.4826 * mad
+        sigma = mad_std(spectrum_arr[mask])
         mask = spectrum_arr < (median_val + sigma_threshold * sigma)
         iteration += 1
 
