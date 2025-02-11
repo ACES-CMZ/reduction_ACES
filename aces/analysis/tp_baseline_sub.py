@@ -150,14 +150,23 @@ def fit_single_sin(t, y, f_guess):
         dict: Contains fit parameters, fit function, and covariance matrix.
     """
     A_guess = (np.max(y) - np.min(y)) / 2.0
-    sinfunc = lambda t_val, A, f, phi: A * np.sin(2 * np.pi * f * t_val + phi)
+
+    def sinfunc(t_val, A, f, phi):
+        return A * np.sin(2 * np.pi * f * t_val + phi)
+
     popt, pcov = scipy.optimize.curve_fit(sinfunc, t, y, p0=[A_guess, f_guess, 0.0], maxfev=10000)
     A, f, phi = popt
 
+    def fitfunc(t_val):
+        return A * np.sin(2 * np.pi * f * t_val + phi)
+
     return {
-        "A": A, "f": f, "phi": phi,
-        "fitfunc": lambda t_val: A * np.sin(2 * np.pi * f * t_val + phi),
-        "popt": popt, "pcov": pcov
+        "A": A,
+        "f": f,
+        "phi": phi,
+        "fitfunc": fitfunc,
+        "popt": popt,
+        "pcov": pcov
     }
 
 
@@ -200,12 +209,17 @@ def iterative_fit_sinusoids(t, y, threshold_frac=0.05, max_iter=20):
         residual -= sine_fit
         fits.append(fit_result)
 
+    def model_func(t_input):
+        return offset + sum(
+            fit["A"] * np.sin(2 * np.pi * fit["f"] * t_input + fit["phi"]) for fit in fits
+        )
+
     return {
         "offset": offset,
         "fits": fits,
         "model": offset + model_sum,
         "residual": residual,
-        "model_func": lambda t_input: offset + sum(fit["A"] * np.sin(2 * np.pi * fit["f"] * t_input + fit["phi"]) for fit in fits)
+        "model_func": model_func
     }
 
 
@@ -274,20 +288,21 @@ def main():
             line_free_data = prepare_line_free_data(data["spectrum"], data["spectral_axis"], masked_ranges)
 
             iter_fit = iterative_fit_sinusoids(line_free_data["spectral_axis"].value,
-                                             line_free_data["spectrum"],
-                                             threshold_frac=0.05,
-                                             max_iter=20)
+                                               line_free_data["spectrum"],
+                                               threshold_frac=0.05,
+                                               max_iter=20)
 
             create_full_spectrum_plots(data["spectrum"].copy(),
-                                     data["spectral_axis"].copy(),
-                                     iter_fit,
-                                     line_free_data["offset_value"],
-                                     file_path.replace(".fits", ""),
-                                     masked_ranges)
+                                       data["spectral_axis"].copy(),
+                                       iter_fit,
+                                       line_free_data["offset_value"],
+                                       file_path.replace(".fits", ""),
+                                       masked_ranges)
 
             print(f"Successfully processed {file_path}")
         except Exception as err:
             print(f"Error processing {file_path}: {err}")
+
 
 if __name__ == "__main__":
     main()
