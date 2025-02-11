@@ -5,6 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 from pathlib import Path
 from astropy.table import Table
+from casatasks import importfits, exportfits, imhead, imreframe, imtrans, feather, imsmooth
 
 
 def check_files_exist(file_names):
@@ -17,7 +18,7 @@ def get_file(filename):
     If multiple files are found, it sorts the files and returns the first one
     (this should not be necessary once we remove duplicate images).
     """
-    files = glob.glob(filename)  
+    files = glob.glob(filename)
     if len(files) == 0:
         print(f"[INFO] No files matching '{filename}' were found.")
         return None
@@ -38,7 +39,7 @@ def import_fits(fitsimage, imagename, overwrite=False):
     if not Path(imagename).exists() or overwrite:
         importfits(fitsimage=fitsimage, imagename=imagename, defaultaxes=True, defaultaxesvalues=['', '', '', 'I'], overwrite=overwrite)
         print(f"[INFO] FITS file imported into {imagename}.")
-    
+
     return imagename
 
 
@@ -99,7 +100,7 @@ def feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, MOLECULE
             if 'perplanebeams' in seven_m_head:
                 if not os.path.isdir(seven_m_cube_im + '.commonbeam'):
                     imsmooth(imagename=seven_m_cube_im, kernel='commonbeam', targetres=True, outfile=seven_m_cube_im + '.commonbeam')
-            
+
             # Import and set observatory for 12m data
             twelve_m_cube_im = import_fits(twelve_m_cube, twelve_m_cube.replace('.fits', '.image'), overwrite=True)
             imhead(imagename=twelve_m_cube_im, mode='put', hdkey='telescope', hdvalue='ALMA')
@@ -107,7 +108,7 @@ def feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, MOLECULE
             if 'perplanebeams' in twelve_m_head:
                 if not os.path.isdir(twelve_m_cube_im + '.commonbeam'):
                     imsmooth(imagename=twelve_m_cube_im, kernel='commonbeam', targetres=True, outfile=twelve_m_cube_im + '.commonbeam')
-            
+
             # Set observatory for TP cube and get frequencies
             imhead(imagename=tp_cube, mode='put', hdkey='telescope', hdvalue='ALMA')
             tp_freq = imhead(tp_cube, mode='get', hdkey='restfreq')

@@ -6,9 +6,8 @@ import pandas as pd
 from pathlib import Path
 from astropy.table import Table
 from astropy.io import fits
-from astropy import units as u
-from radio_beam import Beam
 from spectral_cube import SpectralCube
+from casatasks import importfits, imregrid, exportfits, imhead, imsmooth, feather, imsubimage
 
 
 def get_file(filename):
@@ -24,7 +23,7 @@ def read_table(filename):
     table = Table.read(filename, format='csv')
     lines = table['Line'].tolist()
     line_spws = {}
-    
+
     for line in lines:
         mask = table['Line'] == line
         key = process_string(line)
@@ -59,11 +58,11 @@ def import_sd_fits(fitsimage, imagename):
     """
     if os.path.exists(imagename):
         shutil.rmtree(imagename)
-    
+
     with fits.open(fitsimage) as hdul:
         header = hdul[0].header
         data = hdul[0].data
-        
+
         bunit = header.get('BUNIT', '').upper()
         if 'K' in bunit:
             # Apply main beam efficiency correction
@@ -71,16 +70,16 @@ def import_sd_fits(fitsimage, imagename):
             eta_mb = 0.49  # main beam efficiency
             data = data / eta_mb
             header['COMMENT'] = 'Data converted from Ta to Tmb using eta_mb = 0.49'
-            
+
             temp_fits = fitsimage + '.temp.fits'
             fits.writeto(temp_fits, data, header, overwrite=True)
             fitsimage = temp_fits
-        
+
     importfits(fitsimage=fitsimage, imagename=imagename, overwrite=True)
-    
+
     if fitsimage.endswith('.temp.fits'):
         os.remove(fitsimage)
-    
+
     return imagename
 
 
@@ -137,17 +136,17 @@ def prepare_sd_cube(sd_cube, base_sd_name):
     sd_cube_im = base_sd_name + '.image'
     sd_cube_eq = base_sd_name + '.j2000'
     sd_cube_eq_fits = base_sd_name + '.j2000.fits'
-    
+
     if not os.path.exists(sd_cube_im):
         import_sd_fits(sd_cube, sd_cube_im)
-    
+
     if not os.path.exists(sd_cube_eq):
         imregrid(imagename=sd_cube_im, template='J2000', output=sd_cube_eq)
-    
+
     if not os.path.exists(sd_cube_eq_fits):
-        exportfits(imagename=sd_cube_eq, fitsimage=sd_cube_eq_fits, 
+        exportfits(imagename=sd_cube_eq, fitsimage=sd_cube_eq_fits,
                   dropdeg=True, overwrite=True)
-    
+
     return sd_cube_eq_fits
 
 
@@ -155,24 +154,24 @@ def prepare_and_feather(obs_dir, obs_id, sd_cube_eq_fits, seven_m_cube, twelve_m
     """Prepare and feather data in two steps: First SD+7M, then (SD+7M)+12M."""
     OUTPUT_SD_7M = obs_dir / f'Sgr_A_st_{obs_id}.SD_7M_feather.{MOLECULE}.image.statcont.contsub'
     OUTPUT_ALL = obs_dir / f'Sgr_A_st_{obs_id}.SD_7M_12M_feather.{MOLECULE}.image.statcont.contsub'
-    
+
     if os.path.isfile(str(OUTPUT_ALL) + '.fits'):
         print(f"Final output for region {obs_id} already exists, skipping...")
         return True
 
     print(f"Processing region {obs_id}...")
 
-    # Step 1: SD+7M feathering    
+    # Step 1: SD+7M feathering
     seven_m_head = imhead(seven_m_cube)
     if 'perplanebeams' in seven_m_head:
         commonbeam = seven_m_cube.replace('.fits', '.image.commonbeam')
         if not os.path.isdir(commonbeam):
-            imsmooth(imagename=seven_m_cube, kernel='commonbeam', 
+            imsmooth(imagename=seven_m_cube, kernel='commonbeam',
                    targetres=True, outfile=commonbeam)
         if not os.path.isfile(commonbeam + '.fits'):
             exportfits(imagename=commonbeam, fitsimage=commonbeam + '.fits', dropdeg=True)
         seven_m_cube = commonbeam + '.fits'
-    
+
     sd_cube_matched, seven_m_cube_regridded = match_spectral_coverage_and_resolution(
         sd_cube_eq_fits, seven_m_cube
     )
@@ -183,16 +182,16 @@ def prepare_and_feather(obs_dir, obs_id, sd_cube_eq_fits, seven_m_cube, twelve_m
     )
 
     seven_m_cube_im = import_interferometer_fits(
-        seven_m_cube_regridded, 
+        seven_m_cube_regridded,
         seven_m_cube_regridded.replace('.fits', '.image')
     )
-    
+
     seven_m_cube_im = drop_stokes_axis(seven_m_cube_im)
 
     if not os.path.exists(str(OUTPUT_SD_7M)):
         feather(imagename=str(OUTPUT_SD_7M), highres=seven_m_cube_im,
                lowres=sd_cube_matched_im, sdfactor=1.0)
-        
+
     if not os.path.isfile(str(OUTPUT_SD_7M) + '.fits'):
         exportfits(imagename=str(OUTPUT_SD_7M), fitsimage=str(OUTPUT_SD_7M) + '.fits',
                  dropdeg=True)
@@ -211,7 +210,7 @@ def prepare_and_feather(obs_dir, obs_id, sd_cube_eq_fits, seven_m_cube, twelve_m
         if 'perplanebeams' in twelve_m_head:
             commonbeam = twelve_m_cube.replace('.fits', '.image.commonbeam')
             if not os.path.isdir(commonbeam):
-                imsmooth(imagename=twelve_m_cube, kernel='commonbeam', 
+                imsmooth(imagename=twelve_m_cube, kernel='commonbeam',
                         targetres=True, outfile=commonbeam)
             if not os.path.isfile(commonbeam + '.fits'):
                 exportfits(imagename=commonbeam, fitsimage=commonbeam + '.fits', dropdeg=True)
@@ -221,18 +220,18 @@ def prepare_and_feather(obs_dir, obs_id, sd_cube_eq_fits, seven_m_cube, twelve_m
         _, twelve_m_regridded = match_spectral_coverage_and_resolution(
             str(OUTPUT_SD_7M) + '.fits', twelve_m_cube
         )
-        
+
         twelve_m_cube_im = import_interferometer_fits(
             twelve_m_regridded,
             twelve_m_regridded.replace('.fits', '.image')
         )
-        
+
         twelve_m_cube_im = drop_stokes_axis(twelve_m_cube_im)
 
         if not os.path.exists(str(OUTPUT_ALL)):
             feather(imagename=str(OUTPUT_ALL), highres=twelve_m_cube_im,
                    lowres=str(OUTPUT_SD_7M), sdfactor=1.0)
-            
+
         if not os.path.isfile(str(OUTPUT_ALL) + '.fits'):
             exportfits(imagename=str(OUTPUT_ALL), fitsimage=str(OUTPUT_ALL) + '.fits',
                       dropdeg=True)
@@ -242,7 +241,7 @@ def prepare_and_feather(obs_dir, obs_id, sd_cube_eq_fits, seven_m_cube, twelve_m
             for temp_file in [twelve_m_regridded]:
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
-            
+
     return True
 
 
@@ -251,7 +250,7 @@ def create_feathercubes(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, line_spws, MOLECU
     sd_cube = "CMZ_3mm_HCO.fits"
     generic_name = '.Sgr_A_star_sci.spw'
     prefix = 'member.uid___A001_'
-    
+
     base_sd_name = Path(sd_cube).stem
     sd_cube_eq = prepare_sd_cube(sd_cube, base_sd_name)
 
@@ -259,15 +258,15 @@ def create_feathercubes(ACES_WORKDIR, ACES_DATA, ACES_ROOTDIR, line_spws, MOLECU
         obs_id = row['Obs ID']
         obs_dir = ACES_WORKDIR / f'Sgr_A_st_{obs_id}'
         obs_dir.mkdir(exist_ok=True)
-        
+
         seven_m_cube = get_file(
             f"{ACES_DATA / (prefix + row['7m MOUS ID']) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_7m_spw']}.cube.I.iter1.image.pbcor.statcont.contsub.fits"
         )
-        
+
         twelve_m_cube = get_file(
             f"{ACES_DATA / (prefix + row['12m MOUS ID']) / 'calibrated/working'}/*{generic_name}{line_spws[MOLECULE]['mol_12m_spw']}.cube.I.iter1.image.pbcor.statcont.contsub.fits"
         )
-        
+
         if seven_m_cube and twelve_m_cube:
             prepare_and_feather(obs_dir, obs_id, sd_cube_eq, seven_m_cube, twelve_m_cube, MOLECULE)
 
