@@ -116,7 +116,7 @@ def get_prunemask_space_dask(mask, npix=10):
     return da.stack(masks)
 
 
-def get_noedge_mask(cube, iterations=35):
+def get_noedge_mask(cube, iterations=40):
     """
     Erode the edges on a channel-by-channel basis
 
@@ -216,20 +216,20 @@ def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     # PHANGS-like cuts
-    noise = fits.getdata(f"{mompath}/{molname}_CubeMosaic_noisemap.fits")
     if mask is None:
+        noise = fits.getdata(f"{mompath}/{molname}_CubeMosaic_noisemap.fits")
         mcube = cube.with_mask(cube > noise * cube.unit)
     else:
         mcube = cube.with_mask(mask)
 
 
-    print(f"PV mean.  dt={time.time() - t0}")
+    print(f"PV mean with mas.  dt={time.time() - t0}")
     pv_mean_masked = mcube.mean(axis=1, **howargs)
     pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.fits", overwrite=True)
     makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
-    print(f"PV mean 2.  dt={time.time() - t0}")
+    print(f"PV mean with mask 2.  dt={time.time() - t0}")
     pv_mean_masked = mcube.mean(axis=2, **howargs)
     pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.fits", overwrite=True)
     makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.png",
@@ -434,7 +434,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=noise_madstd.value, wcs=noise_madstd.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_edgelessmadstd.png",
             stretch='asinh', min_percent=0.5, max_percent=99.5)
 
-    return signal_mask_both
+    return BooleanArrayMask(signal_mask_both, cube.wcs)
 
 def main():
     dodask = os.getenv('USE_DASK')
