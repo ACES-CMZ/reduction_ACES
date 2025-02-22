@@ -1030,6 +1030,33 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
         dscube_s.write(outcubename.replace(".fits", "_spectrally.fits"), overwrite=True)
 
 
+def downsample_spectrally(cubename, outcubename, factor=9, overwrite=True,
+                          smooth=True,
+                          use_dask=True, spectrally_too=True):
+    assert outcubename.endswith('.fits')
+    from astropy.convolution import Gaussian1DKernel
+
+    cube = SpectralCube.read(cubename, use_dask=use_dask)
+    if use_dask:
+        import dask.array as da
+        from dask.diagnostics import ProgressBar as DaskProgressBar
+    else:
+        cube.allow_huge_operations = True
+        import contextlib
+        DaskProgressBar = contextlib.nullcontext
+
+    print(f"Downsampling cube {cubename} -> {outcubename}")
+    print(cube)
+    start = 0
+    with DaskProgressBar():
+        # smooth with sigma width half the downsampling
+        kernel = Gaussian1DKernel(factor / 2)
+        dscube = cube.spectral_smooth(kernel)
+
+        dscube_s = dscube.downsample_axis(factor=factor, axis=0)
+        dscube_s.write(outcubename, overwrite=True)
+
+
 def rms_map(img, kernel=Gaussian2DKernel(10)):
     """
     Gaussian2DKernel should be larger than the beam, probably at least 2x larger

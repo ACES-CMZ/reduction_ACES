@@ -707,6 +707,10 @@ def make_giant_mosaic_cube_sio21(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/SiO21_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/SiO21_CubeMosaic_downsampled9.fits',
                               )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/SiO21_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/SiO21_CubeMosaic_spectrally.fits',
+                              factor=2,
+                              )
 
 
 def make_giant_mosaic_cube_hnco(**kwargs):
@@ -744,6 +748,10 @@ def make_giant_mosaic_cube_hnco(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HNCO_CubeMosaic_downsampled9.fits',
+                              )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/HNCO_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HNCO_CubeMosaic_spectrally.fits',
+                              factor=7,
                               )
 
 
@@ -892,6 +900,10 @@ def make_giant_mosaic_cube_hnco_TP7m12m(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_7m12mTP_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HNCO_7m12mTP_CubeMosaic_downsampled9.fits',
                               )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/HNCO_7m12mTP_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HNCO_7m12mTP_CubeMosaic_spectrally.fits',
+                              factor=7,
+                              )
 
 
 def make_giant_mosaic_cube_hcop(**kwargs):
@@ -928,6 +940,10 @@ def make_giant_mosaic_cube_hcop(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HCOP_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HCOP_CubeMosaic_downsampled9.fits',
+                              )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/HCOP_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HCOP_CubeMosaic_spectrally.fits',
+                              factor=7,
                               )
 
 
@@ -967,6 +983,10 @@ def make_giant_mosaic_cube_hnco_TP7m(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic_downsampled9.fits',
                               overwrite=True
+                              )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HNCO_7mTP_CubeMosaic_spectrally.fits',
+                              factor=7,
                               )
 
 
@@ -1070,6 +1090,10 @@ def make_giant_mosaic_cube_h13cn(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/H13CN_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/H13CN_CubeMosaic_downsampled9.fits',
                               )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/H13CN_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/H13CN_CubeMosaic_spectrally.fits',
+                              factor=2,
+                              )
 
 
 def make_giant_mosaic_cube_h13cop(**kwargs):
@@ -1101,6 +1125,10 @@ def make_giant_mosaic_cube_h13cop(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/H13COp_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/H13COp_CubeMosaic_downsampled9.fits',
+                              )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/H13COp_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/H13COp_CubeMosaic_spectrally.fits',
+                              factor=2,
                               )
 
 
@@ -1134,6 +1162,10 @@ def make_giant_mosaic_cube_hn13c(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HN13C_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HN13C_CubeMosaic_downsampled9.fits',
+                              )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/HN13C_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HN13C_CubeMosaic_spectrally.fits',
+                              factor=2,
                               )
 
 
@@ -1169,6 +1201,10 @@ def make_giant_mosaic_cube_so21(**kwargs):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/SO21_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/SO21_CubeMosaic_downsampled9.fits',
                               )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/SO21_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/SO21_CubeMosaic_spectrally.fits',
+                              factor=2,
+                              )
 
 
 def make_giant_mosaic_cube_hc15n(**kwargs):
@@ -1200,6 +1236,10 @@ def make_giant_mosaic_cube_hc15n(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HC15N_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HC15N_CubeMosaic_downsampled9.fits',
+                              )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/HC15N_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HC15N_CubeMosaic_spectrally.fits',
+                              factor=2,
                               )
 
 
@@ -1241,7 +1281,7 @@ def make_giant_mosaic_cube_hcop_noTP(**kwargs):
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.manual*image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci29.cube.I.manual*image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
-    filelist = glob.glob('/orange/adamginsburg/ACES/upload/HCOp_feather_images/TM_7M_only_feather/Sgr_A_st_*.7M_12M_feather.SPW_29.image.statcont.contsub.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/HCOp_feather_images/MOPRA_12M_7M_featherTM_7M_only_feather/Sgr_A_st_*.7M_12M_feather.SPW_29.image.statcont.contsub.fits')
 
     print(f"Found {len(filelist)} HCOP-containing spw29 files")
 
@@ -1269,4 +1309,49 @@ def make_giant_mosaic_cube_hcop_noTP(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/HCOP_noTP_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/HCOP_noTP_CubeMosaic_downsampled9.fits',
+                              )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/HCOP_noTP_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HCOP_noTP_CubeMosaic_spectrally.fits',
+                              factor=7,
+                              )
+                              
+
+def make_giant_mosaic_cube_hcop_mopra(**kwargs):
+
+    #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.iter1.image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci29.cube.I.manual*image.pbcor.statcont.contsub.fits')
+    #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/HCOp_feather_images/MOPRA_12M_7M_feather/Sgr_A_st_*.SD_7M_12M_feather.hco*.image.statcont.contsub.fits')
+
+    print(f"Found {len(filelist)} HCOP-containing spw29 files (MOPRA)")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=29) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfrq = 89.188526e9
+    cdelt_kms = 0.5401059211273
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfrq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='HCOP_mopra',
+                           nchan=550,
+                           beam_threshold=3.3 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/HCOP_Channels/',
+                           fail_if_cube_dropped=False,
+                           #use_reproject_cube=True,
+                           parallel=os.getenv('SLURM_NTASKS'),
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/HCOP_mopra_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HCOP_mopra_CubeMosaic_downsampled9.fits',
+                              )
+        downsample_spectrally(f'{basepath}/mosaics/cubes/HCOP_mopra_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/HCOP_mopra_CubeMosaic_spectrally.fits',
+                              factor=3,
                               )

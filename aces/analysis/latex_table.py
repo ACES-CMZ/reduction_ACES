@@ -488,7 +488,7 @@ def make_spw_table():
     latexdict['tabletype'] = 'table*'
     latexdict['tablefoot'] = (
         "}\\par\n"
-        "ACES Spectral Configuration, including a non-exhaustive lists of prominent, "
+        "ACES Spectral Configuration, including a non-exhaustive list of prominent, "
         "potentially continuum-affecting, lines.  The included lines are those that are, "
         "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection})."
     )

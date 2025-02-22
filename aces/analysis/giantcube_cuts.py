@@ -215,24 +215,25 @@ def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/
     makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
-    # PHANGS-like cuts
     if mask is None:
+        print("Loading noise map & calculating mask")
         noise = fits.getdata(f"{mompath}/{molname}_CubeMosaic_noisemap.fits")
         mcube = cube.with_mask(cube > noise * cube.unit)
     else:
+        print("Using provided mask")
         mcube = cube.with_mask(mask)
 
 
-    print(f"PV mean with mas.  dt={time.time() - t0}")
+    print(f"PV mean with mask.  dt={time.time() - t0}")
     pv_mean_masked = mcube.mean(axis=1, **howargs)
     pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.fits", overwrite=True)
-    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.png",
+    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     print(f"PV mean with mask 2.  dt={time.time() - t0}")
     pv_mean_masked = mcube.mean(axis=2, **howargs)
     pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.fits", overwrite=True)
-    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.png",
+    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     # 2.5 sigma cut
@@ -242,13 +243,13 @@ def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/
     print(f"PV mean.  dt={time.time() - t0}")
     pv_mean_masked = mdcube_2p5.mean(axis=1, **howargs)
     pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_mean_masked_2p5.fits", overwrite=True)
-    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean_masked_2p5.png",
+    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_pv_mean_masked_2p5.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     print(f"PV mean 2.  dt={time.time() - t0}")
     pv_mean_masked = mdcube_2p5.mean(axis=2, **howargs)
     pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.fits", overwrite=True)
-    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.png",
+    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
 
@@ -477,6 +478,8 @@ def main():
         t0 = time.time()
 
         cube = SpectralCube.read(cubefilename)
+        if cube.shape[0] > 500 and 'H40a' not in cubefilename:
+            cube = SpectralCube.read(cubefilename.replace(".fits", "_spectrally.fits"))
 
         howargs = {'how': 'slice', 'progressbar': True}
         print(f"Non-Dask: how are we computing? {howargs}")
@@ -500,6 +503,8 @@ def main():
         print(f"Memory limit: {memory_limit}")
 
         cube = SpectralCube.read(cubefilename, use_dask=True)
+        if cube.shape[0] > 500 and 'H40a' not in cubefilename:
+            cube = SpectralCube.read(cubefilename.replace(".fits", "_spectrally.fits"), use_dask=True)
 
         t0 = time.time()
 
