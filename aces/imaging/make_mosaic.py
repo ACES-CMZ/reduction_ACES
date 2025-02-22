@@ -1047,7 +1047,6 @@ def downsample_spectrally(cubename, outcubename, factor=9, overwrite=True,
 
     print(f"Downsampling cube {cubename} -> {outcubename}")
     print(cube)
-    start = 0
     with DaskProgressBar():
         # smooth with sigma width half the downsampling
         kernel = Gaussian1DKernel(factor / 2)

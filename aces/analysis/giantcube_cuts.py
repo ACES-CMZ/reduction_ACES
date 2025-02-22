@@ -223,7 +223,6 @@ def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/
         print("Using provided mask")
         mcube = cube.with_mask(mask)
 
-
     print(f"PV mean with mask.  dt={time.time() - t0}")
     pv_mean_masked = mcube.mean(axis=1, **howargs)
     pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.fits", overwrite=True)
@@ -410,7 +409,6 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
             stretch='asinh', vmin=-0.1, max_percent=99.5)
     del mom0
 
-
     print(f"Computing no-edge mask. dt={time.time() - t0}")
     noedge = get_noedge_mask(cube)
 
@@ -436,6 +434,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
             stretch='asinh', min_percent=0.5, max_percent=99.5)
 
     return BooleanArrayMask(signal_mask_both, cube.wcs)
+
 
 def main():
     dodask = os.getenv('USE_DASK')

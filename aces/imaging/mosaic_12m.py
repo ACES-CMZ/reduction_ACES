@@ -16,7 +16,8 @@ from aces.imaging.make_mosaic import (read_as_2d, get_peak,
                                       get_m0,
                                       make_downsampled_cube,
                                       make_giant_mosaic_cube,
-                                      rms
+                                      rms,
+                                      downsample_spectrally
                                       )
 from aces.imaging.make_mosaic import make_mosaic as make_mosaic_, all_lines as all_lines_
 # import os
@@ -1314,7 +1315,7 @@ def make_giant_mosaic_cube_hcop_noTP(**kwargs):
                               f'{basepath}/mosaics/cubes/HCOP_noTP_CubeMosaic_spectrally.fits',
                               factor=7,
                               )
-                              
+
 
 def make_giant_mosaic_cube_hcop_mopra(**kwargs):
 
