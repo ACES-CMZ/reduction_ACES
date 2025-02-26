@@ -490,10 +490,11 @@ def make_spw_table():
         "}\\par\n"
         "ACES Spectral Configuration, including a non-exhaustive list of prominent, "
         "potentially continuum-affecting, lines.  The included lines are those that are, "
-        "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection})."
+        "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection}).  "
+        "The rest frequencies of the targeted lines are given in GHz in the row below their names."
     )
 
-    ftbl.write(f"{basepath}/papers/continuum_data/spectral_setup.tex", formats=formats,
+    ftbl.write(f"{basepath}/papers/continuum_data/tables/spectral_setup.tex", formats=formats,
                overwrite=True, latexdict=latexdict)
 
     return ftbl

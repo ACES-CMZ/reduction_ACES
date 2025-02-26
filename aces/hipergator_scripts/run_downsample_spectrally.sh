@@ -28,7 +28,7 @@ for MOLNAME in HNCO_7m12mTP HCOP_noTP HC15N SO21 H13CN HN13C H13COp HCOP SiO21; 
                --cpus-per-task=1 \
                --mem=256gb --time=96:00:00 \
                --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},USE_LOCAL=${USE_LOCAL},DASK_CLIENT=${DASK_CLIENT},DOWNSAMPLE=${DOWNSAMPLE},DO_PV=${DO_PV} \
-               --wrap '/red/adamginsburg/miniconda3/envs/python312/bin/python -c "from aces.analysis import downsample_spectrally; downsample_spectrally.main()"'
+               --wrap '/red/adamginsburg/miniconda3/envs/python312/bin/python -c "from aces.analysis import downsample_all_spectrally; downsample_all_spectrally.main()"'
     else
         echo "${MOLNAME}_CubeMosaic.fits does not exist"
         ls -lh ${MOLNAME}*fits
