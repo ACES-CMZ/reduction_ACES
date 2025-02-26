@@ -39,7 +39,7 @@ def main():
         numcores = int(os.getenv('SLURM_NTASKS')) * int(os.getenv('SLURM_JOB_CPUS_PER_NODE'))
     else:
         numcores = 1
-    
+
     print(f"Using Dask: {use_dask}")
     print(f"Number of cores: {numcores}")
     print(f"molnames: {molnames}")
