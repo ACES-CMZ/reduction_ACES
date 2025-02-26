@@ -1,4 +1,5 @@
 import os
+import shutil
 from aces.imaging.make_mosaic import downsample_spectrally
 from aces import conf
 
@@ -18,6 +19,7 @@ dsfactor_dict = {
     #"CS21": 1,
     #"HC3N": 1,
     "HCOP": 7,
+    "HCOP_mopra": 3,
     "SiO21": 2,
     #"SO32": 1,
 }
