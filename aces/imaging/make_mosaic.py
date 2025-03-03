@@ -1051,7 +1051,7 @@ def downsample_spectrally(cubename, outcubename, factor=9, overwrite=True,
         import dask.array as da
         from dask.diagnostics import ProgressBar as DaskProgressBar
 
-        scheduler = cube.use_dask_scheduler('threads', num_workers=num_cores)
+        cube.use_dask_scheduler('threads', num_workers=num_cores)
 
         with DaskProgressBar():
             # smooth with sigma width half the downsampling
