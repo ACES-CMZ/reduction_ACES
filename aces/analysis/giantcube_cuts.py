@@ -459,7 +459,10 @@ def main():
 
     print(f"giantcube_cuts main parameters: molname{molname} dodask={dodask} dods={dods} do_pv={do_pv}")
 
-    cubefilename = f'{cubepath}/{molname}_CubeMosaic.fits'
+    cubefilename = f'{cubepath}/{molname}_CubeMosaic_spectrally.fits'
+    if not os.path.exists(cubefilename):
+        cubefilename = f'{cubepath}/{molname}_CubeMosaic.fits'
+    print(f"Using cube {cubefilename}")
     if os.getenv("USE_LOCAL"):
         src_cubefilename = cubefilename
         if os.path.getsize(src_cubefilename) > 3e11:

@@ -35,12 +35,13 @@ else
 fi
 
 #for MOLNAME in SO21 H13CN HN13C H40a CH3CHO NSplus; do # H13COp CS21 HC3N HCOP SiO21 HNCO_7m12mTP; do
-for MOLNAME in HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H13CN HN13C H13COp CS21 HC3N HCOP SiO21 SO32; do
+#for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H13CN HN13C H13COp CS21 HC3N HCOP SiO21 SO32; do
+for MOLNAME in HCOP_mopra; do
 
     if [[ $MOLNAME == *"HNCO"* ]]; then
         export mem=512
-    elif [[ $MOLNAME == *"HCOP"* ]]; then
-        export mem=512
+    #elif [[ $MOLNAME == *"HCOP"* ]]; then
+    #    export mem=512
     else
         export mem=256
     fi
@@ -59,7 +60,7 @@ for MOLNAME in HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H13CN HN13C 
         #/red/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/analysis/giantcube_cuts.py || exit 1
         sbatch --job-name=aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT} \
                --output=/red/adamginsburg/ACES/logs/aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT}_%j.log \
-               --account=astronomy-dept --qos=astronomy-dept-b --ntasks=32 --nodes=1 \
+               --account=astronomy-dept --qos=astronomy-dept --ntasks=32 --nodes=1 \
                --mem=${mem}gb --time=96:00:00 \
                --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},USE_LOCAL=${USE_LOCAL},DASK_CLIENT=${DASK_CLIENT},DOWNSAMPLE=${DOWNSAMPLE},DO_PV=${DO_PV} \
                --wrap /red/adamginsburg/miniconda3/envs/python312/bin/aces_giantcube_analysis
