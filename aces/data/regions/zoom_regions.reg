@@ -2,7 +2,7 @@
 global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1
 galactic
 box(0.096993759, 0.024355304, 504.8203", 358.8801", 0) # color=#2EE6D6 width=2 text={North Arches} font="helvetica 10 normal roman"
-box(0.163727690, -0.070544532, 326.2236", 284.0760", 0) # color=#2EE6D6 width=2 text={Pistol Quintuplet} font="helvetica 10 normal roman"
+box(0.163727690, -0.070544532, 326.2236", 284.0760", 0) # color=#2EE6D6 width=2 text={Pistol Sickle Quintuplet} font="helvetica 10 normal roman"
 box(0.514917217, -0.052354790, 498.0334", 412.1990", 0) # color=#2EE6D6 width=2 text={Sgr B1} font="helvetica 10 normal roman"
 box(359.442350761, -0.096457228, 208.4775", 166.0009", 0) # color=#2EE6D6 width=2 text={Sgr C} font="helvetica 10 normal roman"
 box(359.974945550, -0.078751871, 98.2085", 82.4607", 0) # color=#2EE6D6 width=2 text={Sgr A East} font="helvetica 10 normal roman"
@@ -13,7 +13,7 @@ box(359.611683297, -0.239006506, 131.4033", 107.9750", 0) # color=#2EE6D6 width=
 box(0.254526363, 0.019530785, 393.3003", 297.6328", 0) # color=#2EE6D6 width=2 text={Brick} font="helvetica 10 normal roman"
 box(0.375781645, 0.017482982, 451.7147", 390.1172", 0) # color=#2EE6D6 width=2 text={Dust Ridge C} font="helvetica 10 normal roman"
 box(0.675977373, -0.045253042, 660.7727", 696.2378", 0) # color=#2EE6D6 width=2 text={Sgr B2} font="helvetica 10 normal roman"
-box(0.815018274, -0.190889216, 382.5156", 396.7885", 0) # color=#2EE6D6 width=2 text={Nonhebel Bubble} font="helvetica 10 normal roman"
+box(0.815018274, -0.190889216, 382.5156", 396.7885", 0) # color=#2EE6D6 width=2 text={M0.8 Ring} font="helvetica 10 normal roman"
 box(359.944870512, -0.046021049, 178.8130", 162.1015", 0) # color=#2EE6D6 width=2 text={Sgr A*} font="helvetica 10 normal roman"
-box(0.063474920, -0.079908407, 370.9951", 342.5856", 0) # color=#2EE6D6 width=2 text={TLP} font="helvetica 10 normal roman"
+box(0.063474920, -0.079908407, 370.9951", 342.5856", 0) # color=#2EE6D6 width=2 text={South Dust Ridge} font="helvetica 10 normal roman"
 box(359.632471104, -0.054839112, 279.0820", 269.0550", 0) # color=#2EE6D6 width=2 text={G359.63} font="helvetica 10 normal roman"

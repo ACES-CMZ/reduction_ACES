@@ -228,6 +228,7 @@ def make_observation_table(access_token=None):
     metadata['Observation Start Time'].format = 'fits'
     metadata['Observation End Time'] = Time(metadata['t_max'], format='mjd')
     metadata['Observation End Time'].format = 'fits'
+    metadata = metadata[metadata['target_name'] == 'Sgr_A_star']
 
     sub_meta = metadata['schedblock_name', 'Observation Start Time',
                         'Observation End Time', 'pwv', 't_exptime',
@@ -279,26 +280,34 @@ def make_observation_table(access_token=None):
                 path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/working/{xidstr}.ms'
                 try:
                     tbl = Table.read(path + "/ASDM_CALWVR")
-                    these_pwvs.append(np.median(tbl['water']) * 1000)
+                    med_pwv = np.median(tbl['water'])
+                    if np.isnan(med_pwv):
+                        raise ValueError("WTF?")
+                    these_pwvs.append(med_pwv * 1000)
                 except ValueError:
                     lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
                     tbl = lltbl.as_astropy_table(include_columns=['water'])
-                    these_pwvs.append(np.median(tbl['water']) * 1000)
+                    med_pwv = np.median(tbl['water'])
+                    if np.isnan(med_pwv):
+                        raise ValueError("WTF?")
+                    these_pwvs.append(med_pwv * 1000)
                 except IOError as ex:
                     if 'TP' not in sbname:
                         path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/{xidstr}.ms'
                         if os.path.exists(path):
                             lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
                             tbl = lltbl.as_astropy_table(include_columns=['water'])
-                            these_pwvs.append(np.median(tbl['water']) * 1000)
+                            med_pwv = np.median(tbl['water'])
+                            if np.isnan(med_pwv):
+                                raise ValueError("WTF?")
+                            these_pwvs.append(med_pwv * 1000)
                         else:
                             these_pwvs.append(np.nan)
-                            if 'TM1' in sbname:
-                                print(sbname, mous, xid, ex)
+                            print("No CALWVR table found for ", sbname, mous, xid, ex)
+                    print(f"Skipped TP {path}")
                 except Exception as ex:
                     these_pwvs.append(np.nan)
-                    if 'TM1' in sbname:
-                        print(sbname, mous, xid, ex)
+                    print("Unknown exception for ", sbname, mous, xid, ex)
             pwv_measurements[sbname] = these_pwvs
         pwvs.append(fr"\makecell{{{',\\\\ '.join(map(pwvfmt, these_pwvs))}}}".replace('nan', '-'))
     with open(pwv_cache_fn, 'w') as fh:
@@ -376,9 +385,11 @@ def make_observation_table(access_token=None):
     usub_meta['Time'].unit = u.min
     usub_meta['PWV'].unit = u.mm
 
+    colnames_noconfig = colnames[:2] + colnames[3:]
+
     usub_meta[colnames][tm].write(f'{basepath}/tables/observation_metadata_12m.ecsv', format='ascii.ecsv', overwrite=True)
-    usub_meta[colnames][sm].write(f'{basepath}/tables/observation_metadata_7m.ecsv', format='ascii.ecsv', overwrite=True)
-    usub_meta[colnames][tp].write(f'{basepath}/tables/observation_metadata_TP.ecsv', format='ascii.ecsv', overwrite=True)
+    usub_meta[colnames_noconfig][sm].write(f'{basepath}/tables/observation_metadata_7m.ecsv', format='ascii.ecsv', overwrite=True)
+    usub_meta[colnames_noconfig][tp].write(f'{basepath}/tables/observation_metadata_TP.ecsv', format='ascii.ecsv', overwrite=True)
 
     usub_meta['Execution Dates'] = [fr'\makecell{{{",\\\\ ".join([x for x in ed.split(", ")])}.}}' for ed in usub_meta['Execution Dates']]
 
@@ -477,12 +488,13 @@ def make_spw_table():
     latexdict['tabletype'] = 'table*'
     latexdict['tablefoot'] = (
         "}\\par\n"
-        "ACES Spectral Configuration, including a non-exhaustive lists of prominent, "
+        "ACES Spectral Configuration, including a non-exhaustive list of prominent, "
         "potentially continuum-affecting, lines.  The included lines are those that are, "
-        "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection})."
+        "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection}).  "
+        "The rest frequencies of the targeted lines are given in GHz in the row below their names."
     )
 
-    ftbl.write(f"{basepath}/papers/continuum_data/spectral_setup.tex", formats=formats,
+    ftbl.write(f"{basepath}/papers/continuum_data/tables/spectral_setup.tex", formats=formats,
                overwrite=True, latexdict=latexdict)
 
     return ftbl
