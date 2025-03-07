@@ -1282,7 +1282,7 @@ def make_giant_mosaic_cube_hcop_noTP(**kwargs):
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.manual*image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci29.cube.I.manual*image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
-    filelist = glob.glob('/orange/adamginsburg/ACES/upload/HCOp_feather_images/MOPRA_12M_7M_featherTM_7M_only_feather/Sgr_A_st_*.7M_12M_feather.SPW_29.image.statcont.contsub.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/HCOp_feather_images/TM_7M_only_feather/Sgr_A_st_*.7M_12M_feather.SPW_29.image.statcont.contsub.fits')
 
     print(f"Found {len(filelist)} HCOP-containing spw29 files")
 
@@ -1334,13 +1334,13 @@ def make_giant_mosaic_cube_hcop_mopra(**kwargs):
         assert os.path.exists(fn)
 
     restfrq = 89.188526e9
-    cdelt_kms = 0.5401059211273
+    cdelt_kms = 1.81607449832
     make_giant_mosaic_cube(filelist,
                            weightfilelist=weightfilelist,
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
                            cubename='HCOP_mopra',
-                           nchan=550,
+                           nchan=165,
                            beam_threshold=3.3 * u.arcsec,
                            channelmosaic_directory=f'{basepath}/mosaics/HCOP_Channels/',
                            fail_if_cube_dropped=False,
