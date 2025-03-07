@@ -48,7 +48,7 @@ def main():
 
     for molname in molnames:
         print(molname)
-        target_path = '/red/adamginsburg/workdir/mosaics/'
+        target_path = '/red/adamginsburg/ACES/workdir/'
         cubename = f"{basepath}/mosaics/cubes/{molname}_CubeMosaic.fits"
         outname = f"{target_path}/mosaics/cubes/{molname}_CubeMosaic_spectrally.fits"
         downsample_spectrally(cubename,

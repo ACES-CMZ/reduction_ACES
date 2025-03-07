@@ -481,7 +481,11 @@ def main():
 
         cube = SpectralCube.read(cubefilename)
         if cube.shape[0] > 500 and 'H40a' not in cubefilename:
-            cube = SpectralCube.read(cubefilename.replace(".fits", "_spectrally.fits"))
+            if os.path.exists(cubefilename.replace(".fits", "_spectrally.fits")):
+                cubefilename = cubefilename.replace(".fits", "_spectrally.fits")
+            else:
+                print("WARNING: huge cube is being used b/c no spectrally downsampled exists")
+            cube = SpectralCube.read(cubefilename)
 
         howargs = {'how': 'slice', 'progressbar': True}
         print(f"Non-Dask: how are we computing? {howargs}")
@@ -506,7 +510,11 @@ def main():
 
         cube = SpectralCube.read(cubefilename, use_dask=True)
         if cube.shape[0] > 500 and 'H40a' not in cubefilename:
-            cube = SpectralCube.read(cubefilename.replace(".fits", "_spectrally.fits"), use_dask=True)
+            if os.path.exists(cubefilename.replace(".fits", "_spectrally.fits")):
+                cubefilename = cubefilename.replace(".fits", "_spectrally.fits")
+            else:
+                print("WARNING: huge cube is being used b/c no spectrally downsampled exists")
+            cube = SpectralCube.read(cubefilename, use_dask=True)
 
         t0 = time.time()
 
