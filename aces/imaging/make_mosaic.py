@@ -1037,7 +1037,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
 def downsample_spectrally(cubename, outcubename, factor=9, overwrite=True,
                           smooth=True, num_cores=1,
                           verbose=True,
-                          use_dask=True, spectrally_too=True):
+                          use_dask=True):
     assert outcubename.endswith('.fits')
     from astropy.convolution import Gaussian1DKernel
 
