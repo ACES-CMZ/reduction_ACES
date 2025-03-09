@@ -228,7 +228,7 @@
         "nchan": -1,
         "start": "",
         "width": "",
-        "cyclefactor": 2.5,
+        "cyclefactor": 3.0,
         "phasecenter": "ICRS 17:45:12.176 -28.54.51.587",
         "specmode": "cube",
         "gridder": "mosaic",
