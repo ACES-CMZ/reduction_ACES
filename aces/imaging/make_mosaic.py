@@ -933,6 +933,7 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
         pbar = tqdm(channels, desc='Channels')
     else:
         pbar = channels
+    status = {'filled': [], 'skipped': []}
     for chan in pbar:
         chanfn = f'{channelmosaic_directory}/{cubename}_CubeMosaic_channel{chan}.fits'
         if os.path.exists(chanfn):
@@ -942,10 +943,13 @@ def combine_channels_into_mosaic_cube(header, cubename, nchan, channels,
             if verbose:
                 pbar.set_description('Channels (flushing)')
             hdu.flush()
+            status['filled'].append(chan)
         else:
             pbar.set_description("Channels (skip)")
+            status['skipped'].append(chan)
 
     if verbose:
+        print(f"Status of filling: {status}")
         print(f"Moving {output_working_file} to {output_file}")
     shutil.move(output_working_file, output_file)
     assert os.path.exists(output_file), f"Failed to move {output_working_file} to {output_file}"
@@ -1028,6 +1032,40 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
         dscube_s = dscube.downsample_axis(factor=factor, axis=0)
         assert outcubename.endswith('.fits')
         dscube_s.write(outcubename.replace(".fits", "_spectrally.fits"), overwrite=True)
+
+
+def downsample_spectrally(cubename, outcubename, factor=9, overwrite=True,
+                          smooth=True, num_cores=1,
+                          verbose=True,
+                          use_dask=True, spectrally_too=True):
+    assert outcubename.endswith('.fits')
+    from astropy.convolution import Gaussian1DKernel
+
+    cube = SpectralCube.read(cubename, use_dask=use_dask)
+
+    kernel = Gaussian1DKernel(factor / 2)
+    print(f"Downsampling cube {cubename} -> {outcubename}")
+    print(cube)
+
+    if use_dask:
+        import dask.array as da
+        from dask.diagnostics import ProgressBar as DaskProgressBar
+
+        cube.use_dask_scheduler('threads', num_workers=num_cores)
+
+        with DaskProgressBar():
+            # smooth with sigma width half the downsampling
+            dscube = cube.spectral_smooth(kernel)
+
+            dscube_s = dscube.downsample_axis(factor=factor, axis=0)
+            dscube_s.write(outcubename, overwrite=True)
+    else:
+        cube.allow_huge_operations = True
+
+        dscube = cube.spectral_smooth(kernel, use_memmap=True, num_cores=num_cores, verbose=verbose)
+        print("Done smoothing, now downsampling")
+        dscube_s = dscube.downsample_axis(factor=factor, axis=0)
+        dscube_s.write(outcubename, overwrite=True)
 
 
 def rms_map(img, kernel=Gaussian2DKernel(10)):
