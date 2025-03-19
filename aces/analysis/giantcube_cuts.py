@@ -175,6 +175,25 @@ def get_beam_area_pix(cube):
     return beam_area_pix
 
 
+def velocity_mask(cube):
+    """
+    Make a PV-based velocity mask showing the most inclusive range w/o introducing too much overlap
+    """
+    ell = cube.world[0, 0, :]
+    l1, v1 = 0.9, -100
+    l2, v2 = -0.6, -200
+    vmin = (ell - l2) * (v1 - v2)/(l1 - l2) + v2
+    l1, v1 = 0.9, 200
+    l2, v2 = -0.6, 100
+    vmax = (ell - l2) * (v1 - v2)/(l1 - l2) + v2
+
+    mask = (cube.spectral_axis > vmin) & (cube.spectral_axis < vmax)
+
+    # is a 2D mask already, with 0 <-> vel and last axis <-> \ell.  Need to broadcast along b
+    return mask[:, None, :]
+
+
+
 def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/',
            howargs={}):
 
@@ -313,7 +332,8 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     print(f"Pruned mask. dt={time.time() - t0}")
-    signal_mask_both = get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
+    signal_mask_both = (get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
+                        & get_noedge_mask(cube))
     print(f"Done creating pruned mask. dt={time.time() - t0}")
     if hasattr(signal_mask_both, 'compute'):
         dafits.write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits",
