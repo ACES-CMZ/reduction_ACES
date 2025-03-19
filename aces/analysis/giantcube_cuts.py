@@ -179,15 +179,16 @@ def velocity_mask(cube):
     """
     Make a PV-based velocity mask showing the most inclusive range w/o introducing too much overlap
     """
-    ell = cube.world[0, 0, :]
-    l1, v1 = 0.9, -100
-    l2, v2 = -0.6, -200
+    _, _, ell = cube.world[0, 0, :]
+    ell[ell > 180*u.deg] -= 360*u.deg
+    l1, v1 = 0.9*u.deg, -100*u.km/u.s
+    l2, v2 = -0.6*u.deg, -200*u.km/u.s
     vmin = (ell - l2) * (v1 - v2)/(l1 - l2) + v2
-    l1, v1 = 0.9, 200
-    l2, v2 = -0.6, 100
+    l1, v1 = 0.9*u.deg, 200*u.km/u.s
+    l2, v2 = -0.6*u.deg, 100*u.km/u.s
     vmax = (ell - l2) * (v1 - v2)/(l1 - l2) + v2
 
-    mask = (cube.spectral_axis > vmin) & (cube.spectral_axis < vmax)
+    mask = (cube.spectral_axis[:, None] > vmin[None, :]) & (cube.spectral_axis[:, None] < vmax[None, :])
 
     # is a 2D mask already, with 0 <-> vel and last axis <-> \ell.  Need to broadcast along b
     return mask[:, None, :]
@@ -290,7 +291,11 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
             print(cube, flush=True)
         print("Dask graph:\n", cube._data.max().__dask_graph__(), flush=True)
 
-    print(f"Howargs: {howargs}")
+    print(f"Howargs: {howargs}.  Using vmask.")
+
+    vmask = velocity_mask(cube)
+    cube = cube.with_mask(vmask)
+
     print(f"max.  dt={time.time() - t0}", flush=True)
     mx = cube.max(axis=0, **howargs)
     print(f"Done computing max, now writing. dt={time.time() - t0}")
