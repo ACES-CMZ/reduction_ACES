@@ -18,12 +18,12 @@ diag_dir = f'{basepath}/diagnostic_plots/'
 import radio_beam
 
 
-def plot_fullwidth_figure(fn, data=None,
+def plot_fullwidth_figure(fn, imgdata=None,
                           name='Aggregate',
                           label=r"$S_\nu$ [mJy/beam]", figsize=(14, 4), dpi=250, scalebar=True, beam=True,
                           subset_label=False):
     fig = pl.figure(figsize=figsize, dpi=dpi)
-    if data is None:
+    if imgdata is None:
         imgdata = fits.open(fn)[0].data
         imgdata[imgdata == 0] = np.nan
     ww = WCS(fits.open(fn)[0].header)
@@ -46,7 +46,10 @@ def plot_fullwidth_figure(fn, data=None,
     if subset_label:
         ax.text(0.99, 0.93, {'aggregate': 'Aggregate',
                              'low': 'spw 25+27',
-                             'high': 'spw 33+35'}[name],
+                             'high': 'spw 33+35',
+                             'spw25_27': 'spw 25+27',
+                             'spw33_35': 'spw 33+35',
+                             }[name],
                 transform=ax.transAxes,
                 horizontalalignment='right')
     
@@ -62,9 +65,13 @@ def plot_fullwidth_figure(fn, data=None,
     if beam:
         beam = radio_beam.Beam.from_fits_header(fn)
         pixscale = (ww.proj_plane_pixel_area()**0.5).to(u.arcsec)
-        ellipse_artist = beam.ellipse_to_plot(20, 20, pixscale)
+        ellipse_artist = beam.ellipse_to_plot(50, 50, pixscale)
+        ellipse_artist.set_facecolor('b')
+        ellipse_artist.set_edgecolor('b')
+        ellipse_artist.set_linewidth(0.25)
+        ellipse_artist.set_fill(True)
         ax.add_artist(ellipse_artist)
-        rectangle_artist = pl.Rectangle((20, 20,), 50, 50, edgecolor='k', facecolor='none', lw=1)
+        rectangle_artist = pl.Rectangle((20, 20,), 60, 60, edgecolor='k', facecolor='none', lw=0.25)
         ax.add_artist(rectangle_artist)
     
     return fig
@@ -102,5 +109,5 @@ if __name__ == '__main__':
             snmap = map / rmsmap
             snmap[rmsmap == 0] = np.nan
             snmap[snmap == 0] = np.nan
-            fig = plot_fullwidth_figure(fn, data=snmap, name=name, label="S/N Ratio", subset_label=True)
+            fig = plot_fullwidth_figure(fn, imgdata=snmap, name=name, label="S/N Ratio", subset_label=True)
             fig.savefig(f'{diag_dir}/SignalToNoise_map_{name}_{cmname}.png', bbox_inches='tight')
