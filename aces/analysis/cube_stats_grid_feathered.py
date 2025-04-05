@@ -159,7 +159,10 @@ def main(num_workers=None):
 
     cache_stats_file = open(tbldir / "feathered_cube_stats.txt", 'w')
 
-    for fullpath in glob.glob(f"{basepath}/upload/Feather_12m_7m_TP/SPW*/cubes/*"):
+    filelists = (glob.glob(f"{basepath}/upload/Feather_12m_7m_TP/SPW*/cubes/*fits") +
+                 glob.glob(f"{basepath}/MOPRA_12M_7M_feather/*fits"))
+
+    for fullpath in filelists:
         fn = fullpath
         basename = os.path.basename(fullpath)
         field = basename[9:11]
