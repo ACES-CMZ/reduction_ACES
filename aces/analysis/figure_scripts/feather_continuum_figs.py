@@ -2,7 +2,6 @@ from astropy.wcs import WCS
 from astropy.io import fits
 from astropy import units as u
 from astropy.visualization import simple_norm
-from astropy.visualization import simple_norm
 from astropy.coordinates import SkyCoord
 import matplotlib.colors as mcolors
 import numpy as np
@@ -11,7 +10,7 @@ import mpl_plot_templates.inset_plots
 from radio_beam import Beam
 import regions
 
-from aces.analysis.figure_scripts.figure_configuration import mymap, mymap2, pl, distance, distance
+from aces.analysis.figure_scripts.figure_configuration import mymap, mymap2, pl, distance
 
 import PIL
 import pyavm
@@ -35,11 +34,11 @@ if __name__ == '__main__':
 
     mustangfeatheredfn = f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits'
     rslt = fits.open(mustangfeatheredfn)[0]
-    norm = simple_norm(rslt.data[:,:], vmin=0.0001, vmax=1.5, stretch='log')
-    colordata = mymap(norm(rslt.data[:,:]))
+    norm = simple_norm(rslt.data[:, :], vmin=0.0001, vmax=1.5, stretch='log')
+    colordata = mymap(norm(rslt.data[:, :]))
 
     # flip the Y-axis
-    ct = (colordata[::-1,:,:3] * 256)
+    ct = (colordata[::-1, :, :3] * 256)
     ct[ct > 255] = 255
     img = PIL.Image.fromarray(ct.astype('uint8'))
     img.save(f'{basepath}/mosaics/continuum/MUSTANG_12m_feather_noaxes.png')
@@ -84,7 +83,7 @@ if __name__ == '__main__':
             text_y = yr + height + 0.1  # Slightly above the rectangle
             va = 'bottom'
         ax.text(text_x, text_y, name, ha='center', va=va, color=rect.get_edgecolor(), fontsize=8)
-        
+
         ax.coords[0].set_major_formatter('d.dd')
         ax.coords[1].set_major_formatter('d.dd')
         ax.coords[0].set_ticks(spacing=0.25*u.deg)
@@ -102,4 +101,3 @@ if __name__ == '__main__':
     cb.set_ticks([0.001, 0.01, 0.05, 0.1, 0.2, 0.4, 0.8, 1.4])
 
     fig.savefig(f'{basepath}/mosaics/continuum/MUSTANG_12m_feather_afmhot.png', bbox_inches='tight', dpi=300)
-
