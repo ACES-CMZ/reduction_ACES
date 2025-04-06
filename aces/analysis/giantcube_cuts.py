@@ -180,19 +180,18 @@ def velocity_mask(cube, vmin_pos=-120*u.km/u.s, vmin_neg=-220*u.km/u.s, vmax_pos
     Make a PV-based velocity mask showing the most inclusive range w/o introducing too much overlap
     """
     _, _, ell = cube.world[0, 0, :]
-    ell[ell > 180*u.deg] -= 360*u.deg
-    l1, v1 = 0.9*u.deg, vmin_pos
-    l2, v2 = -0.6*u.deg, vmin_neg
+    ell[ell > 180 * u.deg] -= 360 * u.deg
+    l1, v1 = 0.9 * u.deg, vmin_pos
+    l2, v2 = -0.6 * u.deg, vmin_neg
     vmin = (ell - l2) * (v1 - v2)/(l1 - l2) + v2
-    l1, v1 = 0.9*u.deg, vmax_pos
-    l2, v2 = -0.6*u.deg, vmax_neg
+    l1, v1 = 0.9 * u.deg, vmax_pos
+    l2, v2 = -0.6 * u.deg, vmax_neg
     vmax = (ell - l2) * (v1 - v2)/(l1 - l2) + v2
 
     mask = (cube.spectral_axis[:, None] > vmin[None, :]) & (cube.spectral_axis[:, None] < vmax[None, :])
 
     # is a 2D mask already, with 0 <-> vel and last axis <-> \ell.  Need to broadcast along b
     return mask[:, None, :]
-
 
 
 def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/',
@@ -294,13 +293,13 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     print(f"Howargs: {howargs}.  Using vmask.")
 
     if molname in ('H13CO+', 'HC15N'):
-        vmask = velocity_mask(cube, vmin_pos=0*u.km/u.s, vmin_neg=-100*u.km/u.s)
+        vmask = velocity_mask(cube, vmin_pos=0 * u.km/u.s, vmin_neg=-100 * u.km/u.s)
     elif molname in ('SO21', ):
-        vmask = velocity_mask(cube, vmax_pos=100*u.km/u.s, vmax_neg=0*u.km/u.s)
+        vmask = velocity_mask(cube, vmax_pos=100 * u.km/u.s, vmax_neg=0 * u.km/u.s)
     elif molname in ('CH3CHO',):
-        vmask = velocity_mask(cube, vmax_pos=300*u.km/u.s, vmax_neg=200*u.km/u.s)
+        vmask = velocity_mask(cube, vmax_pos=300 * u.km/u.s, vmax_neg=200 * u.km/u.s)
     elif molname in ('CS21', 'CS'):
-        vmask = velocity_mask(cube, vmax_pos=300*u.km/u.s, vmax_neg=200*u.km/u.s, vmin_pos=-200*u.km/u.s, vmin_neg=-300*u.km/u.s)
+        vmask = velocity_mask(cube, vmax_pos=300 * u.km/u.s, vmax_neg=200 * u.km/u.s, vmin_pos=-200 * u.km/u.s, vmin_neg=-300 * u.km/u.s)
     else:
         vmask = velocity_mask(cube)
     cube = cube.with_mask(vmask)
