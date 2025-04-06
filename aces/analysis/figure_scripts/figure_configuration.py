@@ -5,6 +5,8 @@ import pylab as pl
 pl.rcParams['figure.facecolor'] = 'w'
 pl.rcParams['figure.figsize'] = (10,8)
 pl.rcParams['font.size'] = 16
+pl.rcParams['xtick.direction'] = 'in'
+pl.rcParams['ytick.direction'] = 'in'
 
 
 

@@ -21,6 +21,10 @@ import radio_beam
 def plot_fullwidth_figure(fn, imgdata=None,
                           name='Aggregate',
                           label=r"$S_\nu$ [mJy/beam]", figsize=(14, 4), dpi=250, scalebar=True, beam=True,
+                          colormap=mymap,
+                          normkwargs={'vmin': -0.5, 'vmax': 20, 'stretch': 'asinh'},
+                          scale=1e3,
+                          scalebar_color='k',
                           subset_label=False):
     fig = pl.figure(figsize=figsize, dpi=dpi)
     if imgdata is None:
@@ -32,7 +36,7 @@ def plot_fullwidth_figure(fn, imgdata=None,
     #          cmap='gray_r')
     #im2 = ax.imshow(imgdata, norm=simple_norm(imgdata, min_cut=0.0006, max_percent=99.9, stretch='log'),
     #          cmap='inferno')
-    im = ax.imshow(imgdata*1e3, norm=simple_norm(imgdata*1e3, vmin=-0.5, vmax=20, stretch='asinh'),
+    im = ax.imshow(imgdata*scale, norm=simple_norm(imgdata*scale, **normkwargs),
                 cmap=colormap)
     cb = pl.colorbar(mappable=im, pad=0.01);
     cb.set_label(label)
@@ -58,9 +62,11 @@ def plot_fullwidth_figure(fn, imgdata=None,
     ax.coords[0].set_ticks(spacing=0.25*u.deg)
     
     if scalebar:
-        mpl_plot_templates.inset_plots.make_scalebar(ax, left_side=SkyCoord(0.5*u.deg, -0.28*u.deg, frame='galactic'),
-                                                        length=(25*u.pc/distance).to(u.arcsec, u.dimensionless_angles()),
-                                                        color='k', label='25 pc')
+        mpl_plot_templates.inset_plots.make_scalebar(ax, 
+                                                     left_side=SkyCoord(0.5*u.deg, -0.28*u.deg, frame='galactic'),
+                                                     length=(25*u.pc/distance).to(u.arcsec, u.dimensionless_angles()),
+                                                     color=scalebar_color,
+                                                     label='25 pc')
         
     if beam:
         beam = radio_beam.Beam.from_fits_header(fn)
@@ -85,7 +91,7 @@ if __name__ == '__main__':
                             f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_mosaic.fits',
                             ),
                             ('aggregate', 'high', 'low')) :
-            fig = plot_fullwidth_figure(fn, name=name)
+            fig = plot_fullwidth_figure(fn, name=name, colormap=colormap)
             fig.savefig(f'{diag_dir}/FullField12m_circularbeam_{name}_{cmname}.png', bbox_inches='tight', dpi=250)
 
         for fn, name in (
@@ -94,7 +100,7 @@ if __name__ == '__main__':
             ('/orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw33_35_maskedrms_mosaic.fits', 'spw33_35'),
             ('/orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_maskedrms_mosaic.fits', 'spw25_27'),
         ):
-            fig = plot_fullwidth_figure(fn, name=name, label="RMS [mJy beam$^{-1}$]", subset_label=True)
+            fig = plot_fullwidth_figure(fn, name=name, label="RMS [mJy beam$^{-1}$]", subset_label=True, colormap=colormap)
             fig.savefig(f'{diag_dir}/RMS_map_{name}_{cmname}.png', bbox_inches='tight', dpi=250)
 
         for rmsfn, fn, name in (
@@ -109,5 +115,5 @@ if __name__ == '__main__':
             snmap = map / rmsmap
             snmap[rmsmap == 0] = np.nan
             snmap[snmap == 0] = np.nan
-            fig = plot_fullwidth_figure(fn, imgdata=snmap, name=name, label="S/N Ratio", subset_label=True)
+            fig = plot_fullwidth_figure(fn, imgdata=snmap, name=name, label="S/N Ratio", subset_label=True, colormap=colormap)
             fig.savefig(f'{diag_dir}/SignalToNoise_map_{name}_{cmname}.png', bbox_inches='tight')
