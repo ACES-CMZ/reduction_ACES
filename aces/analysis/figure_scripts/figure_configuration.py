@@ -20,3 +20,7 @@ colors_stack2 = np.vstack((colors1, colors2b))
 mymap2 = mcolors.LinearSegmentedColormap.from_list('my_afmcolormap', colors_stack2)
 
 distance = 8.1*u.kpc
+
+# mymap_gray is just the lower half of my_colormap
+colors_gray = np.vstack((colors1, [colors1[-1]]*128))
+mymap_gray = mcolors.LinearSegmentedColormap.from_list('my_colormap_gry', colors_gray)
