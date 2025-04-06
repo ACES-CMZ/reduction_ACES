@@ -61,8 +61,7 @@ if __name__ == '__main__':
 
     fig.savefig(f'{basepath}/mosaics/continuum/MUSTANG_12m_feather.png', bbox_inches='tight', dpi=300)
 
-
-
+    # zoomreg overlay
     zoomregs = regions.Regions.read(f'{basepath}/reduction_ACES/aces/data/regions/zoom_regions.reg')
 
     ax = fig.gca()
@@ -92,9 +91,7 @@ if __name__ == '__main__':
 
     fig.savefig(f'{basepath}/mosaics/continuum/MUSTANG_12m_feather_zoomregions.png', bbox_inches='tight', dpi=300)
 
-
-
-
+    # afmhot
     fig = plot_fullwidth_figure(mustangfeatheredfn, scale=1, normkwargs={'vmin': 0.0001, 'vmax': 1.5, 'stretch': 'log'},
                                 colormap=mymap2,
                                 label=r"$T_B$ [K]", figsize=(14, 4), dpi=250, scalebar=True, beam=True,
