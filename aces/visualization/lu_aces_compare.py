@@ -14,11 +14,12 @@ from aces.visualization.figure_configuration import mymap, mymap2, distance
 
 from aces import conf
 
+
 def main():
     """
     Main function to execute the comparisons
     """
-    pl.rcParams['figure.fontsize'] = 14
+    pl.rcParams['font.size'] = 14
 
     # Calculate effective frequency as in the notebook
     nueff = (86.71 * 0.9375 + 88.29 * 0.9375 + 98.10 * 1.875 + 100 * 1.875) / (1.875 * 2 + 0.9375 * 2)
@@ -39,7 +40,7 @@ def main():
         figsize=(9, 10),
         **common_kwargs
     )
-    
+
     # Save the figure
     pl.savefig('20kmsCloud_comparison.pdf', bbox_inches='tight')
 
@@ -51,7 +52,7 @@ def main():
         figsize=(12, 10),
         **common_kwargs
     )
-    
+
     # Save the figure
     pl.savefig('CloudE_comparison.pdf', bbox_inches='tight')
 
@@ -63,9 +64,10 @@ def main():
         figsize=(12, 10),
         **common_kwargs
     )
-    
+
     # Save the figure
     pl.savefig('SgrC_comparison.pdf', bbox_inches='tight')
+
 
 if __name__ == "__main__":
     main()
