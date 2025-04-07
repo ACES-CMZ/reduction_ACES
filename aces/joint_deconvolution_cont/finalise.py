@@ -9,15 +9,15 @@ from astropy.coordinates import SkyCoord
 from astropy.nddata import Cutout2D
 import astropy.units as u
 import gc
-import os 
+import os
 
 # defining the path of the FITS file to be opened and processed
 file = './../data/feathered/cont_12mtp.fits'
 
-# opening the FITS file and extracting the first Header Data Unit (HDU) 
+# opening the FITS file and extracting the first Header Data Unit (HDU)
 hdu_12mtp = fits.open(file)[0]
 
-# removing the singleton dimensions of the data 
+# removing the singleton dimensions of the data
 hdu_12mtp.data = np.squeeze(hdu_12mtp.data)
 
 # removing some specific header entries
