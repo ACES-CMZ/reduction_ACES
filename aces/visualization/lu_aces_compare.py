@@ -9,8 +9,8 @@ import pylab as pl
 from astropy import units as u
 from aces.visualization import compare_to_other
 
-from aces.analysis.figure_scripts import figure_configuration
-from aces.analysis.figure_scripts.figure_configuration import mymap, mymap2, distance
+from aces.visualization import figure_configuration
+from aces.visualization.figure_configuration import mymap, mymap2, distance
 
 from aces import conf
 
