@@ -21,6 +21,7 @@ from image_registration import chi2_shift
 from aces import conf
 basepath = conf.basepath
 
+
 def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
     """
     Feather ACES continuum data with MUSTANG data.
@@ -64,7 +65,7 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
 
     # Path to MUSTANG data
     fn = f"{TENS_DIR}/{mustang_name}"
-    mustang_plus_planck_fn = f"{TENS_DIR}/{mustang_name.replace('.fits','')}_PlanckCombined.fits"
+    mustang_plus_planck_fn = f"{TENS_DIR}/{mustang_name.replace('.fits', '')}_PlanckCombined.fits"
 
     # Open MUSTANG data and prepare WCS
     fh = fits.open(fn)
@@ -218,6 +219,7 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
         pass  # all is good
 
     return rslt
+
 
 if __name__ == "__main__":
     print("Running feather_aces_with_mustang...")
