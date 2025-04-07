@@ -221,5 +221,5 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
 
 if __name__ == "__main__":
     print("Running feather_aces_with_mustang...")
-    rslt = feather_aces_with_mustang(use_cached=False)
+    rslt = feather_aces_with_mustang(use_cached=False, niter=30)
     print(rslt)
