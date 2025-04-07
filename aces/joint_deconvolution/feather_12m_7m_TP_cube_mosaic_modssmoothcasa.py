@@ -8,25 +8,24 @@ from pathlib import Path
 from astropy.io import fits
 from reproject import reproject_interp
 from reproject.mosaicking import find_optimal_celestial_wcs
-from casatasks import imhead, exportfits, imtrans, feather, imreframe, importfits, imregrid, rmtables, imsmooth, rmtables, imrebin
+from casatasks import imhead, exportfits, imtrans, feather, imreframe, importfits, imregrid, rmtables, imsmooth, imrebin
 from tqdm.auto import tqdm
+from spectral_cube import SpectralCube
 import astropy.units as u
-import gc 
-import warnings
+import gc
 from astropy.convolution import Gaussian2DKernel
 from radio_beam import Beam
-from astropy import units as u
 warnings.filterwarnings('ignore')
 
 
 def create_fake_hdus(hdus, j):
     '''
     Function to create fake HDUs (Header Data Units) for use in reprojecting.
-    
+
     Inputs:
     - hdus: a list of HDU objects
     - j: an index to select a particular plane of data in each HDU
-    
+
     Outputs:
     - a list of fake HDU objects
     '''
@@ -48,12 +47,12 @@ def get_largest_bmaj_bmin(files):
     Function to find the largest BMAJ and BMIN from a list of HDUs.
 
     Inputs:
-    - files: 
+    - files:
 
     Outputs:
     - a tuple containing the largest BMAJ and BMIN values
     """
-    
+
     hdu_list = [fits.open(file)[0] for file in files]
 
     # Initialize largest values
@@ -92,11 +91,11 @@ def smooth_hdus_spectral_cube(files, largest_bmaj, largest_bmin):
     - None, but creates smoothed images in the same directory as the input images
     """
     # Convert the largest_bmaj and largest_bmin to degrees
-    largest_bmaj_deg = largest_bmaj *1.1
-    largest_bmin_deg = largest_bmin *1.1
+    largest_bmaj_deg = largest_bmaj * 1.1
+    largest_bmin_deg = largest_bmin * 1.1
 
     # Create a beam object for the desired resolution
-    target_beam = Beam(major=largest_bmaj_deg*u.deg, minor=largest_bmaj_deg*u.deg, pa=0*u.deg)
+    target_beam = Beam(major=largest_bmaj_deg * u.deg, minor=largest_bmaj_deg * u.deg, pa=0 * u.deg)
 
     hdu_list = [fits.open(file)[0] for file in files]
 
@@ -107,7 +106,7 @@ def smooth_hdus_spectral_cube(files, largest_bmaj, largest_bmin):
 
         # Load the spectral cube
         cube = SpectralCube.read(hdu)
-        cube.allow_huge_operations=True
+        cube.allow_huge_operations = True
 
         # Convolve the cube to the target resolution
         cube = cube.convolve_to(target_beam)
@@ -116,13 +115,13 @@ def smooth_hdus_spectral_cube(files, largest_bmaj, largest_bmin):
         tqdm.write('INFO Smoothed to largest beam.')
 
         outfile = files[i].replace('.fits', '.smoothed.fits')
-        tqdm.write('INFO Save smoothed files: %s '% outfile)
+        tqdm.write('INFO Save smoothed files: %s ' % outfile)
         cube.write(outfile, overwrite=True)
 
         del cube
         gc.collect()
 
-    return()
+    return ()
 
 
 def smooth_hdus_casa(files, largest_bmaj, largest_bmin):
@@ -142,7 +141,7 @@ def smooth_hdus_casa(files, largest_bmaj, largest_bmin):
     largest_bmin_deg = largest_bmin * 1.1
 
     # Loop over HDU file names
-    for file in tqdm(files, desc = 'Smoothing', position=1, leave=True):
+    for file in tqdm(files, desc='Smoothing', position=1, leave=True):
 
         # Convert FITS to CASA Image
         casa_image = file.replace('.fits', '.image')
@@ -150,9 +149,9 @@ def smooth_hdus_casa(files, largest_bmaj, largest_bmin):
 
         # Smooth the CASA Image
         smoothed_image = casa_image + ".smoothed"
-        imsmooth(imagename=casa_image, kernel='gauss', 
-                major=str(largest_bmaj_deg)+'deg', minor=str(largest_bmaj_deg)+'deg', 
-                pa='0deg', targetres=True, outfile=smoothed_image, overwrite=True)
+        imsmooth(imagename=casa_image, kernel='gauss',
+                 major=str(largest_bmaj_deg) + 'deg', minor=str(largest_bmaj_deg) + 'deg',
+                 pa='0deg', targetres=True, outfile=smoothed_image, overwrite=True)
 
         # Convert smoothed CASA Image back to FITS
         outfile = file.replace('.fits', '.smoothed.fits')
@@ -164,7 +163,7 @@ def smooth_hdus_casa(files, largest_bmaj, largest_bmin):
         rmtables([casa_image, smoothed_image])
 
         tqdm.write('INFO Smoothed to largest beam.')
-        tqdm.write('INFO Saved smoothed file: %s '% outfile)
+        tqdm.write('INFO Saved smoothed file: %s ' % outfile)
 
     return
 
@@ -175,7 +174,7 @@ def rebin_hdus_casa(files, factor=3, overwrite=True):
     """
 
     # Loop over HDU file names
-    for file in tqdm(files, desc = 'Rebinning', position=1, leave=True):
+    for file in tqdm(files, desc='Rebinning', position=1, leave=True):
 
         input_image = file.replace('.fits', '.image')
         regrid_image = file.replace('.fits', '.rebin.image')
@@ -187,8 +186,8 @@ def rebin_hdus_casa(files, factor=3, overwrite=True):
         # Import the .fits files into CASA images
         importfits(fitsimage=file, imagename=input_image, overwrite=overwrite)
 
-        # Rebin the image by some factor 
-        imrebin(imagename=input_image, outfile=regrid_image, factor=[factor,factor,1], overwrite=True)
+        # Rebin the image by some factor
+        imrebin(imagename=input_image, outfile=regrid_image, factor=[factor, factor, 1], overwrite=True)
 
         # Export the regridded image to a .fits file
         exportfits(imagename=regrid_image, fitsimage=output_fits, overwrite=overwrite, velocity=True)
@@ -230,5 +229,4 @@ def create_smoothed_regridded_mosaics(ACES_WORKDIR, MOLECULE):
     rebin_hdus_casa(TP_7M_12M_cube_files_smooth)
     rebin_hdus_casa(TWELVE_M_weight_files)
 
-    return()
-
+    return ()

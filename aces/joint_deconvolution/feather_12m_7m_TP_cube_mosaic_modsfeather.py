@@ -11,16 +11,15 @@ from reproject.mosaicking import find_optimal_celestial_wcs
 from casatasks import imhead, exportfits, imtrans, feather, imreframe
 from astropy.table import Table
 from tqdm.auto import tqdm
-import glob 
 
 
 def check_files_exist(file_names):
     '''
     Function to check if all files in a list exist.
-    
+
     Inputs:
     - file_names: a list of file paths as strings
-    
+
     Outputs:
     - a boolean value indicating whether all files exist (True) or not (False)
     '''
@@ -31,19 +30,19 @@ def check_files_exist(file_names):
 def get_file(filename):
     '''
     Function to find a file matching a given filename.
-    
+
     Input:
     - filename: a string representing the name of the file to find
-    
+
     Output:
     - the path to the last file that matches the filename, or None if no such file is found
     '''
     # print("[INFO] Getting file that matches the filename.")
     files = glob.glob(filename)
-    if len(files)==0:
+    if len(files) == 0:
         print(f"[INFO] No files matching '{filename}' were found.")
         return None
-    if len(files)>1:
+    if len(files) > 1:
         files.sort()
         print(f"[INFO] Too many files matching '{filename}' were found - taking highest s number.")
 
@@ -53,11 +52,11 @@ def get_file(filename):
 def export_fits(imagename, fitsimage, overwrite=True):
     '''
     Function to export an image to a FITS file if it doesn't already exist.
-    
+
     Inputs:
     - imagename: a string representing the name of the image to export
     - fitsimage: a string representing the name of the FITS file to which to export the image
-    
+
     Outputs:
     - None, but a FITS file is created or overwritten if it already exists
     '''
@@ -70,10 +69,10 @@ def export_fits(imagename, fitsimage, overwrite=True):
 def process_string(input_string):
     '''
     Function to process a string - remove spaces and convert to lowercase.
-    
+
     Input:
     - input_string: a string to be processed
-    
+
     Output:
     - a string with all spaces removed and all characters converted to lowercase
     '''
@@ -109,7 +108,7 @@ def read_table(filename):
 def feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt, MOLECULE):
     """
     A function to process ALMA observation data.
-    
+
     Args:
     - obs_dir (str): directory of the observation
     - obs_id (str): identifier of the observation
@@ -118,7 +117,7 @@ def feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, twelve_m
     - twelve_m_cube (str): path to the 12m cube
     - twelve_m_wt (str): path to the 12m weight
     - MOLECULE (str): molecule under study
-    
+
     Returns:
     None
     """
@@ -193,7 +192,7 @@ def feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, twelve_m
         fitsimage=str(obs_dir / f'Sgr_A_st_{obs_id}.12M.{MOLECULE}.image.weight.fits')
     )
 
-    return()
+    return ()
 
 
 def create_feathercubes(ACES_WORKDIR, ACES_DATA, line_spws, MOLECULE):
@@ -209,7 +208,7 @@ def create_feathercubes(ACES_WORKDIR, ACES_DATA, line_spws, MOLECULE):
     Outputs:
     - None. However, the function creates and saves observation cubes in the specified directory.
     """
-    
+
     # Load the SB information
     sb_names = pd.read_csv('../../tables/aces_SB_uids.csv')
 
@@ -218,14 +217,14 @@ def create_feathercubes(ACES_WORKDIR, ACES_DATA, line_spws, MOLECULE):
     prefix = 'member.uid___A001_'
 
     # Loop over each single-beam observation (EB = Element Block)
-    for i in tqdm(range(len(sb_names)), desc = 'EBs'):
+    for i in tqdm(range(len(sb_names)), desc='EBs'):
 
         # Extract the observation ID
         obs_id = sb_names['Obs ID'][i]
-        
+
         # Create the directory for the current observation if it doesn't exist
         obs_dir = ACES_WORKDIR / f'Sgr_A_st_{obs_id}'
-        obs_dir.mkdir(exist_ok=True) 
+        obs_dir.mkdir(exist_ok=True)
 
         # Extract the MOUS IDs (Member of the Observing Unit Set) for different types of observation
         tp_mous_id = sb_names['TP MOUS ID'][i]
@@ -241,6 +240,4 @@ def create_feathercubes(ACES_WORKDIR, ACES_DATA, line_spws, MOLECULE):
         # Perform the feathering process to merge different types of observations into a single observation cube
         feathercubes(obs_dir, obs_id, tp_cube, seven_m_cube, twelve_m_cube, twelve_m_wt, MOLECULE)
 
-    return()
-
-        
+    return ()
