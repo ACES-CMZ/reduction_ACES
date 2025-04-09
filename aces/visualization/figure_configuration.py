@@ -23,7 +23,10 @@ mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 colors_stack2 = np.vstack((colors1, colors2b))
 mymap2 = mcolors.LinearSegmentedColormap.from_list('my_afmcolormap', colors_stack2)
 
-distance = 8.1*u.kpc
+# from Gravity paper?
+# https://ui.adsabs.harvard.edu/abs/2019A%26A...625L..10G/abstract says 8.178
+# https://ui.adsabs.harvard.edu/abs/2021A%26A...647A..59G/abstract 8.275
+distance = 8.275*u.kpc
 
 # mymap_gray is just the lower half of my_colormap
 colors_gray = np.vstack((colors1, [colors1[-1]]*128))
