@@ -21,14 +21,15 @@ basepath = conf.basepath
 def format_ax(ax, label="", cb=True, hidey=False, hidex=False):
     ax.coords[0].set_axislabel("Right Ascension")
     ax.coords[1].set_axislabel("Declination")
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.05)
-    cax.set_xticks([])
-    cax.set_xlabel("")
-    cax.set_xticklabels([])
     im = ax.images[0]
 
     if cb:
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        cax.set_xticks([])
+        cax.set_xlabel("")
+        cax.set_xticklabels([])
+
         cb = pl.colorbar(im, cax=cax)
         cax.coords[0].set_axislabel('')
         cax.coords[0].set_ticklabel_visible(False)

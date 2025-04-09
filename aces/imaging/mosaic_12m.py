@@ -166,10 +166,12 @@ def check_files(filelist, funcname=None):
         assert os.path.exists(fn
             .replace("image.pbcor.statcont.contsub.fits", "pb")
             .replace("image.pbcor", "pb")
+            .replace("image.tt0.pbcor", "pb.tt0")
         ), f"No pb found for {fn}"
         assert os.path.exists(fn
             .replace("image.pbcor.statcont.contsub.fits", "weight")
             .replace("image.pbcor", "weight")
+            .replace("image.tt0.pbcor", "weight.tt0")
         ), f"No weight found for {fn}"
 
 
@@ -226,7 +228,7 @@ def reimaged(header):
     logprint("12m continuum reimaged (glob is *.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor)")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
-    
+
     # special-case field am
     am_index = [ii for ii, x in enumerate(filelist) if 'uid___A001_X15a0_X184' in x][0]
     #filelist[am_index] = f'{basepath}/mosaics/field_am/12m_field_am_mosaic.fits'
@@ -1367,7 +1369,10 @@ def make_giant_mosaic_cube_hcop_mopra(**kwargs):
                               )
 
 
-def mosaic_field_am_pieces():
+def mosaic_field_am_pieces(header=None):
+    """
+    header is a dummy kwarg
+    """
     path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/'
 
     basefn = 'Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.{uplo}.{suffix}.fits'
@@ -1379,3 +1384,11 @@ def mosaic_field_am_pieces():
     print(radio_beam.Beam.from_fits_header('/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic.fits'))
     os.link('/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic.fits',
             f'{path}/{basefn.format(uplo="lower_plus_upper", suffix="image.tt0.pbcor.fits")}')
+
+    # assume the weight & pb from the original merged data are the same as the post-facto mosaics
+    # (uplo=weight is  a bit of a hack)
+    # this is all a hack to make the filename matching work; there are other ways to do this
+    os.link(f'{path}/{basefn.format(uplo="weight", suffix="tt0.fits")}',
+            f'{path}/{basefn.format(uplo="lower_plus_upper", suffix="weight.tt0.pbcor.fits")}')
+    os.link(f'{path}/{basefn.format(uplo="pb", suffix="tt0.fits")}',
+            f'{path}/{basefn.format(uplo="lower_plus_upper", suffix="pb.tt0.pbcor.fits")}')
