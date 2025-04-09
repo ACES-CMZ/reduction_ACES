@@ -97,9 +97,9 @@ def main():
 
     header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
 
-    funcs = ((residuals, reimaged, reimaged_high, continuum, rms_, manual_alpha)
+    funcs = ((mosaic_field_am_pieces, residuals, reimaged, reimaged_high, continuum, rms_, manual_alpha)
              if options.contonly else
-             (residuals, reimaged, reimaged_high, continuum, rms_, manual_alpha, cs21, hcop, hnco, h40a))
+             (mosaic_field_am_pieces, residuals, reimaged, reimaged_high, continuum, rms_, manual_alpha, cs21, hcop, hnco, h40a))
 
     if not options.skip_cont:
         processes = []
@@ -226,6 +226,12 @@ def reimaged(header):
     logprint("12m continuum reimaged (glob is *.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor)")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
+    
+    # special-case field am
+    am_index = [ii for ii, x in enumerate(filelist) if 'uid___A001_X15a0_X184' in x][0]
+    #filelist[am_index] = f'{basepath}/mosaics/field_am/12m_field_am_mosaic.fits'
+    filelist[am_index] = '/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits'
+
     tt1filelist = [x.replace("tt0", "tt1") for x in filelist]
 
     check_files(filelist, funcname='reimaged')
@@ -368,7 +374,10 @@ def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', '
                     )
 
 
-def manual_alpha():
+def manual_alpha(header=None):
+    """
+    header is a dummy argument not used here, just added to allow manual_alpha to run
+    """
     lofrqhdu = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_mosaic.fits')
     hifrqhdu = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw33_35_mosaic.fits')
     lorms = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_maskedrms_mosaic.fits')
@@ -1356,3 +1365,17 @@ def make_giant_mosaic_cube_hcop_mopra(**kwargs):
                               f'{basepath}/mosaics/cubes/HCOP_mopra_CubeMosaic_spectrally.fits',
                               factor=3,
                               )
+
+
+def mosaic_field_am_pieces():
+    path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/'
+
+    basefn = 'Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.{uplo}.{suffix}.fits'
+
+    hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix='image.tt0.pbcor')) for uplo in ('lower', 'upper')]
+    wthdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix='weight.tt0')) for uplo in ('lower', 'upper')]
+    mos = make_mosaic(hdus, name='field_am', array='12m', folder='field_am', basepath=conf.basepath, doplots=False, commonbeam=True)
+
+    print(radio_beam.Beam.from_fits_header('/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic.fits'))
+    os.link('/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic.fits',
+            f'{path}/{basefn.format(uplo="lower_plus_upper", suffix="image.tt0.pbcor.fits")}')

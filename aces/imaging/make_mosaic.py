@@ -266,7 +266,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             if array == '12m':
                 assert cb.major < 3 * u.arcsec
 
-        log.info("Loading HDUs and projecting to common beam")
+        log.info(f"Loading HDUs and projecting to common beam {cb} = {cb.major} {cb.minor} {cb.pa}")
         prjs = [spectral_cube.Projection.from_hdu(hdul) for hdul in
                 ProgressBar(twod_hdus)]
         for prj, bm in (zip(ProgressBar(prjs), beams)):
@@ -275,7 +275,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             except NoBeamError:
                 prj.beam = bm
 
-        log.info(f"Convolving HDUs to common beam {cb}\n")
+        log.info(f"Convolving HDUs to common beam {cb} = {cb.major} {cb.minor} {cb.pa}")
         pb = ProgressBar(len(prjs))
 
         # when convolving to a new beam, but retainig Jy/beam units, the beam
@@ -289,7 +289,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         # parallelization of this failed
         twod_hdus = [reprj(prj, scalefactor=cb.sr / prj.beam.sr) for prj in prjs]
 
-    log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
+    log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.")
     # number of items to count in progress bar
     npb = len(twod_hdus)
     pb = ProgressBar(npb)
