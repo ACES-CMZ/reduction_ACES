@@ -52,7 +52,10 @@ def get_common_beam(beams):
     raise BeamError("Failed to find common beam.")
 
 
-def read_as_2d(fn, minval=None, suppress_warnings=True):
+def read_as_2d(fn, minval=None, suppress_warnings=True, verbose=False):
+    """
+    'minval' is for weight files
+    """
     with warnings.catch_warnings():
         if suppress_warnings:
             warnings.simplefilter('ignore')
@@ -70,16 +73,28 @@ def read_as_2d(fn, minval=None, suppress_warnings=True):
                                         header=header)
             else:
                 data = fh[0].data.squeeze()
+                
+                # rescale to make minval uniform
+                data /= np.nanmax(data)
                 # meant for weights; we're setting weights to zero
                 data[data < minval] = 0
                 # sanity check
-                assert np.nanmax(data) == 1
+                #assert np.nanmax(data) == 1, f'{fn} failed nanmax check: {np.nanmax(data)}'
                 hdu2d = fits.PrimaryHDU(data=data,
                                         header=header)
             return fits.HDUList([hdu2d])
         else:
             cube = SpectralCube.read(fn, format='casa_image')
-            return fits.HDUList([cube[0].hdu])
+            if minval is None:
+                return fits.HDUList([cube[0].hdu])
+            else:
+                hdu = cube[0].hdu
+                
+                # rescale to make minval uniform
+                hdu.data /= np.nanmax(hdu.data)
+                # meant for weights; we're setting weights to zero
+                hdu.data[hdu.data < minval] = 0
+                return fits.HDUList([hdu])
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
@@ -248,7 +263,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         target_wcs = wcs.WCS(target_header)
         shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
-    if commonbeam is not None:
+    if bool(commonbeam) and commonbeam is not None:
         if beams is None:
             beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
                                             for hdul in twod_hdus])
@@ -278,7 +293,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         log.info(f"Convolving HDUs to common beam {cb} = {cb.major} {cb.minor} {cb.pa}")
         pb = ProgressBar(len(prjs))
 
-        # when convolving to a new beam, but retainig Jy/beam units, the beam
+        # when convolving to a new beam, but retaining Jy/beam units, the beam
         # size is getting larger so the unit is too.
         def reprj(prj, scalefactor=1):
             rslt = prj.convolve_to(cb).hdu
@@ -286,6 +301,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             pb.update()
             return rslt
 
+        # DEBUG: make sure the beam scaling factor makes sense
+        print([cb.sr / prj.beam.sr for prj in prjs])
         # parallelization of this failed
         twod_hdus = [reprj(prj, scalefactor=cb.sr / prj.beam.sr) for prj in prjs]
 
@@ -321,6 +338,12 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.fits'
     log.info(f"Writing reprojected data to {outfile}")
     fits.PrimaryHDU(data=prjarr, header=header).writeto(outfile, overwrite=True)
+
+    if commonbeam is not None:
+        # create a new version in MJy/sr
+        header['BUNIT'] = 'MJy/sr'
+        mjysr_hdu = fits.PrimaryHDU(data=(prjarr * 1e6 / cb.sr).value, header=header)
+        mjysr_hdu.writeto(outfile.replace('.fits', '_MJy_sr.fits'), overwrite=True)
 
     if doplots:
         log.info("Creating plots")
