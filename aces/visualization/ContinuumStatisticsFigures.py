@@ -141,6 +141,10 @@ def plot_beamsize_per_field(data):
                                     (np.char.find(data['filename'], 'X15a0_Xe8')== -1) &
                                     (np.char.find(data['filename'], 'obsolete')== -1) &
                                     (np.char.find(data['filename'], 'fits')== -1) &
+                                    # either X184 has lower_plus_upper, or it's not X184
+                                    (((np.char.find(data['filename'], 'X15a0_X184') >= 0) &
+                                      (np.char.find(data['filename'], 'lower_plus_upper') >= 0)) |
+                                     ((np.char.find(data['filename'], 'X15a0_X184') == -1))) &
                                     data['pbcor']]]
             for reg in np.unique(data['region'])}
     for ii, regname in enumerate(toplot):
@@ -151,6 +155,7 @@ def plot_beamsize_per_field(data):
                 pl.plot(xv, len(toplot) - ii, 's', color=color, label=label)
         else:
             print(f"Warning: {regname} has no data")
+            raise ValueError(f"ERROR: {regname} has no data")
 
     pl.legend(loc='best', handles=pl.gca().lines[-3:])
     # "a" should be at the top (len - ii ensures that)
@@ -259,10 +264,8 @@ def main():
     plot_spatial_distribution_of_beams(data)
     plot_rms_histogram_and_cdf(data)
 
+    return data
+
 
 if __name__ == "__main__":
-    main()
-
-
-
-
+    data = main()
