@@ -1394,44 +1394,45 @@ def mosaic_field_am_pieces(header=None):
     """
     path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/'
 
-    basefn = 'Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.{uplo}.{suffix}.fits'
+    for spw in ('25_27', '33_35', '25_27_29_31_33_35'):
+        basefn = 'Sgr_A_star_sci.spw{spw}.cont.I.manual.{uplo}.{suffix}'
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
 
-        for tt in ('tt0', 'tt1'):
-            hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'image.{tt}.pbcor')) for uplo in ('lower', 'upper')]
-            wthdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'weight.{tt}')) for uplo in ('lower', 'upper')]
-            mos = make_mosaic(hdus, weights=wthdus, name='field_am', array='12m', folder='field_am', basepath=conf.basepath, doplots=False, commonbeam=True)
+            for tt in ('tt0', 'tt1'):
+                hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'image.{tt}.pbcor', spw=spw)) for uplo in ('lower', 'upper')]
+                wthdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'weight.{tt}', spw=spw)) for uplo in ('lower', 'upper')]
+                mos = make_mosaic(hdus, weights=wthdus, name='field_am_spw{spw}', array='12m', folder='field_am', basepath=conf.basepath, doplots=False, commonbeam=True)
 
-            with fits.open('/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic.fits', mode='update') as fh:
-                fh[0].header['BUNIT'] = 'Jy/beam'
-
-            print(radio_beam.Beam.from_fits_header('/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic.fits'))
-            try:
-                outname = f'{path}/uid___A001_X15a0_X184.{basefn.format(uplo="lower_plus_upper", suffix=f"image.{tt}.pbcor")}'
-                print(outname)
-                os.link(
-                        '/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic.fits',
-                        outname,
-                        )
-                with fits.open(outname, mode='update') as fh:
+                with fits.open(f'/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic_spw{spw}.fits', mode='update') as fh:
                     fh[0].header['BUNIT'] = 'Jy/beam'
-            except FileExistsError as ex:
-                pass
 
-        for tt in ('tt0', 'tt1'):
-            for ftype in ('weight', 'pb'):
-                hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'{ftype}.{tt}')) for uplo in ('lower', 'upper')]
-                mos = make_mosaic(hdus, name=f'field_am_{ftype}', array='12m', folder='field_am',
-                                  basepath=conf.basepath, doplots=False, commonbeam=None)
-
+                print(radio_beam.Beam.from_fits_header(f'/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_spw{spw}_mosaic.fits'))
                 try:
-                    outname = f'{path}/uid___A001_X15a0_X184.{basefn.format(uplo="lower_plus_upper", suffix=f"{ftype}.{tt}")}'
+                    outname = f'{path}/uid___A001_X15a0_X184.{basefn.format(uplo="lower_plus_upper", suffix=f"image.{tt}.pbcor", spw=spw)}'
                     print(outname)
                     os.link(
-                            f'/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_{ftype}_mosaic.fits',
-                            outname
+                            f'/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic_spw{spw}.fits',
+                            outname,
                             )
+                    with fits.open(outname, mode='update') as fh:
+                        fh[0].header['BUNIT'] = 'Jy/beam'
                 except FileExistsError as ex:
                     pass
+
+            for tt in ('tt0', 'tt1'):
+                for ftype in ('weight', 'pb'):
+                    hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'{ftype}.{tt}')) for uplo in ('lower', 'upper')]
+                    mos = make_mosaic(hdus, name=f'field_am_{ftype}_spw{spw}', array='12m', folder='field_am',
+                                    basepath=conf.basepath, doplots=False, commonbeam=None)
+
+                    try:
+                        outname = f'{path}/uid___A001_X15a0_X184.{basefn.format(uplo="lower_plus_upper", suffix=f"{ftype}.{tt}")}'
+                        print(outname)
+                        os.link(
+                                f'/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_{ftype}_spw{spw}_mosaic.fits',
+                                outname
+                                )
+                    except FileExistsError as ex:
+                        pass

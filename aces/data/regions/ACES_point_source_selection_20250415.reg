@@ -1,18 +1,18 @@
 # Region file format: DS9 CARTA 5.0.0-beta.1
 global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1
 galactic
-point(0.351699413, -0.067383218) # color=#DB3737 width=1
-point(0.412638352, -0.021558008) # color=#DB3737 width=1
-point(0.744048728, -0.166633659) # color=#DB3737 width=1
-point(0.824169805, -0.190252748) # color=#DB3737 width=1
-point(359.827534377, 0.002875065) # color=#DB3737 width=1
-point(359.720025913, -0.105799515) # color=#DB3737 width=1
-point(359.692924891, -0.126403934) # color=#DB3737 width=1
-point(359.489241186, -0.225394608) # color=#DB3737 width=1
-point(359.544109984, -0.000507500) # color=#DB3737 width=1
-point(359.760400166, -0.081880381) # color=#DB3737 width=1
-point(359.997214874, 0.084994320) # color=#DB3737 width=1
-point(359.922136441, 0.159796965) # color=#DB3737 width=1
-point(0.288215768, 0.051916336) # color=#DB3737 width=1
-point(0.566923809, 0.017197655) # color=#DB3737 width=1
-point(359.471981393, -0.133248350) # color=#DB3737 width=1
+point(0.351699413, -0.067383218) # color=#DB3737 width=1 text={1}
+point(0.412638352, -0.021558008) # color=#DB3737 width=1 text={2}
+point(0.744048728, -0.166633659) # color=#DB3737 width=1 text={3}
+point(0.824169805, -0.190252748) # color=#DB3737 width=1 text={4}
+point(359.827534377, 0.002875065) # color=#DB3737 width=1 text={5}
+point(359.720025913, -0.105799515) # color=#DB3737 width=1 text={6}
+point(359.692924891, -0.126403934) # color=#DB3737 width=1 text={7}
+point(359.489241186, -0.225394608) # color=#DB3737 width=1 text={8}
+point(359.544109984, -0.000507500) # color=#DB3737 width=1 text={9}
+point(359.760400166, -0.081880381) # color=#DB3737 width=1 text={10}
+point(359.997214874, 0.084994320) # color=#DB3737 width=1 text={11}
+point(359.922136441, 0.159796965) # color=#DB3737 width=1 text={12}
+point(0.288215768, 0.051916336) # color=#DB3737 width=1 text={13}
+point(0.566923809, 0.017197655) # color=#DB3737 width=1 text={14}
+point(359.471981393, -0.133248350) # color=#DB3737 width=1 text={15}

@@ -390,6 +390,12 @@ def parse_fn(fn):
     commands = get_commands()
     robust = commands[sbname]['tclean_cont_pars']['aggregate']['robust']
 
+    spwsplit = [x for x in split if 'spw' in x]
+    if len(spwsplit) > 0:
+        spwsplit = spwsplit[0]
+    else:
+        spwsplit = 'unlabeled'
+
     return {'region': region,
             'band': 'B3',
             'muid': muid,
@@ -397,7 +403,7 @@ def parse_fn(fn):
             'robust': 'r' + str(robust),
             'suffix': split[-1],
             'pbcor': 'pbcor' in fn.lower(),
-            'spws': ','.join([x for x in split[3].replace("spw", "").split("_")]),
+            'spws': ','.join([x for x in spwsplit.replace("spw", "").split("_")]),
             }
 
 
@@ -424,6 +430,8 @@ def assemble_stats(globstrs, ditch_suffix=None):
                 meta = parse_fn(fn)
         except Exception as ex:
             log.error(f"Failed to parse file {fn}: {ex}")
+        if ('pbcor' in fn.lower() and not meta['pbcor']):
+            raise ValueError(f"pbcor in filename {fn} but pbcor=False in meta")
         meta['filename'] = fn
         stats = imstats(fn, reg=get_noise_region(meta['region'], meta['band']))
         meta['casaversion'] = stats['casaversion']
@@ -515,6 +523,7 @@ def savestats(basepath=basepath,
         globstrs=(f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}",
                   f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cube.I.manual.{suffix}{filetype}",
                   f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.manual.{suffix}{filetype}",
+                  f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.manual.lower_plus_upper.{suffix}{filetype}",
                   ),
         ditch_suffix=f".{suffix[:-1]}")
     with open(f'{basepath}/tables/metadata_{suffix}.json', 'w') as fh:
