@@ -250,19 +250,26 @@ def imstats(fn, reg=None):
         data = fh[0].data
         ww = wcs.WCS(fh[0].header)
         casaversion = fh[0].header['ORIGIN'] if 'ORIGIN' in fh[0].header else 'unknown'
-    except IsADirectoryError:
-        cube = SpectralCube.read(fn, format='casa_image')
-        data = cube[0].value
-        ww = cube.wcs
+    except (IsADirectoryError, FileNotFoundError):
+        try:
+            cube = SpectralCube.read(fn, format='casa_image')
+            data = cube[0].value
+            ww = cube.wcs
 
-        # lots of work to get CASA version
-        metatb = Table.read(f"{fn}/logtable")
-        hist = metatb['MESSAGE']
-        history = {x.split(":")[0]: ":".join(x.split(": ")[1:])
-                   for x in hist if ':' in x and 'ICRS' not in x}
-        history.update({x.split("=")[0]: x.split("=")[1].lstrip()
-                        for x in hist if '=' in x})
-        casaversion = history['version']
+            # lots of work to get CASA version
+            metatb = Table.read(f"{fn}/logtable")
+            hist = metatb['MESSAGE']
+            history = {x.split(":")[0]: ":".join(x.split(": ")[1:])
+                    for x in hist if ':' in x and 'ICRS' not in x}
+            history.update({x.split("=")[0]: x.split("=")[1].lstrip()
+                            for x in hist if '=' in x})
+            casaversion = history['version']
+        except (ValueError, FileNotFoundError):
+            fn = fn+".fits"
+            fh = fits.open(fn)
+            data = fh[0].data
+            ww = wcs.WCS(fh[0].header)
+            casaversion = fh[0].header['ORIGIN'] if 'ORIGIN' in fh[0].header else 'unknown'
 
     mad = mad_std(data, ignore_nan=True)
     peak = np.nanmax(data)

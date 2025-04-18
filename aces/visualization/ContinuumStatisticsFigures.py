@@ -75,6 +75,10 @@ def plot_noise_vs_beam(data):
     high = np.array([('spw33_35' in fn) and ('v1' not in fn) for fn in data['filename']])
     low = np.array([('spw25_27.' in fn) and ('v1' not in fn) for fn in data['filename']])
     agg = np.array([('spw25_27_29_31_33_35' in fn) and ('v1' not in fn) for fn in data['filename']])
+    assert 'am' in data['region'][TM & high]
+    assert 'am' in data['region'][TM & low]
+    assert 'am' in data['region'][TM & agg]
+    assert np.all(data['mad'][data['region'] == 'am'] > 0)
 
     pl.figure()
     pl.scatter((data['bmaj'] * data['bmin'])[TM & high]**0.5, data['mad'][TM & high] * 1e3, label='spw33 & 35: 3.6 GHz',

@@ -33,6 +33,7 @@ import dask
 from functools import partial
 import multiprocessing.pool as mpp
 from itertools import repeat
+from casatools import image
 
 from aces import conf
 import uvcombine
@@ -1399,46 +1400,88 @@ def mosaic_field_am_pieces(header=None):
     """
     path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/'
 
-    for spw, fitssuff in (('25_27', ''), ('33_35', ''), ('25_27_29_31_33_35', '.fits')):
+    default_fits_header_extras = {
+        "CTYPE3": "FREQ",
+        "CRVAL3": 9.765597660909e+10,
+        "CDELT3": 4.883128329773e+05,
+        "CRPIX3": 1.0,
+        "CUNIT3": "Hz",
+        "CTYPE4": "STOKES",
+        "CRVAL4": 1.0,
+        "CDELT4": 1.0,
+        "CRPIX4": 1.0,
+        "CUNIT4": ""
+    }
+
+    for spw, fitssuff in (('25_27', '.fits'), ('33_35', '.fits'), ('25_27_29_31_33_35', '.fits')):
         # Dan uploaded image files for 25_27 and 33_35 and FITS for 25_27_29_31_33_35
-        basefn = 'Sgr_A_star_sci.spw{spw}.cont.I.manual.{uplo}.{suffix}' + fitssuff
+        basefn = 'uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.{uplo}.{suffix}' + fitssuff
+
+        ia = image()
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
 
             for tt in ('tt0', 'tt1'):
                 hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'image.{tt}.pbcor', spw=spw)) for uplo in ('lower', 'upper')]
-                wthdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'weight.{tt}', spw=spw)) for uplo in ('lower', 'upper')]
-                mos = make_mosaic(hdus, weights=wthdus, name=f'field_am_spw{spw}', array='12m', folder='field_am', basepath=conf.basepath, doplots=False, commonbeam=True)
+                wthdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'weight.{tt}', spw=spw), minval=0.05) for uplo in ('lower', 'upper')]
+                mos = make_mosaic(hdus, weights=wthdus, name=f'field_am_spw{spw}_{tt}', array='12m', folder='field_am', basepath=conf.basepath, doplots=False, commonbeam=True)
 
-                with fits.open(f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_spw{spw}_mosaic.fits', mode='update') as fh:
+                mosname = f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_spw{spw}_{tt}_mosaic.fits'
+                with fits.open(mosname, mode='update') as fh:
                     fh[0].header['BUNIT'] = 'Jy/beam'
+                    fh[0].header.update(hdus[0].header)
+                    fh[0].header.update(default_fits_header_extras)
+                    fh[0].data[fh[0].data == 0] = np.nan
 
-                print(radio_beam.Beam.from_fits_header(f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_spw{spw}_mosaic.fits'))
-                try:
-                    outname = f'{path}/uid___A001_X15a0_X184.{basefn.format(uplo="lower_plus_upper", suffix=f"image.{tt}.pbcor", spw=spw)}'
-                    print(outname)
-                    os.link(
-                            f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_spw{spw}_mosaic.fits',
-                            outname,
-                            )
-                    with fits.open(outname, mode='update') as fh:
-                        fh[0].header['BUNIT'] = 'Jy/beam'
-                except FileExistsError as ex:
-                    pass
+                print(f'am combination {tt} Beam:', radio_beam.Beam.from_fits_header(mosname))
+                outname = f'{path}/{basefn.format(uplo="lower_plus_upper", suffix=f"image.{tt}.pbcor", spw=spw)}'
+                print(outname)
+                if os.path.exists(outname):
+                    if not os.path.samefile(outname, mosname):
+                        print(f"Unlinking {outname} because it is not the same file as {mosname}")
+                        os.unlink(outname)
+                        os.link(mosname, outname)
+                    else:
+                        print(f'{outname} already exists and is the same file as {mosname}')
+                else:
+                    print(f'Linking {mosname} to {outname}')
+                    os.link(mosname, outname)
+
+                ia.newimagefromfits(outfile=outname.replace(".fits", ""),
+                                    infile=outname,
+                                    overwrite=True,
+                                    )
+                ia.close()
 
             for tt in ('tt0', 'tt1'):
                 for ftype in ('weight', 'pb'):
                     hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'{ftype}.{tt}', spw=spw)) for uplo in ('lower', 'upper')]
-                    mos = make_mosaic(hdus, name=f'field_am_{ftype}_spw{spw}', array='12m', folder='field_am',
-                                    basepath=conf.basepath, doplots=False, commonbeam=None)
+                    mos = make_mosaic(hdus, name=f'field_am_{ftype}_spw{spw}_{tt}', array='12m', folder='field_am',
+                                      basepath=conf.basepath, doplots=False, commonbeam=None)
 
-                    try:
-                        outname = f'{path}/uid___A001_X15a0_X184.{basefn.format(uplo="lower_plus_upper", suffix=f"{ftype}.{tt}", spw=spw)}'
-                        print(outname)
-                        os.link(
-                                f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_{ftype}_spw{spw}_mosaic.fits',
-                                outname
-                                )
-                    except FileExistsError as ex:
-                        pass
+                    mosname = f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_{ftype}_spw{spw}_{tt}_mosaic.fits'
+                    with fits.open(mosname, mode='update') as fh:
+                        fh[0].header['BUNIT'] = 'Jy/beam'
+                        fh[0].header.update(hdus[0].header)
+                        fh[0].header.update(default_fits_header_extras)
+                        fh[0].data[fh[0].data == 0] = np.nan
+
+                    outname = f'{path}/{basefn.format(uplo="lower_plus_upper", suffix=f"{ftype}.{tt}", spw=spw)}'
+
+                    if os.path.exists(outname):
+                        if not os.path.samefile(outname, mosname):
+                            print(f"Unlinking {outname} because it is not the same file as {mosname}")
+                            os.unlink(outname)
+                            os.link(mosname, outname)
+                        else:
+                            print(f'{outname} already exists and is the same file as {mosname}')
+                    else:
+                        print(f'Linking {mosname} to {outname}')
+                        os.link(mosname, outname)
+
+                    ia.newimagefromfits(outfile=outname.replace(".fits", ""),
+                                        infile=outname,
+                                        overwrite=True,
+                                        )
+                    ia.close()
