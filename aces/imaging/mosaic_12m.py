@@ -1430,9 +1430,11 @@ def mosaic_field_am_pieces(header=None):
                 mosname = f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_spw{spw}_{tt}_mosaic.fits'
                 with fits.open(mosname, mode='update') as fh:
                     fh[0].header['BUNIT'] = 'Jy/beam'
-                    fh[0].header.update(hdus[0].header)
+                    fh[0].header.update(hdus[0][0].header)
                     fh[0].header.update(default_fits_header_extras)
                     fh[0].data[fh[0].data == 0] = np.nan
+                    fh[0].header['ORIGIN'] = '6.5.4-9 CASAtools:v1.0.0'
+                    fh[0].header['VERSION'] = '6.5.4-9 CASAtools:v1.0.0'
 
                 print(f'am combination {tt} Beam:', radio_beam.Beam.from_fits_header(mosname))
                 outname = f'{path}/{basefn.format(uplo="lower_plus_upper", suffix=f"image.{tt}.pbcor", spw=spw)}'
@@ -1463,9 +1465,11 @@ def mosaic_field_am_pieces(header=None):
                     mosname = f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_{ftype}_spw{spw}_{tt}_mosaic.fits'
                     with fits.open(mosname, mode='update') as fh:
                         fh[0].header['BUNIT'] = 'Jy/beam'
-                        fh[0].header.update(hdus[0].header)
+                        fh[0].header.update(hdus[0][0].header)
                         fh[0].header.update(default_fits_header_extras)
                         fh[0].data[fh[0].data == 0] = np.nan
+                        fh[0].header['ORIGIN'] = '6.5.4-9 CASAtools:v1.0.0'
+                        fh[0].header['VERSION'] = '6.5.4-9 CASAtools:v1.0.0'
 
                     outname = f'{path}/{basefn.format(uplo="lower_plus_upper", suffix=f"{ftype}.{tt}", spw=spw)}'
 
