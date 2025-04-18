@@ -7,6 +7,8 @@ import shutil
 import glob
 import radio_beam
 import os
+import warnings
+from spectral_cube import SpectralCube
 from astropy import units as u
 from astropy.io import fits
 from astropy import log
@@ -31,6 +33,7 @@ import dask
 from functools import partial
 import multiprocessing.pool as mpp
 from itertools import repeat
+from casatools import image
 
 from aces import conf
 import uvcombine
@@ -97,9 +100,9 @@ def main():
 
     header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
 
-    funcs = ((residuals, reimaged, reimaged_high, continuum, rms_, manual_alpha)
+    funcs = ((mosaic_field_am_pieces, residuals, reimaged, reimaged_high, continuum, rms_, manual_alpha)
              if options.contonly else
-             (residuals, reimaged, reimaged_high, continuum, rms_, manual_alpha, cs21, hcop, hnco, h40a))
+             (mosaic_field_am_pieces, residuals, reimaged, reimaged_high, continuum, rms_, manual_alpha, cs21, hcop, hnco, h40a))
 
     if not options.skip_cont:
         processes = []
@@ -148,29 +151,40 @@ def main_():
 
 
 def check_files(filelist, funcname=None):
-    if funcname is not None:
-        logprint(f"Checking files for {funcname}")
-    uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
-    for row in uidtb:
-        matches = [(row['12m MOUS ID'] in fn) or
-                   (f'_{row["Obs ID"]}.' in os.path.basename(fn))
-                   for fn in filelist]
-        print(row['Obs ID'], sum(matches))
-        if sum(matches) != 1:
-            for fn in filelist:
-                if row['12m MOUS ID'] in fn:
-                    print(fn)
-            raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        if funcname is not None:
+            logprint(f"Checking files for {funcname}")
+        uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
+        for row in uidtb:
+            matches = [(row['12m MOUS ID'] in fn) or
+                    (f'_{row["Obs ID"]}.' in os.path.basename(fn))
+                    for fn in filelist]
+            #print(row['Obs ID'], sum(matches))
+            if sum(matches) != 1:
+                for fn in filelist:
+                    if row['12m MOUS ID'] in fn:
+                        print(fn)
+                raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
 
-    for fn in filelist:
-        assert os.path.exists(fn
-            .replace("image.pbcor.statcont.contsub.fits", "pb")
-            .replace("image.pbcor", "pb")
-        ), f"No pb found for {fn}"
-        assert os.path.exists(fn
-            .replace("image.pbcor.statcont.contsub.fits", "weight")
-            .replace("image.pbcor", "weight")
-        ), f"No weight found for {fn}"
+        for fn in filelist:
+            assert os.path.exists(fn
+                .replace("image.pbcor.statcont.contsub.fits", "pb")
+                .replace("image.pbcor", "pb")
+                .replace("image.tt0.pbcor", "pb.tt0")
+                .replace('manual.pbcor.tt0', 'manual.pb.tt0')
+            ), f"No pb found for {fn}"
+            assert os.path.exists(fn
+                .replace("image.pbcor.statcont.contsub.fits", "weight")
+                .replace("image.pbcor", "weight")
+                .replace("image.tt0.pbcor", "weight.tt0")
+                .replace('manual.pbcor.tt0', 'manual.weight.tt0')
+            ), f"No weight found for {fn}"
+
+            if fn.endswith('fits'):
+                assert fits.getheader(fn)['BUNIT'] is not None, f"Missing BUNIT in {fn}"
+            else:
+                assert SpectralCube.read(fn, format='casa_image').unit is not None, f"Missing BUNIT in {fn}"
 
 
 def continuum(header):
@@ -196,20 +210,20 @@ def continuum(header):
     # for product version, we need to use what we're given...
     weightfiles = [fn.replace(".weight.tt0.fits", ".pb.tt0.fits").replace(".weight.tt0", ".pb.tt0.fits") for fn in weightfiles if not os.path.exists(fn)]
     assert len(weightfiles) == len(filelist)
-    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+    wthdus = [read_as_2d(fn, minval=0.05) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='continuum_commonbeam_circular',
                 commonbeam='circular',
                 weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
+                norm_kwargs=dict(stretch='asinh', vmax=0.008, vmin=-0.0002),
                 target_header=header,
                 folder='continuum'
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
+                norm_kwargs=dict(stretch='asinh', vmax=0.008, vmin=-0.0002),
                 target_header=header,
                 folder='continuum'
                 )
@@ -226,6 +240,12 @@ def reimaged(header):
     logprint("12m continuum reimaged (glob is *.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor)")
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
+
+    # special-case field am
+    am_index = [ii for ii, x in enumerate(filelist) if 'uid___A001_X15a0_X184' in x][0]
+    #filelist[am_index] = f'{basepath}/mosaics/field_am/12m_field_am_mosaic.fits'
+    filelist[am_index] = '/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits'
+
     tt1filelist = [x.replace("tt0", "tt1") for x in filelist]
 
     check_files(filelist, funcname='reimaged')
@@ -243,27 +263,27 @@ def reimaged(header):
     #for missing in set(weightfiles_) - set(weightfiles):
     #    logprint(f"Missing {missing}")
     print("Reading as 2d for weightfiles (reimaged): ", end=None, flush=True)
-    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+    wthdus = [read_as_2d(fn, minval=0.05) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='continuum_commonbeam_circular_reimaged',
                 commonbeam='circular', weights=wthdus, cbar_unit='Jy/beam',
                 array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.008,
-                                 min_cut=-0.0002),
+                norm_kwargs=dict(stretch='asinh', vmax=0.008,
+                                 vmin=-0.0002),
                 target_header=header,
                 folder='continuum'
                 )
     print(flush=True)
     make_mosaic(hdus, name='continuum_reimaged', weights=wthdus,
                 cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
+                norm_kwargs=dict(stretch='asinh', vmax=0.008, vmin=-0.0002),
                 target_header=header,
                 folder='continuum'
                 )
     print(flush=True)
     make_mosaic(wthdus, name='average_weight',
                 cbar_unit='Average Weight', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0002),
+                norm_kwargs=dict(stretch='asinh', vmax=1, vmin=-0.0002),
                 target_header=header,
                 folder='continuum'
                 )
@@ -272,7 +292,7 @@ def reimaged(header):
     pbhdus = [read_as_2d(fn, minval=0.5) for fn in pbfiles]
     make_mosaic(pbhdus, name='primarybeam_coverage', weights=wthdus,
                 cbar_unit='PB Level', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0002),
+                norm_kwargs=dict(stretch='asinh', vmax=1, vmin=-0.0002),
                 target_header=header,
                 folder='continuum'
                 )
@@ -288,11 +308,19 @@ def reimaged(header):
     # pbcorrect & mosaic tt1 image
     tt1hdus = [read_as_2d(fn) for fn in tt1filelist]
     pbhdus = [read_as_2d(fn) for fn in pbfiles]
-    for tt1, pb in zip(tt1hdus, pbhdus):
-        tt1[0].data /= pb[0].data
+    for tt1, pb, ttfn, pbfn in zip(tt1hdus, pbhdus, tt1filelist, pbfiles):
+        try:
+            tt1[0].data /= pb[0].data
+        except Exception as ex:
+            print()
+            print(ttfn)
+            print(pbfn)
+            print(tt1.info())
+            print(pb.info())
+            raise ex
     make_mosaic(tt1hdus, name='continuum_commonbeam_circular_reimaged_tt1', weights=wthdus,
                 cbar_unit='?', array='12m', basepath=basepath,
-                norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0002),
+                norm_kwargs=dict(stretch='asinh', vmax=1, vmin=-0.0002),
                 target_header=header,
                 folder='continuum',
                 commonbeam='circular'
@@ -320,6 +348,11 @@ def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', '
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}.cont.I*image.tt0.pbcor')
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.spw{spw}.cont*tt0.pbcor.fits')
 
+        # special-case field am
+        filelist = [x for x in filelist if 'uid___A001_X15a0_X184' not in x]
+        filelist.append(f'/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits')
+
+
         check_files(filelist, funcname='reimaged_high')
 
         print(f"Reading as 2d for files (reimaged {name}): ", end=None, flush=True)
@@ -333,42 +366,45 @@ def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', '
         #assert len(weightfiles) == len(filelist)
         #for missing in set(weightfiles_) - set(weightfiles):
         #    logprint(f"Missing {missing}")
-        wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+        wthdus = [read_as_2d(fn, minval=0.05) for fn in weightfiles]
         print(flush=True)
         make_mosaic(hdus, name=f'continuum_commonbeam_circular_reimaged_spw{spw}',
                     commonbeam='circular', weights=wthdus, cbar_unit='Jy/beam',
                     array='12m', basepath=basepath,
-                    norm_kwargs=dict(stretch='asinh', max_cut=0.008,
-                                     min_cut=-0.0002),
+                    norm_kwargs=dict(stretch='asinh', vmax=0.008,
+                                     vmin=-0.0002),
                     target_header=header,
                     folder='continuum'
                     )
         print(flush=True)
         make_mosaic(hdus, name=f'continuum_reimaged_spw{spw}', weights=wthdus,
                     cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                    norm_kwargs=dict(stretch='asinh', max_cut=0.008, min_cut=-0.0002),
+                    norm_kwargs=dict(stretch='asinh', vmax=0.008, vmin=-0.0002),
                     target_header=header,
                     folder='continuum'
                     )
         print(flush=True)
         make_mosaic(wthdus, name=f'average_weight_spw{spw}',
                     cbar_unit='Average Weight', array='12m', basepath=basepath,
-                    norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0002),
+                    norm_kwargs=dict(stretch='asinh', vmax=1, vmin=-0.0002),
                     target_header=header,
                     folder='continuum'
                     )
         print(flush=True)
         print("Reading as 2d for pb (reimaged): ", end=None, flush=True)
-        pbhdus = [read_as_2d(fn, minval=0.5) for fn in pbfiles]
+        pbhdus = [read_as_2d(fn, minval=0.05) for fn in pbfiles]
         make_mosaic(pbhdus, name=f'primarybeam_coverage_spw{spw}', weights=wthdus,
                     cbar_unit='PB Level', array='12m', basepath=basepath,
-                    norm_kwargs=dict(stretch='asinh', max_cut=1, min_cut=-0.0002),
+                    norm_kwargs=dict(stretch='asinh', vmax=1, vmin=-0.0002),
                     target_header=header,
                     folder='continuum'
                     )
 
 
-def manual_alpha():
+def manual_alpha(header=None):
+    """
+    header is a dummy argument not used here, just added to allow manual_alpha to run
+    """
     lofrqhdu = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_mosaic.fits')
     hifrqhdu = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw33_35_mosaic.fits')
     lorms = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_maskedrms_mosaic.fits')
@@ -407,11 +443,11 @@ def residuals(header):
         beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(read_as_2d(fn)[0].header)
                                         for fn in beamfiles])
         assert len(weightfiles) == len(filelist)
-        wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+        wthdus = [read_as_2d(fn, minval=0.05) for fn in weightfiles]
         print(flush=True)
         make_mosaic(hdus, name=f'continuum_residual_{name}', weights=wthdus,
                     cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                    norm_kwargs=dict(stretch='linear', max_cut=0.001, min_cut=-0.0002),
+                    norm_kwargs=dict(stretch='linear', vmax=0.001, vmin=-0.0002),
                     target_header=header,
                     )
         print(flush=True)
@@ -426,7 +462,7 @@ def residuals(header):
                     beams=beams,
                     weights=wthdus,
                     cbar_unit='Jy/beam', array='12m', basepath=basepath,
-                    norm_kwargs=dict(stretch='asinh', max_cut=0.001, min_cut=-0.0002),
+                    norm_kwargs=dict(stretch='asinh', vmax=0.001, vmin=-0.0002),
                     target_header=header,
                     )
 
@@ -444,11 +480,11 @@ def hcop(header):
     #weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw29.mfs.I.pb.fits.gz')
     #weightfiles += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.Sgr_A_star_sci.spw29.mfs.I.pb.fits.gz')
     weightfiles = [fn.replace("cube.I.pbcor.fits", "mfs.I.pb.fits.gz") for fn in filelist]
-    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+    wthdus = [read_as_2d(fn, minval=0.05) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='hcop_max', cbar_unit='K', array='12m', basepath=basepath,
                 weights=wthdus,
-                norm_kwargs=dict(max_cut=20, min_cut=-0.5, ),
+                norm_kwargs=dict(vmax=20, vmin=-0.5, ),
                 target_header=header,
                 )
     hdus = [get_m0(fn, suffix='_hcop').hdu for fn in filelist]
@@ -456,7 +492,7 @@ def hcop(header):
     make_mosaic(hdus, name='hcop_m0', cbar_unit='K km/s', array='12m', basepath=basepath,
                 weights=wthdus,
                 target_header=header,
-                norm_kwargs=dict(max_cut=100, min_cut=-10,))
+                norm_kwargs=dict(vmax=100, vmin=-10,))
 
 
 def hnco(header):
@@ -472,17 +508,17 @@ def hnco(header):
     #weightfiles = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*.Sgr_A_star_sci.spw31.mfs.I.pb.fits.gz')
     #weightfiles += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.Sgr_A_star_sci.spw31.mfs.I.pb.fits.gz')
     weightfiles = [fn.replace("cube.I.pbcor.fits", "mfs.I.pb.fits.gz") for fn in filelist]
-    wthdus = [read_as_2d(fn, minval=0.5) for fn in weightfiles]
+    wthdus = [read_as_2d(fn, minval=0.05) for fn in weightfiles]
     print(flush=True)
     make_mosaic(hdus, name='hnco_max', basepath=basepath, array='12m',
                 target_header=header,
                 weights=wthdus,
-                norm_kwargs=dict(max_cut=20, min_cut=-0.5, ))
+                norm_kwargs=dict(vmax=20, vmin=-0.5, ))
     hdus = [get_m0(fn, suffix='_hnco').hdu for fn in filelist]
     print(flush=True)
     make_mosaic(hdus, name='hnco_m0', cbar_unit='K km/s', array='12m',
                 basepath=basepath, weights=wthdus, target_header=header,
-                norm_kwargs=dict(max_cut=100, min_cut=-10, ))
+                norm_kwargs=dict(vmax=100, vmin=-10, ))
 
 
 def h40a(header):
@@ -511,7 +547,7 @@ def h40a(header):
         logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data == 0).sum()}')
 
     make_mosaic(hdus, name='h40a_max', cbar_unit='K',
-                norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
+                norm_kwargs=dict(vmax=5, vmin=-0.01, stretch='asinh'),
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
     hdus = [get_m0(fn,
                    slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s},
@@ -519,7 +555,7 @@ def h40a(header):
     for hdu, fn in zip(hdus, filelist):
         logprint(f'{fn}: {np.isnan(hdu.data).sum()}, {(hdu.data == 0).sum()}')
     make_mosaic(hdus, name='h40a_m0', cbar_unit='K km/s',
-                norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
+                norm_kwargs={'vmax': 20, 'vmin': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
 
 
@@ -540,11 +576,11 @@ def cs21(header):
     weightfiles = [fn.replace("cube.I.iter1.image.pbcor", "cube.I.iter1.pb") for fn in filelist]
     wthdus = [get_peak(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=97.98095330 * u.GHz, suffix='_cs21').hdu for fn in weightfiles]
     make_mosaic(hdus, name='cs21_max', cbar_unit='K',
-                norm_kwargs=dict(max_cut=5, min_cut=-0.01, stretch='asinh'),
+                norm_kwargs=dict(vmax=5, vmin=-0.01, stretch='asinh'),
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
     hdus = [get_m0(fn, slab_kwargs={'lo': -200 * u.km / u.s, 'hi': 200 * u.km / u.s}, rest_value=97.98095330 * u.GHz).hdu for fn in filelist]
     make_mosaic(hdus, name='cs21_m0', cbar_unit='K km/s',
-                norm_kwargs={'max_cut': 20, 'min_cut': -1, 'stretch': 'asinh'},
+                norm_kwargs={'vmax': 20, 'vmin': -1, 'stretch': 'asinh'},
                 array='12m', basepath=basepath, weights=wthdus, target_header=header)
 
 
@@ -1356,3 +1392,100 @@ def make_giant_mosaic_cube_hcop_mopra(**kwargs):
                               f'{basepath}/mosaics/cubes/HCOP_mopra_CubeMosaic_spectrally.fits',
                               factor=3,
                               )
+
+
+def mosaic_field_am_pieces(header=None):
+    """
+    header is a dummy kwarg
+    """
+    path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/'
+
+    default_fits_header_extras = {
+        "CTYPE3": "FREQ",
+        "CRVAL3": 9.765597660909e+10,
+        "CDELT3": 4.883128329773e+05,
+        "CRPIX3": 1.0,
+        "CUNIT3": "Hz",
+        "CTYPE4": "STOKES",
+        "CRVAL4": 1.0,
+        "CDELT4": 1.0,
+        "CRPIX4": 1.0,
+        "CUNIT4": ""
+    }
+
+    for spw, fitssuff in (('25_27', '.fits'), ('33_35', '.fits'), ('25_27_29_31_33_35', '.fits')):
+        # Dan uploaded image files for 25_27 and 33_35 and FITS for 25_27_29_31_33_35
+        basefn = 'uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.{uplo}.{suffix}' + fitssuff
+
+        ia = image()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+
+            for tt in ('tt0', 'tt1'):
+                hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'image.{tt}.pbcor', spw=spw)) for uplo in ('lower', 'upper')]
+                wthdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'weight.{tt}', spw=spw), minval=0.05) for uplo in ('lower', 'upper')]
+                mos = make_mosaic(hdus, weights=wthdus, name=f'field_am_spw{spw}_{tt}', array='12m', folder='field_am', basepath=conf.basepath, doplots=False, commonbeam=True)
+
+                mosname = f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_spw{spw}_{tt}_mosaic.fits'
+                with fits.open(mosname, mode='update') as fh:
+                    fh[0].header['BUNIT'] = 'Jy/beam'
+                    fh[0].header.update(hdus[0][0].header)
+                    fh[0].header.update(default_fits_header_extras)
+                    fh[0].data[fh[0].data == 0] = np.nan
+                    fh[0].header['ORIGIN'] = '6.5.4-9 CASAtools:v1.0.0'
+                    fh[0].header['VERSION'] = '6.5.4-9 CASAtools:v1.0.0'
+
+                print(f'am combination {tt} Beam:', radio_beam.Beam.from_fits_header(mosname))
+                outname = f'{path}/{basefn.format(uplo="lower_plus_upper", suffix=f"image.{tt}.pbcor", spw=spw)}'
+                print(outname)
+                if os.path.exists(outname):
+                    if not os.path.samefile(outname, mosname):
+                        print(f"Unlinking {outname} because it is not the same file as {mosname}")
+                        os.unlink(outname)
+                        os.link(mosname, outname)
+                    else:
+                        print(f'{outname} already exists and is the same file as {mosname}')
+                else:
+                    print(f'Linking {mosname} to {outname}')
+                    os.link(mosname, outname)
+
+                ia.newimagefromfits(outfile=outname.replace(".fits", ""),
+                                    infile=outname,
+                                    overwrite=True,
+                                    )
+                ia.close()
+
+            for tt in ('tt0', 'tt1'):
+                for ftype in ('weight', 'pb'):
+                    hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'{ftype}.{tt}', spw=spw)) for uplo in ('lower', 'upper')]
+                    mos = make_mosaic(hdus, name=f'field_am_{ftype}_spw{spw}_{tt}', array='12m', folder='field_am',
+                                      basepath=conf.basepath, doplots=False, commonbeam=None)
+
+                    mosname = f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_{ftype}_spw{spw}_{tt}_mosaic.fits'
+                    with fits.open(mosname, mode='update') as fh:
+                        fh[0].header['BUNIT'] = 'Jy/beam'
+                        fh[0].header.update(hdus[0][0].header)
+                        fh[0].header.update(default_fits_header_extras)
+                        fh[0].data[fh[0].data == 0] = np.nan
+                        fh[0].header['ORIGIN'] = '6.5.4-9 CASAtools:v1.0.0'
+                        fh[0].header['VERSION'] = '6.5.4-9 CASAtools:v1.0.0'
+
+                    outname = f'{path}/{basefn.format(uplo="lower_plus_upper", suffix=f"{ftype}.{tt}", spw=spw)}'
+
+                    if os.path.exists(outname):
+                        if not os.path.samefile(outname, mosname):
+                            print(f"Unlinking {outname} because it is not the same file as {mosname}")
+                            os.unlink(outname)
+                            os.link(mosname, outname)
+                        else:
+                            print(f'{outname} already exists and is the same file as {mosname}')
+                    else:
+                        print(f'Linking {mosname} to {outname}')
+                        os.link(mosname, outname)
+
+                    ia.newimagefromfits(outfile=outname.replace(".fits", ""),
+                                        infile=outname,
+                                        overwrite=True,
+                                        )
+                    ia.close()
