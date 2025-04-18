@@ -387,7 +387,7 @@ def parse_fn(fn):
     sbname = mousmap_[muid]
     region = sbname.split("_")[3]
 
-    commands = get_commands()
+    commands = get_commands(verbose=False)
     robust = commands[sbname]['tclean_cont_pars']['aggregate']['robust']
 
     spwsplit = [x for x in split if 'spw' in x]
@@ -409,13 +409,14 @@ def parse_fn(fn):
 
 def assemble_stats(globstrs, ditch_suffix=None):
     import glob
-    from astropy.utils.console import ProgressBar
+    from tqdm.auto import tqdm
 
     allstats = []
 
     flist = [x for globstr in globstrs for x in glob.glob(globstr)]
 
-    for fn in ProgressBar(flist):
+    # chatbot-produced progressbar; not sure it'll look ok
+    for fn in tqdm(flist):
         if fn.endswith('diff.fits') or fn.endswith('bsens-cleanest.fits'):
             continue
         if fn.count('.fits') > 1:
@@ -430,6 +431,7 @@ def assemble_stats(globstrs, ditch_suffix=None):
                 meta = parse_fn(fn)
         except Exception as ex:
             log.error(f"Failed to parse file {fn}: {ex}")
+            raise ex
         if ('pbcor' in fn.lower() and not meta['pbcor']):
             raise ValueError(f"pbcor in filename {fn} but pbcor=False in meta")
         meta['filename'] = fn

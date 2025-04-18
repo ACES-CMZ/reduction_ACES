@@ -20,6 +20,7 @@ from spectral_cube.utils import NoBeamError
 from astropy.coordinates import SkyCoord
 from tqdm.auto import tqdm
 import re
+from astropy.io.registry import IORegistryError
 
 
 def suppress_wcs_warnings():
@@ -46,7 +47,9 @@ def read_file(filename):
         suppress_wcs_warnings()
         suppress_numpy_warnings()
         try:
-            return SpectralCube.read(filename)
+            return SpectralCube.read(filename)[0]
+        except IORegistryError:
+            return SpectralCube.read(filename, format='casa_image')[0]
         except Exception as ex:
             return Slice.from_hdu(fits.open(filename))
 
@@ -104,12 +107,7 @@ def get_flux_in_region(fitsfile, region, rms_region=None):
         suppress_wcs_warnings()
         suppress_numpy_warnings()
         
-        cube = read_file(fitsfile)
-
-        if cube.ndim > 2:
-            data = cube[0]
-        else:
-            data = cube
+        data = cube = read_file(fitsfile)
 
         beam = cube.beam
         aperture = create_beam_aperture(region, beam)
