@@ -11,13 +11,10 @@ from aces import conf
 # else:
 #     rootdir = os.environ['ACES_ROOTDIR']
 
-if 'verbose' not in locals():
-    verbose = False
-
 pipedir = os.path.dirname(__file__)
 
 
-def merge_aggregate(commands):
+def merge_aggregate(commands, verbose=False):
     from aces.pipeline_scripts import generate_aggregate_high_commands
     generate_aggregate_high_commands.main()
 
@@ -26,7 +23,7 @@ def merge_aggregate(commands):
 
     for sbname, allpars in aggregate_high_commands.items():
         if sbname not in commands:
-            log.warning(f"SB {sbname} was not in the default tclean commands; using aggregate before override")
+            # log.warning(f"SB {sbname} was not in the default tclean commands; using aggregate before override")
             commands[sbname] = allpars
             continue
         for partype, replacements in allpars.items():
@@ -49,13 +46,13 @@ def merge_aggregate(commands):
     return commands
 
 
-def merge_override(commands):
+def merge_override(commands, verbose=False):
     with open(f"{pipedir}/override_tclean_commands.json", "r") as fh:
         override_commands = json.load(fh)
 
     for sbname, allpars in override_commands.items():
         if sbname not in commands:
-            log.warning(f"SB {sbname} was not in the default tclean commands; using override only")
+            # log.warning(f"SB {sbname} was not in the default tclean commands; using override only")
             commands[sbname] = allpars
             continue
         for partype, replacements in allpars.items():
@@ -81,7 +78,7 @@ def merge_override(commands):
     return commands
 
 
-def merge_continuum(commands):
+def merge_continuum(commands, verbose=False):
     with open(f"{pipedir}/spw_selections.json", "r") as fh:
         spw_selections = json.load(fh)
 
@@ -110,19 +107,19 @@ def merge_continuum(commands):
     return commands
 
 
-def main():
+def main(verbose=False):
 
     with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
         default_commands = json.load(fh)
 
-    commands = merge_aggregate(default_commands)
-    commands = merge_override(commands)
-    commands = merge_continuum(commands)
+    commands = merge_aggregate(default_commands, verbose=verbose)
+    commands = merge_override(commands, verbose=verbose)
+    commands = merge_continuum(commands, verbose=verbose)
 
     return commands
 
 
-def get_commands():
+def get_commands(verbose=False):
     return main()
 
 
@@ -148,4 +145,7 @@ def make_table():
 
 
 if __name__ == "__main__":
-    commands = main()
+    if 'verbose' not in globals():
+        verbose = False
+
+    commands = main(verbose=verbose)

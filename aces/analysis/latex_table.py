@@ -11,6 +11,8 @@ import sigfig
 from radio_beam import Beam
 from tqdm.auto import tqdm
 import casa_formats_io
+import radio_beam
+from astropy.io import fits
 
 from aces.analysis.latex_info import (latexdict, format_float, round_to_n, rounded,
                                       rounded_arr, strip_trailing_zeros, exp_to_tex)
@@ -29,17 +31,24 @@ def make_latex_table(savename='continuum_data_summary'):
     tbl['casaversion'] = [[x for x in y.split() if 'CASA' not in x][0] for y in tbl['casaversion']]
     tbl['spws'] = ['all' if x == '25,27,29,31,33,35' else x for x in tbl['spws']]
 
-    good = (((np.char.find(tbl['filename'], 'preQA3') == -1) |
-            (np.char.find(tbl['filename'], 'X15a0_X178') == -1) |
+    good = (((np.char.find(tbl['filename'], 'preQA3') == -1) &
+             (np.char.find(tbl['filename'], 'X15a0_X178') == -1) &
+             (np.char.find(tbl['filename'], 'X15a0_Xd6') == -1) &
+             (np.char.find(tbl['filename'], 'X15a0_Xe8') == -1) &
+             (((np.char.find(tbl['filename'], 'X15a0_X184') >= 0) &
+               (np.char.find(tbl['filename'], 'lower_plus_upper') >= 0)) |
+              ((np.char.find(tbl['filename'], 'X15a0_X184') == -1))) &
              (np.char.find(tbl['filename'], 'obsolete') == -1) #| False # TODO: check for more
              ) & (
             (np.char.find(tbl['spws'], 'v1') == -1) &
+            (np.char.find(tbl['filename'], 'v1.1') == -1) &
             ~(tbl['pbcor']) &
             (tbl['array'] == '12M'))
     ) # noqa
 
     tbl = tbl[good]
     assert len(tbl) > 0
+    assert not any(['v1' in x for x in tbl['spws']])
 
     # filter out v1 first
     # 'cont' is a special-case for field am; it's... ?!!?
@@ -280,12 +289,16 @@ def make_observation_table(access_token=None):
                 path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/working/{xidstr}.ms'
                 try:
                     tbl = Table.read(path + "/ASDM_CALWVR")
+                    if len(tbl) == 0:
+                        print(f"No water table found for {sbname} {mous} {xid} in filename {path}")
+                        raise ValueError("No water table found")
                     med_pwv = np.median(tbl['water'])
                     if np.isnan(med_pwv):
                         raise ValueError("WTF?")
                     these_pwvs.append(med_pwv * 1000)
                 except ValueError:
                     lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
+                    #watercol = [x for x in lltbl.column_set.columns if x.name == 'water']
                     tbl = lltbl.as_astropy_table(include_columns=['water'])
                     med_pwv = np.median(tbl['water'])
                     if np.isnan(med_pwv):
@@ -498,6 +511,41 @@ def make_spw_table():
                overwrite=True, latexdict=latexdict)
 
     return ftbl
+
+    
+def make_table_3():
+    mosaic_path = f'{basepath}/mosaics/continuum/'
+    filenames = {'spw25_27': '12m_continuum_commonbeam_circular_reimaged_spw25_27_mosaic.fits',
+                 'spw33_35': '12m_continuum_commonbeam_circular_reimaged_spw33_35_mosaic.fits',
+                 'agg': '12m_continuum_commonbeam_circular_reimaged_mosaic.fits'}
+    beams = {key: radio_beam.Beam.from_fits_header(fits.getheader(f'{mosaic_path}/{fn}')).major for key, fn in filenames.items()}
+    spw25beam = beams['spw25_27'].to(u.arcsec).value
+    spw33beam = beams['spw33_35'].to(u.arcsec).value
+    aggbeam = beams['agg'].to(u.arcsec).value
+
+    table3 = fr"""
+    \begin{{table}}[h]
+    \centering
+    \caption{{Continuum Image Products}}
+    \begin{{tabular}}{{c c c}}
+    \hline
+    \hline
+    \label{{tab:imagetypes}}
+        Image Name                & SPWs & Beam \\
+        \hline
+        Low, circular & 25, 27 & {spw25beam:0.2f}\arcsec \\
+        High, circular & 33, 35 & {spw33beam:0.2f}\arcsec \\
+        All data, circular & 25, 27, 33, 35 & {aggbeam:0.2f}\arcsec \\
+        All data, best resolution & 25, 27, 33, 35 & n/a \\
+        \hline
+    \end{{tabular}}
+    \end{{table}}
+    """ 
+
+    with open(f"{basepath}/papers/continuum_data/tables/table_3.tex", 'w') as fh:
+        fh.write(table3)
+
+    return table3
 
 
 if __name__ == "__main__":

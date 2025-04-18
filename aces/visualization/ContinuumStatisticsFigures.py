@@ -14,6 +14,7 @@ from astropy.convolution import Gaussian2DKernel
 from astropy.wcs import WCS
 from aces.imaging.make_mosaic import rms_map
 from aces.visualization.figure_configuration import mymap, mymap2, mymap_gray, pl, distance
+from spectral_cube.lower_dimensional_structures import Projection, Slice
 import copy
 import warnings
 from aces import conf
@@ -147,11 +148,18 @@ def plot_beamsize_per_field(data):
                                      ((np.char.find(data['filename'], 'X15a0_X184') == -1))) &
                                     data['pbcor']]]
             for reg in np.unique(data['region'])}
+    
+    toplot['am'] = [data['bmaj'][(data['suffix'] == 'lower_plus_upper') &
+                                 (data['region'] == 'am') &
+                                 (data['spws'] == spws)][0]
+                    for spws in ('25,27', '25,27,29,31,33,35', '33,35')]
+    
     for ii, regname in enumerate(toplot):
         if len(toplot[regname]) > 0: #TODO: this is a hack b/c am is missing
             #print(regname, toplot[regname])
-            pl.plot(toplot[regname], [len(toplot) - ii]*3, color='k', linestyle='--', alpha=0.5, linewidth=0.5)
-            for xv, color, label in zip(toplot[regname], ['red', 'orange', 'blue'], ('aggregate', '25,27', '33,35')):
+            # sort from small to large to avoid overlap back-and-forth scribbles
+            pl.plot(sorted(toplot[regname]), [len(toplot) - ii]*3, color='k', linestyle='--', alpha=0.5, linewidth=0.5)
+            for xv, color, label in zip(sorted(toplot[regname]), ['blue', 'red', 'orange',], ('33,35', 'aggregate', '25,27',)):
                 pl.plot(xv, len(toplot) - ii, 's', color=color, label=label)
         else:
             print(f"Warning: {regname} has no data")
@@ -182,9 +190,19 @@ def plot_spatial_distribution_of_beams(data):
         sel = TM & fld & agg & notfits
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            cube = SpectralCube.read(data['filename'][sel][0], format='casa_image')
-            ww = cube.wcs.celestial #WCS(fh[0].header)
-        xy = ww.pixel_to_world(cube.shape[2], cube.shape[1]).galactic
+            if sel.sum() == 0:
+                sel = TM & fld & agg & ~notfits
+                try:
+                    cube = SpectralCube.read(data['filename'][sel][0])
+                except:
+                    cube = Slice.from_hdu(fits.open(data['filename'][sel][0]))
+            else:
+                cube = SpectralCube.read(data['filename'][sel][0], format='casa_image')
+            ww = cube.wcs.celestial
+        try:
+            xy = ww.pixel_to_world(cube.shape[2]//2, cube.shape[1]//2).galactic
+        except:
+            xy = ww.pixel_to_world(cube.shape[1]//2, cube.shape[0]//2).galactic
         ell = pl.matplotlib.patches.Ellipse(
                             xy=(xy.l.wrap_at(180*u.deg).value, xy.b.value),
                             width=data['bmaj'][sel][0] / scale,
@@ -199,9 +217,9 @@ def plot_spatial_distribution_of_beams(data):
     ax.add_patch(ell)
     ell = pl.matplotlib.patches.Ellipse((0.3, -0.18), width=3/scale, height=3/scale, facecolor='none', edgecolor='b')
     ax.add_patch(ell)
-    ax.text(0.25, -0.18, '1", 3"', ha='left', va='center', color='b')
+    ax.text(0.25, -0.25, '1", 3"', ha='left', va='center', color='b')
 
-    ax.axis([0.95, -0.61, -0.25, 0.32])
+    ax.axis([0.95, -0.61, -0.3, 0.22])
     ax.set_aspect(1)
     ax.set_xlabel(r"Galactic Longitude ($^\circ$)")
     ax.set_ylabel(r"Galactic Latitude ($^\circ$)")

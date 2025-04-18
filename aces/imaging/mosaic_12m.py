@@ -347,6 +347,11 @@ def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', '
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}.cont.I*image.tt0.pbcor')
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.spw{spw}.cont*tt0.pbcor.fits')
 
+        # special-case field am
+        filelist = [x for x in filelist if 'uid___A001_X15a0_X184' not in x]
+        filelist.append(f'/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits')
+
+
         check_files(filelist, funcname='reimaged_high')
 
         print(f"Reading as 2d for files (reimaged {name}): ", end=None, flush=True)
@@ -1394,8 +1399,9 @@ def mosaic_field_am_pieces(header=None):
     """
     path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/'
 
-    for spw in ('25_27', '33_35', '25_27_29_31_33_35'):
-        basefn = 'Sgr_A_star_sci.spw{spw}.cont.I.manual.{uplo}.{suffix}'
+    for spw, fitssuff in (('25_27', ''), ('33_35', ''), ('25_27_29_31_33_35', '.fits')):
+        # Dan uploaded image files for 25_27 and 33_35 and FITS for 25_27_29_31_33_35
+        basefn = 'Sgr_A_star_sci.spw{spw}.cont.I.manual.{uplo}.{suffix}' + fitssuff
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
@@ -1403,17 +1409,17 @@ def mosaic_field_am_pieces(header=None):
             for tt in ('tt0', 'tt1'):
                 hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'image.{tt}.pbcor', spw=spw)) for uplo in ('lower', 'upper')]
                 wthdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'weight.{tt}', spw=spw)) for uplo in ('lower', 'upper')]
-                mos = make_mosaic(hdus, weights=wthdus, name='field_am_spw{spw}', array='12m', folder='field_am', basepath=conf.basepath, doplots=False, commonbeam=True)
+                mos = make_mosaic(hdus, weights=wthdus, name=f'field_am_spw{spw}', array='12m', folder='field_am', basepath=conf.basepath, doplots=False, commonbeam=True)
 
-                with fits.open(f'/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic_spw{spw}.fits', mode='update') as fh:
+                with fits.open(f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_spw{spw}_mosaic.fits', mode='update') as fh:
                     fh[0].header['BUNIT'] = 'Jy/beam'
 
-                print(radio_beam.Beam.from_fits_header(f'/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_spw{spw}_mosaic.fits'))
+                print(radio_beam.Beam.from_fits_header(f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_spw{spw}_mosaic.fits'))
                 try:
                     outname = f'{path}/uid___A001_X15a0_X184.{basefn.format(uplo="lower_plus_upper", suffix=f"image.{tt}.pbcor", spw=spw)}'
                     print(outname)
                     os.link(
-                            f'/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_mosaic_spw{spw}.fits',
+                            f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_spw{spw}_mosaic.fits',
                             outname,
                             )
                     with fits.open(outname, mode='update') as fh:
@@ -1423,15 +1429,15 @@ def mosaic_field_am_pieces(header=None):
 
             for tt in ('tt0', 'tt1'):
                 for ftype in ('weight', 'pb'):
-                    hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'{ftype}.{tt}')) for uplo in ('lower', 'upper')]
+                    hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'{ftype}.{tt}', spw=spw)) for uplo in ('lower', 'upper')]
                     mos = make_mosaic(hdus, name=f'field_am_{ftype}_spw{spw}', array='12m', folder='field_am',
                                     basepath=conf.basepath, doplots=False, commonbeam=None)
 
                     try:
-                        outname = f'{path}/uid___A001_X15a0_X184.{basefn.format(uplo="lower_plus_upper", suffix=f"{ftype}.{tt}")}'
+                        outname = f'{path}/uid___A001_X15a0_X184.{basefn.format(uplo="lower_plus_upper", suffix=f"{ftype}.{tt}", spw=spw)}'
                         print(outname)
                         os.link(
-                                f'/orange/adamginsburg/ACES//mosaics/field_am/12m_field_am_{ftype}_spw{spw}_mosaic.fits',
+                                f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_{ftype}_spw{spw}_mosaic.fits',
                                 outname
                                 )
                     except FileExistsError as ex:
