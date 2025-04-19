@@ -130,3 +130,25 @@ for reg in zoomregs:
         pl.subplots_adjust(wspace=0.03, hspace=0.01)
 
     pl.savefig(f'{basepath}/papers/continuum_data/figures/{name.replace(" ", "_").replace("/", "").replace("*", "star")}_hi_lo_alpha.pdf', bbox_inches='tight')
+
+    
+def alpha_comparison():
+    manual_alpha = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_manual_alpha_mosaic.fits')
+    tt_alpha = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_alpha_mosaic.fits')
+    
+    sel = snr_lo > 10
+    pl.figure(figsize=(4, 4), dpi=300)
+    with pl.rc_context({'font.size': 12}):
+        pl.scatter(manual_alpha[0].data[sel],
+                tt_alpha[0].data[sel], s=1, alpha=0.25, c=snr_lo[sel], cmap='viridis_r')
+        cb = pl.colorbar()
+        cb.set_label("Signal-to-Noise Ratio")
+        pl.xlabel("Manual (spw33+35 / spw25+27)")
+        pl.ylabel("TT-based")
+        pl.plot([-5,5], [-5,5], 'k--')
+        pl.axis([-5,5,-5,5])
+        pl.savefig(f'{basepath}/papers/continuum_data/figures/alpha_comparison.pdf', bbox_inches='tight')
+
+
+if __name__ == "__main__":
+    alpha_comparison()

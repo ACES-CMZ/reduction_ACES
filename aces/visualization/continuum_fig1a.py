@@ -91,7 +91,7 @@ def plot_fullwidth_figure(fn, imgdata=None,
 def plot_three_panel_figure(fn1, fn2, fn3, names=None, colormap=None,
                             label=r"$S_\nu$ [mJy/beam]",
                             dpi=300,
-                            subset_label=False, scale=1e3, normkwargs=None,
+                            subset_label=True, scale=1e3, normkwargs=None,
                             scalebar=True,
                             scalebar_color='k',
                             cbar_size="2%"):
@@ -266,7 +266,7 @@ if __name__ == '__main__':
             fig.savefig(f'{diag_dir}/FullField12m_circularbeam_{name}_{cmname}.png', bbox_inches='tight', dpi=250)
             fig.savefig(f'{diag_dir}/FullField12m_circularbeam_{name}_{cmname}.pdf', bbox_inches='tight', dpi=250)
 
-        fig = plot_three_panel_figure(*filenames, names=fname_labels, colormap=colormap)
+        fig = plot_three_panel_figure(*filenames, names=fname_labels, colormap=colormap, subset_label=True)
         fig.savefig(f'{diag_dir}/FullField12m_circularbeam_three_panel_{cmname}.png', bbox_inches='tight', dpi=300)
         fig.savefig(f'{diag_dir}/FullField12m_circularbeam_three_panel_{cmname}.pdf', bbox_inches='tight', dpi=300)
 
@@ -282,7 +282,7 @@ if __name__ == '__main__':
 
         filenames = [x[0] for x in iterables]
         fname_labels = [x[1] for x in iterables]
-        fig = plot_three_panel_figure(*filenames, names=fname_labels, colormap=colormap)
+        fig = plot_three_panel_figure(*filenames, names=fname_labels, colormap=colormap, subset_label=True)
         fig.savefig(f'{diag_dir}/RMS_three_panel_{cmname}.png', bbox_inches='tight', dpi=300)
         fig.savefig(f'{diag_dir}/RMS_three_panel_{cmname}.pdf', bbox_inches='tight', dpi=300)
 
