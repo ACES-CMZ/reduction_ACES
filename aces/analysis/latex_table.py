@@ -225,196 +225,221 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
     return schedblock_meta
 
 
-def make_observation_table(access_token=None):
+def make_observation_table(access_token=None, use_cache=True):
     from astroquery.alma import Alma
     from astropy.time import Time
     import numpy as np
     from astropy.table import Table
+    from astropy import table
 
-    metadata = Alma.query(payload={'project_code': '2021.1.00172.L'})
-    metadata['t_min'] = Time(metadata['t_min'], format='mjd')
-    metadata['Observation Start Time'] = Time(metadata['t_min'], format='mjd')
-    metadata['Observation Start Time'].format = 'fits'
-    metadata['Observation End Time'] = Time(metadata['t_max'], format='mjd')
-    metadata['Observation End Time'].format = 'fits'
-    metadata = metadata[metadata['target_name'] == 'Sgr_A_star']
+    if use_cache:
+        usub_meta_tm = Table.read(f'{basepath}/tables/observation_metadata_12m.ecsv')
+        usub_meta_sm = Table.read(f'{basepath}/tables/observation_metadata_7m.ecsv')
+        usub_meta_tp = Table.read(f'{basepath}/tables/observation_metadata_TP.ecsv')
+        usub_meta_tp['Configuration'] = 'TP'
+        usub_meta_sm['Configuration'] = '7M'
+        usub_meta = table.vstack([usub_meta_tm, usub_meta_sm, usub_meta_tp])
 
-    sub_meta = metadata['schedblock_name', 'Observation Start Time',
-                        'Observation End Time', 'pwv', 't_exptime',
-                        's_resolution', 'spatial_scale_max', 'member_ous_uid']
-    usub_meta = Table(np.unique(sub_meta))
+        # Sort usub_meta by 'Field' in natural order
+        sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
+        usub_meta = usub_meta[sorted_indices]
 
-    schedblock_meta = retrieve_execution_metadata(access_token=access_token)
+        sm = usub_meta['Configuration'] == '7M'
+        tp = usub_meta['Configuration'] == 'TP'
+        tm = (~tp) & (~sm)
+        colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
+        colnames_noconfig = colnames[:2] + colnames[3:]
 
-    usub_meta['executions'] = [', '.join([x['date']
-                                         for x in schedblock_meta[schedblock_name]['executions']
-                                         if x['status'] == 'Pass'
-                                         ])
-                               for schedblock_name in usub_meta['schedblock_name']]
-    usub_meta['npointings'] = [int(schedblock_meta[schedblock_name]['number_pointings'])
-                               for schedblock_name in usub_meta['schedblock_name']]
-    timefmt = lambda x: f"{x:0.1f}"  # noqa
-    usub_meta['time_per_eb'] = [rf'\makecell{{{",\\\\".join([timefmt(float(x['time']))
-                                                             for x in schedblock_meta[schedblock_name]['executions']
-                                                             if x['status'] == 'Pass'
-                                                             ])}}}'
-                                for schedblock_name in usub_meta['schedblock_name']]
-
-    # get PWVs
-    execution_uids = {schedblock_name: [x['execblockuid'] for x in schedblock_meta[schedblock_name]['executions']
-                                        if x['status'] == 'Pass']
-                      for schedblock_name in usub_meta['schedblock_name']}
-    # schedblock_to_mous = {schedblock_name: schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']
-    #                       for schedblock_name in usub_meta['schedblock_name']}
-    mous_to_schedblock = {schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']: schedblock_name
-                          for schedblock_name in usub_meta['schedblock_name']}
-
-    pwv_cache_fn = f'{basepath}/reduction_ACES/aces/data/pwv_measurements.json'
-    if os.path.exists(pwv_cache_fn):
-        with open(pwv_cache_fn, 'r') as fh:
-            pwv_measurements = json.load(fh)
     else:
-        pwv_measurements = {}
-    pwvs = []
-    pwvfmt = lambda x: f"{x:0.2f}"  # noqa
-    for mous in tqdm(usub_meta['member_ous_uid'], desc='PWV'):
-        sbname = mous_to_schedblock[mous]
-        mousstr = mous.replace('/', '_').replace(':', '_')
-        these_pwvs = []
-        if sbname in pwv_measurements:
-            these_pwvs = pwv_measurements[sbname]
+
+        metadata = Alma.query(payload={'project_code': '2021.1.00172.L'})
+        metadata['t_min'] = Time(metadata['t_min'], format='mjd')
+        metadata['Observation Start Time'] = Time(metadata['t_min'], format='mjd')
+        metadata['Observation Start Time'].format = 'fits'
+        metadata['Observation End Time'] = Time(metadata['t_max'], format='mjd')
+        metadata['Observation End Time'].format = 'fits'
+        metadata = metadata[metadata['target_name'] == 'Sgr_A_star']
+
+        sub_meta = metadata['schedblock_name', 'Observation Start Time',
+                            'Observation End Time', 'pwv', 't_exptime',
+                            's_resolution', 'spatial_scale_max', 'member_ous_uid']
+        usub_meta = Table(np.unique(sub_meta))
+
+        schedblock_meta = retrieve_execution_metadata(access_token=access_token)
+
+        usub_meta['executions'] = [', '.join([x['date']
+                                            for x in schedblock_meta[schedblock_name]['executions']
+                                            if x['status'] == 'Pass'
+                                            ])
+                                for schedblock_name in usub_meta['schedblock_name']]
+        usub_meta['npointings'] = [int(schedblock_meta[schedblock_name]['number_pointings'])
+                                for schedblock_name in usub_meta['schedblock_name']]
+        timefmt = lambda x: f"{x:0.1f}"  # noqa
+        usub_meta['time_per_eb'] = [rf'\makecell[l]{{{",\\\\".join([timefmt(float(x['time']))
+                                                                for x in schedblock_meta[schedblock_name]['executions']
+                                                                if x['status'] == 'Pass'
+                                                                ])}}}'
+                                    for schedblock_name in usub_meta['schedblock_name']]
+
+        # get PWVs
+        execution_uids = {schedblock_name: [x['execblockuid'] for x in schedblock_meta[schedblock_name]['executions']
+                                            if x['status'] == 'Pass']
+                        for schedblock_name in usub_meta['schedblock_name']}
+        # schedblock_to_mous = {schedblock_name: schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']
+        #                       for schedblock_name in usub_meta['schedblock_name']}
+        mous_to_schedblock = {schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']: schedblock_name
+                            for schedblock_name in usub_meta['schedblock_name']}
+
+        pwv_cache_fn = f'{basepath}/reduction_ACES/aces/data/pwv_measurements.json'
+        if os.path.exists(pwv_cache_fn):
+            with open(pwv_cache_fn, 'r') as fh:
+                pwv_measurements = json.load(fh)
         else:
-            for xid in execution_uids[sbname]:
-                xidstr = xid.replace("/", "_").replace(":", "_")
-                path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/working/{xidstr}.ms'
-                try:
-                    tbl = Table.read(path + "/ASDM_CALWVR")
-                    if len(tbl) == 0:
-                        print(f"No water table found for {sbname} {mous} {xid} in filename {path}")
-                        raise ValueError("No water table found")
-                    med_pwv = np.median(tbl['water'])
-                    if np.isnan(med_pwv):
-                        raise ValueError("WTF?")
-                    these_pwvs.append(med_pwv * 1000)
-                except ValueError:
-                    lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
-                    #watercol = [x for x in lltbl.column_set.columns if x.name == 'water']
-                    tbl = lltbl.as_astropy_table(include_columns=['water'])
-                    med_pwv = np.median(tbl['water'])
-                    if np.isnan(med_pwv):
-                        raise ValueError("WTF?")
-                    these_pwvs.append(med_pwv * 1000)
-                except IOError as ex:
-                    if 'TP' not in sbname:
-                        path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/{xidstr}.ms'
-                        if os.path.exists(path):
-                            lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
-                            tbl = lltbl.as_astropy_table(include_columns=['water'])
-                            med_pwv = np.median(tbl['water'])
-                            if np.isnan(med_pwv):
-                                raise ValueError("WTF?")
-                            these_pwvs.append(med_pwv * 1000)
-                        else:
-                            these_pwvs.append(np.nan)
-                            print("No CALWVR table found for ", sbname, mous, xid, ex)
-                    print(f"Skipped TP {path}")
-                except Exception as ex:
-                    these_pwvs.append(np.nan)
-                    print("Unknown exception for ", sbname, mous, xid, ex)
-            pwv_measurements[sbname] = these_pwvs
-        pwvs.append(fr"\makecell{{{',\\\\ '.join(map(pwvfmt, these_pwvs))}}}".replace('nan', '-'))
-    with open(pwv_cache_fn, 'w') as fh:
-        json.dump(pwv_measurements, fh)
-    del usub_meta['pwv']
-    usub_meta['pwv'] = pwvs
+            pwv_measurements = {}
+        pwvs = []
+        pwvfmt = lambda x: f"{x:0.2f}"  # noqa
+        for mous in tqdm(usub_meta['member_ous_uid'], desc='PWV'):
+            sbname = mous_to_schedblock[mous]
+            mousstr = mous.replace('/', '_').replace(':', '_')
+            these_pwvs = []
+            if sbname in pwv_measurements:
+                these_pwvs = pwv_measurements[sbname]
+            else:
+                for xid in execution_uids[sbname]:
+                    xidstr = xid.replace("/", "_").replace(":", "_")
+                    path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/working/{xidstr}.ms'
+                    try:
+                        tbl = Table.read(path + "/ASDM_CALWVR")
+                        if len(tbl) == 0:
+                            print(f"No water table found for {sbname} {mous} {xid} in filename {path}")
+                            raise ValueError("No water table found")
+                        med_pwv = np.median(tbl['water'])
+                        if np.isnan(med_pwv):
+                            raise ValueError("WTF?")
+                        these_pwvs.append(med_pwv * 1000)
+                    except ValueError:
+                        lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
+                        #watercol = [x for x in lltbl.column_set.columns if x.name == 'water']
+                        tbl = lltbl.as_astropy_table(include_columns=['water'])
+                        med_pwv = np.median(tbl['water'])
+                        if np.isnan(med_pwv):
+                            raise ValueError("WTF?")
+                        these_pwvs.append(med_pwv * 1000)
+                    except IOError as ex:
+                        if 'TP' not in sbname:
+                            path = f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.{mousstr}/calibrated/{xidstr}.ms'
+                            if os.path.exists(path):
+                                lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
+                                tbl = lltbl.as_astropy_table(include_columns=['water'])
+                                med_pwv = np.median(tbl['water'])
+                                if np.isnan(med_pwv):
+                                    raise ValueError("WTF?")
+                                these_pwvs.append(med_pwv * 1000)
+                            else:
+                                these_pwvs.append(np.nan)
+                                print("No CALWVR table found for ", sbname, mous, xid, ex)
+                        print(f"Skipped TP {path}")
+                    except Exception as ex:
+                        these_pwvs.append(np.nan)
+                        print("Unknown exception for ", sbname, mous, xid, ex)
+                pwv_measurements[sbname] = these_pwvs
+            pwvs.append(fr"\makecell[l]{{{',\\\\ '.join(map(pwvfmt, these_pwvs))}}}".replace('nan', '-'))
+        with open(pwv_cache_fn, 'w') as fh:
+            json.dump(pwv_measurements, fh)
+        del usub_meta['pwv']
+        usub_meta['pwv'] = pwvs
 
-    tm = np.char.find(usub_meta['schedblock_name'], '_TM') > 0
-    sm = np.char.find(usub_meta['schedblock_name'], '_7M') > 0
-    tp = np.char.find(usub_meta['schedblock_name'], '_TP') > 0
+        # Sort usub_meta by 'Field' in natural order
+        sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
+        usub_meta = usub_meta[sorted_indices]
 
-    configuration_schedules = requests.get('https://almascience.eso.org/observing/observing-configuration-schedule/prior-cycle-observing-and-configuration-schedule')
+        tm = np.char.find(usub_meta['schedblock_name'], '_TM') > 0
+        sm = np.char.find(usub_meta['schedblock_name'], '_7M') > 0
+        tp = np.char.find(usub_meta['schedblock_name'], '_TP') > 0
 
-    from astropy.time import Time
-    from astropy.io import ascii
+        configuration_schedules = requests.get('https://almascience.eso.org/observing/observing-configuration-schedule/prior-cycle-observing-and-configuration-schedule')
 
-    def try_read_table(index):
-        try:
-            return ascii.read(configuration_schedules.text, format='html', htmldict={'table_id': index})
-        except Exception as ex:  # noqa
-            #print(ex)
-            return
+        from astropy.time import Time
+        from astropy.io import ascii
 
-    config_sched_tbls = {ii:
-                         try_read_table(ii)
-                         for ii in range(1, 10)
-                         if try_read_table(ii) is not None
-                        }
-    assert len(config_sched_tbls) > 0
+        def try_read_table(index):
+            try:
+                return ascii.read(configuration_schedules.text, format='html', htmldict={'table_id': index})
+            except Exception as ex:  # noqa
+                #print(ex)
+                return
 
-    for ii, config_sched_tbl in config_sched_tbls.items():
-        config_sched_tbl['Start date'] = Time(config_sched_tbl['Start date'])
-        config_sched_tbl['End date'] = Time(config_sched_tbl['End date'])
+        config_sched_tbls = {ii:
+                            try_read_table(ii)
+                            for ii in range(1, 10)
+                            if try_read_table(ii) is not None
+                            }
+        assert len(config_sched_tbls) > 0
 
-    usub_meta['cycle_id'] = np.zeros(len(usub_meta), dtype='int')
-    usub_meta['config_id'] = ['x' * 11 for x in range(len(usub_meta))]
-    usub_meta['block'] = ['xx' for x in range(len(usub_meta))]
-    for row in usub_meta:
-        for cycle_id, config_sched_tbl in config_sched_tbls.items():
-            match = ((config_sched_tbl['Start date'] < row['Observation Start Time']) &
-                     (config_sched_tbl['End date'] >= row['Observation Start Time']))
-            if match.sum() > 0:
-                row['cycle_id'] = cycle_id
-                row['config_id'] = config_sched_tbl[match]['Approx Config.'][0]
-                row['block'] = config_sched_tbl[match]['Block'][0]
-                #print(f"Matched {row['schedblock_name']} to cycle {cycle_id} config {row['config_id']} block {row['block']}")
+        for ii, config_sched_tbl in config_sched_tbls.items():
+            config_sched_tbl['Start date'] = Time(config_sched_tbl['Start date'])
+            config_sched_tbl['End date'] = Time(config_sched_tbl['End date'])
 
-    usub_meta['Field'] = [x.split("_")[3] for x in usub_meta['schedblock_name']]
-    usub_meta.rename_column('pwv', 'PWV')
-    usub_meta.rename_column('t_exptime', 'Exposure Time')
-    usub_meta.rename_column('s_resolution', 'Res.')
-    usub_meta.rename_column('spatial_scale_max', 'LAS')
-    usub_meta.rename_column('config_id', 'Configuration')
-    usub_meta.rename_column('executions', 'Execution Dates')
-    usub_meta.rename_column('npointings', 'N(P)')
-    usub_meta.rename_column('time_per_eb', 'Time')
+        usub_meta['cycle_id'] = np.zeros(len(usub_meta), dtype='int')
+        usub_meta['config_id'] = ['x' * 11 for x in range(len(usub_meta))]
+        usub_meta['block'] = ['xx' for x in range(len(usub_meta))]
+        for row in usub_meta:
+            for cycle_id, config_sched_tbl in config_sched_tbls.items():
+                match = ((config_sched_tbl['Start date'] < row['Observation Start Time']) &
+                        (config_sched_tbl['End date'] >= row['Observation Start Time']))
+                if match.sum() > 0:
+                    row['cycle_id'] = cycle_id
+                    row['config_id'] = config_sched_tbl[match]['Approx Config.'][0]
+                    row['block'] = config_sched_tbl[match]['Block'][0]
+                    #print(f"Matched {row['schedblock_name']} to cycle {cycle_id} config {row['config_id']} block {row['block']}")
 
-    updated = (np.char.find(usub_meta['schedblock_name'], 'updated') >= 0)
-    print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()}")
-    for fieldname in set(usub_meta['Field']):
-        for sub in (tm, sm, tp):
-            match = (usub_meta['Field'][sub] == fieldname)
-            if match.sum() > 1:
-                #print(fieldname, match.sum(), sub[sub].sum())
-                #sub[sub][match] = updated[sub][match]
-                # hard to parse logic, eh?  Just... talk yourself through it 5-10 times...
-                sub[sub] &= (~match) | (match & (updated[sub]))
-                #print(fieldname, match.sum(), sub[sub].sum())
-    print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()} (after filtering for updated)")
+        usub_meta['Field'] = [x.split("_")[3] for x in usub_meta['schedblock_name']]
+        usub_meta.rename_column('pwv', 'PWV')
+        usub_meta.rename_column('t_exptime', 'Exposure Time')
+        usub_meta.rename_column('s_resolution', 'Res.')
+        usub_meta.rename_column('spatial_scale_max', 'LAS')
+        usub_meta.rename_column('config_id', 'Configuration')
+        usub_meta.rename_column('executions', 'Execution Dates')
+        usub_meta.rename_column('npointings', 'N(P)')
+        usub_meta.rename_column('time_per_eb', 'Time')
 
-    colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
-    usub_meta['LAS'].unit = u.arcsec
-    usub_meta['Res.'].unit = u.arcsec
-    #usub_meta['Exposure Time'].unit = u.s
-    usub_meta['Time'].unit = u.min
-    usub_meta['PWV'].unit = u.mm
+        updated = (np.char.find(usub_meta['schedblock_name'], 'updated') >= 0)
+        print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()}")
+        for fieldname in set(usub_meta['Field']):
+            for sub in (tm, sm, tp):
+                match = (usub_meta['Field'][sub] == fieldname)
+                if match.sum() > 1:
+                    #print(fieldname, match.sum(), sub[sub].sum())
+                    #sub[sub][match] = updated[sub][match]
+                    # hard to parse logic, eh?  Just... talk yourself through it 5-10 times...
+                    sub[sub] &= (~match) | (match & (updated[sub]))
+                    #print(fieldname, match.sum(), sub[sub].sum())
+        print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()} (after filtering for updated)")
 
-    colnames_noconfig = colnames[:2] + colnames[3:]
+        colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
+        usub_meta['LAS'].unit = u.arcsec
+        usub_meta['Res.'].unit = u.arcsec
+        #usub_meta['Exposure Time'].unit = u.s
+        usub_meta['Time'].unit = u.min
+        usub_meta['PWV'].unit = u.mm
 
-    usub_meta[colnames][tm].write(f'{basepath}/tables/observation_metadata_12m.ecsv', format='ascii.ecsv', overwrite=True)
-    usub_meta[colnames_noconfig][sm].write(f'{basepath}/tables/observation_metadata_7m.ecsv', format='ascii.ecsv', overwrite=True)
-    usub_meta[colnames_noconfig][tp].write(f'{basepath}/tables/observation_metadata_TP.ecsv', format='ascii.ecsv', overwrite=True)
+        colnames_noconfig = colnames[:2] + colnames[3:]
 
-    usub_meta['Execution Dates'] = [fr'\makecell{{{",\\\\ ".join([x for x in ed.split(", ")])}.}}' for ed in usub_meta['Execution Dates']]
+        usub_meta[colnames][tm].write(f'{basepath}/tables/observation_metadata_12m.ecsv', format='ascii.ecsv', overwrite=True)
+        usub_meta[colnames_noconfig][sm].write(f'{basepath}/tables/observation_metadata_7m.ecsv', format='ascii.ecsv', overwrite=True)
+        usub_meta[colnames_noconfig][tp].write(f'{basepath}/tables/observation_metadata_TP.ecsv', format='ascii.ecsv', overwrite=True)
+
+    usub_meta['Execution Dates'] = [fr'\makecell[l]{{{",\\\\ ".join([x for x in ed.split(", ")])}.}}' for ed in usub_meta['Execution Dates']]
 
     #latexdict['header_start'] = '\\label{tab:observation_metadata_12m}'#\n\\footnotesize'
     #latexdict['preamble'] = '\\caption{12m Observation Metadata}\n\\resizebox{\\textwidth}{!}{'
-    latexdict['col_align'] = 'l' * len(usub_meta.columns)
+    latexdict['col_align'] = 'r' * len(usub_meta.columns)
     latexdict['tabletype'] = 'table*'
     latexdict['tablefoot'] = (
         "}\\par\n"
         """
         The \\emph{Time} column gives the execution time of each execution block.
-        The \\emph{PWV} is the median of the water column in he \\texttt{ASDM\\_CALWVR} table.
+        The \\emph{PWV} is the median of the water column in the \\texttt{ASDM\\_CALWVR} table.
         \\emph{Res.} is the resolution in arcseconds.
         \\emph{N(P)} is the number of pointings.
         """
@@ -429,11 +454,16 @@ def make_observation_table(access_token=None):
 
     for sel, nm in ((tm, '12m'), (sm, '7m'), (tp, 'TP')):
         latexdict['header_start'] = f'\\label{{tab:observation_metadata_{nm}}}'#\n\\footnotesize'
-        latexdict['preamble'] = f'\\caption{{{nm} Observation Metadata}}\n\\resizebox{{\\textwidth}}{{!}}{{'
-        usub_meta[colnames][sel].write(f"{basepath}/papers/continuum_data/tables/observation_metadata_{nm}.tex",
-                                       formats=formats,
-                                       overwrite=True,
-                                       latexdict=latexdict)
+        preamble = '{counter}\n\\caption{{{nm} Observation Metadata{contd}}}\n\\resizebox{{\\textwidth}}{{!}}{{'
+        for ii in range(0, sel.sum(), 25):
+            if ii == 0:
+                latexdict['preamble'] = preamble.format(nm=nm, contd='', counter='')
+            else:
+                latexdict['preamble'] = preamble.format(nm=nm, contd=' continued', counter=r'\addtocounter{table}{-1}')
+            usub_meta[colnames][sel][ii:ii+25].write(f"{basepath}/papers/continuum_data/tables/observation_metadata_{nm}_rows{ii}-{ii+25}.tex",
+                                        formats=formats,
+                                        overwrite=True,
+                                        latexdict=latexdict)
 
     return usub_meta, (tm, sm, tp)
 
