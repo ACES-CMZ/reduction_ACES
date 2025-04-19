@@ -233,48 +233,52 @@ def plot_spatial_distribution_of_beams(data):
 
 
 def plot_rms_histogram(data):
-    pl.figure(figsize=(10, 8))
-    rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_maskedrms_mosaic.fits')
-    beam = radio_beam.Beam.from_fits_header(rmsmap[0].header)
-    h1, l1, p1 = pl.hist(rmsmap[0].data[np.isfinite(rmsmap[0].data)]*1e3, bins=np.geomspace(2e-5, 2e-3)*1e3, histtype='step', label=f'Full {beam.major.to(u.arcsec):0.1f}');
-    rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw33_35_maskedrms_mosaic.fits')
-    beam = radio_beam.Beam.from_fits_header(rmsmap[0].header)
-    h2, l2, p2 = pl.hist(rmsmap[0].data[np.isfinite(rmsmap[0].data)]*1e3, bins=np.geomspace(2e-5, 2e-3)*1e3, histtype='step', label=f'SPW 33+35 {beam.major.to(u.arcsec):0.1f}');
-    rmsmap2527 = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_maskedrms_mosaic.fits')
-    beam = radio_beam.Beam.from_fits_header(rmsmap2527[0].header)
-    h3, l3, p3 = pl.hist(rmsmap2527[0].data[np.isfinite(rmsmap2527[0].data)]*1e3, bins=np.geomspace(2e-5, 2e-3)*1e3, histtype='step', label=f'SPW 25+27 {beam.major.to(u.arcsec):0.1f}');
-    pl.semilogx();
-    pl.xlabel("RMS Flux Density [mJy beam$^{-1}$]")
-    pl.ylabel("Number of 0.2x0.2\" Pixels")
-    pl.legend(loc='center right', fancybox=True, framealpha=0.5)
-    pl.savefig(f'{diag_dir}/RMS_Histogram_comparison_circular.png', bbox_inches='tight')
+    with pl.rc_context({'font.size': 12}):
+        pl.figure(figsize=(5, 4), dpi=300)
+        rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_maskedrms_mosaic.fits')
+        beam = radio_beam.Beam.from_fits_header(rmsmap[0].header)
+        h1, l1, p1 = pl.hist(rmsmap[0].data[np.isfinite(rmsmap[0].data)]*1e3, bins=np.geomspace(2e-5, 2e-3)*1e3, histtype='step', label=f'Full {beam.major.to(u.arcsec):0.1f}');
+        rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw33_35_maskedrms_mosaic.fits')
+        beam = radio_beam.Beam.from_fits_header(rmsmap[0].header)
+        h2, l2, p2 = pl.hist(rmsmap[0].data[np.isfinite(rmsmap[0].data)]*1e3, bins=np.geomspace(2e-5, 2e-3)*1e3, histtype='step', label=f'SPW 33+35 {beam.major.to(u.arcsec):0.1f}');
+        rmsmap2527 = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_maskedrms_mosaic.fits')
+        beam = radio_beam.Beam.from_fits_header(rmsmap2527[0].header)
 
-    return p1, p2, p3
+        h3, l3, p3 = pl.hist(rmsmap2527[0].data[np.isfinite(rmsmap2527[0].data)]*1e3,
+                             bins=np.geomspace(2e-5, 5e-3)*1e3, histtype='step', label=f'SPW 25+27 {beam.major.to(u.arcsec):0.1f}');
+        pl.semilogx();
+        pl.xlabel("RMS Flux Density [mJy beam$^{-1}$]")
+        pl.ylabel("Number of 0.2x0.2\" Pixels")
+        pl.legend(loc='center right', fancybox=True, framealpha=0.5, fontsize=10)
+        pl.savefig(f'{diag_dir}/RMS_Histogram_comparison_circular.png', bbox_inches='tight')
+        pl.savefig(f'{diag_dir}/RMS_Histogram_comparison_circular.pdf', bbox_inches='tight')
+        return p1, p2, p3
 
 
 def plot_rms_histogram_and_cdf(data):
-    p1, p2, p3 = plot_rms_histogram(data)
-    # CDF
-    ax2 = pl.twinx()
-    rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_maskedrms_mosaic.fits')
-    rmssrt = np.sort(rmsmap[0].data[np.isfinite(rmsmap[0].data)])*1e3
-    print(f'rmssrt[0] = {rmssrt[0]}.  rmssrt[-1] = {rmssrt[-1]}')
-    ax2.plot(rmssrt, np.arange(rmssrt.size)/rmssrt.size, color=p1[0].get_edgecolor(), linestyle='--')
+    with pl.rc_context({'font.size': 12}):
+        p1, p2, p3 = plot_rms_histogram(data)
+        # CDF
+        ax2 = pl.twinx()
+        rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_maskedrms_mosaic.fits')
+        rmssrt = np.sort(rmsmap[0].data[np.isfinite(rmsmap[0].data)])*1e3
+        print(f'rmssrt[0] = {rmssrt[0]}.  rmssrt[-1] = {rmssrt[-1]}')
+        ax2.plot(rmssrt, np.arange(rmssrt.size)/rmssrt.size, color=p1[0].get_edgecolor(), linestyle='--')
 
-    rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw33_35_maskedrms_mosaic.fits')
-    rmssrt = np.sort(rmsmap[0].data[np.isfinite(rmsmap[0].data)])*1e3
-    ax2.plot(rmssrt, np.arange(rmssrt.size)/rmssrt.size,  color=p2[0].get_edgecolor(), linestyle=':')
+        rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw33_35_maskedrms_mosaic.fits')
+        rmssrt = np.sort(rmsmap[0].data[np.isfinite(rmsmap[0].data)])*1e3
+        ax2.plot(rmssrt, np.arange(rmssrt.size)/rmssrt.size,  color=p2[0].get_edgecolor(), linestyle=':')
 
-    rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_maskedrms_mosaic.fits')
-    rmssrt = np.sort(rmsmap[0].data[np.isfinite(rmsmap[0].data)])*1e3
-    ax2.plot(rmssrt, np.arange(rmssrt.size)/rmssrt.size,  color=p3[0].get_edgecolor(), linestyle=':')
+        rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_maskedrms_mosaic.fits')
+        rmssrt = np.sort(rmsmap[0].data[np.isfinite(rmsmap[0].data)])*1e3
+        ax2.plot(rmssrt, np.arange(rmssrt.size)/rmssrt.size,  color=p3[0].get_edgecolor(), linestyle=':')
 
-    ax2.set_xlim(2e-5*1e3, 2e-3*1e3)
-    ax2.set_ylim(0,1)
-    ax2.set_ylabel("Fraction of pixels (CDF)")
-    #pl.legend(loc='center right')
-    pl.savefig(f'{diag_dir}/RMS_Histogram_comparison_circular_withCDF.png', bbox_inches='tight')
-    pl.savefig(f'{diag_dir}/RMS_Histogram_comparison_circular_withCDF.pdf', bbox_inches='tight')
+        ax2.set_xlim(4e-5*1e3, 5e-3*1e3)
+        ax2.set_ylim(0,1)
+        ax2.set_ylabel("Fraction of pixels (CDF)")
+        #pl.legend(loc='center right')
+        pl.savefig(f'{diag_dir}/RMS_Histogram_comparison_circular_withCDF.png', bbox_inches='tight')
+        pl.savefig(f'{diag_dir}/RMS_Histogram_comparison_circular_withCDF.pdf', bbox_inches='tight')
 
 
 def main():

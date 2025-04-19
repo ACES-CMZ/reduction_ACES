@@ -18,14 +18,14 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 basepath = conf.basepath
 
 
-def format_ax(ax, label="", cb=True, hidey=False, hidex=False):
+def format_ax(ax, label="", cb=True, hidey=False, hidex=False, cbar_size="5%"):
     ax.coords[0].set_axislabel("Right Ascension")
     ax.coords[1].set_axislabel("Declination")
     im = ax.images[0]
 
     if cb:
         divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
+        cax = divider.append_axes("right", size=cbar_size, pad=0.05)
         cax.set_xticks([])
         cax.set_xlabel("")
         cax.set_xticklabels([])
