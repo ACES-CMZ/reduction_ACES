@@ -1,4 +1,7 @@
+import os
 from astropy.wcs import WCS
+from astropy import wcs
+from astropy.convolution import Gaussian2DKernel, convolve_fft
 from astropy.io import fits
 from astropy import units as u
 from astropy.visualization import simple_norm
@@ -8,6 +11,7 @@ import numpy as np
 import mpl_plot_templates
 import mpl_plot_templates.inset_plots
 from radio_beam import Beam
+import radio_beam
 import regions
 from astropy import coordinates
 from astropy import visualization
@@ -35,14 +39,6 @@ def load_mustang_data():
     fn = 'SgrB2_flux_cut_dt6_filtp05to49_noShift_final_map.fits'
     mustang_fn = f'{TENS_DIR}/{fn}'
     mustang_plus_planck_fn = f"{TENS_DIR}/{fn.replace('.fits','')}_PlanckCombined.fits"
-
-    if not os.path.exists(mustang_plus_planck_fn):
-        from aces.visualization import merge_mustang
-
-    mustang = fits.open(mustang_fn)
-    mustangwcs = WCS(mustang[0].header)
-    mustangdata = mustang[0].data
-    mustangbeam = Beam.from_fits_header(mustang[0].header)
 
     mustang_planck_image = fits.open(mustang_plus_planck_fn)
     mustangdata = mustang_planck_image[0].data
