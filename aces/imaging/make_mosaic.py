@@ -281,7 +281,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             if array == '12m':
                 assert cb.major < 3 * u.arcsec
 
-        log.info(f"Loading HDUs and projecting to common beam {cb} = {cb.major.to(u.arcsec)} {cb.minor.to(u.arcsec)} {cb.pa}")
+        log.info(f"Loading HDUs and projecting to common beam {cb:0.2f} = {cb.major.to(u.arcsec):0.2f} {cb.minor.to(u.arcsec):0.2f} {cb.pa:0.2f}")
         prjs = [spectral_cube.Projection.from_hdu(hdul) for hdul in
                 ProgressBar(twod_hdus)]
         for prj, bm in (zip(ProgressBar(prjs), beams)):
@@ -290,7 +290,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             except NoBeamError:
                 prj.beam = bm
 
-        log.info(f"Convolving HDUs to common beam {cb} = {cb.major.to(u.arcsec)} {cb.minor.to(u.arcsec)} {cb.pa}")
+        log.info(f"Convolving HDUs to common beam {cb:0.2f} = {cb.major.to(u.arcsec):0.2f} {cb.minor.to(u.arcsec):0.2f} {cb.pa:0.2f}")
         pb = ProgressBar(len(prjs))
 
         # when convolving to a new beam, but retaining Jy/beam units, the beam

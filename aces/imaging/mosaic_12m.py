@@ -193,7 +193,8 @@ def continuum(header):
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/product/*25_27_29_31_33_35*cont.I.manual.pbcor.tt0.fits')
     filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*.tt0.pbcor.fits')
 
-    check_files(filelist, funcname='continuum')
+    # check_files searches for weight files that don't necessarily exist
+    # check_files(filelist, funcname='continuum')
 
     print("CONTINUUM (default/product version) Reading as 2d for files: ", end=None, flush=True)
     hdus = [read_as_2d(fn) for fn in filelist]
@@ -241,10 +242,9 @@ def reimaged(header):
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
 
-    # special-case field am
-    am_index = [ii for ii, x in enumerate(filelist) if 'uid___A001_X15a0_X184' in x][0]
-    #filelist[am_index] = f'{basepath}/mosaics/field_am/12m_field_am_mosaic.fits'
-    filelist[am_index] = '/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits'
+    # special-case field am: there are multiple hits and we have to squeeze down to just one
+    filelist = [x for x in filelist if 'uid___A001_X15a0_X184' not in x]
+    filelist.append(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits')
 
     tt1filelist = [x.replace("tt0", "tt1") for x in filelist]
 
@@ -429,6 +429,9 @@ def residuals(header):
         filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}.*cont.I.iter1.residual.tt0')
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw{spw}.*cont.I.manual.residual.tt0')
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.spw{spw}.*cont.I*.residual.tt0')
+
+        filelist = [x for x in filelist if 'uid___A001_X15a0_X184' not in x]
+        filelist.append(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.lower_plus_upper.residual.tt0')
 
         check_files(filelist, funcname='residuals')
 
@@ -1429,12 +1432,15 @@ def mosaic_field_am_pieces(header=None):
 
                 mosname = f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_spw{spw}_{tt}_mosaic.fits'
                 with fits.open(mosname, mode='update') as fh:
+                    wcs = WCS(fh[0].header)
                     fh[0].header['BUNIT'] = 'Jy/beam'
                     fh[0].header.update(hdus[0][0].header)
                     fh[0].header.update(default_fits_header_extras)
                     fh[0].data[fh[0].data == 0] = np.nan
                     fh[0].header['ORIGIN'] = '6.5.4-9 CASAtools:v1.0.0'
                     fh[0].header['VERSION'] = '6.5.4-9 CASAtools:v1.0.0'
+                    # restore WCS to the original - don't want to inherit a WCS from hdus[0][0]
+                    fh[0].header.update(wcs.to_header())
 
                 print(f'am combination {tt} Beam:', radio_beam.Beam.from_fits_header(mosname))
                 outname = f'{path}/{basefn.format(uplo="lower_plus_upper", suffix=f"image.{tt}.pbcor", spw=spw)}'
@@ -1457,19 +1463,21 @@ def mosaic_field_am_pieces(header=None):
                 ia.close()
 
             for tt in ('tt0', 'tt1'):
-                for ftype in ('weight', 'pb'):
+                for ftype in ('weight', 'pb', 'residual'):
                     hdus = [read_as_2d(path + basefn.format(uplo=uplo, suffix=f'{ftype}.{tt}', spw=spw)) for uplo in ('lower', 'upper')]
                     mos = make_mosaic(hdus, name=f'field_am_{ftype}_spw{spw}_{tt}', array='12m', folder='field_am',
                                       basepath=conf.basepath, doplots=False, commonbeam=None)
 
                     mosname = f'/orange/adamginsburg/ACES/mosaics/field_am/12m_field_am_{ftype}_spw{spw}_{tt}_mosaic.fits'
                     with fits.open(mosname, mode='update') as fh:
+                        wcs = WCS(fh[0].header)
                         fh[0].header['BUNIT'] = 'Jy/beam'
                         fh[0].header.update(hdus[0][0].header)
                         fh[0].header.update(default_fits_header_extras)
                         fh[0].data[fh[0].data == 0] = np.nan
                         fh[0].header['ORIGIN'] = '6.5.4-9 CASAtools:v1.0.0'
                         fh[0].header['VERSION'] = '6.5.4-9 CASAtools:v1.0.0'
+                        fh[0].header.update(wcs.to_header())
 
                     outname = f'{path}/{basefn.format(uplo="lower_plus_upper", suffix=f"{ftype}.{tt}", spw=spw)}'
 

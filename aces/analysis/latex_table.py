@@ -128,10 +128,26 @@ def make_latex_table(savename='continuum_data_summary'):
     latexdict['tablefoot'] = ("}\\par\n"
                              )
 
-    ftbl.sort(['Region'])
+    # replacement for ftbl.sort(['Region'])
+    ftbl.sort('SPWs')
+    sorted_indices = [x[0] for x in sorted(enumerate(ftbl['Region']), key=lambda x: (len(x[1]), x[1]))]
+    ftbl = ftbl[sorted_indices]
 
-    ftbl.write(f"{basepath}/papers/continuum_data/{savename}.tex", formats=formats,
-               overwrite=True, latexdict=latexdict)
+    nrows = 50
+    for ii in range(0, len(ftbl), nrows):
+        latexdict['header_start'] = f'\\label{{tab:continuum_data_summary_{ii}-{ii+nrows}}}'#\n\\footnotesize'
+        if ii == 0:
+            contd = ''
+            counter = ''
+        else:
+            contd = ' continued'
+            counter = r'\addtocounter{table}{-1}'
+        preamble = '{counter}\n\\caption{{Continuum Data Summary{contd}}}\n\\resizebox{{\\textwidth}}{{!}}{{'
+        latexdict['preamble'] = preamble.format(contd=contd, counter=counter)
+        ftbl[ii:ii+nrows].write(f"{basepath}/papers/continuum_data/tables/continuum_data_summary_{ii}-{ii+nrows}.tex",
+                            formats=formats,
+                            overwrite=True,
+                            latexdict=latexdict)
 
     return ftbl
 
