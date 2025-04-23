@@ -282,7 +282,8 @@ if __name__ == '__main__':
 
         filenames = [x[0] for x in iterables]
         fname_labels = [x[1] for x in iterables]
-        fig = plot_three_panel_figure(*filenames, names=fname_labels, colormap=colormap, subset_label=True)
+        fig = plot_three_panel_figure(*filenames, names=fname_labels, colormap=colormap, subset_label=True,
+                                      normkwargs = {'vmin': 0.0, 'vmax': 1, 'stretch': 'asinh'})
         fig.savefig(f'{diag_dir}/RMS_three_panel_{cmname}.png', bbox_inches='tight', dpi=300)
         fig.savefig(f'{diag_dir}/RMS_three_panel_{cmname}.pdf', bbox_inches='tight', dpi=300)
 

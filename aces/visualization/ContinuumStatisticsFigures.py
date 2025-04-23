@@ -80,26 +80,31 @@ def plot_noise_vs_beam(data):
     assert 'am' in data['region'][TM & agg]
     assert np.all(data['mad'][data['region'] == 'am'] > 0)
 
-    pl.figure()
-    pl.scatter((data['bmaj'] * data['bmin'])[TM & high]**0.5, data['mad'][TM & high] * 1e3, label='spw33 & 35: 3.6 GHz',
-               edgecolor='blue', facecolor='none', linewidth=2)
-    pl.scatter((data['bmaj'] * data['bmin'])[TM & low]**0.5, data['mad'][TM & low] * 1e3, label='spw25 & 27: 3.6 GHz',
-               marker='s', edgecolor='orange', facecolor='none', linewidth=2)
-    pl.scatter((data['bmaj'] * data['bmin'])[TM & agg]**0.5, data['mad'][TM & agg] * 1e3, label='all spw: 4.8 GHz',
-               marker="^", facecolor='none', edgecolor='red', linewidth=2)
-    pl.axvline(1.5, color='k', linestyle='--')
-    pl.text(1.47, 0.25, "1.5\" requested", rotation=90)
-    pl.axvline(1.8, color='k', linestyle='--')
-    pl.text(1.77, 0.25, "1.8\" ALMA tolerance", rotation=90)
-    pl.axhline(0.13, color='k', linestyle='--')
-    pl.text(2.13, 0.05, "0.13 mJy requested", horizontalalignment='right', backgroundcolor='w')
-    pl.annotate('', (2, 0.13), (1.95, 0.07), arrowprops={'arrowstyle': '->'})
-    yl = pl.ylim()
-    pl.ylim(0, yl[1])
-    pl.legend(fancybox=True, framealpha=0.5)
-    pl.xlabel("Beam Geometric Average FWHM [arcsec]")
-    pl.ylabel("Noise Level [mJy]")
-    pl.savefig(f'{diag_dir}/noise_vs_beam_geomavg.png', bbox_inches='tight')
+    with pl.rc_context({'font.size': 12}):
+        pl.figure(figsize=(6, 6), dpi=300)
+        pl.scatter((data['bmaj'] * data['bmin'])[TM & high]**0.5, data['mad'][TM & high] * 1e3,
+                   label='spw33 & 35: 3.6 GHz',
+                   edgecolor='blue', facecolor='none', linewidth=1, s=9)
+        pl.scatter((data['bmaj'] * data['bmin'])[TM & low]**0.5, data['mad'][TM & low] * 1e3,
+                   label='spw25 & 27: 3.6 GHz',
+                   marker='s', edgecolor='orange', facecolor='none', linewidth=1, s=9)
+        pl.scatter((data['bmaj'] * data['bmin'])[TM & agg]**0.5, data['mad'][TM & agg] * 1e3,
+                   label='all spw: 4.8 GHz',
+                   marker="^", facecolor='none', edgecolor='red', linewidth=1, s=9)
+        pl.axvline(1.5, color='k', linestyle='--')
+        pl.text(1.46, 0.25, "1.5\" requested", rotation=90)
+        pl.axvline(1.8, color='k', linestyle='--')
+        pl.text(1.76, 0.25, "1.8\" ALMA tolerance", rotation=90)
+        pl.axhline(0.13, color='k', linestyle='--')
+        pl.text(2.13, 0.05, "0.13 mJy requested", horizontalalignment='right', backgroundcolor='w')
+        pl.annotate('', (2, 0.13), (1.95, 0.07), arrowprops={'arrowstyle': '->'})
+        yl = pl.ylim()
+        pl.ylim(0, yl[1])
+        leg = pl.legend(fancybox=True, framealpha=1)
+        pl.xlabel("Beam Geometric Average FWHM [arcsec]")
+        pl.ylabel("Noise Level [mJy beam$^{-1}$]")
+        pl.savefig(f'{diag_dir}/noise_vs_beam_geomavg.png', bbox_inches='tight')
+        pl.savefig(f'{diag_dir}/noise_vs_beam_geomavg.pdf', bbox_inches='tight')
 
 
 def estimate_global_rms(data, nbeams=3, threshold=2.0):
@@ -136,7 +141,6 @@ def plot_beamsize_per_field(data):
     high = np.array([('spw33_35' in fn) and ('v1' not in fn) for fn in data['filename']])
     low = np.array([('spw25_27.' in fn) and ('v1' not in fn) for fn in data['filename']])
     agg = np.array([('spw25_27_29_31_33_35' in fn) and ('v1' not in fn) for fn in data['filename']])
-    pl.figure(figsize=(12,12))
     toplot = {reg: [row['bmaj']
                     for subset in (agg, low, high)
                     for row in data[(data['region'] == reg) & subset &
@@ -157,30 +161,33 @@ def plot_beamsize_per_field(data):
                                  (data['region'] == 'am') &
                                  (data['spws'] == spws)][0]
                     for spws in ('25,27', '25,27,29,31,33,35', '33,35')]
-    
-    for ii, regname in enumerate(toplot):
-        if len(toplot[regname]) > 0: #TODO: this is a hack b/c am is missing
-            #print(regname, toplot[regname])
-            # sort from small to large to avoid overlap back-and-forth scribbles
-            pl.plot(sorted(toplot[regname]), [len(toplot) - ii]*3, color='k', linestyle='--', alpha=0.5, linewidth=0.5)
-            for xv, color, label in zip(sorted(toplot[regname]), ['blue', 'red', 'orange',], ('33,35', 'aggregate', '25,27',)):
-                pl.plot(xv, len(toplot) - ii, 's', color=color, label=label)
-        else:
-            print(f"Warning: {regname} has no data")
-            raise ValueError(f"ERROR: {regname} has no data")
 
-    pl.legend(loc='best', handles=pl.gca().lines[-3:])
-    # "a" should be at the top (len - ii ensures that)
-    pl.yticks(np.arange(len(toplot)) + 1,
-              np.array(list(toplot.keys()))[::-1], fontsize=14)
-    pl.ylim(0.5, len(toplot)+0.5)
-    pl.xlabel("Angular Size [\"]")
-    pl.savefig(f'{diag_dir}/beamsize_per_field.png', bbox_inches='tight')
-    pl.savefig(f'{diag_dir}/beamsize_per_field.pdf', bbox_inches='tight')
+    sorted_regions = [x for x in sorted(toplot.keys(), key=lambda x: (len(x), x))]
+    
+    with pl.rc_context({'font.size': 12}):
+        pl.figure(figsize=(6, 6), dpi=300)
+        for ii, regname in enumerate(sorted_regions):
+            if len(toplot[regname]) > 0: #TODO: this is a hack b/c am is missing
+                #print(regname, toplot[regname])
+                # sort from small to large to avoid overlap back-and-forth scribbles
+                pl.plot(sorted(toplot[regname]), [len(toplot) - ii]*3, color='k', linestyle='--', alpha=0.5, linewidth=0.5)
+                for xv, color, label in zip(sorted(toplot[regname]), ['blue', 'red', 'orange',], ('33,35', 'aggregate', '25,27',)):
+                    pl.plot(xv, len(toplot) - ii, 's', color=color, label=label, markersize=5)
+            else:
+                print(f"Warning: {regname} has no data")
+                raise ValueError(f"ERROR: {regname} has no data")
+
+        pl.legend(loc='upper right', handles=pl.gca().lines[-3:], bbox_to_anchor=(1.2, 1.0), framealpha=1)
+        # "a" should be at the top 
+        pl.yticks(np.arange(len(toplot)) + 1, sorted_regions[::-1], fontsize=9)
+        pl.ylim(0.0, len(toplot)+1)
+        pl.xlabel("Angular Size [\"]")
+        pl.savefig(f'{diag_dir}/beamsize_per_field.png', bbox_inches='tight')
+        pl.savefig(f'{diag_dir}/beamsize_per_field.pdf', bbox_inches='tight')
 
 
 def plot_spatial_distribution_of_beams(data):
-    fig = pl.figure()
+    fig = pl.figure(figsize=(8, 8), dpi=300)
     ax = pl.gca()
     scale = 32
     notfits = (np.char.find(data['filename'], 'fits') == -1)
@@ -214,7 +221,7 @@ def plot_spatial_distribution_of_beams(data):
                             angle=data['bpa'][sel][0])
         ell.set_edgecolor('k')
         ell.set_facecolor('none')
-        ax.text(xy.l.wrap_at(180*u.deg).value, xy.b.value, field, ha='center', va='center', size=12)
+        ax.text(xy.l.wrap_at(180*u.deg).value, xy.b.value, field, ha='center', va='center', size=8)
         ax.add_patch(ell)
 
     ell = pl.matplotlib.patches.Ellipse((0.3, -0.18), width=1/scale, height=1/scale, facecolor='none', edgecolor='b')
@@ -225,8 +232,8 @@ def plot_spatial_distribution_of_beams(data):
 
     ax.axis([0.95, -0.61, -0.3, 0.22])
     ax.set_aspect(1)
-    ax.set_xlabel(r"Galactic Longitude ($^\circ$)")
-    ax.set_ylabel(r"Galactic Latitude ($^\circ$)")
+    ax.set_xlabel(r"Galactic Longitude $(^\circ)$")
+    ax.set_ylabel(r"Galactic Latitude $(^\circ)$")
 
     fig.savefig(f'{diag_dir}/spatial_distribution_of_beams.pdf',
                 bbox_inches='tight') 
