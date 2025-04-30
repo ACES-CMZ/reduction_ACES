@@ -22,9 +22,11 @@ import pyavm
 from aces.visualization.figure_configuration import mymap, mymap2, distance
 from aces import conf
 
+
 # Configuration
 basepath = conf.basepath
 TENS_DIR = f'{basepath}/TENS/'
+
 
 # Define regions
 b1reg = regions.RectangleSkyRegion(
@@ -33,20 +35,21 @@ b1reg = regions.RectangleSkyRegion(
     height=6*u.arcmin
 )
 
+
 def load_mustang_data():
     """Load MUSTANG data and create necessary objects"""
-
     fn = 'SgrB2_flux_cut_dt6_filtp05to49_noShift_final_map.fits'
-    mustang_fn = f'{TENS_DIR}/{fn}'
-    mustang_plus_planck_fn = f"{TENS_DIR}/{fn.replace('.fits','')}_PlanckCombined.fits"
+    #mustang_fn = f'{TENS_DIR}/{fn}'
+    mustang_plus_planck_fn = f"{TENS_DIR}/{fn.replace('.fits', '')}_PlanckCombined.fits"
 
     mustang_planck_image = fits.open(mustang_plus_planck_fn)
     mustangdata = mustang_planck_image[0].data
     mustangwcs = wcs.WCS(mustang_planck_image[0].header)
-    mustangdata = convolve_fft(mustangdata, Gaussian2DKernel(1), allow_huge=True) 
+    mustangdata = convolve_fft(mustangdata, Gaussian2DKernel(1), allow_huge=True)
     mustangbeam = radio_beam.Beam.from_fits_header(mustang_planck_image[0].header)
 
     return mustangdata, mustangwcs, mustangbeam
+
 
 def load_aces_data():
     """Load ACES data and create necessary objects"""
@@ -61,6 +64,7 @@ def load_aces_data():
     ACESdata *= jtok_aces
     return ACESdata, ACESwcs, ACESbeam
 
+
 def cutout(region, data, wcs):
     """
     Cut out a region from data using the given WCS
@@ -69,9 +73,10 @@ def cutout(region, data, wcs):
     slices_large, slices_small = mask.get_overlap_slices(data.shape)
     return data[slices_large], wcs[slices_large]
 
+
 def compare_feathered_to_unfeathered():
-    blcb1 = coordinates.SkyCoord(0.6*u.deg, -0.12*u.deg, frame='galactic')
-    trcb1 = coordinates.SkyCoord(0.44*u.deg, 0.03*u.deg, frame='galactic')
+    #blcb1 = coordinates.SkyCoord(0.6*u.deg, -0.12*u.deg, frame='galactic')
+    #trcb1 = coordinates.SkyCoord(0.44*u.deg, 0.03*u.deg, frame='galactic')
 
     # Load data
     mustangdata, mustangwcs, mustangbeam = load_mustang_data()
@@ -85,7 +90,7 @@ def compare_feathered_to_unfeathered():
 
     # MUSTANG plot
     cmust, wcmust = cutout(b1reg, mustangdata, mustangwcs)
-    ax = pl.subplot(1,3,1,projection=wcmust)
+    ax = pl.subplot(1, 3, 1, projection=wcmust)
     im = ax.imshow(cmust, norm=visualization.simple_norm(cmust, stretch='asinh', min_percent=0.5, max_percent=99.95), cmap=mymap)
 
     ax.set_xlabel("Galactic Longitude")
@@ -104,9 +109,9 @@ def compare_feathered_to_unfeathered():
 
     # ALMA 12m plot
     c12m, wc12m = cutout(b1reg, ACESdata, ACESwcs)
-    ax = pl.subplot(1,3,3,projection=wc12m)
+    ax = pl.subplot(1, 3, 3, projection=wc12m)
     im = ax.imshow(c12m,
-                norm=visualization.simple_norm(c12m, stretch='asinh', min_percent=1, max_percent=99.95), cmap='gray_r')
+                   norm=visualization.simple_norm(c12m, stretch='asinh', min_percent=1, max_percent=99.95), cmap='gray_r')
     ax.set_xlabel("Galactic Longitude")
     ax.set_ylabel("Galactic Latitude")
     ax.coords[1].set_ticklabel_visible(False)
@@ -123,9 +128,9 @@ def compare_feathered_to_unfeathered():
 
     # Feathered plot
     fma, wfma = cutout(b1reg, mustangfeathered[0].data, feathwcs)
-    ax = pl.subplot(1,3,2,projection=wfma)
+    ax = pl.subplot(1, 3, 2, projection=wfma)
     im = ax.imshow(fma,
-                norm=visualization.simple_norm(fma, stretch='asinh', min_percent=0.5, max_percent=99.95), cmap=mymap)
+                   norm=visualization.simple_norm(fma, stretch='asinh', min_percent=0.5, max_percent=99.95), cmap=mymap)
     ax.set_xlabel("Galactic Longitude")
     ax.set_ylabel("Galactic Latitude")
     ax.coords[1].set_ticklabel_visible(False)
@@ -143,11 +148,11 @@ def compare_feathered_to_unfeathered():
     for ax in pl.gcf().axes:
         try:
             ax.coords[0].set_ticklabel(rotation=45, pad=30)
-        except Exception as ex:
+        except Exception as ex:  # noqa: F841
             pass
 
     pl.tight_layout()
-    pl.subplots_adjust(hspace=0, wspace=0.0) # adjust by changing figsize
+    pl.subplots_adjust(hspace=0, wspace=0.0)  # adjust by changing figsize
     pl.savefig("/orange/adamginsburg/web/secure/ACES/mosaics/MUSTANG_vs_ACES_zoomSgrB1.pdf", bbox_inches='tight')
     pl.savefig("/orange/adamginsburg/web/secure/ACES/mosaics/MUSTANG_vs_ACES_zoomSgrB1.png", bbox_inches='tight')
 
