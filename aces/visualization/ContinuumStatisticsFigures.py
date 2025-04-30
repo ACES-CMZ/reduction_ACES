@@ -13,7 +13,7 @@ from astropy import units as u
 from astropy.convolution import Gaussian2DKernel
 from astropy.wcs import WCS
 from aces.imaging.make_mosaic import rms_map
-from aces.visualization.figure_configuration import mymap, mymap2, mymap_gray, pl, distance
+from aces.visualization.figure_configuration import mymap, mymap2, mymap_gray, distance
 from spectral_cube.lower_dimensional_structures import Projection, Slice
 import copy
 import warnings
@@ -100,7 +100,7 @@ def plot_noise_vs_beam(data):
         pl.annotate('', (2, 0.13), (1.95, 0.07), arrowprops={'arrowstyle': '->'})
         yl = pl.ylim()
         pl.ylim(0, yl[1])
-        leg = pl.legend(fancybox=True, framealpha=1)
+        pl.legend(fancybox=True, framealpha=1)
         pl.xlabel("Beam Geometric Average FWHM [arcsec]")
         pl.ylabel("Noise Level [mJy beam$^{-1}$]")
         pl.savefig(f'{diag_dir}/noise_vs_beam_geomavg.png', bbox_inches='tight')
@@ -144,26 +144,26 @@ def plot_beamsize_per_field(data):
     toplot = {reg: [row['bmaj']
                     for subset in (agg, low, high)
                     for row in data[(data['region'] == reg) & subset &
-                                    (np.char.find(data['filename'], 'preQA3')== -1) &
-                                    (np.char.find(data['filename'], 'X15a0_X178')== -1) &
-                                    (np.char.find(data['filename'], 'X15a0_Xd6')== -1) &
-                                    (np.char.find(data['filename'], 'X15a0_Xe8')== -1) &
-                                    (np.char.find(data['filename'], 'obsolete')== -1) &
-                                    (np.char.find(data['filename'], 'fits')== -1) &
+                                    (np.char.find(data['filename'], 'preQA3') == -1) &
+                                    (np.char.find(data['filename'], 'X15a0_X178') == -1) &
+                                    (np.char.find(data['filename'], 'X15a0_Xd6') == -1) &
+                                    (np.char.find(data['filename'], 'X15a0_Xe8') == -1) &
+                                    (np.char.find(data['filename'], 'obsolete') == -1) &
+                                    (np.char.find(data['filename'], 'fits') == -1) &
                                     # either X184 has lower_plus_upper, or it's not X184
                                     (((np.char.find(data['filename'], 'X15a0_X184') >= 0) &
                                       (np.char.find(data['filename'], 'lower_plus_upper') >= 0)) |
                                      ((np.char.find(data['filename'], 'X15a0_X184') == -1))) &
                                     data['pbcor']]]
-            for reg in np.unique(data['region'])}
-    
+              for reg in np.unique(data['region'])}
+
     toplot['am'] = [data['bmaj'][(data['suffix'] == 'lower_plus_upper') &
                                  (data['region'] == 'am') &
                                  (data['spws'] == spws)][0]
                     for spws in ('25,27', '25,27,29,31,33,35', '33,35')]
 
     sorted_regions = [x for x in sorted(toplot.keys(), key=lambda x: (len(x), x))]
-    
+
     with pl.rc_context({'font.size': 12}):
         pl.figure(figsize=(6, 6), dpi=300)
         for ii, regname in enumerate(sorted_regions):
@@ -178,7 +178,7 @@ def plot_beamsize_per_field(data):
                 raise ValueError(f"ERROR: {regname} has no data")
 
         pl.legend(loc='upper right', handles=pl.gca().lines[-3:], bbox_to_anchor=(1.2, 1.0), framealpha=1)
-        # "a" should be at the top 
+        # "a" should be at the top
         pl.yticks(np.arange(len(toplot)) + 1, sorted_regions[::-1], fontsize=9)
         pl.ylim(0.0, len(toplot)+1)
         pl.xlabel("Angular Size [\"]")
@@ -192,8 +192,8 @@ def plot_spatial_distribution_of_beams(data):
     scale = 32
     notfits = (np.char.find(data['filename'], 'fits') == -1)
     TM = data['array'] == '12M'
-    high = np.array([('spw33_35' in fn) and ('v1' not in fn) for fn in data['filename']])
-    low = np.array([('spw25_27.' in fn) and ('v1' not in fn) for fn in data['filename']])
+    #high = np.array([('spw33_35' in fn) and ('v1' not in fn) for fn in data['filename']])
+    #low = np.array([('spw25_27.' in fn) and ('v1' not in fn) for fn in data['filename']])
     agg = np.array([('spw25_27_29_31_33_35' in fn) and ('v1' not in fn) for fn in data['filename']])
 
     for ii, field in enumerate(np.unique(data['region'][TM])):
@@ -205,20 +205,21 @@ def plot_spatial_distribution_of_beams(data):
                 sel = TM & fld & agg & ~notfits
                 try:
                     cube = SpectralCube.read(data['filename'][sel][0])
-                except:
+                except:  # noqa: E722
+                    # this is lazy coding; should catch the SpectralCube exception
                     cube = Slice.from_hdu(fits.open(data['filename'][sel][0]))
             else:
                 cube = SpectralCube.read(data['filename'][sel][0], format='casa_image')
             ww = cube.wcs.celestial
         try:
             xy = ww.pixel_to_world(cube.shape[2]//2, cube.shape[1]//2).galactic
-        except:
+        except:  # noqa: E722
             xy = ww.pixel_to_world(cube.shape[1]//2, cube.shape[0]//2).galactic
         ell = pl.matplotlib.patches.Ellipse(
-                            xy=(xy.l.wrap_at(180*u.deg).value, xy.b.value),
-                            width=data['bmaj'][sel][0] / scale,
-                            height=data['bmin'][sel][0] / scale,
-                            angle=data['bpa'][sel][0])
+            xy=(xy.l.wrap_at(180*u.deg).value, xy.b.value),
+            width=data['bmaj'][sel][0] / scale,
+            height=data['bmin'][sel][0] / scale,
+            angle=data['bpa'][sel][0])
         ell.set_edgecolor('k')
         ell.set_facecolor('none')
         ax.text(xy.l.wrap_at(180*u.deg).value, xy.b.value, field, ha='center', va='center', size=8)
@@ -236,7 +237,7 @@ def plot_spatial_distribution_of_beams(data):
     ax.set_ylabel(r"Galactic Latitude $(^\circ)$")
 
     fig.savefig(f'{diag_dir}/spatial_distribution_of_beams.pdf',
-                bbox_inches='tight') 
+                bbox_inches='tight')
 
 
 def plot_rms_histogram(data):
@@ -274,14 +275,14 @@ def plot_rms_histogram_and_cdf(data):
 
         rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw33_35_maskedrms_mosaic.fits')
         rmssrt = np.sort(rmsmap[0].data[np.isfinite(rmsmap[0].data)])*1e3
-        ax2.plot(rmssrt, np.arange(rmssrt.size)/rmssrt.size,  color=p2[0].get_edgecolor(), linestyle=':')
+        ax2.plot(rmssrt, np.arange(rmssrt.size)/rmssrt.size, color=p2[0].get_edgecolor(), linestyle=':')
 
         rmsmap = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_spw25_27_maskedrms_mosaic.fits')
         rmssrt = np.sort(rmsmap[0].data[np.isfinite(rmsmap[0].data)])*1e3
-        ax2.plot(rmssrt, np.arange(rmssrt.size)/rmssrt.size,  color=p3[0].get_edgecolor(), linestyle=':')
+        ax2.plot(rmssrt, np.arange(rmssrt.size)/rmssrt.size, color=p3[0].get_edgecolor(), linestyle=':')
 
         ax2.set_xlim(4e-5*1e3, 5e-3*1e3)
-        ax2.set_ylim(0,1)
+        ax2.set_ylim(0, 1)
         ax2.set_ylabel("Fraction of pixels (CDF)")
         #pl.legend(loc='center right')
         pl.savefig(f'{diag_dir}/RMS_Histogram_comparison_circular_withCDF.png', bbox_inches='tight')
