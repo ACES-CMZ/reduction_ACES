@@ -352,7 +352,6 @@ def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', '
         filelist = [x for x in filelist if 'uid___A001_X15a0_X184' not in x]
         filelist.append(f'/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits')
 
-
         check_files(filelist, funcname='reimaged_high')
 
         print(f"Reading as 2d for files (reimaged {name}): ", end=None, flush=True)
@@ -953,7 +952,6 @@ def make_giant_mosaic_cube_hcop(**kwargs):
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci29.cube.I.manual*image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
     filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW29/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.hco+10.image.statcont.contsub.fits')
-
 
     print(f"Found {len(filelist)} HCOP-containing spw29 files")
 

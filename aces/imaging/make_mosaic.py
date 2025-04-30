@@ -73,7 +73,7 @@ def read_as_2d(fn, minval=None, suppress_warnings=True, verbose=False):
                                         header=header)
             else:
                 data = fh[0].data.squeeze()
-                
+
                 # rescale to make minval uniform
                 data /= np.nanmax(data)
                 # meant for weights; we're setting weights to zero
@@ -89,7 +89,7 @@ def read_as_2d(fn, minval=None, suppress_warnings=True, verbose=False):
                 return fits.HDUList([cube[0].hdu])
             else:
                 hdu = cube[0].hdu
-                
+
                 # rescale to make minval uniform
                 hdu.data /= np.nanmax(hdu.data)
                 # meant for weights; we're setting weights to zero
@@ -425,7 +425,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                     flagmap[slcs_big] += (cmsk.data[slcs_small] * int(comp.meta['label'])) * (flagmap[slcs_big] == 0)
                 else:
                     print("Error - the composite mask has no overlap with the flag map.  "
-                        "I don't know why this occurs but it definitely is not expected.")
+                          "I don't know why this occurs but it definitely is not expected.")
 
         outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_field_number_map.fits'
         log.info(f"Writing flag image to {outfile}")
@@ -438,7 +438,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             if ii > 0:
                 fsum = (flagmap == ii).sum()
                 cy, cx = ((np.arange(flagmap.shape[0])[:, None] * (flagmap == ii)).sum() / fsum,
-                        (np.arange(flagmap.shape[1])[None, :] * (flagmap == ii)).sum() / fsum)
+                          (np.arange(flagmap.shape[1])[None, :] * (flagmap == ii)).sum() / fsum)
                 pl.text(cx, cy, f"{ii}\n{tbl[ii - 1]['Obs ID']}",
                         horizontalalignment='left', verticalalignment='center',
                         color=(1, 0.8, 0.5), transform=ax.get_transform('pixel'),
