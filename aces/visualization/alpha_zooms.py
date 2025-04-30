@@ -100,7 +100,7 @@ for reg in zoomregs:
     bad_mask[~joint_mask[slc_lg]] = np.nan
     im0 = ax3.imshow(hifrq[slc_lg].value*1e3, cmap=mymap_gray, norm=norm, zorder=-5)
     im3 = ax3.imshow(alpha_cutout * bad_mask, vmin=-5, vmax=5, cmap='Spectral')
-    cm = add_cb(ax3, r"Spectral Index $\alpha$",)
+    cm = add_cb(ax3, r"Spectral Index $\alpha$", )
 
     ax4 = pl.subplot(1, 4, 4, projection=ww_sl)
     im = ax4.imshow(feather.value[slc_lg], cmap=mymap,
@@ -131,22 +131,22 @@ for reg in zoomregs:
 
     pl.savefig(f'{basepath}/papers/continuum_data/figures/{name.replace(" ", "_").replace("/", "").replace("*", "star")}_hi_lo_alpha.pdf', bbox_inches='tight')
 
-    
+
 def alpha_comparison():
     manual_alpha = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_manual_alpha_mosaic.fits')
     tt_alpha = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_alpha_mosaic.fits')
-    
+
     sel = snr_lo > 10
     pl.figure(figsize=(4, 4), dpi=300)
     with pl.rc_context({'font.size': 12}):
         pl.scatter(manual_alpha[0].data[sel],
-                tt_alpha[0].data[sel], s=1, alpha=0.25, c=snr_lo[sel], cmap='viridis_r')
+                   tt_alpha[0].data[sel], s=1, alpha=0.25, c=snr_lo[sel], cmap='viridis_r')
         cb = pl.colorbar()
         cb.set_label("Signal-to-Noise Ratio")
         pl.xlabel("Manual (spw33+35 / spw25+27)")
         pl.ylabel("TT-based")
-        pl.plot([-5,5], [-5,5], 'k--')
-        pl.axis([-5,5,-5,5])
+        pl.plot([-5, 5], [-5, 5], 'k--')
+        pl.axis([-5, 5, -5, 5])
         pl.savefig(f'{basepath}/papers/continuum_data/figures/alpha_comparison.pdf', bbox_inches='tight')
 
 
