@@ -125,10 +125,6 @@ pk = aces_to_brick_feather[75:-75, 125:-125].max()
 ax4.contour(aces_to_brick_feather[75:-75, 125:-125], levels=np.array([0.1, 0.5, 0.9])*pk, colors=['g']*3, linewidths=[0.25]*3)
 pl.savefig(f'{basepath}/papers/continuum_data/figures/BrickFeather_Cycle0_comparison_zoom_contours.png', bbox_inches='tight', dpi=200)
 
-
-
-
-
 meerkatfh = fits.open('/orange/adamginsburg/cmz/meerkat/MEERKAT_StokesI_butreadablebyCARTA.fits')
 
 target_hdu = brickcube[0].hdu.header
@@ -178,7 +174,7 @@ ax3.coords[0].set_ticklabel(rotation=25, pad=30)
 ax4.coords[0].set_ticklabel(rotation=25, pad=30)
 
 pl.subplots_adjust(hspace=0.02, wspace=0.02)
-pl.savefig(f'{basepath}/papers/continuum_data/figures/BrickMEERKAT_comparison_large.png', 
+pl.savefig(f'{basepath}/papers/continuum_data/figures/BrickMEERKAT_comparison_large.png',
            bbox_inches='tight', dpi=200)
 print(f'Effective spectral index assumed={effective_index:0.3f}')
 
@@ -235,6 +231,6 @@ format_ax(ax6, label="T$_B$ [K]", cb=True, hidey=True, hidex=False)
 #ax4.coords[0].set_ticklabel(rotation=25, pad=30)
 
 pl.subplots_adjust(hspace=0.02, wspace=0.04)
-pl.savefig(f'{basepath}/papers/continuum_data/figures/BrickMEERKAT_comparison_large_withC0.png', 
+pl.savefig(f'{basepath}/papers/continuum_data/figures/BrickMEERKAT_comparison_large_withC0.png',
            bbox_inches='tight', dpi=200)
 print(f'Effective spectral index assumed={effective_index:0.3f}')
