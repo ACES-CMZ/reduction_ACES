@@ -244,7 +244,7 @@ def reimaged(header):
 
     # special-case field am: there are multiple hits and we have to squeeze down to just one
     filelist = [x for x in filelist if 'uid___A001_X15a0_X184' not in x]
-    filelist.append(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits')
+    filelist.append(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits')  # noqa: E501
 
     tt1filelist = [x.replace("tt0", "tt1") for x in filelist]
 
@@ -350,7 +350,7 @@ def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', '
 
         # special-case field am
         filelist = [x for x in filelist if 'uid___A001_X15a0_X184' not in x]
-        filelist.append(f'/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits')
+        filelist.append(f'/orange/adamginsburg/ACES/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw{spw}.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits')  # noqa: E501
 
         check_files(filelist, funcname='reimaged_high')
 
@@ -430,7 +430,7 @@ def residuals(header):
         filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.spw{spw}.*cont.I*.residual.tt0')
 
         filelist = [x for x in filelist if 'uid___A001_X15a0_X184' not in x]
-        filelist.append(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.lower_plus_upper.residual.tt0')
+        filelist.append(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.lower_plus_upper.residual.tt0')  # noqa: E501
 
         check_files(filelist, funcname='residuals')
 
