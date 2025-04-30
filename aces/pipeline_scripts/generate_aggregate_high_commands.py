@@ -21,7 +21,7 @@ if os.getenv('ACES_ROOTDIR') is not None:
 pipedir = os.path.dirname(__file__)
 
 
-def main():
+def main(verbose=False):
 
     with open(f"{pipedir}/default_tclean_commands.json", "r") as fh:
         commands = json.load(fh)
@@ -47,7 +47,8 @@ def main():
                 aggregate_high_commands[key]['tclean_cont_pars'] = {}
             for hilo, spwstr in (('high', '33_35'), ('low', '25_27')):
                 if f'aggregate_{hilo}' not in commands[key]['tclean_cont_pars']:
-                    print(f"Adding {key}: aggregate_{hilo} -> {spwstr}")
+                    if verbose:
+                        print(f"Adding {key}: aggregate_{hilo} -> {spwstr}")
                     pars = copy.copy(commands[key]['tclean_cont_pars']['aggregate'])
                     pars['imagename'] = pars['imagename'].replace('25_27_29_31_33_35', spwstr)
 

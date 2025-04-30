@@ -45,7 +45,7 @@ def make_figure(data, wavelength, beam, bins=50):
 
     pl.ylim(yl)
     ax1t = ax1.secondary_xaxis('top', functions=(lambda x: x / 1e3 / wavelength.to(u.m).value, lambda x: x / 1e3 / wavelength.to(u.m).value))
-    ax1t.set_xlabel("Baseline Length (k$\\lambda$)")
+    ax1t.set_xlabel("Baseline Length (k$\\lambda$)", fontsize=16)
     #ax1t.set_ticks(np.linspace(1000,100000,10))
     ax2 = pl.subplot(1, 2, 2)
     pl.hist(uvcts,
@@ -123,10 +123,12 @@ def main(redo=False):
     msmd = msmetadata()
     ms = mstool()
 
-    for row in tbl:
+    sorted_indices = [x[0] for x in sorted(enumerate(tbl['Obs ID']), key=lambda x: (len(x[1]), x[1]))]
+
+    for row in tbl[sorted_indices]:
         region = row['Obs ID']
         if region in [row['region'] for row in uvtbl]:
-            print(f'Skipping completed region {region}: {uvdata[np.where(uvtbl["region"] == region)[0][0]]}')
+            #print(f'Skipping completed region {region}: {uvdata[np.where(uvtbl["region"] == region)[0][0]]}')
             continue
 
         datapath = f'{basepath}/data//2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_{row["12m MOUS ID"]}/calibrated/working'
@@ -213,9 +215,10 @@ def main(redo=False):
     uvtbl.write(f'{basepath}/reduction_ACES/aces/data/tables/uvspacings.ecsv', overwrite=True)
 
     fontsize = 16
+    bigfontsize = 20
     pl.rcParams['font.size'] = fontsize
 
-    rows = {key: uvtbl[(uvtbl['region'] == key)] for key in sorted(uvtbl['region'])}
+    rows = {key: uvtbl[(uvtbl['region'] == key)] for key in sorted(uvtbl['region'], key=lambda x: (len(x), x))}
     stats = [{
         "label": key,
         "med": row['50%'][0],
@@ -229,7 +232,7 @@ def main(redo=False):
     fig, axes = pl.subplots(nrows=1, ncols=1, figsize=(12, 12), sharey=True)
     axes.bxp(stats, vert=False)
     #axes.set_title(f'{band} UV distribution overview', fontsize=fontsize)
-    axes.set_xlabel("Angular Scale (\")", fontsize=fontsize)
+    axes.set_xlabel("Angular Scale (\")", fontsize=bigfontsize)
     axes.set_xlim(0.1, 25)
     rad_to_as = u.radian.to(u.arcsec)
 
@@ -237,8 +240,10 @@ def main(redo=False):
         return rad_to_as / x / 1000
 
     ax1t = axes.secondary_xaxis('top', functions=(fcn, fcn))
-    ax1t.set_xlabel("Baseline Length (k$\\lambda$)")
-    ax1t.set_ticks([15, 20, 30, 50, 100, 400])
+    ax1t.set_xlabel("Baseline Length (k$\\lambda$)", fontsize=bigfontsize)
+    ax1t.set_ticks([10, 15, 20, 30, 50, 100, 400])
+    ax1t.tick_params(axis='x', labelsize=bigfontsize)
+    axes.tick_params(axis='x', labelsize=bigfontsize)
     savefig(f'{basepath}/diagnostic_plots/uvhistograms/summary_uvdistribution.pdf', bbox_inches='tight')
 
     distance = 8.5

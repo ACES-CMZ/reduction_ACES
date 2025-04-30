@@ -22,7 +22,7 @@ which git
 git --version
 echo $?
 
-export IPYTHON=/orange/adamginsburg/miniconda3/envs/python310/bin/ipython
+export IPYTHON=/orange/adamginsburg/miniconda3/envs/python312/bin/ipython
 
 cd ${WORK_DIR}
 echo ${WORK_DIR}
@@ -42,4 +42,4 @@ export DASK_THREADS=$SLURM_NTASKS
 
 env
 
-/orange/adamginsburg/miniconda3/envs/python310/bin/aces_imstats
+/orange/adamginsburg/miniconda3/envs/python312/bin/aces_imstats

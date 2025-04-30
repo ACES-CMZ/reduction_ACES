@@ -250,19 +250,26 @@ def imstats(fn, reg=None):
         data = fh[0].data
         ww = wcs.WCS(fh[0].header)
         casaversion = fh[0].header['ORIGIN'] if 'ORIGIN' in fh[0].header else 'unknown'
-    except IsADirectoryError:
-        cube = SpectralCube.read(fn, format='casa_image')
-        data = cube[0].value
-        ww = cube.wcs
+    except (IsADirectoryError, FileNotFoundError):
+        try:
+            cube = SpectralCube.read(fn, format='casa_image')
+            data = cube[0].value
+            ww = cube.wcs
 
-        # lots of work to get CASA version
-        metatb = Table.read(f"{fn}/logtable")
-        hist = metatb['MESSAGE']
-        history = {x.split(":")[0]: ":".join(x.split(": ")[1:])
-                   for x in hist if ':' in x and 'ICRS' not in x}
-        history.update({x.split("=")[0]: x.split("=")[1].lstrip()
-                        for x in hist if '=' in x})
-        casaversion = history['version']
+            # lots of work to get CASA version
+            metatb = Table.read(f"{fn}/logtable")
+            hist = metatb['MESSAGE']
+            history = {x.split(":")[0]: ":".join(x.split(": ")[1:])
+                       for x in hist if ':' in x and 'ICRS' not in x}
+            history.update({x.split("=")[0]: x.split("=")[1].lstrip()
+                            for x in hist if '=' in x})
+            casaversion = history['version']
+        except (ValueError, FileNotFoundError):
+            fn = fn+".fits"
+            fh = fits.open(fn)
+            data = fh[0].data
+            ww = wcs.WCS(fh[0].header)
+            casaversion = fh[0].header['ORIGIN'] if 'ORIGIN' in fh[0].header else 'unknown'
 
     mad = mad_std(data, ignore_nan=True)
     peak = np.nanmax(data)
@@ -387,8 +394,14 @@ def parse_fn(fn):
     sbname = mousmap_[muid]
     region = sbname.split("_")[3]
 
-    commands = get_commands()
+    commands = get_commands(verbose=False)
     robust = commands[sbname]['tclean_cont_pars']['aggregate']['robust']
+
+    spwsplit = [x for x in split if 'spw' in x]
+    if len(spwsplit) > 0:
+        spwsplit = spwsplit[0]
+    else:
+        spwsplit = 'unlabeled'
 
     return {'region': region,
             'band': 'B3',
@@ -397,19 +410,20 @@ def parse_fn(fn):
             'robust': 'r' + str(robust),
             'suffix': split[-1],
             'pbcor': 'pbcor' in fn.lower(),
-            'spws': ','.join([x for x in split[3].replace("spw", "").split("_")]),
+            'spws': ','.join([x for x in spwsplit.replace("spw", "").split("_")]),
             }
 
 
 def assemble_stats(globstrs, ditch_suffix=None):
     import glob
-    from astropy.utils.console import ProgressBar
+    from tqdm.auto import tqdm
 
     allstats = []
 
     flist = [x for globstr in globstrs for x in glob.glob(globstr)]
 
-    for fn in ProgressBar(flist):
+    # chatbot-produced progressbar; not sure it'll look ok
+    for fn in tqdm(flist):
         if fn.endswith('diff.fits') or fn.endswith('bsens-cleanest.fits'):
             continue
         if fn.count('.fits') > 1:
@@ -424,6 +438,9 @@ def assemble_stats(globstrs, ditch_suffix=None):
                 meta = parse_fn(fn)
         except Exception as ex:
             log.error(f"Failed to parse file {fn}: {ex}")
+            raise ex
+        if ('pbcor' in fn.lower() and not meta['pbcor']):
+            raise ValueError(f"pbcor in filename {fn} but pbcor=False in meta")
         meta['filename'] = fn
         stats = imstats(fn, reg=get_noise_region(meta['region'], meta['band']))
         meta['casaversion'] = stats['casaversion']
@@ -515,6 +532,7 @@ def savestats(basepath=basepath,
         globstrs=(f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.iter1.{suffix}{filetype}",
                   f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cube.I.manual.{suffix}{filetype}",
                   f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.manual.{suffix}{filetype}",
+                  f"{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/*/calibrated/working/*.cont.I.manual.lower_plus_upper.{suffix}{filetype}",
                   ),
         ditch_suffix=f".{suffix[:-1]}")
     with open(f'{basepath}/tables/metadata_{suffix}.json', 'w') as fh:

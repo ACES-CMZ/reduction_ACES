@@ -52,31 +52,49 @@ def get_common_beam(beams):
     raise BeamError("Failed to find common beam.")
 
 
-def read_as_2d(fn, minval=None):
-    print(".", end='', flush=True)
-    if fn.endswith('fits') or fn.endswith('.fits.gz'):
-        fh = fits.open(fn)
-        ww = wcs.WCS(fh[0].header).celestial
+def read_as_2d(fn, minval=None, suppress_warnings=True, verbose=False):
+    """
+    'minval' is for weight files
+    """
+    with warnings.catch_warnings():
+        if suppress_warnings:
+            warnings.simplefilter('ignore')
+        print(".", end='', flush=True)
+        if fn.endswith('fits') or fn.endswith('.fits.gz'):
+            fh = fits.open(fn)
+            ww = wcs.WCS(fh[0].header).celestial
 
-        # strip the WCS
-        header = strip_wcs_from_header(fh[0].header)
-        header.update(ww.to_header())
+            # strip the WCS
+            header = strip_wcs_from_header(fh[0].header)
+            header.update(ww.to_header())
 
-        if minval is None:
-            hdu2d = fits.PrimaryHDU(data=fh[0].data.squeeze(),
-                                    header=header)
+            if minval is None:
+                hdu2d = fits.PrimaryHDU(data=fh[0].data.squeeze(),
+                                        header=header)
+            else:
+                data = fh[0].data.squeeze()
+
+                # rescale to make minval uniform
+                data /= np.nanmax(data)
+                # meant for weights; we're setting weights to zero
+                data[data < minval] = 0
+                # sanity check
+                #assert np.nanmax(data) == 1, f'{fn} failed nanmax check: {np.nanmax(data)}'
+                hdu2d = fits.PrimaryHDU(data=data,
+                                        header=header)
+            return fits.HDUList([hdu2d])
         else:
-            data = fh[0].data.squeeze()
-            # meant for weights; we're setting weights to zero
-            data[data < minval] = 0
-            # sanity check
-            assert np.nanmax(data) == 1
-            hdu2d = fits.PrimaryHDU(data=data,
-                                    header=header)
-        return fits.HDUList([hdu2d])
-    else:
-        cube = SpectralCube.read(fn, format='casa_image')
-        return fits.HDUList([cube[0].hdu])
+            cube = SpectralCube.read(fn, format='casa_image')
+            if minval is None:
+                return fits.HDUList([cube[0].hdu])
+            else:
+                hdu = cube[0].hdu
+
+                # rescale to make minval uniform
+                hdu.data /= np.nanmax(hdu.data)
+                # meant for weights; we're setting weights to zero
+                hdu.data[hdu.data < minval] = 0
+                return fits.HDUList([hdu])
 
 
 def get_peak(fn, slab_kwargs=None, rest_value=None, suffix="", save_file=True,
@@ -231,7 +249,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
                 array='7m',
                 folder=None,  # must be specified though
                 basepath='./',
-                footprint_threshold=1e-3
+                footprint_threshold=1e-3,
+                doplots=True
                ):
     """
     Given a long list of 2D HDUs and an output name, make a giant mosaic.
@@ -244,7 +263,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         target_wcs = wcs.WCS(target_header)
         shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
-    if commonbeam is not None:
+    if bool(commonbeam) and commonbeam is not None:
         if beams is None:
             beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
                                             for hdul in twod_hdus])
@@ -262,7 +281,7 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             if array == '12m':
                 assert cb.major < 3 * u.arcsec
 
-        log.info("Loading HDUs and projecting to common beam")
+        log.info(f"Loading HDUs and projecting to common beam {cb:0.2f} = {cb.major.to(u.arcsec):0.2f} {cb.minor.to(u.arcsec):0.2f} {cb.pa:0.2f}")
         prjs = [spectral_cube.Projection.from_hdu(hdul) for hdul in
                 ProgressBar(twod_hdus)]
         for prj, bm in (zip(ProgressBar(prjs), beams)):
@@ -271,10 +290,10 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             except NoBeamError:
                 prj.beam = bm
 
-        log.info(f"Convolving HDUs to common beam {cb}\n")
+        log.info(f"Convolving HDUs to common beam {cb:0.2f} = {cb.major.to(u.arcsec):0.2f} {cb.minor.to(u.arcsec):0.2f} {cb.pa:0.2f}")
         pb = ProgressBar(len(prjs))
 
-        # when convolving to a new beam, but retainig Jy/beam units, the beam
+        # when convolving to a new beam, but retaining Jy/beam units, the beam
         # size is getting larger so the unit is too.
         def reprj(prj, scalefactor=1):
             rslt = prj.convolve_to(cb).hdu
@@ -282,10 +301,12 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
             pb.update()
             return rslt
 
+        # DEBUG: make sure the beam scaling factor makes sense
+        print([cb.sr / prj.beam.sr for prj in prjs])
         # parallelization of this failed
         twod_hdus = [reprj(prj, scalefactor=cb.sr / prj.beam.sr) for prj in prjs]
 
-    log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.\n")
+    log.info(f"Reprojecting and coadding {len(twod_hdus)} HDUs.")
     # number of items to count in progress bar
     npb = len(twod_hdus)
     pb = ProgressBar(npb)
@@ -318,108 +339,115 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
     log.info(f"Writing reprojected data to {outfile}")
     fits.PrimaryHDU(data=prjarr, header=header).writeto(outfile, overwrite=True)
 
-    log.info("Creating plots")
-    import pylab as pl
-    from astropy import visualization
-    import matplotlib.colors as mcolors
-    import pyavm
+    if commonbeam is not None:
+        # create a new version in MJy/sr
+        header['BUNIT'] = 'MJy/sr'
+        mjysr_hdu = fits.PrimaryHDU(data=(prjarr * 1e6 / cb.sr).value, header=header)
+        mjysr_hdu.writeto(outfile.replace('.fits', '_MJy_sr.fits'), overwrite=True)
 
-    colors1 = pl.cm.gray_r(np.linspace(0., 1, 128))
-    colors2 = pl.cm.hot(np.linspace(0, 1, 128))
+    if doplots:
+        log.info("Creating plots")
+        import pylab as pl
+        from astropy import visualization
+        import matplotlib.colors as mcolors
+        import pyavm
 
-    colors = np.vstack((colors1, colors2))
-    mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+        colors1 = pl.cm.gray_r(np.linspace(0., 1, 128))
+        colors2 = pl.cm.hot(np.linspace(0, 1, 128))
 
-    pl.rc('axes', axisbelow=True)
-    pl.matplotlib.use('agg')
+        colors = np.vstack((colors1, colors2))
+        mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
-    front = 10
-    back = -10
-    fronter = 20
+        pl.rc('axes', axisbelow=True)
+        pl.matplotlib.use('agg')
 
-    fig = pl.figure(figsize=(20, 7))
-    ax = fig.add_subplot(111, projection=target_wcs)
-    norm = visualization.simple_norm(prjarr, **norm_kwargs)
-    im = ax.imshow(prjarr, norm=norm, zorder=front, cmap=mymap)
-    cbar = pl.colorbar(mappable=im)
-    if cbar_unit is not None:
-        cbar.set_label(cbar_unit)
-    ax.coords[0].set_axislabel('Galactic Longitude')
-    ax.coords[1].set_axislabel('Galactic Latitude')
-    ax.coords[0].set_major_formatter('d.dd')
-    ax.coords[1].set_major_formatter('d.dd')
-    ax.coords[0].set_ticks(spacing=0.1 * u.deg)
-    ax.coords[0].set_ticklabel(rotation=45, pad=20)
+        front = 10
+        back = -10
+        fronter = 20
 
-    fig.tight_layout()
-    fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.png', bbox_inches='tight')
-    fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
+        fig = pl.figure(figsize=(20, 7))
+        ax = fig.add_subplot(111, projection=target_wcs)
+        norm = visualization.simple_norm(prjarr, **norm_kwargs)
+        im = ax.imshow(prjarr, norm=norm, zorder=front, cmap=mymap)
+        cbar = pl.colorbar(mappable=im)
+        if cbar_unit is not None:
+            cbar.set_label(cbar_unit)
+        ax.coords[0].set_axislabel('Galactic Longitude')
+        ax.coords[1].set_axislabel('Galactic Latitude')
+        ax.coords[0].set_major_formatter('d.dd')
+        ax.coords[1].set_major_formatter('d.dd')
+        ax.coords[0].set_ticks(spacing=0.1 * u.deg)
+        ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
-    ax.coords.grid(True, color='black', ls='--', zorder=back)
+        fig.tight_layout()
+        fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic.png', bbox_inches='tight')
+        fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_hires.png', bbox_inches='tight', dpi=300)
 
-    overlay = ax.get_coords_overlay('icrs')
-    overlay.grid(color='black', ls=':', zorder=back)
-    overlay[0].set_axislabel('Right Ascension (ICRS)')
-    overlay[1].set_axislabel('Declination (ICRS)')
-    overlay[0].set_major_formatter('hh:mm')
-    ax.set_axisbelow(True)
-    ax.set_zorder(back)
-    fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_withgrid.png', bbox_inches='tight')
+        ax.coords.grid(True, color='black', ls='--', zorder=back)
 
-    tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
+        overlay = ax.get_coords_overlay('icrs')
+        overlay.grid(color='black', ls=':', zorder=back)
+        overlay[0].set_axislabel('Right Ascension (ICRS)')
+        overlay[1].set_axislabel('Declination (ICRS)')
+        overlay[0].set_major_formatter('hh:mm')
+        ax.set_axisbelow(True)
+        ax.set_zorder(back)
+        fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_withgrid.png', bbox_inches='tight')
 
-    log.info("Creating AVM-embedded colormapped image")
+        tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
 
-    imfn = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_noaxes.png'
-    makepng(prjarr, target_wcs, imfn, footprint=footprint, **norm_kwargs)
+        log.info("Creating AVM-embedded colormapped image")
 
-    log.info("Computing overlap regions")
-    # create a list of composite regions for labeling purposes
-    composites = []
-    flagmap = np.zeros(prjarr.shape, dtype='int')
-    # loop over the SB_naming table
-    for row in ProgressBar(tbl):
-        indx = row['Proposal ID'][3:]
+        imfn = f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_noaxes.png'
+        makepng(prjarr, target_wcs, imfn, footprint=footprint, **norm_kwargs)
 
-        # load up regions
-        regs = regions.Regions.read(f'{basepath}/reduction_ACES/aces/data/regions/final_cmz{indx}.reg')
-        pregs = [reg.to_pixel(target_wcs) for reg in regs]
+        log.info("Computing overlap regions")
+        # create a list of composite regions for labeling purposes
+        composites = []
+        flagmap = np.zeros(prjarr.shape, dtype='int')
+        # loop over the SB_naming table
+        for row in ProgressBar(tbl):
+            indx = row['Proposal ID'][3:]
 
-        composite = _regionlist_to_single_region(pregs)
-        composite.meta['label'] = indx
-        composites.append(composite)
+            # load up regions
+            regs = regions.Regions.read(f'{basepath}/reduction_ACES/aces/data/regions/final_cmz{indx}.reg')
+            pregs = [reg.to_pixel(target_wcs) for reg in regs]
 
-        for comp in composites:
-            cmsk = comp.to_mask()
+            composite = _regionlist_to_single_region(pregs)
+            composite.meta['label'] = indx
+            composites.append(composite)
 
-            slcs_big, slcs_small = cmsk.get_overlap_slices(prjarr.shape)
-            if slcs_big is not None and slcs_small is not None:
-                flagmap[slcs_big] += (cmsk.data[slcs_small] * int(comp.meta['label'])) * (flagmap[slcs_big] == 0)
-            else:
-                print("Error - the composite mask has no overlap with the flag map.  "
-                      "I don't know why this occurs but it definitely is not expected.")
+            for comp in composites:
+                cmsk = comp.to_mask()
 
-    outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_field_number_map.fits'
-    log.info(f"Writing flag image to {outfile}")
-    fits.PrimaryHDU(data=flagmap,
-                    header=target_wcs.to_header()).writeto(outfile, overwrite=True)
+                slcs_big, slcs_small = cmsk.get_overlap_slices(prjarr.shape)
+                if slcs_big is not None and slcs_small is not None:
+                    flagmap[slcs_big] += (cmsk.data[slcs_small] * int(comp.meta['label'])) * (flagmap[slcs_big] == 0)
+                else:
+                    print("Error - the composite mask has no overlap with the flag map.  "
+                          "I don't know why this occurs but it definitely is not expected.")
 
-    ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max()) + 0.5, zorder=fronter)
+        outfile = f'{basepath}/mosaics/{folder}/{array}_{name}_field_number_map.fits'
+        log.info(f"Writing flag image to {outfile}")
+        fits.PrimaryHDU(data=flagmap,
+                        header=target_wcs.to_header()).writeto(outfile, overwrite=True)
 
-    for ii in np.unique(flagmap):
-        if ii > 0:
-            fsum = (flagmap == ii).sum()
-            cy, cx = ((np.arange(flagmap.shape[0])[:, None] * (flagmap == ii)).sum() / fsum,
-                      (np.arange(flagmap.shape[1])[None, :] * (flagmap == ii)).sum() / fsum)
-            pl.text(cx, cy, f"{ii}\n{tbl[ii - 1]['Obs ID']}",
-                    horizontalalignment='left', verticalalignment='center',
-                    color=(1, 0.8, 0.5), transform=ax.get_transform('pixel'),
-                    zorder=fronter)
+        ax.contour(flagmap, cmap='prism', levels=np.arange(flagmap.max()) + 0.5, zorder=fronter)
 
-    fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')
+        for ii in np.unique(flagmap):
+            if ii > 0:
+                fsum = (flagmap == ii).sum()
+                cy, cx = ((np.arange(flagmap.shape[0])[:, None] * (flagmap == ii)).sum() / fsum,
+                          (np.arange(flagmap.shape[1])[None, :] * (flagmap == ii)).sum() / fsum)
+                pl.text(cx, cy, f"{ii}\n{tbl[ii - 1]['Obs ID']}",
+                        horizontalalignment='left', verticalalignment='center',
+                        color=(1, 0.8, 0.5), transform=ax.get_transform('pixel'),
+                        zorder=fronter)
 
-    # close figures to avoid memory leak
-    pl.close('all')
+        fig.savefig(f'{basepath}/mosaics/{folder}/{array}_{name}_mosaic_withgridandlabels.png', bbox_inches='tight')
+
+        # close figures to avoid memory leak
+        pl.close('all')
 
     if commonbeam is not None:
         return cb
