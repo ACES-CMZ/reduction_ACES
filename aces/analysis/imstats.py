@@ -260,7 +260,7 @@ def imstats(fn, reg=None):
             metatb = Table.read(f"{fn}/logtable")
             hist = metatb['MESSAGE']
             history = {x.split(":")[0]: ":".join(x.split(": ")[1:])
-                    for x in hist if ':' in x and 'ICRS' not in x}
+                       for x in hist if ':' in x and 'ICRS' not in x}
             history.update({x.split("=")[0]: x.split("=")[1].lstrip()
                             for x in hist if '=' in x})
             casaversion = history['version']
