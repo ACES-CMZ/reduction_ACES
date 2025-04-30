@@ -158,8 +158,8 @@ def check_files(filelist, funcname=None):
         uidtb = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
         for row in uidtb:
             matches = [(row['12m MOUS ID'] in fn) or
-                    (f'_{row["Obs ID"]}.' in os.path.basename(fn))
-                    for fn in filelist]
+                       (f'_{row["Obs ID"]}.' in os.path.basename(fn))
+                       for fn in filelist]
             #print(row['Obs ID'], sum(matches))
             if sum(matches) != 1:
                 for fn in filelist:

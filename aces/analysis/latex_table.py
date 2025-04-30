@@ -145,9 +145,9 @@ def make_latex_table(savename='continuum_data_summary'):
         preamble = '{counter}\n\\caption{{Continuum Data Summary{contd}}}\n\\resizebox{{\\textwidth}}{{!}}{{'
         latexdict['preamble'] = preamble.format(contd=contd, counter=counter)
         ftbl[ii:ii+nrows].write(f"{basepath}/papers/continuum_data/tables/continuum_data_summary_{ii}-{ii+nrows}.tex",
-                            formats=formats,
-                            overwrite=True,
-                            latexdict=latexdict)
+                                formats=formats,
+                                overwrite=True,
+                                latexdict=latexdict)
 
     return ftbl
 
@@ -246,7 +246,6 @@ def make_observation_table(access_token=None, use_cache=True):
     from astropy.time import Time
     import numpy as np
     from astropy.table import Table
-    from astropy import table
 
     if use_cache:
         usub_meta_tm = Table.read(f'{basepath}/tables/observation_metadata_12m.ecsv')
@@ -284,27 +283,27 @@ def make_observation_table(access_token=None, use_cache=True):
         schedblock_meta = retrieve_execution_metadata(access_token=access_token)
 
         usub_meta['executions'] = [', '.join([x['date']
-                                            for x in schedblock_meta[schedblock_name]['executions']
-                                            if x['status'] == 'Pass'
-                                            ])
-                                for schedblock_name in usub_meta['schedblock_name']]
+                                              for x in schedblock_meta[schedblock_name]['executions']
+                                              if x['status'] == 'Pass'
+                                              ])
+                                   for schedblock_name in usub_meta['schedblock_name']]
         usub_meta['npointings'] = [int(schedblock_meta[schedblock_name]['number_pointings'])
-                                for schedblock_name in usub_meta['schedblock_name']]
+                                   for schedblock_name in usub_meta['schedblock_name']]
         timefmt = lambda x: f"{x:0.1f}"  # noqa
         usub_meta['time_per_eb'] = [rf'\makecell[l]{{{",\\\\".join([timefmt(float(x['time']))
-                                                                for x in schedblock_meta[schedblock_name]['executions']
-                                                                if x['status'] == 'Pass'
-                                                                ])}}}'
+                                                                    for x in schedblock_meta[schedblock_name]['executions']
+                                                                    if x['status'] == 'Pass'
+                                                                    ])}}}'
                                     for schedblock_name in usub_meta['schedblock_name']]
 
         # get PWVs
         execution_uids = {schedblock_name: [x['execblockuid'] for x in schedblock_meta[schedblock_name]['executions']
                                             if x['status'] == 'Pass']
-                        for schedblock_name in usub_meta['schedblock_name']}
+                          for schedblock_name in usub_meta['schedblock_name']}
         # schedblock_to_mous = {schedblock_name: schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']
         #                       for schedblock_name in usub_meta['schedblock_name']}
         mous_to_schedblock = {schedblock_meta[schedblock_name]['parentObsUnitSetStatusId']: schedblock_name
-                            for schedblock_name in usub_meta['schedblock_name']}
+                              for schedblock_name in usub_meta['schedblock_name']}
 
         pwv_cache_fn = f'{basepath}/reduction_ACES/aces/data/pwv_measurements.json'
         if os.path.exists(pwv_cache_fn):
@@ -386,10 +385,10 @@ def make_observation_table(access_token=None, use_cache=True):
                 return
 
         config_sched_tbls = {ii:
-                            try_read_table(ii)
-                            for ii in range(1, 10)
-                            if try_read_table(ii) is not None
-                            }
+                             try_read_table(ii)
+                             for ii in range(1, 10)
+                             if try_read_table(ii) is not None
+                             }
         assert len(config_sched_tbls) > 0
 
         for ii, config_sched_tbl in config_sched_tbls.items():
@@ -402,7 +401,7 @@ def make_observation_table(access_token=None, use_cache=True):
         for row in usub_meta:
             for cycle_id, config_sched_tbl in config_sched_tbls.items():
                 match = ((config_sched_tbl['Start date'] < row['Observation Start Time']) &
-                        (config_sched_tbl['End date'] >= row['Observation Start Time']))
+                         (config_sched_tbl['End date'] >= row['Observation Start Time']))
                 if match.sum() > 0:
                     row['cycle_id'] = cycle_id
                     row['config_id'] = config_sched_tbl[match]['Approx Config.'][0]
@@ -477,9 +476,9 @@ def make_observation_table(access_token=None, use_cache=True):
             else:
                 latexdict['preamble'] = preamble.format(nm=nm, contd=' continued', counter=r'\addtocounter{table}{-1}')
             usub_meta[colnames][sel][ii:ii+25].write(f"{basepath}/papers/continuum_data/tables/observation_metadata_{nm}_rows{ii}-{ii+25}.tex",
-                                        formats=formats,
-                                        overwrite=True,
-                                        latexdict=latexdict)
+                                                     formats=formats,
+                                                     overwrite=True,
+                                                     latexdict=latexdict)
 
     return usub_meta, (tm, sm, tp)
 
@@ -558,7 +557,7 @@ def make_spw_table():
 
     return ftbl
 
-    
+
 def make_table_3():
     mosaic_path = f'{basepath}/mosaics/continuum/'
     filenames = {'spw25_27': '12m_continuum_commonbeam_circular_reimaged_spw25_27_mosaic.fits',
@@ -586,7 +585,7 @@ def make_table_3():
         \hline
     \end{{tabular}}
     \end{{table}}
-    """ 
+    """
 
     with open(f"{basepath}/papers/continuum_data/tables/table_3.tex", 'w') as fh:
         fh.write(table3)
