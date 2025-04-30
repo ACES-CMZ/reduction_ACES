@@ -88,18 +88,16 @@ pl.subplots_adjust(hspace=0.02, wspace=0.05)
 pl.savefig(output_path, bbox_inches='tight', dpi=200)
 print(f"Figure saved to {output_path}")
 
-
-
-fig = pl.figure(figsize=(12,11))
-ax1 = pl.subplot(2,2,1, projection=ww[75:-75, 125:-125])
+fig = pl.figure(figsize=(12, 11))
+ax1 = pl.subplot(2, 2, 1, projection=ww[75:-75, 125:-125])
 brickfeatherdata = brickfeatherfh[0].data.squeeze() * jtok_Brick.value
 norm = simple_norm(brickfeatherdata, stretch='linear', vmin=-0.01, vmax=0.1) #max_percent=99.95, min_percent=1)
 pl.imshow(brickfeatherdata[75:-75, 125:-125], cmap=mymap, norm=norm)
-ax2 = pl.subplot(2,2,2, projection=ww[75:-75, 125:-125])
+ax2 = pl.subplot(2, 2, 2, projection=ww[75:-75, 125:-125])
 pl.imshow(brick_feather_conv_ACES[75:-75, 125:-125] * jtok_Brick.value, cmap=mymap, norm=norm)
-ax3 = pl.subplot(2,2,3, projection=ww[75:-75, 125:-125])
+ax3 = pl.subplot(2, 2, 3, projection=ww[75:-75, 125:-125])
 pl.imshow(aces_to_brick_feather[75:-75, 125:-125], cmap=mymap, norm=norm)
-ax4 = pl.subplot(2,2,4, projection=ww[75:-75, 125:-125])
+ax4 = pl.subplot(2, 2, 4, projection=ww[75:-75, 125:-125])
 diff = aces_to_brick_feather - brick_feather_conv_ACES*jtok_Brick.value
 diff[np.isnan(brick_feather_conv_ACES) | (brick_feather_conv_ACES == 0) | np.isnan(brickfeatherdata)] = np.nan
 pl.imshow(diff[75:-75, 125:-125], cmap='RdBu', norm=simple_norm(diff, vmin=-0.04, vmax=0.04, stretch='linear'))
@@ -143,19 +141,19 @@ meerkat_jtok = meerkat_beam.jtok(1.4*u.GHz)
 
 ACES_conv_MEER = convolve_fft(aces_to_brick2, meerkat_convkernel)
 
-fig = pl.figure(figsize=(12,11))
-ax1 = pl.subplot(2,2,1, projection=ww_big)
+fig = pl.figure(figsize=(12, 11))
+ax1 = pl.subplot(2, 2, 1, projection=ww_big)
 arbitrary_scale = 0.00015 #(95/1.4)**-0.8
 effective_index = np.log(arbitrary_scale) / np.log(95/1.4)
 norm = simple_norm(meerkat_to_brick * meerkat_jtok.value * arbitrary_scale,
                    stretch='linear', vmin=-0.01, vmax=0.1) #max_percent=99.95, min_percent=1)
 pl.imshow(meerkat_to_brick * meerkat_jtok.value * arbitrary_scale,
           cmap=mymap, norm=norm)
-ax2 = pl.subplot(2,2,2, projection=ww_big)
+ax2 = pl.subplot(2, 2, 2, projection=ww_big)
 pl.imshow(ACES_conv_MEER, cmap=mymap, norm=norm)
-ax3 = pl.subplot(2,2,3, projection=ww_big)
+ax3 = pl.subplot(2, 2, 3, projection=ww_big)
 pl.imshow(aces_to_brick2, cmap=mymap, norm=norm)
-ax4 = pl.subplot(2,2,4, projection=ww_big)
+ax4 = pl.subplot(2, 2, 4, projection=ww_big)
 diff = -(meerkat_to_brick * meerkat_jtok.value * arbitrary_scale
          - ACES_conv_MEER)
 pl.imshow(diff, cmap=mymap, norm=norm)
@@ -184,32 +182,32 @@ brick_feather_conv_MEER = convolve_fft(brickfeatherfh[0].data.squeeze(),
                                        convkernel_bricktomeer)
 brick_feather_conv_MEER[np.isnan(brickfh[0].data.squeeze())] = np.nan
 
-fig = pl.figure(figsize=(12,17))
+fig = pl.figure(figsize=(12, 17))
 slc = slice(475, -475), slice(525, -525)
-ax1 = pl.subplot(3,2,1, projection=ww_big[slc])
+ax1 = pl.subplot(3, 2, 1, projection=ww_big[slc])
 arbitrary_scale = 0.00015 #(95/1.4)**-0.8
 effective_index = np.log(arbitrary_scale) / np.log(95/1.4)
 norm = simple_norm(meerkat_to_brick * meerkat_jtok.value * arbitrary_scale,
                    stretch='linear', vmin=-0.01, vmax=0.1) #max_percent=99.95, min_percent=1)
 pl.imshow((meerkat_to_brick * meerkat_jtok.value * arbitrary_scale)[slc],
           cmap=mymap, norm=norm)
-ax2 = pl.subplot(3,2,2, projection=ww_big[slc])
+ax2 = pl.subplot(3, 2, 2, projection=ww_big[slc])
 pl.imshow(ACES_conv_MEER[slc], cmap=mymap, norm=norm)
-ax3 = pl.subplot(3,2,3, projection=ww_big[slc])
+ax3 = pl.subplot(3, 2, 3, projection=ww_big[slc])
 pl.imshow(aces_to_brick2[slc], cmap=mymap, norm=norm)
-ax4 = pl.subplot(3,2,4, projection=ww_big[slc])
+ax4 = pl.subplot(3, 2, 4, projection=ww_big[slc])
 diff = -(meerkat_to_brick * meerkat_jtok.value * arbitrary_scale
          - ACES_conv_MEER)
 pl.imshow(diff[slc], cmap=mymap, norm=norm)
 
-ax5 = pl.subplot(3,2,5, projection=ww[75:-75, 125:-125])
+ax5 = pl.subplot(3, 2, 5, projection=ww[75:-75, 125:-125])
 diff = -(meerkat_to_brick * meerkat_jtok.value * arbitrary_scale
          - ACES_conv_MEER
         )[400:-400, 400:-400] - brick_feather_conv_MEER*jtok_Brick.value
 pl.imshow(diff[75:-75, 125:-125], cmap='RdBu',
           norm=simple_norm(diff, vmin=-0.04, vmax=0.04, stretch='linear'))
 
-ax6 = pl.subplot(3,2,6, projection=ww[75:-75, 125:-125])
+ax6 = pl.subplot(3, 2, 6, projection=ww[75:-75, 125:-125])
 pl.imshow(brick_feather_conv_MEER[75:-75, 125:-125] * jtok_Brick.value,
           cmap=mymap, norm=norm)
 
@@ -218,7 +216,7 @@ ax2.text(0.95, 0.95, "ACES smooth", transform=ax2.transAxes, horizontalalignment
 ax3.text(0.95, 0.95, "ACES", transform=ax3.transAxes, horizontalalignment='right')
 ax4.text(0.95, 0.95, f"ACES-MEERKAT*{arbitrary_scale}", transform=ax4.transAxes, horizontalalignment='right')
 ax5.text(0.95, 0.95, f"ACES-MEERKAT*{arbitrary_scale}-Brick", transform=ax5.transAxes, horizontalalignment='right')
-ax6.text(0.95, 0.95, f"BrickC0", transform=ax6.transAxes, horizontalalignment='right')
+ax6.text(0.95, 0.95, "BrickC0", transform=ax6.transAxes, horizontalalignment='right')
 
 format_ax(ax1, label="", cb=False, hidex=True)
 format_ax(ax3, label="", cb=False, hidex=True)
