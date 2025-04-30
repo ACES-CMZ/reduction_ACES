@@ -954,6 +954,7 @@ def make_giant_mosaic_cube_hcop(**kwargs):
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
     filelist = glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW29/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.hco+10.image.statcont.contsub.fits')
 
+
     print(f"Found {len(filelist)} HCOP-containing spw29 files")
 
     check_files(filelist)
@@ -1362,7 +1363,8 @@ def make_giant_mosaic_cube_hcop_mopra(**kwargs):
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw29.cube.I.manual*image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*sci29.cube.I.manual*image.pbcor.statcont.contsub.fits')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*29.cube.I.manual.pbcor.fits')
-    filelist = glob.glob('/orange/adamginsburg/ACES/upload/HCOp_feather_images/MOPRA_12M_7M_feather/Sgr_A_st_*.SD_7M_12M_feather.hco*.image.statcont.contsub.fits')
+    #filelist = glob.glob('/orange/adamginsburg/ACES/upload/HCOp_feather_images/MOPRA_12M_7M_feather/Sgr_A_st_*.SD_7M_12M_feather.hco*.image.statcont.contsub.fits')
+    filelist = glob.glob('/orange/adamginsburg/ACES/upload/HCOp_feather_images/MOPRA_12M_7M_feather/*.hco+10.image.statcont.contsub.fits')
 
     print(f"Found {len(filelist)} HCOP-containing spw29 files (MOPRA)")
 
