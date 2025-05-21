@@ -1381,7 +1381,7 @@ def make_giant_mosaic_cube_hcop_mopra(**kwargs):
                            cubename='HCOP_mopra',
                            nchan=165,
                            beam_threshold=3.3 * u.arcsec,
-                           channelmosaic_directory=f'{basepath}/mosaics/HCOP_Channels/',
+                           channelmosaic_directory=f'{basepath}/mosaics/HCOP_mopra_Channels/',
                            fail_if_cube_dropped=False,
                            #use_reproject_cube=True,
                            parallel=os.getenv('SLURM_NTASKS'),
