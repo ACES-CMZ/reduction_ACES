@@ -294,7 +294,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     if molname in ('HC15N'):
         vmask = velocity_mask(cube, vmin_pos=0 * u.km/u.s, vmin_neg=-100 * u.km/u.s)
-    elif molname in ('H13CO+', ):
+    elif molname in ('H13COp', ):
         vmask = velocity_mask(cube, vmin_pos=-50 * u.km/u.s, vmin_neg=-150 * u.km/u.s)
     elif molname in ('SO21', ):
         vmask = velocity_mask(cube, vmax_pos=150 * u.km/u.s, vmax_neg=50 * u.km/u.s)
