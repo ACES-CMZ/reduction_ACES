@@ -1,16 +1,4 @@
 #!/bin/bash
-#SBATCH --mail-type=NONE          # Mail events (NONE, BEGIN, END, FAIL, ALL)
-#SBATCH --mail-user=adamginsburg@ufl.edu     # Where to send mail
-#SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --ntasks=64
-#SBATCH --mem=256gb
-#SBATCH --nodes=1 # exactly 1 node
-#SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --qos=astronomy-dept-b
-#SBATCH --account=astronomy-dept
-#SBATCH --output=/red/adamginsburg/ACES/logs/ACES_AllCube_analysis_%j.log
-#SBATCH --job-name=ACES_AllCube_analysis
-#SBATCH --export=ALL
 
 date
 
@@ -36,7 +24,7 @@ fi
 
 #for MOLNAME in SO21 H13CN HN13C H40a CH3CHO NSplus; do # H13COp CS21 HC3N HCOP SiO21 HNCO_7m12mTP; do
 for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H13CN HN13C H13COp CS21 HC3N HCOP SiO21 SO32; do
-#for MOLNAME in H13CN; do
+#for MOLNAME in HC15N; do
 
     if [[ $MOLNAME == *"HNCO"* ]]; then
         export mem=512
