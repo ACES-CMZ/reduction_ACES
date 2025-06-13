@@ -293,14 +293,19 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     print(f"Howargs: {howargs}.  Using vmask.")
 
     if molname in ('HC15N'):
+        print("Limiting vmin_pos to 0 km/s and vmin_neg to -100 km/s for HC15N")
         vmask = velocity_mask(cube, vmin_pos=0 * u.km/u.s, vmin_neg=-100 * u.km/u.s)
     elif molname in ('H13CO+', 'H13COp'):
+        print("Limiting vmin_pos to -50 km/s and vmin_neg to -150 km/s for H13CO+ == H13COp")
         vmask = velocity_mask(cube, vmin_pos=-50 * u.km/u.s, vmin_neg=-150 * u.km/u.s)
     elif molname in ('SO21', ):
+        print("Limiting vmax_pos to 150 km/s and vmax_neg to 50 km/s for SO21")
         vmask = velocity_mask(cube, vmax_pos=150 * u.km/u.s, vmax_neg=50 * u.km/u.s)
     elif molname in ('CH3CHO',):
+        print("Limiting vmax_pos to 300 km/s and vmax_neg to 200 km/s for CH3CHO")
         vmask = velocity_mask(cube, vmax_pos=300 * u.km/u.s, vmax_neg=200 * u.km/u.s)
     elif molname in ('CS21', 'CS'):
+        print("Limiting vmax_pos to 300 km/s and vmax_neg to 200 km/s and vmin_pos to -200 km/s and vmin_neg to -300 km/s for CS21 == CS")
         vmask = velocity_mask(cube, vmax_pos=300 * u.km/u.s, vmax_neg=200 * u.km/u.s, vmin_pos=-200 * u.km/u.s, vmin_neg=-300 * u.km/u.s)
     else:
         vmask = velocity_mask(cube)
