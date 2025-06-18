@@ -20,13 +20,17 @@ if __name__ == "__main__":
     product_dict = {'brick_h2o_core': f'{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X192/',
                     'SgrB2_G0.69': f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_Xea/",
                     'cloud_e_hotcore': f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X1a4/",
-                    'SgrC_hotcore': f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001/X15a0/X174/"
+                    'SgrC_hotcore': f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001/X15a0/X174/",
+                    'SgrC_MM1_HC_12m': f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001/X15a0/X172/",
+                    'brick_maser_core_12m': f'{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X190/',
                     }
 
     regions_dict = {'brick_h2o_core': regions.CircleSkyRegion(coordinates.SkyCoord('17:46:10.628', '-28:42:17.75', frame='icrs', unit=(u.h, u.deg)), radius=15 * u.arcsec),
                     'SgrB2_G0.69': regions.CircleSkyRegion(coordinates.SkyCoord('17h47m22s', '-28:21:27', frame='fk5', unit=(u.h, u.deg)), radius=15 * u.arcsec),
                     'cloud_e_hotcore': regions.CircleSkyRegion(coordinates.SkyCoord(0.4751733 * u.deg, -0.0096808 * u.deg, frame='galactic'), radius=15 * u.arcsec),
                     'SgrC_hotcore': regions.CircleSkyRegion(coordinates.SkyCoord('17:44:40.58', '-29:28:16.28', frame='icrs', unit=(u.h, u.deg)), radius=15 * u.arcsec),
+                    'SgrC_MM1_HC_12m': regions.CircleSkyRegion(coordinates.SkyCoord('17:44:40.58', '-29:28:15.82', frame='icrs', unit=(u.h, u.deg)), radius=3 * u.arcsec),
+                    'brick_maser_core_12m': regions.CircleSkyRegion(coordinates.SkyCoord('17:46:10.63', '-28:42:17.77', frame='icrs', unit=(u.h, u.deg)), radius=3 * u.arcsec),
                     }
 
     for regname in product_dict:
