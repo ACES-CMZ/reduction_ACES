@@ -32,7 +32,7 @@ then = time.time()
 # edits to the underlying table will result in inconsistencies & crashes.
 # i.e., any time we add or remove a column from the table, we need to make sure
 # this number specifies the number of columns
-NCOLS = 44
+NCOLS = 45
 
 
 def dt(message=""):
