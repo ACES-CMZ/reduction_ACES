@@ -129,7 +129,7 @@ def get_noedge_mask(cube, iterations=40):
     else:
         ndi = ndimage
 
-    struct = ndi.generate_binary_structure(3, 1)
+    struct = ndi.generate_binary_structure(rank=3, connectivity=1)
     # make cubic binary structure, but ignore the spectral dimension
     struct[0, :, :] = False
     struct[-1, :, :] = False
@@ -194,8 +194,11 @@ def velocity_mask(cube, vmin_pos=-120*u.km/u.s, vmin_neg=-220*u.km/u.s, vmax_pos
     return mask[:, None, :]
 
 
-def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/',
+def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments//',
            howargs={}):
+
+    pvpath = os.path.join(mompath, 'pvs')
+    os.makedirs(f"{mompath}", exist_ok=True)
 
     t0 = time.time()
     print(cube, flush=True)
@@ -212,26 +215,26 @@ def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/
 
     print(f"PV peak intensity.  dt={time.time() - t0}", flush=True)
     pv_max = cube.max(axis=1, **howargs)
-    pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_max.fits", overwrite=True)
-    makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_max.png",
+    pv_max.write(f"{pvpath}/{molname}_CubeMosaic_PV_max.fits", overwrite=True)
+    makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{pvpath}/{molname}_CubeMosaic_PV_max.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     print(f"PV mean.  dt={time.time() - t0}")
     pv_mean = cube.mean(axis=1, **howargs)
-    pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
-    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean.png",
+    pv_mean.write(f"{pvpath}/{molname}_CubeMosaic_PV_mean.fits", overwrite=True)
+    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{pvpath}/{molname}_CubeMosaic_PV_mean.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     print(f"PV max 2.  dt={time.time() - t0}")
     pv_max = cube.max(axis=2, **howargs)
-    pv_max.write(f"{mompath}/{molname}_CubeMosaic_PV_b_max.fits", overwrite=True)
-    makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_max.png",
+    pv_max.write(f"{pvpath}/{molname}_CubeMosaic_PV_b_max.fits", overwrite=True)
+    makepng(data=pv_max.value, wcs=pv_max.wcs, imfn=f"{pvpath}/{molname}_CubeMosaic_PV_b_max.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     print(f"PV mean 2.  dt={time.time() - t0}")
     pv_mean = cube.mean(axis=2, **howargs)
-    pv_mean.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
-    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean.png",
+    pv_mean.write(f"{pvpath}/{molname}_CubeMosaic_PV_b_mean.fits", overwrite=True)
+    makepng(data=pv_mean.value, wcs=pv_mean.wcs, imfn=f"{pvpath}/{molname}_CubeMosaic_PV_b_mean.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     if mask is None:
@@ -244,14 +247,14 @@ def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/
 
     print(f"PV mean with mask.  dt={time.time() - t0}")
     pv_mean_masked = mcube.mean(axis=1, **howargs)
-    pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.fits", overwrite=True)
-    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_mean_masked.png",
+    pv_mean_masked.write(f"{pvpath}/{molname}_CubeMosaic_PV_mean_masked.fits", overwrite=True)
+    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{pvpath}/{molname}_CubeMosaic_PV_mean_masked.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     print(f"PV mean with mask 2.  dt={time.time() - t0}")
     pv_mean_masked = mcube.mean(axis=2, **howargs)
-    pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.fits", overwrite=True)
-    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked.png",
+    pv_mean_masked.write(f"{pvpath}/{molname}_CubeMosaic_PV_b_mean_masked.fits", overwrite=True)
+    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{pvpath}/{molname}_CubeMosaic_PV_b_mean_masked.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     # 2.5 sigma cut
@@ -260,19 +263,23 @@ def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/
 
     print(f"PV mean.  dt={time.time() - t0}")
     pv_mean_masked = mdcube_2p5.mean(axis=1, **howargs)
-    pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_mean_masked_2p5.fits", overwrite=True)
-    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_pv_mean_masked_2p5.png",
+    pv_mean_masked.write(f"{pvpath}/{molname}_CubeMosaic_PV_mean_masked_2p5.fits", overwrite=True)
+    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{pvpath}/{molname}_CubeMosaic_pv_mean_masked_2p5.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
     print(f"PV mean 2.  dt={time.time() - t0}")
     pv_mean_masked = mdcube_2p5.mean(axis=2, **howargs)
-    pv_mean_masked.write(f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.fits", overwrite=True)
-    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.png",
+    pv_mean_masked.write(f"{pvpath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.fits", overwrite=True)
+    makepng(data=pv_mean_masked.value, wcs=pv_mean_masked.wcs, imfn=f"{pvpath}/{molname}_CubeMosaic_PV_b_mean_masked_2p5.png",
             stretch='asinh', min_percent=1, max_percent=99.5)
 
 
 def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
                  howargs={}):
+
+    os.makedirs(f"{mompath}", exist_ok=True)
+    os.makedirs(f"{mompath}/spectra", exist_ok=True)
+
     t0 = time.time()
     print(cube, flush=True)
     if hasattr(cube, 'rechunk'):
@@ -352,8 +359,12 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     print(f"Pruned mask. dt={time.time() - t0}")
-    signal_mask_both = (get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0)
-                        & get_noedge_mask(cube))
+    print(f"Computing no-edge mask. dt={time.time() - t0}")
+    noedge = get_noedge_mask(cube)
+    print(f"'good' spectrum: {cube.mask.include().sum(axis=(1,2))}")
+    print(f"noedge spectrum: {noedge.sum(axis=(1,2))}")
+    signal_mask_both = (get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0) & noedge)
+    print(f"signal_mask_both spectrum: {signal_mask_both.sum(axis=(1,2))}")
     print(f"Done creating pruned mask. dt={time.time() - t0}")
     if hasattr(signal_mask_both, 'compute'):
         dafits.write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits",
@@ -377,6 +388,22 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     mom1.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom1.fits", overwrite=True)
     makepng(data=mom1.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom1.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
+
+    howargs_spec = howargs.copy()
+    howargs_spec['how'] = 'slice'
+
+    maxspec = mdcube_both.max(axis=(1,2), **howargs_spec)
+    maxspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated_maxspec.fits", overwrite=True)
+    mean_spec = mdcube_both.mean(axis=(1,2), **howargs_spec)
+    mean_spec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated_mean_spec.fits", overwrite=True)
+    stdspec = mdcube_both.mad_std(axis=(1,2), **howargs_spec)
+    stdspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated_stdspec.fits", overwrite=True)
+    maxspec = cube.max(axis=(1,2), **howargs_spec)
+    maxspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_maxspec.fits", overwrite=True)
+    mean_spec = cube.mean(axis=(1,2), **howargs_spec)
+    mean_spec.write(f"{mompath}/spectra/{molname}_CubeMosaic_mean_spec.fits", overwrite=True)
+    stdspec = cube.mad_std(axis=(1,2), **howargs_spec)
+    stdspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_stdspec.fits", overwrite=True)
 
     print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
     signal_mask_5p0 = cube > noise * 5.0
@@ -449,9 +476,6 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
             stretch='asinh', vmin=-0.1, max_percent=99.5)
     del mom0
 
-    print(f"Computing no-edge mask. dt={time.time() - t0}")
-    noedge = get_noedge_mask(cube)
-    print(f"noedge spectrum: {noedge.sum(axis=(1,2))}")
 
     print(f"no-edge max.  dt={time.time() - t0}", flush=True)
     nemx = cube.with_mask(noedge).max(axis=0, **howargs)
