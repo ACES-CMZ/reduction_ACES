@@ -105,9 +105,9 @@ def main(num_workers=None):
     colnames_fromheader = ['imsize', 'cell', 'threshold', 'niter', 'pblimit', 'pbmask', 'restfreq', 'nchan',
                            'width', 'start', 'chanchunks', 'deconvolver', 'weighting', 'robust', 'git_version', 'git_date', 'version']
     colnames_stats = list(('min max std sum mean'.split() +
-                      'min_K max_K std_K sum_K mean_K'.split() +
-                      'lowmin lowmax lowstd lowmadstd lowsum lowmean'.split()
-                      )) + ['timestamp']
+                           'min_K max_K std_K sum_K mean_K'.split() +
+                           'lowmin lowmax lowstd lowmadstd lowsum lowmean'.split()
+                           )) + ['timestamp']
 
     colnames = colnames_apriori + colnames_fromheader + colnames_stats
     # sanity check to make sure I didn't mis-count things above
@@ -159,12 +159,11 @@ def main(num_workers=None):
 
     cache_stats_file = open(tbldir / "feathered_cube_stats.txt", 'w')
 
-    filelists = (
-                 glob.glob(f"{basepath}/upload/HCOp_feather_images/MOPRA_12M_7M_feather/*statcont.contsub.fits") +
+    filelists = (glob.glob(f"{basepath}/upload/HCOp_feather_images/MOPRA_12M_7M_feather/*statcont.contsub.fits") +
                  glob.glob(f"{basepath}/upload/Feather_12m_7m_TP/SPW*/cubes/*statcont.contsub.fits") +
                  glob.glob(f"{basepath}/MOPRA_12M_7M_feather/*statcont.contsub.fits") +
                  glob.glob(f"{basepath}/upload/HCOp_feather_images/*statcont.contsub.fits")
-                 )
+                )
     ufilelist = np.unique(filelists)
     print(f"Found {len(ufilelist)} unique files out of {len(filelists)} total files")
 
