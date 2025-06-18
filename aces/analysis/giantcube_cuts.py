@@ -361,10 +361,10 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     print(f"Pruned mask. dt={time.time() - t0}")
     print(f"Computing no-edge mask. dt={time.time() - t0}")
     noedge = get_noedge_mask(cube)
-    print(f"'good' spectrum: {cube.mask.include().sum(axis=(1,2))}")
-    print(f"noedge spectrum: {noedge.sum(axis=(1,2))}")
+    print(f"'good' spectrum: {cube.mask.include().sum(axis=(1, 2))}")
+    print(f"noedge spectrum: {noedge.sum(axis=(1, 2))}")
     signal_mask_both = (get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0) & noedge)
-    print(f"signal_mask_both spectrum: {signal_mask_both.sum(axis=(1,2))}")
+    print(f"signal_mask_both spectrum: {signal_mask_both.sum(axis=(1, 2))}")
     print(f"Done creating pruned mask. dt={time.time() - t0}")
     if hasattr(signal_mask_both, 'compute'):
         dafits.write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits",
@@ -392,17 +392,17 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     howargs_spec = howargs.copy()
     howargs_spec['how'] = 'slice'
 
-    maxspec = mdcube_both.max(axis=(1,2), **howargs_spec)
+    maxspec = mdcube_both.max(axis=(1, 2), **howargs_spec)
     maxspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated_maxspec.fits", overwrite=True)
-    mean_spec = mdcube_both.mean(axis=(1,2), **howargs_spec)
+    mean_spec = mdcube_both.mean(axis=(1, 2), **howargs_spec)
     mean_spec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated_mean_spec.fits", overwrite=True)
-    stdspec = mdcube_both.mad_std(axis=(1,2), **howargs_spec)
+    stdspec = mdcube_both.mad_std(axis=(1, 2), **howargs_spec)
     stdspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated_stdspec.fits", overwrite=True)
-    maxspec = cube.max(axis=(1,2), **howargs_spec)
+    maxspec = cube.max(axis=(1, 2), **howargs_spec)
     maxspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_maxspec.fits", overwrite=True)
-    mean_spec = cube.mean(axis=(1,2), **howargs_spec)
+    mean_spec = cube.mean(axis=(1, 2), **howargs_spec)
     mean_spec.write(f"{mompath}/spectra/{molname}_CubeMosaic_mean_spec.fits", overwrite=True)
-    stdspec = cube.mad_std(axis=(1,2), **howargs_spec)
+    stdspec = cube.mad_std(axis=(1, 2), **howargs_spec)
     stdspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_stdspec.fits", overwrite=True)
 
     print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
@@ -475,7 +475,6 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
     del mom0
-
 
     print(f"no-edge max.  dt={time.time() - t0}", flush=True)
     nemx = cube.with_mask(noedge).max(axis=0, **howargs)
