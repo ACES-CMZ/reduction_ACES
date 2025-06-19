@@ -37,10 +37,10 @@ jobs:
             python: '3.12'
             toxenv: py312-test
 
-          - name: Python 3.13 with minimal dependencies
-            os: ubuntu-latest
-            python: '3.13'
-            toxenv: py313-test
+            # requires casastools for 313 - name: Python 3.13 with minimal dependencies
+            # requires casastools for 313   os: ubuntu-latest
+            # requires casastools for 313   python: '3.13'
+            # requires casastools for 313   toxenv: py313-test
 
             # - name: Python 3.10 with all optional dependencies and coverage checking
             #   os: ubuntu-latest
