@@ -133,7 +133,7 @@ def main(num_workers=None):
     colnames_stats = ('min max std sum mean'.split() +
                       'min_K max_K std_K sum_K mean_K'.split() +
                       'lowmin lowmax lowstd lowmadstd lowsum lowmean'.split() +
-                      ['mod' + x for x in 'min max std sum mean'.split()] + ['epsilon'])
+                      ['mod' + x for x in 'min max std sum mean'.split()] + ['epsilon', 'timestamp'])
 
     colnames = colnames_apriori + colnames_fromheader + colnames_stats
     # sanity check to make sure I didn't mis-count things above
@@ -379,7 +379,7 @@ def main(num_workers=None):
                        [min, max, std, sum, mean] +
                        list(map(lambda x: u.Quantity(x).to(u.K, jtok_equiv), [min, max, std, sum, mean])) +
                        [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean] +
-                       [modmin, modmax, modstd, modsum, modmean, epsilon])
+                       [modmin, modmax, modstd, modsum, modmean, epsilon, datetime.datetime.now().isoformat()])
                 assert len(row) == len(colnames) == NCOLS
                 rows.append(row)
 
