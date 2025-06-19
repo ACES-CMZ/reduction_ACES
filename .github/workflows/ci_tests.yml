@@ -89,6 +89,7 @@ jobs:
       run: |
         mkdir -p ~/.casa/data
         export CASA_DISABLE_AUTO_UPDATE=True
+        export PYTHONWARNINGS=ignore::DeprecationWarning:pkgutil
     - name: Validate json files
       uses: RaaLabs/validate-json@v0.0.7
     - name: Test with tox
