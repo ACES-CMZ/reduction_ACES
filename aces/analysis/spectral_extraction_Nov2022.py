@@ -18,11 +18,13 @@ class getslice(object):
 if __name__ == "__main__":
 
     product_dict = {'SgrC_coreMM1': f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X172/",
-                    'SgrC_coreMM2': f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X172/"
+                    'SgrC_coreMM2': f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X172/",
+                    "BrickMaserCore": f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X190/",
                     }
 
     regions_dict = {'SgrC_coreMM1': regions.CircleSkyRegion(coordinates.SkyCoord('17:44:40.60', '-29:28:16.0', frame='icrs', unit=(u.h, u.deg)), radius=0.75 * u.arcsec),
                     'SgrC_coreMM2': regions.CircleSkyRegion(coordinates.SkyCoord('17:44:40.21', '-29:28:12.5', frame='icrs', unit=(u.h, u.deg)), radius=0.75 * u.arcsec),
+                    "BrickMaserCore": regions.CircleSkyRegion(coordinates.SkyCoord(0.26087, 0.01616, frame='galactic', unit=(u.deg, u.deg)), radius=0.75 * u.arcsec),
                     }
 
     for regname in product_dict:
