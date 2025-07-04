@@ -27,35 +27,45 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Python 3.9 with minimal dependencies
+          - name: Python 3.10 with minimal dependencies
             os: ubuntu-latest
-            python: 3.9
-            toxenv: py39-test
+            python: '3.10'
+            toxenv: py310-test
 
-            # - name: Python 3.9 with all optional dependencies and coverage checking
+          - name: Python 3.12 with minimal dependencies
+            os: ubuntu-latest
+            python: '3.12'
+            toxenv: py312-test
+
+            # requires casastools for 313 - name: Python 3.13 with minimal dependencies
+            # requires casastools for 313   os: ubuntu-latest
+            # requires casastools for 313   python: '3.13'
+            # requires casastools for 313   toxenv: py313-test
+
+            # - name: Python 3.10 with all optional dependencies and coverage checking
             #   os: ubuntu-latest
-            #   python: 3.9
-            #   toxenv: py39-test-alldeps-cov
+            #   python: 3.10
+            #   toxenv: py310-test-alldeps-cov
 
-            # - name: macOS - Python 3.9 with all optional dependencies
+            # - name: macOS - Python 3.12 with all optional dependencies
             # - os: macos-latest
-            # - python: 3.9
-            # - toxenv: py39-test-alldeps
+            # - python: 3.12
+            # - toxenv: py312-test-alldeps
 
-            # - name: Windows - Python 3.9 with all optional dependencies
+            # - name: Windows - Python 3.12 with all optional dependencies
             # - os: windows-latest
-            # - python: 3.9
-            # - toxenv: py39-test-alldeps
+            # - python: 3.12
+            # - toxenv: py312-test-alldeps
 
-          # - name: Python 3.9 with oldest supported version of all dependencies
+          # - name: Python 3.10 with oldest supported version of all dependencies
           #   os: ubuntu-16.04
-          #   python: 3.9
-          #   toxenv: py39-test-oldestdeps
+          #   python: 3.10
+          #   toxenv: py310-test-oldestdeps
 
-          # - name: Python 3.9 with latest dev versions of key dependencies
+          # - name: Python 3.12 with latest dev versions of key dependencies
           #   os: ubuntu-latest
-          #   python: 3.9
-          #   toxenv: py38-test-devdeps
+          #   python: 3.12
+          #   toxenv: py312-test-devdeps
 
           # - name: Test building of Sphinx docs
           #   os: ubuntu-latest
@@ -64,17 +74,22 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Set up python ${{ matrix.python }} on ${{ matrix.os }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
     - name: Install base dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install tox codecov
+    - name: Setup CASA environment for CI
+      run: |
+        mkdir -p ~/.casa/data
+        export CASA_DISABLE_AUTO_UPDATE=True
+        export PYTHONWARNINGS=ignore::DeprecationWarning:pkgutil
     - name: Validate json files
       uses: RaaLabs/validate-json@v0.0.7
     - name: Test with tox

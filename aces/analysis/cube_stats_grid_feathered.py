@@ -32,7 +32,7 @@ then = time.time()
 # edits to the underlying table will result in inconsistencies & crashes.
 # i.e., any time we add or remove a column from the table, we need to make sure
 # this number specifies the number of columns
-NCOLS = 44
+NCOLS = 45
 
 
 def dt(message=""):
@@ -104,10 +104,10 @@ def main(num_workers=None):
     colnames_apriori = ['Field', 'Config', 'spw', 'suffix', 'filename', 'bmaj', 'bmin', 'bpa', 'wcs_restfreq', 'minfreq', 'maxfreq']
     colnames_fromheader = ['imsize', 'cell', 'threshold', 'niter', 'pblimit', 'pbmask', 'restfreq', 'nchan',
                            'width', 'start', 'chanchunks', 'deconvolver', 'weighting', 'robust', 'git_version', 'git_date', 'version']
-    colnames_stats = ('min max std sum mean'.split() +
-                      'min_K max_K std_K sum_K mean_K'.split() +
-                      'lowmin lowmax lowstd lowmadstd lowsum lowmean'.split()
-                      )
+    colnames_stats = list(('min max std sum mean'.split() +
+                           'min_K max_K std_K sum_K mean_K'.split() +
+                           'lowmin lowmax lowstd lowmadstd lowsum lowmean'.split()
+                           )) + ['timestamp']
 
     colnames = colnames_apriori + colnames_fromheader + colnames_stats
     # sanity check to make sure I didn't mis-count things above
@@ -159,27 +159,38 @@ def main(num_workers=None):
 
     cache_stats_file = open(tbldir / "feathered_cube_stats.txt", 'w')
 
-    filelists = (glob.glob(f"{basepath}/upload/Feather_12m_7m_TP/SPW*/cubes/*fits") +
-                 glob.glob(f"{basepath}/MOPRA_12M_7M_feather/*fits") +
-                 glob.glob(f"{basepath}/upload/HCOp_feather_images/*fits") +
-                 glob.glob(f"{basepath}/upload/HCOp_feather_images/MOPRA_12M_7M_feather/*fits")
-                 )
+    filelists = (glob.glob(f"{basepath}/upload/HCOp_feather_images/MOPRA_12M_7M_feather/*statcont.contsub.fits") +
+                 glob.glob(f"{basepath}/upload/Feather_12m_7m_TP/SPW*/cubes/*statcont.contsub.fits") +
+                 glob.glob(f"{basepath}/MOPRA_12M_7M_feather/*statcont.contsub.fits") +
+                 glob.glob(f"{basepath}/upload/HCOp_feather_images/*statcont.contsub.fits")
+                )
+    ufilelist = np.unique(filelists)
+    print(f"Found {len(ufilelist)} unique files out of {len(filelists)} total files")
 
-    for fullpath in filelists:
+    for fullpath in ufilelist:
+        print(f"Processing {fullpath}")
         fn = fullpath
         basename = os.path.basename(fullpath)
         field = basename[9:11]
 
         config = 'TP_7M_12M_'
         suffix = '.image.statcont.contsub.fits'
-        spw = fullpath.split("SPW")[1][:2]
+        if 'SPW' in fullpath:
+            spw = fullpath.split("SPW")[1][:2]
+        elif 'hco+' in fullpath:
+            spw = '29'
+        elif 'hnco' in fullpath:
+            spw = '31'
+        else:
+            print(f"ERROR: Unknown spw for {fullpath}")
+            spw = '99'
 
         if tbl is not None:
             row_matches = ((tbl['Field'] == field) &
                            (tbl['Config'] == config) &
                            (tbl['spw'] == spw) &
                            (tbl['suffix'] == suffix))
-            if any(row_matches) and not np.all(np.isfinite(tbl[row_matches]['min'])):
+            if any(row_matches) and not np.all(~np.isfinite(tbl[row_matches]['min'])):
                 print(f"Skipping {fullpath} as complete: {tbl[row_matches]}", flush=True)
                 continue
 
@@ -284,7 +295,7 @@ def main(num_workers=None):
                [history[key] if key in history else '' for key in colnames_fromheader] +
                [min, max, std, sum, mean] +
                list(map(lambda x: u.Quantity(x).to(u.K, jtok_equiv), [min, max, std, sum, mean])) +
-               [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean]
+               [lowmin, lowmax, lowstd, lowmadstd, lowsum, lowmean, datetime.datetime.now().isoformat()]
                )
         assert len(row) == len(colnames) == NCOLS
         rows.append(row)
