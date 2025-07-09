@@ -30,7 +30,7 @@ def main():
         data2 = fits.getdata(fn2)
 
         fig, ax = pl.subplots(1, 1)
-        ax.scatter(data1, data2, s=1, alpha=0.2)
+        ax.scatter(data1, data2, s=1, alpha=0.5)
         ax.set_xlabel(f'{mol1} [K km s$^{{-1}}$]')
         ax.set_ylabel(f'{mol2} [K km s$^{{-1}}$]')
         if mol1 in contnames:
@@ -38,7 +38,24 @@ def main():
         if mol2 in contnames:
             ax.set_ylabel(f'{mol2} [K]')
 
-        fig.savefig(f'{basepath}/diagnostic_plots/correlations/{mol1}_{mol2}_correlation.png', bbox_inches='tight')
+        fig.savefig(f'{basepath}/diagnostic_plots/correlations/{mol1}_{mol2}_correlation.png', bbox_inches='tight', dpi=150)
+
+        pl.close('all')
+
+        fig, ax = pl.subplots(1, 1)
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.scatter(data1, data2, s=0.5, alpha=0.05)
+        ax.set_xlabel(f'{mol1} [K km s$^{{-1}}$]')
+        ax.set_ylabel(f'{mol2} [K km s$^{{-1}}$]')
+        if mol1 in contnames:
+            ax.set_xlabel(f'{mol1} [K]')
+        if mol2 in contnames:
+            ax.set_ylabel(f'{mol2} [K]')
+
+        fig.savefig(f'{basepath}/diagnostic_plots/correlations/{mol1}_{mol2}_correlation_log.png', bbox_inches='tight', dpi=150)
+
+        print(f'{mol1} vs {mol2} done')
         pl.close('all')
 
 
