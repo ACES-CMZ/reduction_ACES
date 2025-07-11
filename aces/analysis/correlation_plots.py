@@ -32,6 +32,7 @@ def main():
 
         to_xcorr = np.isfinite(data1) & np.isfinite(data2)
         corr = np.corrcoef(data1[to_xcorr], data2[to_xcorr])[0, 1]
+        assert np.isfinite(corr)
 
         xmin, xmax = np.nanmin(data1), np.nanmax(data1)
         x5, x95 = np.nanpercentile(data1, [5, 95])

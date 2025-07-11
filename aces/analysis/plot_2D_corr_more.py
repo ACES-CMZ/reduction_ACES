@@ -57,6 +57,7 @@ def main():
     sns.heatmap(half_corr, annot=True, cmap="coolwarm", xticklabels=tracer_list[:-1], yticklabels=tracer_list[1:],vmax=1, vmin=-1, mask=mask)
 
     plt.savefig(f'{basepath}/diagnostic_plots/correlations/2Dcorr_matrix_more.pdf', dpi=100, bbox_inches='tight')
+    plt.savefig(f'{basepath}/diagnostic_plots/correlations/2Dcorr_matrix_more.png', dpi=100, bbox_inches='tight')
 
 if __name__ == '__main__':
     main()
