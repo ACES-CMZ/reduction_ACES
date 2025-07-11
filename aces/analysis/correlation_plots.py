@@ -14,6 +14,8 @@ from aces import conf
 basepath = conf.basepath
 
 def main():
+    os.makedirs(f'{basepath}/diagnostic_plots/correlations', exist_ok=True)
+
     contnames = {'continuum': '/orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
                 'continuum_feathered': '/orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits'}
 

@@ -8,8 +8,9 @@ from aces import conf
 def main():
     basepath = conf.basepath
 
-    cubepath = f'{basepath}/mosaics/cubes/moments'
+    os.makedirs(f'{basepath}/diagnostic_plots/correlations', exist_ok=True)
 
+    cubepath = f'{basepath}/mosaics/cubes/moments'
 
     ######## Read the continum
     contfilename = f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits'
