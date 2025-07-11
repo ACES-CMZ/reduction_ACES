@@ -1,8 +1,11 @@
+import os
 import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
 import seaborn as sns
 from aces import conf
+import regions
+from astropy.wcs import WCS
 
 
 def main():
@@ -14,6 +17,13 @@ def main():
 
     ######## Read the continum
     contfilename = f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits'
+
+    ww = WCS(fits.getheader(contfilename))
+
+    pixreg = regions.Regions.read(f'{basepath}/regions/sgramask.reg')[0].to_pixel(ww).union(
+        regions.Regions.read(f'{basepath}/regions/sgrb2mask.reg')[0].to_pixel(ww))
+    reg_mask = pixreg.to_mask()
+    sgra_or_sgrb2 = (reg_mask.to_image(fits.getdata(contfilename).shape) > 0)
 
     ######## Read the mom0
     molnamelist = ['HCOP_mopra','HNCO_7m12mTP','SiO21', 'SO21', 'H13COp', 'H13CN', 'HN13C', 'HC15N','CS21','H40a','SO32','HC3N','CH3CHO','NSplus']
@@ -27,6 +37,8 @@ def main():
 
     maps = [fits.getdata(file) for file in fits_files]
 
+    #molstringlist = [r'SiO$^{\phantom{x}}$', r'SO$^{\phantom{x}}$', r'H$^{13}$CO$^+$', r'H$^{13}$CN', r'HN$^{13}$C', r'HC$^{15}$N']
+    tracer_list = ['Continuum'] + molstringlist
 
     # Compute the 2D correlation coefficients between pairs of maps
     n_maps = len(maps)
@@ -38,13 +50,12 @@ def main():
             # Flatten the 2D arrays and compute the correlation coefficient
             flattened_i = maps[i].flatten()
             flattened_j = maps[j].flatten()
-            to_xcorr = np.isfinite(flattened_i) & np.isfinite(flattened_j)
+            to_xcorr = np.isfinite(flattened_i) & np.isfinite(flattened_j) & ~sgra_or_sgrb2.flatten()
             corr = np.corrcoef(flattened_i[to_xcorr], flattened_j[to_xcorr])[0, 1]
             correlation_matrix[i, j] = corr
             correlation_matrix[j, i] = corr  # Symmetric matrix
+            print(f'{tracer_list[i]} vs {tracer_list[j]}: {corr:.2f}', flush=True)
 
-    #molstringlist = [r'SiO$^{\phantom{x}}$', r'SO$^{\phantom{x}}$', r'H$^{13}$CO$^+$', r'H$^{13}$CN', r'HN$^{13}$C', r'HC$^{15}$N']
-    tracer_list = ['Continuum'] + molstringlist
 
     # Plot the correlation matrix
     plt.figure(figsize=(10, 9))
