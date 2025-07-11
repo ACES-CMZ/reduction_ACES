@@ -7,8 +7,9 @@ cd /red/adamginsburg/ACES/workdir/
 pwd
 
 
-#for MOLNAME in SO21 H13CN HN13C H40a CH3CHO NSplus; do # H13COp CS21 HC3N HCOP SiO21 HNCO_7m12mTP; do
-for MOLNAME in HNCO_7m12mTP HCOP_noTP H13CN HCOP; do
+#for MOLNAME in HC15N SO21 H13CN HN13C H40a CH3CHO NSplus; do # H13COp CS21 HC3N HCOP SiO21 HNCO_7m12mTP; do
+for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H13CN HN13C H13COp CS21 HC3N HCOP SiO21 SO32; do
+#for MOLNAME in HNCO_7m12mTP HCOP_noTP H13CN HCOP; do
 #for MOLNAME in HNCO_7m12mTP; do
 
     if [ -e /orange/adamginsburg/ACES/mosaics/cubes/${MOLNAME}_CubeMosaic.fits ]; then
@@ -24,7 +25,7 @@ for MOLNAME in HNCO_7m12mTP HCOP_noTP H13CN HCOP; do
         #/red/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/analysis/giantcube_cuts.py || exit 1
         sbatch --job-name=aces_downsample_spectrally_${MOLNAME} \
                --output=/red/adamginsburg/ACES/logs/aces_downsample_spectrally_${MOLNAME}_%j.log \
-               --account=astronomy-dept --qos=astronomy-dept --ntasks=${NUM_CORES} --nodes=1 \
+               --account=astronomy-dept --qos=astronomy-dept-b --ntasks=${NUM_CORES} --nodes=1 \
                --cpus-per-task=1 \
                --mem=256gb --time=96:00:00 \
                --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},NUM_CORES=${NUM_CORES} \
