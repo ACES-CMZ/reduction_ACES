@@ -26,8 +26,8 @@ def main():
     sgra_or_sgrb2 = (reg_mask.to_image(fits.getdata(contfilename).shape) > 0)
 
     ######## Read the mom0
-    molnamelist = ['HCOP_mopra','HNCO_7m12mTP','SiO21', 'SO21', 'H13COp', 'H13CN', 'HN13C', 'HC15N','CS21','H40a','SO32','HC3N','CH3CHO','NSplus']
-    molstringlist = [r'HCO$^+$',r'HNCO',r'SiO', r'SO (2$_2$-1$_1$)', r'H$^{13}$CO$^+$', r'H$^{13}$CN', r'HN$^{13}$C', r'HC$^{15}$N',r'CS',r'H40$\alpha$',r'SO (2$_3$-1$_2$)', r'HC$_3$N', r'CH$_3$CHO', r'NS$^+$']
+    molnamelist = ['HCOP_mopra', 'HNCO_7m12mTP', 'SiO21', 'SO21', 'H13COp', 'H13CN', 'HN13C', 'HC15N', 'CS21', 'H40a', 'SO32', 'HC3N', 'CH3CHO', 'NSplus']
+    molstringlist = [r'HCO$^+$', r'HNCO', r'SiO', r'SO (2$_2$-1$_1$)', r'H$^{13}$CO$^+$', r'H$^{13}$CN', r'HN$^{13}$C', r'HC$^{15}$N', r'CS', r'H40$\alpha$', r'SO (2$_3$-1$_2$)', r'HC$_3$N', r'CH$_3$CHO', r'NS$^+$']
     print(list(zip(molnamelist, molstringlist)))
 
     mom0filename = [f'{cubepath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits' for molname in molnamelist]
@@ -56,20 +56,20 @@ def main():
             correlation_matrix[j, i] = corr  # Symmetric matrix
             print(f'{tracer_list[i]} vs {tracer_list[j]}: {corr:.2f}', flush=True)
 
-
     # Plot the correlation matrix
     plt.figure(figsize=(10, 9))
 
     #mask = np.triu(np.ones_like(correlation_matrix, dtype=bool))
 
-    half_corr = correlation_matrix[1:,:-1]
+    half_corr = correlation_matrix[1:, :-1]
     mask = np.triu(np.ones_like(half_corr, dtype=bool), k=1)
 
     #sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", xticklabels=tracer_list, yticklabels=tracer_list,vmax=1, vmin=-1, mask=mask)
-    sns.heatmap(half_corr, annot=True, cmap="coolwarm", xticklabels=tracer_list[:-1], yticklabels=tracer_list[1:],vmax=1, vmin=-1, mask=mask)
+    sns.heatmap(half_corr, annot=True, cmap="coolwarm", xticklabels=tracer_list[:-1], yticklabels=tracer_list[1:], vmax=1, vmin=-1, mask=mask)
 
     plt.savefig(f'{basepath}/diagnostic_plots/correlations/2Dcorr_matrix_more.pdf', dpi=100, bbox_inches='tight')
     plt.savefig(f'{basepath}/diagnostic_plots/correlations/2Dcorr_matrix_more.png', dpi=100, bbox_inches='tight')
+
 
 if __name__ == '__main__':
     main()

@@ -636,6 +636,7 @@ def make_giant_mosaic_cube_channels(header, cubes, weightcubes, commonbeam,
         theader['NAXIS3'] = 1
         theader['CRPIX3'] = 1
         theader['CRVAL3'] = wws.pixel_to_world(chan).to(u.km / u.s).value
+        print(f"DEBUG: {theader}", flush=True)
 
         if verbose:
             pbar.set_description(f'Channel {chan}')

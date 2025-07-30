@@ -15,11 +15,12 @@ import regions
 from aces import conf
 basepath = conf.basepath
 
+
 def main():
     os.makedirs(f'{basepath}/diagnostic_plots/correlations', exist_ok=True)
 
     contnames = {'continuum': '/orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits',
-                'continuum_feathered': '/orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits'}
+                 'continuum_feathered': '/orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits'}
 
     t0 = time.time()
 
@@ -30,7 +31,6 @@ def main():
     reg_mask = pixreg.to_mask()
     sgra_or_sgrb2 = (reg_mask.to_image(fits.getdata(contnames['continuum_feathered']).shape) > 0)
     print(sgra_or_sgrb2.shape, flush=True)
-
 
     #for mol1, mol2 in itertools.combinations([ "H40a",  "SO21", "SO32",], 2):
     for mol1, mol2 in itertools.combinations(['continuum', 'continuum_feathered', "CH3CHO", "CS21", "H13CN", "H13COp", "H40a", "HC15N", "HC3N", "HCOP", "HCOP_mopra", "HCOP_noTP", "HN13C", "HNCO_7m12mTP", "NSplus", "SiO21", "SO21", "SO32",], 2):
@@ -58,7 +58,7 @@ def main():
         fig, ax = pl.subplots(1, 1)
         ax.plot([xmin, xmax], [xmin, xmax], color='b', linestyle='--')
         ax.scatter(data1, data2, s=1, alpha=0.5, color='k', label=f'r={corr:.2f}')
-        ax.scatter(data1[sgra_or_sgrb2], data2[sgra_or_sgrb2], s=1, alpha=0.5, color='r', label=f'Sgr B2 & Sgr A*')
+        ax.scatter(data1[sgra_or_sgrb2], data2[sgra_or_sgrb2], s=1, alpha=0.5, color='r', label='Sgr B2 & Sgr A*')
         ax.set_xlabel(f'{mol1} [K km s$^{{-1}}$]')
         ax.set_ylabel(f'{mol2} [K km s$^{{-1}}$]')
         if mol1 in contnames:
@@ -84,7 +84,7 @@ def main():
         #                                               bins=[np.geomspace(x5, x95, 25), np.geomspace(y5, y95, 25)],
         #                                               threshold=30, marker=',')
 
-        ax.scatter(data1[sgra_or_sgrb2 & bothpos], data2[sgra_or_sgrb2 & bothpos], s=1, alpha=0.5, color='r', label=f'Sgr B2 & Sgr A*')
+        ax.scatter(data1[sgra_or_sgrb2 & bothpos], data2[sgra_or_sgrb2 & bothpos], s=1, alpha=0.5, color='r', label='Sgr B2 & Sgr A*')
 
         ax.set_xlabel(f'{mol1} [K km s$^{{-1}}$]')
         ax.set_ylabel(f'{mol2} [K km s$^{{-1}}$]')
