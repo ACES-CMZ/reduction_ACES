@@ -12,7 +12,12 @@ from astropy import log
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from aces.imaging.parallel_tclean import parallel_clean_slurm
 from aces.pipeline_scripts.merge_tclean_commands import get_commands
+from aces.hipergator_scripts.delivery_status import main as delivery_status
 from aces import conf
+
+# run delivery_status before anything else because we use it to decide which jobs to start
+# in late 2024, the daemon running delivery_status died permanently
+delivery_status()
 
 basepath = conf.basepath
 datapath = f"{basepath}/data"
