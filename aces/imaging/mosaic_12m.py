@@ -664,14 +664,15 @@ def get_weightfile(filename, spw):
                     break
 
     # we have to have exactly 1 match
-    assert len(flist) == 1, str(flist)
+    assert len(flist) == 1, f'{filename} failed to find a weightfile: flist={str(flist)}'
     return flist[0]
 
 
 def make_giant_mosaic_cube_cs21(**kwargs):
     """
     Sep 2023: Fields ar and ad are excluded because of their beams
-    ad shouldn't be, but it is.
+    and shouldn't be, but it is.
+    (but they're back in as of 2024ish)
     """
 
     #filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*spw33.cube.I.iter1.image.pbcor.statcont.contsub.fits')

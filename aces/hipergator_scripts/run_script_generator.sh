@@ -4,17 +4,17 @@
 #SBATCH --ntasks=1
 #SBATCH --nodes=1
 #SBATCH --mem=4gb                     # Job memory request
-#SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/make_ACES_scripts_%j.log
+#SBATCH --time=5:00:00               # Time limit hrs:min:sec
+#SBATCH --output=/red/adamginsburg/ACES/logs/make_ACES_scripts_%j.log
 #SBATCH --export=ALL
 #SBATCH --job-name=make_ACES_scripts
-#SBATCH --qos=adamginsburg-b
-#SBATCH --account=adamginsburg
+#SBATCH --qos=astronomy-dept
+#SBATCH --account=astronomy-dept
 pwd; hostname; date
 
 export ACES="/orange/adamginsburg/ACES/"
 export WORK_DIR="/orange/adamginsburg/ACES/reduction_ACES/"
-export WORK_DIR="/blue/adamginsburg/adamginsburg/ACES/workdir"
+export WORK_DIR="/red/adamginsburg/ACES/workdir"
 export ACES_DATADIR="${ACES}/data/"
 export WEBLOG_DIR="${ACES}/data/2021.1.00172.L/weblogs/"
 
@@ -26,8 +26,8 @@ which git
 git --version
 echo $?
 
-export PYPATH=/orange/adamginsburg/miniconda3/envs/python310/bin/
-export IPYTHON=/orange/adamginsburg/miniconda3/envs/python310/bin/ipython
+export PYPATH=/orange/adamginsburg/miniconda3/envs/python312/bin/
+export IPYTHON=/orange/adamginsburg/miniconda3/envs/python312/bin/ipython
 
 cd ${WORK_DIR}
 echo ${WORK_DIR}
@@ -46,7 +46,7 @@ export ENVIRON='BATCH'
 export DASK_THREADS=$SLURM_NTASKS
 
 export TRYDROPTARGET=True
-export TEMPORARY_WORKING_DIRECTORY="/blue/adamginsburg/adamginsburg/ACES/workdir"
+export TEMPORARY_WORKING_DIRECTORY="/red/adamginsburg/ACES/workdir"
 
 env
 

@@ -49,7 +49,7 @@ def main():
     if os.getenv('TEMPORARY_WORKING_DIRECTORY'):
         temp_workdir = os.getenv('TEMPORARY_WORKING_DIRECTORY')
     else:
-        temp_workdir = "/blue/adamginsburg/adamginsburg/ACES/workdir"
+        temp_workdir = "/red/adamginsburg/ACES/workdir"
         # temp_workdir = False
 
     print(f"RUNONCE={runonce} CLEANUP={cleanup} DUMMYRUN={bool(os.getenv('DUMMYRUN'))} SCRIPTLIST={scriptlist} TEMP_WORKDIR={temp_workdir}")
@@ -342,14 +342,14 @@ def main():
                                 if fn.endswith('.fits'):
                                     shutil.copy(fn, '{tempdir_name}/')
                                 else:
-                                    assert not os.path.exists(target), "Copying a directory to /blue failed because the directory was not successfully deleted"
+                                    assert not os.path.exists(target), "Copying a directory to /red failed because the directory was not successfully deleted"
                                     shutil.copytree(fn, target)\n\n""")
                         )
 
                         cleanupcmds = (textwrap.dedent(
                             f"""
                             import glob
-                            # should be 'savedir_name', which is the path on blue that gets copied to from /tmp
+                            # should be 'savedir_name', which is the path on red that gets copied to from /tmp
                             # workingpath is calibrated/working/ on /orange
                             flist = glob.glob('{savedir_name}/{os.path.basename(tcpars['imagename'])}.*')
                             for fn in flist:
