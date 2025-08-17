@@ -18,6 +18,7 @@ from aces import conf
 # run delivery_status before anything else because we use it to decide which jobs to start
 # in late 2024, the daemon running delivery_status died permanently
 delivery_status()
+print("Delivery status complete")
 
 basepath = conf.basepath
 datapath = f"{basepath}/data"
@@ -41,6 +42,7 @@ parameters = {#'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': 
               #'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
               'member.uid___A001_X15a0_Xd0': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field i spw35: timeout
               'member.uid___A001_X15a0_X17e': {'mem': 256, 'ntasks': 1, 'mpi': False, 'nchan_per': 16},  # field al: try to avoid having subcubes
+              'member.uid___A001_X15a0_X166': {'mem': 128, 'ntasks': 1, 'mpi': False, 'nchan_per': 16},  # field ah: dramatically increase splitting
 }
 newpars = parameters.copy()
 

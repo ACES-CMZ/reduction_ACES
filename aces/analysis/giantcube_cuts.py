@@ -387,7 +387,7 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     mom1 = mdcube_both.moment1(axis=0, **howargs)
     mom1.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom1.fits", overwrite=True)
     makepng(data=mom1.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom1.png",
-            stretch='asinh', vmin=-0.1, max_percent=99.5)
+            stretch='linear', vmin=-0.1, max_percent=99.5, cmap=pl.cm.RdBu)
 
     howargs_spec = howargs.copy()
     howargs_spec['how'] = 'slice'

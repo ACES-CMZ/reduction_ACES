@@ -204,17 +204,19 @@ def check_hdus(hdus):
         raise ValueError(f"Found {bad} bad HDUs (all zero)")
 
 
-def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
+def makepng(data, wcs, imfn, footprint=None, cmap=None, **norm_kwargs):
     import pylab as pl
     from astropy import visualization
     import matplotlib.colors as mcolors
     import pyavm
 
-    colors1 = pl.cm.gray_r(np.linspace(0., 1, 128))
-    colors2 = pl.cm.hot(np.linspace(0, 1, 128))
+    if cmap is None:
+        colors1 = pl.cm.gray_r(np.linspace(0., 1, 128))
+        colors2 = pl.cm.hot(np.linspace(0, 1, 128))
 
-    colors = np.vstack((colors1, colors2))
-    mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+        colors = np.vstack((colors1, colors2))
+        mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+        cmap = ymap
 
     sel = np.isnan(data) | (data == 0) | (footprint == 0 if footprint is not None else False)
 
@@ -226,7 +228,7 @@ def makepng(data, wcs, imfn, footprint=None, **norm_kwargs):
         norm.vmin = norm_kwargs['vmin']
         assert norm.vmin == norm_kwargs['vmin']
 
-    colordata = mymap(norm(data))
+    colordata = cmap(norm(data))
     ct = (colordata[:, :, :] * 256).astype('uint8')
     ct[(colordata[:, :, :] * 256) > 255] = 255
     ct[:, :, 3][sel] = 0

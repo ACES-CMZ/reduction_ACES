@@ -4,11 +4,11 @@
 #SBATCH --ntasks=1
 #SBATCH --nodes=1
 #SBATCH --mem=4gb                     # Job memory request
-#SBATCH --time=96:00:00               # Time limit hrs:min:sec
+#SBATCH --time=5:00:00               # Time limit hrs:min:sec
 #SBATCH --output=/red/adamginsburg/ACES/logs/make_ACES_scripts_%j.log
 #SBATCH --export=ALL
 #SBATCH --job-name=make_ACES_scripts
-#SBATCH --qos=astronomy-dept-b
+#SBATCH --qos=astronomy-dept
 #SBATCH --account=astronomy-dept
 pwd; hostname; date
 
@@ -26,8 +26,8 @@ which git
 git --version
 echo $?
 
-export PYPATH=/orange/adamginsburg/miniconda3/envs/python310/bin/
-export IPYTHON=/orange/adamginsburg/miniconda3/envs/python310/bin/ipython
+export PYPATH=/orange/adamginsburg/miniconda3/envs/python312/bin/
+export IPYTHON=/orange/adamginsburg/miniconda3/envs/python312/bin/ipython
 
 cd ${WORK_DIR}
 echo ${WORK_DIR}
