@@ -216,7 +216,7 @@ def makepng(data, wcs, imfn, footprint=None, cmap=None, **norm_kwargs):
 
         colors = np.vstack((colors1, colors2))
         mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-        cmap = ymap
+        cmap = mymap
 
     sel = np.isnan(data) | (data == 0) | (footprint == 0 if footprint is not None else False)
 

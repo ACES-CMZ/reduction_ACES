@@ -9,6 +9,7 @@ from radio_beam import Beam
 from astropy import units as u
 import dask.array as da
 from dask_image import ndmorph, ndmeasure
+import pylab as pl
 
 from dask.diagnostics import ProgressBar
 from dask.diagnostics import ResourceProfiler
