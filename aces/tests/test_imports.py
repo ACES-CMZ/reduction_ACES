@@ -46,7 +46,7 @@ def test_imports():
     from aces import conf
     import os
 
-    # the tests have to run on tox 
+    # the tests have to run on tox
     conf.basepath = os.getcwd()
     # set the directory to the parent of the parent of this one (so, should be the package-containing directory, under which aces/ will exist)
     conf.basepath = os.path.realpath(os.path.join(os.path.dirname(__file__), '../..'))
@@ -66,10 +66,13 @@ def test_imports():
     from aces.retrieval_scripts import mous_map
 
     # CASA from aces.hipergator_scripts import hack_plotms
-    from aces.hipergator_scripts import link_repipeline_weblogs
-    from aces.hipergator_scripts import job_runner
-    from aces.hipergator_scripts import ghapi_update
-    from aces.hipergator_scripts import delivery_status
+    # don't test hipergator scripts unless
+    import socket
+    if 'ufhpc' in socket.gethostname():
+        from aces.hipergator_scripts import link_repipeline_weblogs
+        from aces.hipergator_scripts import job_runner
+        from aces.hipergator_scripts import ghapi_update
+        from aces.hipergator_scripts import delivery_status
 
     from aces.analysis import imstats
     from aces.analysis import spectral_extraction_Feb2022
