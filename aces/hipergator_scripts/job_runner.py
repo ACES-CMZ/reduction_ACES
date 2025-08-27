@@ -12,7 +12,13 @@ from astropy import log
 from aces.retrieval_scripts.mous_map import get_mous_to_sb_mapping
 from aces.imaging.parallel_tclean import parallel_clean_slurm
 from aces.pipeline_scripts.merge_tclean_commands import get_commands
+from aces.hipergator_scripts.delivery_status import main as delivery_status
 from aces import conf
+
+# run delivery_status before anything else because we use it to decide which jobs to start
+# in late 2024, the daemon running delivery_status died permanently
+delivery_status()
+print("Delivery status complete")
 
 basepath = conf.basepath
 datapath = f"{basepath}/data"
@@ -36,6 +42,7 @@ parameters = {#'member.uid___A001_X15a0_Xea': {'mem': 128, 'ntasks': 32, 'mpi': 
               #'member.uid___A001_X15a0_X14e': {'mem': 256, 'ntasks': 64, 'mpi': True, },  # ad: same as above, too long
               'member.uid___A001_X15a0_Xd0': {'mem': 256, 'ntasks': 1, 'mpi': False, },  # field i spw35: timeout
               'member.uid___A001_X15a0_X17e': {'mem': 256, 'ntasks': 1, 'mpi': False, 'nchan_per': 16},  # field al: try to avoid having subcubes
+              'member.uid___A001_X15a0_X166': {'mem': 128, 'ntasks': 1, 'mpi': False, 'nchan_per': 16},  # field ah: dramatically increase splitting
 }
 newpars = parameters.copy()
 

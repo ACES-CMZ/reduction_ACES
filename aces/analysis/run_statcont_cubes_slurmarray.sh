@@ -10,10 +10,10 @@ echo "Sub-list is $flist"
 if [ $flist ]; then
 
     jobid=$(sbatch --job-name=aces_statcont_arr \
-        --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_statcont_arr_%j_%A_%a.log  \
+        --output=/red/adamginsburg/ACES/logs/aces_statcont_arr_%j_%A_%a.log  \
         --array=$flist \
         --account=astronomy-dept --qos=astronomy-dept-b \
-        --ntasks=16 --nodes=1 --mem=64gb --time=96:00:00 --parsable \
+        --ntasks=16 --nodes=1 --mem=128gb --time=96:00:00 --parsable \
         --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python -c \"from aces.analysis.statcont_cubes import main; main()\"")
 
     echo "Job started is $jobid"
