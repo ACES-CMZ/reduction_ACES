@@ -2502,6 +2502,13 @@
       }
     }
   },
+  "Sgr_A_st_ah_03_7M": {
+    "tclean_cube_pars": {
+      "spw24": {
+        "cyclefactor": 1.5
+      }
+    }
+  },
   "Sgr_A_st_ah_03_TM1": {
       "tclean_cont_pars": {
           "aggregate_low": {
@@ -2623,7 +2630,7 @@
         "threshold": "0.01Jy",
         "nsigma": 0.0,
         "cycleniter": -1,
-        "cyclefactor": 2.0,
+        "cyclefactor": 1.0,
         "minpsffraction": 0.05,
         "maxpsffraction": 0.8,
         "interactive": 0,
