@@ -370,17 +370,36 @@ if 'beams' in rbeam:
             manybeam = True
             break
 
+if os.path.exists('{imagename}.image.multibeam') and os.path.exists('{imagename}.image'):
+    print(f"Found {imagename}.image.multibeam and {imagename}.image.")
+    if manybeam:
+        print("However, the image has multiple beams, so it is not a commonbeam image.")
+        print("Removing {imagename}.image.multibeam so that .image can be moved to .image.multibeam")
+
 if manybeam:
     try:
         os.rename('{imagename}.image', '{imagename}.image.multibeam')
+        print(f"Successfully moved {imagename}.image -> {imagename}.image.multibeam")
     except Exception as ex:
         print("Failed to move {imagename}.image -> {imagename}.image.multibeam, probably because the latter exists")
         print(ex)
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+        os.rename('{imagename}.image', f'{imagename}.image.{{timestamp}}')
+        print(f"INSTEAD moved {imagename}.image -> {imagename}.image.{{timestamp}}")
+        # the above is needed because we do _not_ want to declare victory when there are multibeam images
+
+    assert not os.path.exists('{imagename}.image'), "FAILURE: {imagename}.image exists after moving it to {imagename}.image.multibeam"
+
     try:
         os.rename('{imagename}.image.pbcor', '{imagename}.image.pbcor.multibeam')
+        print(f"Successfully moved {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam")
     except Exception as ex:
         print("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
         print(ex)
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+        os.rename('{imagename}.image.pbcor', f'{imagename}.image.pbcor.{{timestamp}}')
+        print(f"INSTEAD moved {imagename}.image.pbcor -> {imagename}.image.pbcor.{{timestamp}}")
+
     if not os.path.exists('{imagename}.convmodel'):
         logprint('Creating convmodel {os.path.basename(imagename)}.convmodel')
         imsmooth(imagename='{imagename}.model',
