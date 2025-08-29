@@ -1,3 +1,9 @@
+"""
+This script is purely for fixing metadata errors in which some cube files lack
+beam information even though they _should_ have beams.
+
+This does _not_ convolve multi-beam cubes to a common beam.
+"""
 from spectral_cube import SpectralCube
 from spectral_cube.utils import NoBeamError
 from astropy.io import fits

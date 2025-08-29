@@ -367,6 +367,7 @@ def main():
                                     or 3880)
                         if nchan < 1:
                             nchan = 3880
+                        print("Environment:", os.environ)
                         parallel_clean_slurm(nchan=nchan,
                                              imagename=os.path.basename(tcpars.pop('imagename')),
                                              spw=spwnum,

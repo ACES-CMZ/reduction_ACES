@@ -27,7 +27,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         Where to store the intermediate files
     """
 
-    print(f"Starting parallel clean in workdir={workdir} with casa={CASAVERSION}")
+    print(f"Starting parallel clean in workdir={workdir} with casa={CASAVERSION}", flush=True)
 
     try:
         hasunit = False
@@ -338,6 +338,7 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
     ia.imageconcat(outfile=outfile,
                    infiles=infiles,
                    mode='p')
+    ia.close()
 
 
     # consolidates the remainder into a single virtual cube
@@ -362,19 +363,22 @@ rbeam = ia.restoringbeam()
 ia.close()
 
 # if any beam is not the common beam...
-manybeam = False
-if 'beams' in rbeam:
-    for beam in rbeam['beams'].values():
-        if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
-            print(f"Manybeam: beam={{beam['*0']}}, commonbeam={{commonbeam}}")
-            manybeam = True
-            break
+def check_manybeam(rbeam, commonbeam):
+    if 'beams' in rbeam:
+        for beam in rbeam['beams'].values():
+            if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
+                print(f"Manybeam: beam={{beam['*0']}}, commonbeam={{commonbeam}}")
+                return True
+    return False
+
+manybeam = check_manybeam(rbeam, commonbeam)
 
 if os.path.exists('{imagename}.image.multibeam') and os.path.exists('{imagename}.image'):
     print(f"Found {imagename}.image.multibeam and {imagename}.image.")
     if manybeam:
         print("However, the image has multiple beams, so it is not a commonbeam image.")
         print("Removing {imagename}.image.multibeam so that .image can be moved to .image.multibeam")
+        shutil.rmtree('{imagename}.image.multibeam')
 
 if manybeam:
     try:
@@ -405,18 +409,48 @@ if manybeam:
         imsmooth(imagename='{imagename}.model',
                 outfile='{imagename}.convmodel',
                 beam=commonbeam)
+        print(f"Successfully created convolved model {os.path.basename(imagename)}.convmodel: {{os.path.exists('{imagename}.convmodel')}}")
     if not os.path.exists('{os.path.basename(imagename)}.image'):
-        logprint('Creating image {os.path.basename(imagename)}.image')
-        ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
-                    pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
-                    imagemd='{os.path.basename(imagename)}.convmodel',
-                    overwrite=True)
-        ia.close()
+        logprint('Creating image {os.path.basename(imagename)}.image (it did not exist)')
+        try:
+            ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
+                        pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
+                        imagemd='{os.path.basename(imagename)}.convmodel',
+                        overwrite=False)
+            ia.close()
+        except RuntimeError as ex:
+            ia.close()
+            print(f"RuntimeError: {{ex}} - trying again with overwrite=False and to .image-temp instead")
+            ia.imagecalc(outfile='{os.path.basename(imagename)}.image-temp',
+                        pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
+                        imagemd='{os.path.basename(imagename)}.convmodel',
+                        overwrite=False)
+            ia.close()
+            if os.path.exists('{imagename}.image'):
+                shutil.rmtree('{imagename}.image')
+            shutil.move('{imagename}.image-temp', '{imagename}.image')
+        print(f"Successfully created {os.path.basename(imagename)}.image: {{os.path.exists('{imagename}.image')}}")
     if not os.path.exists('{os.path.basename(imagename)}.image.pbcor',):
         logprint('Creating pbcor image {os.path.basename(imagename)}.image.pbcor')
-        impbcor(imagename='{os.path.basename(imagename)}.image',
-                pbimage='{os.path.basename(imagename)}.pb',
-                outfile='{os.path.basename(imagename)}.image.pbcor',)
+        try:
+            impbcor(imagename='{os.path.basename(imagename)}.image',
+                    pbimage='{os.path.basename(imagename)}.pb',
+                    outfile='{os.path.basename(imagename)}.image.pbcor',)
+        except RuntimeError as ex:
+            print(f"RuntimeError: {{ex}} - trying again with overwrite=False and to .image.pbcor-temp instead")
+            impbcor(imagename='{os.path.basename(imagename)}.image',
+                    pbimage='{os.path.basename(imagename)}.pb',
+                    outfile='{os.path.basename(imagename)}.image.pbcor-temp',)
+            if os.path.exists('{imagename}.image.pbcor'):
+                shutil.rmtree('{imagename}.image.pbcor')
+            shutil.move('{imagename}.image.pbcor-temp', '{imagename}.image.pbcor')
+        print(f"Successfully created {os.path.basename(imagename)}.image.pbcor: {{os.path.exists('{imagename}.image.pbcor')}}")
+
+    image_rbeam = ia.restoringbeam()
+    image_cbeam = ia.commonbeam()
+    if 'beams' in image_rbeam:
+        image_manybeam = check_manybeam(image_rbeam, image_cbeam)
+        assert not image_manybeam, "FAILURE: image_manybeam is True, so the conversion to convolved-beam failed"
 
     exportfits(imagename='{os.path.basename(imagename)}.image.pbcor',
                fitsimage='{os.path.basename(imagename)}.image.pbcor.fits',
