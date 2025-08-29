@@ -21,10 +21,10 @@ class Conf(_config.ConfigNamespace):
         '/orange/adamginsburg/ACES/',
         'Base path in which data/ exists')
     logpath = _config.ConfigItem(
-        '/blue/adamginsburg/adamginsburg/ACES/logs/',
+        '/red/adamginsburg/ACES/logs/',
         'High-performance system where logs can be written')
     workpath = _config.ConfigItem(
-        '/blue/adamginsburg/adamginsburg/ACES/workdir',
+        '/red/adamginsburg/ACES/workdir',
         'High-performance system where intermediate data products can go')
 
 
