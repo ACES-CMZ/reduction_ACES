@@ -262,7 +262,7 @@ def make_observation_table(access_token=None, use_cache=True):
         sm = usub_meta['Configuration'] == '7M'
         tp = usub_meta['Configuration'] == 'TP'
         tm = (~tp) & (~sm)
-        colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
+        colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS', 'GLON', 'GLAT']
         colnames_noconfig = colnames[:2] + colnames[3:]
 
     else:
@@ -277,11 +277,17 @@ def make_observation_table(access_token=None, use_cache=True):
 
         sub_meta = metadata['schedblock_name', 'Observation Start Time',
                             'Observation End Time', 'pwv', 't_exptime',
-                            's_resolution', 'spatial_scale_max', 'member_ous_uid']
+                            's_resolution', 'spatial_scale_max', 'member_ous_uid',
+                            'gal_longitude', 'gal_latitude',
+                            ]
         usub_meta = Table(np.unique(sub_meta))
 
         schedblock_meta = retrieve_execution_metadata(access_token=access_token)
 
+        usub_meta['EB ID'] = [rf'\makecell[l]{{{",\\\\ ".join([(x['execblockuid'])
+                                                                    for x in schedblock_meta[schedblock_name]['executions']
+                                                                    ])}}}'
+                                    for schedblock_name in usub_meta['schedblock_name']]
         usub_meta['executions'] = [', '.join([x['date']
                                               for x in schedblock_meta[schedblock_name]['executions']
                                               if x['status'] == 'Pass'
@@ -330,12 +336,23 @@ def make_observation_table(access_token=None, use_cache=True):
                             raise ValueError("No water table found")
                         med_pwv = np.median(tbl['water'])
                         if np.isnan(med_pwv):
+                            if '7M' in sbname:
+                                print(f"Skipping {sbname} {mous} {xid} in filename {path}")
+                                these_pwvs.append(np.nan)
+                                continue
                             raise ValueError("WTF?")
                         these_pwvs.append(med_pwv * 1000)
                     except ValueError:
                         lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
                         #watercol = [x for x in lltbl.column_set.columns if x.name == 'water']
                         tbl = lltbl.as_astropy_table(include_columns=['water'])
+                        if len(tbl) == 0:
+                            print(f"No water table found for {sbname} {mous} {xid} in filename {path}")
+                            if '7M' in sbname:
+                                print(f"Skipping {sbname} {mous} {xid} in filename {path}")
+                                these_pwvs.append(np.nan)
+                                continue
+                            raise ValueError("No water table found")
                         med_pwv = np.median(tbl['water'])
                         if np.isnan(med_pwv):
                             raise ValueError("WTF?")
@@ -365,6 +382,7 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta['pwv'] = pwvs
 
         # Sort usub_meta by 'Field' in natural order
+        usub_meta['Field'] = [x.split("_")[3] for x in usub_meta['schedblock_name']]
         sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
         usub_meta = usub_meta[sorted_indices]
 
@@ -408,7 +426,6 @@ def make_observation_table(access_token=None, use_cache=True):
                     row['block'] = config_sched_tbl[match]['Block'][0]
                     #print(f"Matched {row['schedblock_name']} to cycle {cycle_id} config {row['config_id']} block {row['block']}")
 
-        usub_meta['Field'] = [x.split("_")[3] for x in usub_meta['schedblock_name']]
         usub_meta.rename_column('pwv', 'PWV')
         usub_meta.rename_column('t_exptime', 'Exposure Time')
         usub_meta.rename_column('s_resolution', 'Res.')
@@ -417,6 +434,9 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta.rename_column('executions', 'Execution Dates')
         usub_meta.rename_column('npointings', 'N(P)')
         usub_meta.rename_column('time_per_eb', 'Time')
+        usub_meta.rename_column('gal_longitude', 'GLON')
+        usub_meta.rename_column('gal_latitude', 'GLAT')
+        usub_meta['Gname'] = [f"{x:0.2f} {y:0.2f}" for x, y in zip(usub_meta['GLON'], usub_meta['GLAT'])]
 
         updated = (np.char.find(usub_meta['schedblock_name'], 'updated') >= 0)
         print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()}")
@@ -431,8 +451,7 @@ def make_observation_table(access_token=None, use_cache=True):
                     #print(fieldname, match.sum(), sub[sub].sum())
         print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()} (after filtering for updated)")
 
-        usub_meta.rename_column('schedblock_name', 'EB ID')
-        colnames = ['Field', 'Execution Dates', 'EB ID', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
+        colnames = ['Field', 'Gname', 'Execution Dates', 'EB ID', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
         usub_meta['LAS'].unit = u.arcsec
         usub_meta['Res.'].unit = u.arcsec
         #usub_meta['Exposure Time'].unit = u.s
@@ -598,6 +617,12 @@ def make_table_3():
 
 if __name__ == "__main__":
 
+    make_spw_table()
+    make_table_3()
+
     print("Starting make_latex_table", flush=True)
     result = make_latex_table()
     print("Completed make_latex_table", flush=True)
+
+    make_observation_table(use_cache=False)
+    print("Completed make_observation_table", flush=True)
