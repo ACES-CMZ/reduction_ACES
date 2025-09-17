@@ -17,7 +17,7 @@ if __name__ == "__main__":
     hcopcube = SpectralCube.read('/orange/adamginsburg/cmz/mopra/CMZ_3mm_HCO+.fits')
     hncocube = SpectralCube.read('/orange/adamginsburg/cmz/mopra/CMZ_3mm_HNCO.fits')
 
-    tbl = Table.read('{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
+    tbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/SB_naming.md', format='ascii.csv', delimiter='|', data_start=2)
 
     vwidth = 102.585 * 2048 * u.m / u.s
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
             print(f"Row {indx}: mask sum = {bmask.sum()}, which is {bmask.sum() / mask.sum() * 100:0.2f} percent of original")
 
             # load up regions
-            regs = regions.Regions.read(f'../regions/final_cmz{indx}.reg')
+            regs = regions.Regions.read(f'{basepath}/reduction_ACES/aces/data/regions/final_cmz{indx}.reg')
             pregs = [reg.to_pixel(cube.wcs.celestial) for reg in regs]
 
             composite = _regionlist_to_single_region(pregs)
@@ -71,6 +71,7 @@ if __name__ == "__main__":
         vmax_missed.write(f'{name}_missed_peak_velocity.fits', overwrite=True)
 
         import pylab as pl
+        pl.rcParams['font.size'] = 16
         pl.ion()
 
         fig = pl.figure(1, figsize=(14, 7))
@@ -88,7 +89,7 @@ if __name__ == "__main__":
         cb2.set_label("km/s")
         ax2.set_title("Peak missed velocity")
 
-        pl.savefig(f"peak_missed_{name}.png", bbox_inches='tight')
+        pl.savefig(f"{basepath}/mosaics/diagnostics/peak_missed_{name}.png", bbox_inches='tight')
 
         flagmap = np.zeros(cube.shape[1:], dtype='int')
 
@@ -106,7 +107,7 @@ if __name__ == "__main__":
         ax2.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r'] * 50,
                     linewidths=[0.2] * 50)
 
-        pl.savefig(f"peak_missed_{name}_regcontours.png", bbox_inches='tight')
+        pl.savefig(f"{basepath}/mosaics/diagnostics/peak_missed_{name}_regcontours.png", bbox_inches='tight')
 
         fig2 = pl.figure(2, figsize=(20, 7))
         fig2.set_facecolor('w')
@@ -129,8 +130,8 @@ if __name__ == "__main__":
         ax.coords[0].set_ticks(spacing=0.1 * u.deg)
         ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
-        if os.path.exists('../../mosaics'):
-            fig2.savefig('../../mosaics/mosaic_number_map.png', bbox_inches='tight')
+        if os.path.exists(f'{basepath}/mosaics'):
+            fig2.savefig(f'{basepath}/mosaics/diagnostics/mosaic_number_map.png', bbox_inches='tight')
 
         fig2 = pl.figure(2, figsize=(20, 7))
         fig2.clf()
@@ -156,8 +157,9 @@ if __name__ == "__main__":
         ax.coords[0].set_ticks(spacing=0.1 * u.deg)
         ax.coords[0].set_ticklabel(rotation=45, pad=20)
 
-        if os.path.exists('../../mosaics'):
-            fig2.savefig('../../mosaics/mosaic_number_and_letter_map.png', bbox_inches='tight')
+        if os.path.exists(f'{basepath}/mosaics'):
+            fig2.savefig(f'{basepath}/mosaics/diagnostics/mosaic_number_and_letter_map.png', bbox_inches='tight', dpi=300)
+            fig2.savefig(f'{basepath}/mosaics/diagnostics/mosaic_number_and_letter_map.pdf', bbox_inches='tight')
 
         front = 10
         back = -10
@@ -171,12 +173,13 @@ if __name__ == "__main__":
         ax.set_axisbelow(True)
         ax.set_zorder(back)
 
-        if os.path.exists('../../mosaics'):
-            fig2.savefig('../../mosaics/mosaic_number_and_letter_map_withgrid.png', bbox_inches='tight')
+        if os.path.exists(f'{basepath}/mosaics'):
+            fig2.savefig(f'{basepath}/mosaics/diagnostics/mosaic_number_and_letter_map_withgrid.png', bbox_inches='tight', dpi=300)
+            fig2.savefig(f'{basepath}/mosaics/diagnostics/mosaic_number_and_letter_map_withgrid.pdf', bbox_inches='tight')
 
         flagmapfits = fits.PrimaryHDU(data=flagmap[:, 250:],
                                       header=cube.wcs.celestial[:, 250:].to_header())
-        flagmapfits.writeto('region_number_map.fits', overwrite=True)
+        flagmapfits.writeto(f'{basepath}/mosaics/diagnostics/region_number_map.fits', overwrite=True)
 
         voff = 0
         vmin, vmax = voff - vwidth / 2, voff + vwidth / 2
@@ -202,11 +205,11 @@ if __name__ == "__main__":
         cb2.set_label("km/s")
         ax2.set_title("Peak missed velocity")
 
-        pl.savefig(f"peak_missed_{name}_noshift.png", bbox_inches='tight')
+        pl.savefig(f"{basepath}/mosaics/diagnostics/peak_missed_{name}_noshift.png", bbox_inches='tight')
 
         ax1.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r'] * 50,
                     linewidths=[0.2] * 50)
         ax2.contour(flagmap[:, 250:], levels=np.arange(flagmap.max()), colors=['w', 'r'] * 50,
                     linewidths=[0.2] * 50)
 
-        pl.savefig(f"peak_missed_{name}_noshift_regcontours.png", bbox_inches='tight')
+        pl.savefig(f"{basepath}/mosaics/diagnostics/peak_missed_{name}_noshift_regcontours.png", bbox_inches='tight')

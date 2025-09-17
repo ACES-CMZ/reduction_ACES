@@ -171,7 +171,7 @@ def plot_beamsize_per_field(data):
                 #print(regname, toplot[regname])
                 # sort from small to large to avoid overlap back-and-forth scribbles
                 pl.plot(sorted(toplot[regname]), [len(toplot) - ii]*3, color='k', linestyle='--', alpha=0.5, linewidth=0.5)
-                for xv, color, label in zip(sorted(toplot[regname]), ['blue', 'red', 'orange',], ('33,35', 'aggregate', '25,27',)):
+                for xv, color, label in zip(sorted(toplot[regname]), ['blue', 'red', 'orange',], ('SPW 33,35', 'aggregate', 'SPW 25,27',)):
                     pl.plot(xv, len(toplot) - ii, 's', color=color, label=label, markersize=5)
             else:
                 print(f"Warning: {regname} has no data")
@@ -293,10 +293,10 @@ def main():
     data = load_and_filter_data()
     plot_beam_size_histograms(data)
     plot_noise_vs_beam(data)
-    estimate_global_rms(data)
     plot_beamsize_per_field(data)
     plot_spatial_distribution_of_beams(data)
     plot_rms_histogram_and_cdf(data)
+    estimate_global_rms(data)
 
     return data
 

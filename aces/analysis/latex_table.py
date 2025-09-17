@@ -431,7 +431,8 @@ def make_observation_table(access_token=None, use_cache=True):
                     #print(fieldname, match.sum(), sub[sub].sum())
         print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()} (after filtering for updated)")
 
-        colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
+        usub_meta.rename_column('schedblock_name', 'EB ID')
+        colnames = ['Field', 'Execution Dates', 'EB ID', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
         usub_meta['LAS'].unit = u.arcsec
         usub_meta['Res.'].unit = u.arcsec
         #usub_meta['Exposure Time'].unit = u.s
@@ -549,7 +550,9 @@ def make_spw_table():
         "ACES Spectral Configuration, including a non-exhaustive list of prominent, "
         "potentially continuum-affecting, lines.  The included lines are those that are, "
         "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection}).  "
-        "The rest frequencies of the targeted lines are given in GHz in the row below their names."
+        "The rest frequencies of the targeted lines are given in GHz in the row below their names.  "
+        "The columns $\\nu_{L}$, $\\nu_{U}$, and $\\Delta\\nu$ are the lower frequency, upper frequency, and frequency resolution, respectively.  "
+
     )
 
     ftbl.write(f"{basepath}/papers/continuum_data/tables/spectral_setup.tex", formats=formats,
@@ -595,4 +598,6 @@ def make_table_3():
 
 if __name__ == "__main__":
 
+    print("Starting make_latex_table", flush=True)
     result = make_latex_table()
+    print("Completed make_latex_table", flush=True)
