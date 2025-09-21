@@ -106,6 +106,35 @@ def plot_noise_vs_beam(data):
         pl.savefig(f'{diag_dir}/noise_vs_beam_geomavg.png', bbox_inches='tight')
         pl.savefig(f'{diag_dir}/noise_vs_beam_geomavg.pdf', bbox_inches='tight')
 
+        pl.figure(figsize=(6, 6), dpi=300)
+        pl.scatter((data['bmaj'])[TM & high], data['mad'][TM & high] * 1e3,
+                   label='spw33 & 35: 3.6 GHz',
+                   edgecolor='blue', facecolor='none', linewidth=1, s=9)
+        pl.scatter((data['bmaj'])[TM & low], data['mad'][TM & low] * 1e3,
+                   label='spw25 & 27: 3.6 GHz',
+                   marker='s', edgecolor='orange', facecolor='none', linewidth=1, s=9)
+        pl.scatter((data['bmaj'])[TM & agg], data['mad'][TM & agg] * 1e3,
+                   label='all spw: 4.8 GHz',
+                   marker="^", facecolor='none', edgecolor='red', linewidth=1, s=9)
+        pl.axvline(2.8, color='k', linestyle='--')
+        pl.text(2.74, 0.25, "2.8\" SPW25+27", rotation=90)
+        pl.axvline(2.15, color='k', linestyle='--')
+        pl.text(2.10, 0.25, "2.14\" SPW33+35", rotation=90)
+        pl.axvline(2.30, color='k', linestyle='--')
+        pl.text(2.24, 0.25, "2.30\" aggregate", rotation=90)
+
+        pl.axhline(0.13, color='k', linestyle='--')
+        pl.text(2.80, 0.02, "0.13 mJy requested", horizontalalignment='right', backgroundcolor='w')
+        pl.annotate('', (2.55, 0.13), (2.50, 0.03), arrowprops={'arrowstyle': '->'})
+
+        yl = pl.ylim()
+        pl.ylim(0, yl[1])
+        pl.legend(fancybox=True, framealpha=1)
+        pl.xlabel("Beam Major FWHM [arcsec]")
+        pl.ylabel("Noise Level [mJy beam$^{-1}$]")
+        pl.savefig(f'{diag_dir}/noise_vs_beam_major.png', bbox_inches='tight')
+        pl.savefig(f'{diag_dir}/noise_vs_beam_major.pdf', bbox_inches='tight')
+
 
 def estimate_global_rms(data, nbeams=3, threshold=2.0):
     """

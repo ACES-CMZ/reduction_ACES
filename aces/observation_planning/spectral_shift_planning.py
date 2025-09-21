@@ -128,7 +128,7 @@ if __name__ == "__main__":
         ax.coords[0].set_major_formatter('d.dd')
         ax.coords[1].set_major_formatter('d.dd')
         ax.coords[0].set_ticks(spacing=0.1 * u.deg)
-        ax.coords[0].set_ticklabel(rotation=45, pad=20)
+        ax.coords[0].set_ticklabel(rotation=45, pad=40)
 
         if os.path.exists(f'{basepath}/mosaics'):
             fig2.savefig(f'{basepath}/mosaics/diagnostics/mosaic_number_map.png', bbox_inches='tight')

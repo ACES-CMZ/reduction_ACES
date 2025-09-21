@@ -58,19 +58,19 @@ def make_latex_table(savename='continuum_data_summary'):
     tbl['mad_K'] = (tbl['mad'] * jtok)
 
     cols_to_keep = {'region': 'Region',
-                    'bmaj': r'$\theta_{maj}$',
-                    'bmin': r'$\theta_{min}$',
+                    'bmaj': r'$\theta_{\mathrm{maj}}$',
+                    'bmin': r'$\theta_{\mathrm{min}}$',
                     'bpa': 'BPA',
                     'robust': 'Robust',
                     'spws': 'SPWs',
                     #'Req_Res': r"$\theta_{req}$",
                     #'BeamVsReq': r"$\Omega_{syn}^{1/2}/\Omega_{req}^{1/2}$",
                     #'peak/mad': "DR",
-                    'casaversion': 'CASA Version',
-                    'peak': '$S_{peak}$',
-                    'mad': r'$\sigma_{MAD}$',
-                    'peak_K': '$T_{B,peak}$',
-                    'mad_K': r'$\sigma_{MAD,mK}$',
+                    #'casaversion': 'CASA Version',
+                    'peak': r'$S_{\mathrm{peak}}$',
+                    'mad': r'$\sigma_{\mathrm{MAD}}$',
+                    'peak_K': r'$T_{\mathrm{B,peak}}$',
+                    'mad_K': r'$\sigma_{\mathrm{MAD,mK}}$',
                     #'Req_Sens': r"$\sigma_{req}$",
                     #'SensVsReq': r"$\sigma_{MAD}/\sigma_{req}$",
                     #'dr_pre': "DR$_{pre}$",
@@ -78,14 +78,14 @@ def make_latex_table(savename='continuum_data_summary'):
                     #'dr_improvement': "DR$_{post}$/DR$_{pre}$"
                     }
 
-    units = {'$S_{peak}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
-             '$T_{B,peak}$': (u.K).to_string(u.format.LatexInline),
-             r'$\sigma_{MAD}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
-             r'$\sigma_{MAD,mK}$': (u.mK).to_string(u.format.LatexInline),
+    units = {r'$S_{\mathrm{peak}}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
+             r'$T_{\mathrm{B,peak}}$': (u.K).to_string(u.format.LatexInline),
+             r'$\sigma_{\mathrm{MAD}}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
+             r'$\sigma_{\mathrm{MAD,mK}}$': (u.mK).to_string(u.format.LatexInline),
              #r'$\sigma_{req}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
              #r'$\theta_{req}$': u.arcsec.to_string(u.format.LatexInline),
-             r'$\theta_{maj}$': u.arcsec.to_string(u.format.LatexInline),
-             r'$\theta_{min}$': u.arcsec.to_string(u.format.LatexInline),
+             r'$\theta_{\mathrm{maj}}$': u.arcsec.to_string(u.format.LatexInline),
+             r'$\theta_{\mathrm{min}}$': u.arcsec.to_string(u.format.LatexInline),
              r'PA': u.deg.to_string(u.format.LatexInline),
              r'BPA': u.deg.to_string(u.format.LatexInline),
             }
@@ -100,13 +100,13 @@ def make_latex_table(savename='continuum_data_summary'):
             if new in units:
                 ftbl[new].unit = units[new]
 
-    float_cols = ['$\\theta_{maj}$',
-                  '$\\theta_{min}$',
+    float_cols = [r'$\theta_{\mathrm{maj}}$',
+                  r'$\theta_{\mathrm{min}}$',
                   'BPA',
-                  '$S_{peak}$',
-                  '$T_{B,peak}$',
-                  '$\\sigma_{MAD}$',
-                  '$\\sigma_{MAD,mK}$',
+                  r'$S_{\mathrm{peak}}$',
+                  r'$T_{\mathrm{B,peak}}$',
+                  r'$\sigma_{\mathrm{MAD}}$',
+                  r'$\sigma_{\mathrm{MAD,mK}}$',
                   #'$\\theta_{req}$',
                   #'\\sigma_{req}$',
                   #'$\\sigma_{MAD}/\\sigma_{req}$',
@@ -210,7 +210,7 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
 
         login_response = self._request('POST', login_url, data=data, cache=False)
         access_token = login_response.json()["access_token"]
-        print(login_response.json()['access_token'])
+        print(login_response.json()['access_token'], flush=True)
         time.sleep(1)
     project_uidstr = project_uid.replace("/", "%7C")
     resp2 = requests.get(f'https://asa.alma.cl/snoopi/restapi/project/{project_uidstr}',
@@ -284,9 +284,10 @@ def make_observation_table(access_token=None, use_cache=True):
 
         schedblock_meta = retrieve_execution_metadata(access_token=access_token)
 
-        usub_meta['EB ID'] = [rf'\makecell[l]{{{",\\\\ ".join([(x['execblockuid'])
+        usub_meta['EB ID'] = [rf'\makecell[l]{{{",\\\\ ".join([r'\texttt{' + (x['execblockuid']) + '}'
                                                                     for x in schedblock_meta[schedblock_name]['executions']
-                                                                    ])}}}'
+                                                                    if x['status'] == 'Pass'
+                                                                    ])}. \vspace{{1.5mm}}}}'
                                     for schedblock_name in usub_meta['schedblock_name']]
         usub_meta['executions'] = [', '.join([x['date']
                                               for x in schedblock_meta[schedblock_name]['executions']
@@ -436,7 +437,8 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta.rename_column('time_per_eb', 'Time')
         usub_meta.rename_column('gal_longitude', 'GLON')
         usub_meta.rename_column('gal_latitude', 'GLAT')
-        usub_meta['Gname'] = [f"{x:0.2f} {y:0.2f}" for x, y in zip(usub_meta['GLON'], usub_meta['GLAT'])]
+        usub_meta['Center'] = [f"G{x:06.2f}{'-' if y < 0 else '+'}{abs(y):05.2f}" for x, y in zip(usub_meta['GLON'], usub_meta['GLAT'])]
+        print(f"usub-meta Center: {usub_meta['Center']}", flush=True)
 
         updated = (np.char.find(usub_meta['schedblock_name'], 'updated') >= 0)
         print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()}")
@@ -451,7 +453,7 @@ def make_observation_table(access_token=None, use_cache=True):
                     #print(fieldname, match.sum(), sub[sub].sum())
         print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()} (after filtering for updated)")
 
-        colnames = ['Field', 'Gname', 'Execution Dates', 'EB ID', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
+        colnames = ['Field', 'Center', 'Execution Dates', 'EB ID', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
         usub_meta['LAS'].unit = u.arcsec
         usub_meta['Res.'].unit = u.arcsec
         #usub_meta['Exposure Time'].unit = u.s
@@ -464,7 +466,7 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta[colnames_noconfig][sm].write(f'{basepath}/tables/observation_metadata_7m.ecsv', format='ascii.ecsv', overwrite=True)
         usub_meta[colnames_noconfig][tp].write(f'{basepath}/tables/observation_metadata_TP.ecsv', format='ascii.ecsv', overwrite=True)
 
-    usub_meta['Execution Dates'] = [fr'\makecell[l]{{{",\\\\ ".join([x for x in ed.split(", ")])}.}}' for ed in usub_meta['Execution Dates']]
+    usub_meta['Execution Dates'] = [fr'\makecell[l]{{{",\\\\ ".join([x for x in ed.split(", ")])}. \vspace{{1.5mm}}}}' for ed in usub_meta['Execution Dates']]
 
     #latexdict['header_start'] = '\\label{tab:observation_metadata_12m}'#\n\\footnotesize'
     #latexdict['preamble'] = '\\caption{12m Observation Metadata}\n\\resizebox{\\textwidth}{!}{'
@@ -615,9 +617,12 @@ def make_table_3():
     return table3
 
 
-if __name__ == "__main__":
+def main():
 
+    print("Making spw table", flush=True)
     make_spw_table()
+
+    print("Making table 3", flush=True)
     make_table_3()
 
     print("Starting make_latex_table", flush=True)
@@ -626,3 +631,8 @@ if __name__ == "__main__":
 
     make_observation_table(use_cache=False)
     print("Completed make_observation_table", flush=True)
+
+if __name__ == "__main__":
+    print("Running main()", flush=True)
+    main()
+    print("Done", flush=True)
