@@ -17,6 +17,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          savedir=None,
                          remove_incomplete_psf=True,
                          remove_incomplete_weight=True,
+                         suffixes_to_merge_and_export=None,
+                         array_jobs=None,
                          **kwargs):
     """
     Parameters
@@ -40,6 +42,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     NARRAY = nchan // nchan_per
     assert NARRAY > 1
+    if array_jobs is None:
+        array_jobs = f'0-{NARRAY}'
 
     tclean_kwargs = {'nchan': nchan_per, }
     tclean_kwargs.update(**kwargs)
@@ -51,6 +55,11 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     assert 'interactive' not in tclean_kwargs
     tclean_kwargs['calcres'] = True
     tclean_kwargs['calcpsf'] = True
+
+    if tclean_kwargs.get('gridder') == 'mosaic':
+        necessary_suffixes = ("image", "pb", "psf", "model", "residual", "weight", "mask")
+    else:
+        necessary_suffixes = ("image", "pb", "psf", "model", "residual", "mask")
 
     # TODO:
     # since we're no longer splitting out subsections of the MS, the split should only be done once
@@ -114,6 +123,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                           field='{field}',
                           datacolumn='data',
                           spw=splitspw)
+            listobs(vis=vis, listfile=f'{{vis}}.listobs')
+            listobs(vis=outputvis, listfile=f'{{outputvis}}.listobs')
 
         for vis in {tclean_kwargs['vis']}:
             outputvis=f'{{rename_vis(vis)}}'
@@ -213,6 +224,18 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         if not os.path.exists(tclean_kwargs['imagename'] + ".image"):
             raise ValueError(f"FAILURE: image {{tclean_kwargs['imagename']}}.image was not produced")
 
+        def check_file(fn):
+            " ensure that nonzero values were written, otherwise the imaging task failed "
+            from spectral_cube import SpectralCube
+            import numpy as np
+            cube = SpectralCube.read(fn, format='fits' if fn.endswith('.fits') else 'casa_image')
+            mx = cube.max()
+            if mx == 0 or np.isnan(mx):
+                raise ValueError(f"File {{fn}} has a maximum value of {{mx}}")
+
+        check_file(tclean_kwargs['imagename'] + ".image")
+        check_file(tclean_kwargs['imagename'] + ".residual")
+
         """)
 
     splitscriptname = os.path.join(workdir, f"{imagename}_parallel_split_script.py")
@@ -274,7 +297,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
            f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_%j_%A_%a.log '
            f'--job-name={jobname}_arr --account={account} '
-           f'--array=0-{NARRAY} '
+           f'--array={array_jobs} '
            f'--dependency=afterok:{scriptjobid} '
            f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd}\n')
 
@@ -297,11 +320,14 @@ import glob, os, shutil, datetime
 
 {logprint}
 
-
+suffixes_to_merge_and_export = {suffixes_to_merge_and_export}
 savedir = '{savedir}'
 os.chdir('{workdir}')
 
-for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
+necessary_suffixes = {necessary_suffixes}
+print(f"Necessary suffixes: {{necessary_suffixes}}", flush=True)
+
+for suffix in necessary_suffixes:
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
     infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
     print(outfile, infiles)
@@ -311,8 +337,14 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
     else:
         assert len(infiles) > 0, f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}"
 
+if suffixes_to_merge_and_export is None and os.getenv('SUFFIXES_TO_MERGE_AND_EXPORT') is not None:
+    suffixes_to_merge_and_export = os.getenv('SUFFIXES_TO_MERGE_AND_EXPORT').split(',')
+elif suffixes_to_merge_and_export is None:
+    suffixes_to_merge_and_export = {necessary_suffixes}
 
-for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
+print(f"Suffixes to merge and export: {{suffixes_to_merge_and_export}}", flush=True)
+
+for suffix in necessary_suffixes:
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
     #infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
     infiles = [f'{imagename}.{{start:04d}}.{nchan_per:03d}.{{suffix}}'
@@ -335,6 +367,7 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
         os.rename(outfile+".move", backup_outfile)
 
     # reads much more efficiently, is consistent with other cubes
+    print(f"Concatenating length {{len(infiles)}} files {{infiles}} to {{outfile}}", flush=True)
     ia.imageconcat(outfile=outfile,
                    infiles=infiles,
                    mode='p')
@@ -394,15 +427,17 @@ if manybeam:
 
     assert not os.path.exists('{imagename}.image'), "FAILURE: {imagename}.image exists after moving it to {imagename}.image.multibeam"
 
-    try:
-        os.rename('{imagename}.image.pbcor', '{imagename}.image.pbcor.multibeam')
-        print(f"Successfully moved {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam")
-    except Exception as ex:
-        print("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
-        print(ex)
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
-        os.rename('{imagename}.image.pbcor', f'{imagename}.image.pbcor.{{timestamp}}')
-        print(f"INSTEAD moved {imagename}.image.pbcor -> {imagename}.image.pbcor.{{timestamp}}")
+    # it's possible for pbcor to not exist if we're not doing pbcor (to save space)
+    if os.path.exists('{imagename}.image.pbcor'):
+        try:
+            os.rename('{imagename}.image.pbcor', '{imagename}.image.pbcor.multibeam')
+            print(f"Successfully moved {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam")
+        except Exception as ex:
+            print("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
+            print(ex)
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+            os.rename('{imagename}.image.pbcor', f'{imagename}.image.pbcor.{{timestamp}}')
+            print(f"INSTEAD moved {imagename}.image.pbcor -> {imagename}.image.pbcor.{{timestamp}}")
 
     if not os.path.exists('{imagename}.convmodel'):
         logprint('Creating convmodel {os.path.basename(imagename)}.convmodel')
@@ -414,7 +449,7 @@ if manybeam:
         logprint('Creating image {os.path.basename(imagename)}.image (it did not exist)')
         try:
             ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
-                        pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
+                        pixels='"{os.path.basename(imagename)}.convmodel" + "{os.path.basename(imagename)}.residual"',
                         imagemd='{os.path.basename(imagename)}.convmodel',
                         overwrite=False)
             ia.close()
@@ -422,7 +457,7 @@ if manybeam:
             ia.close()
             print(f"RuntimeError: {{ex}} - trying again with overwrite=False and to .image-temp instead")
             ia.imagecalc(outfile='{os.path.basename(imagename)}.image-temp',
-                        pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
+                        pixels='"{os.path.basename(imagename)}.convmodel" + "{os.path.basename(imagename)}.residual"',
                         imagemd='{os.path.basename(imagename)}.convmodel',
                         overwrite=False)
             ia.close()
@@ -430,7 +465,7 @@ if manybeam:
                 shutil.rmtree('{imagename}.image')
             shutil.move('{imagename}.image-temp', '{imagename}.image')
         print(f"Successfully created {os.path.basename(imagename)}.image: {{os.path.exists('{imagename}.image')}}")
-    if not os.path.exists('{os.path.basename(imagename)}.image.pbcor',):
+    if not os.path.exists('{os.path.basename(imagename)}.image.pbcor'):
         logprint('Creating pbcor image {os.path.basename(imagename)}.image.pbcor')
         try:
             impbcor(imagename='{os.path.basename(imagename)}.image',
@@ -452,19 +487,31 @@ if manybeam:
         image_manybeam = check_manybeam(image_rbeam, image_cbeam)
         assert not image_manybeam, "FAILURE: image_manybeam is True, so the conversion to convolved-beam failed"
 
-    exportfits(imagename='{os.path.basename(imagename)}.image.pbcor',
-               fitsimage='{os.path.basename(imagename)}.image.pbcor.fits',
-               overwrite=True
-               )
     exportfits(imagename='{os.path.basename(imagename)}.image',
                fitsimage='{os.path.basename(imagename)}.image.fits',
                overwrite=True
                )
+    exportfits(imagename='{os.path.basename(imagename)}.image.pbcor',
+               fitsimage='{os.path.basename(imagename)}.image.pbcor.fits',
+               overwrite=True
+               )
+
+def check_file(fn):
+    from spectral_cube import SpectralCube
+    import numpy as np
+    cube = SpectralCube.read(fn, format='fits' if fn.endswith('.fits') else 'casa_image')
+    mx = cube.max()
+    if mx == 0 or np.isnan(mx):
+        raise ValueError(f"File {{fn}} has a maximum value of {{mx}}")
 
 
-for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
+for suffix in suffixes_to_merge_and_export:
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
     if savedir and os.path.exists(savedir):
+        # ensure we don't do any moving or cleanup if the files are junk
+        check_file(outfile)
+        check_file(outfile+".fits")
+
         print(f"Moving {{outfile}} to {{savedir}}")
         full_outfile = os.path.join(savedir, outfile)
         if os.path.exists(full_outfile):
@@ -481,6 +528,12 @@ for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "ima
 
 # Cleanup stage
 
+for suffix in necessary_suffixes:
+    if suffix not in suffixes_to_merge_and_export:
+        print(f"Removing {imagename}.{{suffix}}", flush=True)
+        shutil.rmtree(f'{imagename}.{{suffix}}')
+
+
 os.chdir('{workdir}')
 tclean_kwargs = {tclean_kwargs}
 
@@ -491,6 +544,17 @@ for vis in tclean_kwargs['vis']:
     logprint(f"Removing visibility {{vis}}")
     assert 'orange' not in vis
     shutil.rmtree(vis)
+
+
+# if we've gotten to this point, merging has been successful so we can delete the components
+for suffix in necessary_suffixes:
+    infiles = [f'{imagename}.{{start:04d}}.{nchan_per:03d}.{{suffix}}'
+               for start in range(0, {nchan}, {nchan_per})]
+    print(f"Removing {{infiles}}", flush=True)
+    for fn in infiles:
+        print(f"Removing {{fn}}", flush=True)
+        shutil.rmtree(fn)
+
 """)
 
     with open(mergescriptname, 'w') as fh:
