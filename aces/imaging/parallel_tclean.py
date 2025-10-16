@@ -19,6 +19,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          remove_incomplete_weight=True,
                          suffixes_to_merge_and_export=None,
                          array_jobs=None,
+                         merge_only=False,
                          **kwargs):
     """
     Parameters
@@ -228,7 +229,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
             " ensure that nonzero values were written, otherwise the imaging task failed "
             from spectral_cube import SpectralCube
             import numpy as np
-            cube = SpectralCube.read(fn, format='fits' if fn.endswith('.fits') else 'casa_image')
+            cube = SpectralCube.read(fn, format='fits' if fn.endswith('.fits') else 'casa_image', use_dask=True)
             mx = cube.max()
             if mx == 0 or np.isnan(mx):
                 raise ValueError(f"File {{fn}} has a maximum value of {{mx}}")
@@ -267,6 +268,9 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     if dry:
         print(slurmsplitcmd.split())
         scriptjobid = 'PLACEHOLDER'
+    elif merge_only:
+        print("Skipping split job")
+        scriptjobid = 'PLACEHOLDER'
     else:
         print(slurmsplitcmd.split())
         sbatch = subprocess.check_output(slurmsplitcmd.split())
@@ -303,6 +307,9 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     if dry:
         print(cmd.split())
+        jobid = 'PLACEHOLDER'
+    elif merge_only:
+        print("Skipping array jobs")
         jobid = 'PLACEHOLDER'
     else:
         print(cmd.split())
@@ -413,6 +420,28 @@ if os.path.exists('{imagename}.image.multibeam') and os.path.exists('{imagename}
         print("Removing {imagename}.image.multibeam so that .image can be moved to .image.multibeam")
         shutil.rmtree('{imagename}.image.multibeam')
 
+def imsmooth_spectral_cube(imagename, outfile, commonbeam):
+    '''
+    Use spectral-cube to imsmooth without loading the whole thing into memory
+    '''
+
+    from spectral_cube import SpectralCube
+    import radio_beam
+    from astropy import units as u
+
+    cube = SpectralCube.read('{imagename}.model', use_dask=False, format='casa_image')
+    # set the beam size to the pixel scale
+    pixscale = cube.wcs.proj_plane_pixel_scales()[0]
+    cube = cube.with_beam(radio_beam.Beam(major=pixscale))
+    cbeam = radio_beam.Beam(major=commonbeam['major']['value']*u.Unit(commonbeam['major']['unit']),
+                            minor=commonbeam['minor']['value']*u.Unit(commonbeam['minor']['unit']),
+                            pa=commonbeam['pa']['value']*u.Unit(commonbeam['pa']['unit']))
+    convcube = cube.convolve_to(cbeam)
+
+    convcube.write(outfile + ".fits", format='fits', overwrite=True)
+    importfits(fitsimage=outfile + ".fits", imagename=outfile)
+
+
 if manybeam:
     try:
         os.rename('{imagename}.image', '{imagename}.image.multibeam')
@@ -440,10 +469,11 @@ if manybeam:
             print(f"INSTEAD moved {imagename}.image.pbcor -> {imagename}.image.pbcor.{{timestamp}}")
 
     if not os.path.exists('{imagename}.convmodel'):
+        # Convmodel frequenty runs out of memory, so we use spectral-cube instead
         logprint('Creating convmodel {os.path.basename(imagename)}.convmodel')
-        imsmooth(imagename='{imagename}.model',
-                outfile='{imagename}.convmodel',
-                beam=commonbeam)
+        imsmooth_spectral_cube(imagename='{imagename}.model',
+                               outfile='{imagename}.convmodel',
+                               commonbeam=commonbeam)
         print(f"Successfully created convolved model {os.path.basename(imagename)}.convmodel: {{os.path.exists('{imagename}.convmodel')}}")
     if not os.path.exists('{os.path.basename(imagename)}.image'):
         logprint('Creating image {os.path.basename(imagename)}.image (it did not exist)')
@@ -499,7 +529,7 @@ if manybeam:
 def check_file(fn):
     from spectral_cube import SpectralCube
     import numpy as np
-    cube = SpectralCube.read(fn, format='fits' if fn.endswith('.fits') else 'casa_image')
+    cube = SpectralCube.read(fn, format='fits' if fn.endswith('.fits') else 'casa_image', use_dask=True)
     mx = cube.max()
     if mx == 0 or np.isnan(mx):
         raise ValueError(f"File {{fn}} has a maximum value of {{mx}}")
@@ -528,9 +558,10 @@ for suffix in suffixes_to_merge_and_export:
 
 # Cleanup stage
 
+print("Beginning cleanup")
 for suffix in necessary_suffixes:
     if suffix not in suffixes_to_merge_and_export:
-        print(f"Removing {imagename}.{{suffix}}", flush=True)
+        print(f"Cleanup: Removing {imagename}.{{suffix}}", flush=True)
         shutil.rmtree(f'{imagename}.{{suffix}}')
 
 
@@ -540,20 +571,25 @@ tclean_kwargs = {tclean_kwargs}
 {rename_vis}
 
 for vis in tclean_kwargs['vis']:
-    vis = rename_vis(vis)
     logprint(f"Removing visibility {{vis}}")
+    vis = rename_vis(vis)
     assert 'orange' not in vis
     shutil.rmtree(vis)
 
 
 # if we've gotten to this point, merging has been successful so we can delete the components
+print(f"Final cleanup stage: removing individual chunks", flush=True)
 for suffix in necessary_suffixes:
     infiles = [f'{imagename}.{{start:04d}}.{nchan_per:03d}.{{suffix}}'
                for start in range(0, {nchan}, {nchan_per})]
     print(f"Removing {{infiles}}", flush=True)
     for fn in infiles:
-        print(f"Removing {{fn}}", flush=True)
+        print(f"Final cleanup: Removing {{fn}}", flush=True)
         shutil.rmtree(fn)
+
+print("Final cleanup complete", flush=True)
+# report success forcefully - not clear why this is needed but CASA is not exiting cleanly
+sys.exit(0)
 
 """)
 
@@ -576,8 +612,8 @@ for suffix in necessary_suffixes:
         fh.write(runcmd_merge)
 
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks * 4} '
-           f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_merge_%j_%A_%a.log --job-name={jobname}_merge --account={account} '
-           f'--dependency=afterok:{jobid} '
+           f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_merge_%j_%A_%a.log --job-name={jobname}_merge --account={account} ' +
+           ('' if merge_only else f'--dependency=afterok:{jobid} ') +
            f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd_merge}')
 
     if dry:
