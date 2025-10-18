@@ -58,9 +58,10 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     tclean_kwargs['calcpsf'] = True
 
     if tclean_kwargs.get('gridder') == 'mosaic':
-        necessary_suffixes = ("image", "pb", "psf", "model", "residual", "weight", "mask")
+        # is mask necessary?  don't think so?
+        necessary_suffixes = ("image", "pb", "psf", "model", "residual", "weight")
     else:
-        necessary_suffixes = ("image", "pb", "psf", "model", "residual", "mask")
+        necessary_suffixes = ("image", "pb", "psf", "model", "residual")
 
     # TODO:
     # since we're no longer splitting out subsections of the MS, the split should only be done once
@@ -124,8 +125,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                           field='{field}',
                           datacolumn='data',
                           spw=splitspw)
-            listobs(vis=vis, listfile=f'{{vis}}.listobs')
-            listobs(vis=outputvis, listfile=f'{{outputvis}}.listobs')
+            listobs(vis=vis, listfile=f'{{vis}}.listobs', overwrite=True)
+            listobs(vis=outputvis, listfile=f'{{outputvis}}.listobs', overwrite=True)
 
         for vis in {tclean_kwargs['vis']}:
             outputvis=f'{{rename_vis(vis)}}'
@@ -429,9 +430,13 @@ def imsmooth_spectral_cube(imagename, outfile, commonbeam):
     import radio_beam
     from astropy import units as u
 
-    cube = SpectralCube.read('{imagename}.model', use_dask=False, format='casa_image')
+    # dask is used here; no choice
+    cube = SpectralCube.read('{imagename}.model', format='casa_image')
     # set the beam size to the pixel scale
-    pixscale = cube.wcs.proj_plane_pixel_scales()[0]
+    try:
+        pixscale = cube.wcs.proj_plane_pixel_scales()[0]
+    except AttributeError:
+        pixscale = np.abs(cube.wcs.wcs.cdelt[0]) * u.deg
     cube = cube.with_beam(radio_beam.Beam(major=pixscale))
     cbeam = radio_beam.Beam(major=commonbeam['major']['value']*u.Unit(commonbeam['major']['unit']),
                             minor=commonbeam['minor']['value']*u.Unit(commonbeam['minor']['unit']),
