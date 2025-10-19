@@ -448,6 +448,7 @@ def imsmooth_spectral_cube(imagename, outfile, commonbeam):
 
 
 if manybeam:
+    print("Beginning manybeam", flush=True)
     try:
         os.rename('{imagename}.image', '{imagename}.image.multibeam')
         print(f"Successfully moved {imagename}.image -> {imagename}.image.multibeam")
@@ -522,6 +523,7 @@ if manybeam:
         image_manybeam = check_manybeam(image_rbeam, image_cbeam)
         assert not image_manybeam, "FAILURE: image_manybeam is True, so the conversion to convolved-beam failed"
 
+    print("Fitsifying .image and .image.pbcor")
     exportfits(imagename='{os.path.basename(imagename)}.image',
                fitsimage='{os.path.basename(imagename)}.image.fits',
                overwrite=True
@@ -530,6 +532,8 @@ if manybeam:
                fitsimage='{os.path.basename(imagename)}.image.pbcor.fits',
                overwrite=True
                )
+
+    print("Done with manybeam")
 
 def check_file(fn):
     from spectral_cube import SpectralCube
@@ -551,6 +555,8 @@ for suffix in suffixes_to_merge_and_export:
         full_outfile = os.path.join(savedir, outfile)
         if os.path.exists(full_outfile):
             print(f"Outfile {{full_outfile}} already exists.  Check what's up.")
+        elif os.path.exists(full_outfile+".fits"):
+            print(f"Outfile {{full_outfile}}.fits already exists.  Check what's up.")
         else:
             shutil.move(outfile, savedir)
             shutil.move(outfile+".fits", savedir)
