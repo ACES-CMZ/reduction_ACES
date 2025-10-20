@@ -78,8 +78,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                                  """)
     logprint = textwrap.dedent("""
 
-        def logprint(x):
-            print(x, flush=True)
+        def logprint(x, flush=True):
+            print(x, flush=flush)
             casalog.post(str(x), origin='parallel_tclean')
 
                                """)
@@ -333,15 +333,15 @@ savedir = '{savedir}'
 os.chdir('{workdir}')
 
 necessary_suffixes = {necessary_suffixes}
-print(f"Necessary suffixes: {{necessary_suffixes}}", flush=True)
+logprint(f"Necessary suffixes: {{necessary_suffixes}}", flush=True)
 
 for suffix in necessary_suffixes:
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
     infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
-    print(outfile, infiles)
+    logprint(outfile, infiles)
     if suffix in ("image.pbcor", "sumwt"):
         # these may not always exist
-        print(f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}")
+        logprint(f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}")
     else:
         assert len(infiles) > 0, f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}"
 
@@ -350,7 +350,7 @@ if suffixes_to_merge_and_export is None and os.getenv('SUFFIXES_TO_MERGE_AND_EXP
 elif suffixes_to_merge_and_export is None:
     suffixes_to_merge_and_export = {necessary_suffixes}
 
-print(f"Suffixes to merge and export: {{suffixes_to_merge_and_export}}", flush=True)
+logprint(f"Suffixes to merge and export: {{suffixes_to_merge_and_export}}", flush=True)
 
 for suffix in necessary_suffixes:
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
@@ -358,24 +358,24 @@ for suffix in necessary_suffixes:
     infiles = [f'{imagename}.{{start:04d}}.{nchan_per:03d}.{{suffix}}'
                for start in range(0, {nchan}, {nchan_per})]
     if len(infiles) == 0:
-        print(f"Skipped suffix {{suffix}}")
+        logprint(f"Skipped suffix {{suffix}}")
         continue
     for fn in infiles:
         if not os.path.exists(fn):
-            print(f"Failure: file {{fn}} did not exist")
+            logprint(f"Failure: file {{fn}} did not exist")
 
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
     if os.path.exists(outfile):
         backup_outfile = outfile+f".backup_{{now}}"
-        print(f"Found existing file {{outfile}}.  Moving to {{backup_outfile}}")
+        logprint(f"Found existing file {{outfile}}.  Moving to {{backup_outfile}}")
         os.rename(outfile, backup_outfile)
     if os.path.exists(outfile+".move"):
         backup_outfile = outfile+".move"+f".backup_{{now}}"
-        print(f"Found existing file {{outfile+'.move'}}.  Moving to {{backup_outfile}}")
+        logprint(f"Found existing file {{outfile+'.move'}}.  Moving to {{backup_outfile}}")
         os.rename(outfile+".move", backup_outfile)
 
     # reads much more efficiently, is consistent with other cubes
-    print(f"Concatenating length {{len(infiles)}} files {{infiles}} to {{outfile}}", flush=True)
+    logprint(f"Concatenating length {{len(infiles)}} files {{infiles}} to {{outfile}}", flush=True)
     ia.imageconcat(outfile=outfile,
                    infiles=infiles,
                    mode='p')
@@ -408,17 +408,17 @@ def check_manybeam(rbeam, commonbeam):
     if 'beams' in rbeam:
         for beam in rbeam['beams'].values():
             if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
-                print(f"Manybeam: beam={{beam['*0']}}, commonbeam={{commonbeam}}")
+                logprint(f"Manybeam: beam={{beam['*0']}}, commonbeam={{commonbeam}}")
                 return True
     return False
 
 manybeam = check_manybeam(rbeam, commonbeam)
 
 if os.path.exists('{imagename}.image.multibeam') and os.path.exists('{imagename}.image'):
-    print(f"Found {imagename}.image.multibeam and {imagename}.image.")
+    logprint(f"Found {imagename}.image.multibeam and {imagename}.image.")
     if manybeam:
-        print("However, the image has multiple beams, so it is not a commonbeam image.")
-        print("Removing {imagename}.image.multibeam so that .image can be moved to .image.multibeam")
+        logprint("However, the image has multiple beams, so it is not a commonbeam image.")
+        logprint("Removing {imagename}.image.multibeam so that .image can be moved to .image.multibeam")
         shutil.rmtree('{imagename}.image.multibeam')
 
 def imsmooth_spectral_cube(imagename, outfile, commonbeam):
@@ -448,16 +448,16 @@ def imsmooth_spectral_cube(imagename, outfile, commonbeam):
 
 
 if manybeam:
-    print("Beginning manybeam", flush=True)
+    logprint("Beginning manybeam", flush=True)
     try:
         os.rename('{imagename}.image', '{imagename}.image.multibeam')
-        print(f"Successfully moved {imagename}.image -> {imagename}.image.multibeam")
+        logprint(f"Successfully moved {imagename}.image -> {imagename}.image.multibeam")
     except Exception as ex:
-        print("Failed to move {imagename}.image -> {imagename}.image.multibeam, probably because the latter exists")
-        print(ex)
+        logprint("Failed to move {imagename}.image -> {imagename}.image.multibeam, probably because the latter exists")
+        logprint(ex)
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
         os.rename('{imagename}.image', f'{imagename}.image.{{timestamp}}')
-        print(f"INSTEAD moved {imagename}.image -> {imagename}.image.{{timestamp}}")
+        logprint(f"INSTEAD moved {imagename}.image -> {imagename}.image.{{timestamp}}")
         # the above is needed because we do _not_ want to declare victory when there are multibeam images
 
     assert not os.path.exists('{imagename}.image'), "FAILURE: {imagename}.image exists after moving it to {imagename}.image.multibeam"
@@ -466,13 +466,13 @@ if manybeam:
     if os.path.exists('{imagename}.image.pbcor'):
         try:
             os.rename('{imagename}.image.pbcor', '{imagename}.image.pbcor.multibeam')
-            print(f"Successfully moved {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam")
+            logprint(f"Successfully moved {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam")
         except Exception as ex:
-            print("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
-            print(ex)
+            logprint("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
+            logprint(ex)
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
             os.rename('{imagename}.image.pbcor', f'{imagename}.image.pbcor.{{timestamp}}')
-            print(f"INSTEAD moved {imagename}.image.pbcor -> {imagename}.image.pbcor.{{timestamp}}")
+            logprint(f"INSTEAD moved {imagename}.image.pbcor -> {imagename}.image.pbcor.{{timestamp}}")
 
     if not os.path.exists('{imagename}.convmodel'):
         # Convmodel frequenty runs out of memory, so we use spectral-cube instead
@@ -480,7 +480,7 @@ if manybeam:
         imsmooth_spectral_cube(imagename='{imagename}.model',
                                outfile='{imagename}.convmodel',
                                commonbeam=commonbeam)
-        print(f"Successfully created convolved model {os.path.basename(imagename)}.convmodel: {{os.path.exists('{imagename}.convmodel')}}")
+        logprint(f"Successfully created convolved model {os.path.basename(imagename)}.convmodel: {{os.path.exists('{imagename}.convmodel')}}")
     if not os.path.exists('{os.path.basename(imagename)}.image'):
         logprint('Creating image {os.path.basename(imagename)}.image (it did not exist)')
         try:
@@ -491,7 +491,7 @@ if manybeam:
             ia.close()
         except RuntimeError as ex:
             ia.close()
-            print(f"RuntimeError: {{ex}} - trying again with overwrite=False and to .image-temp instead")
+            logprint(f"RuntimeError: {{ex}} - trying again with overwrite=False and to .image-temp instead")
             ia.imagecalc(outfile='{os.path.basename(imagename)}.image-temp',
                         pixels='"{os.path.basename(imagename)}.convmodel" + "{os.path.basename(imagename)}.residual"',
                         imagemd='{os.path.basename(imagename)}.convmodel',
@@ -500,7 +500,7 @@ if manybeam:
             if os.path.exists('{imagename}.image'):
                 shutil.rmtree('{imagename}.image')
             shutil.move('{imagename}.image-temp', '{imagename}.image')
-        print(f"Successfully created {os.path.basename(imagename)}.image: {{os.path.exists('{imagename}.image')}}")
+        logprint(f"Successfully created {os.path.basename(imagename)}.image: {{os.path.exists('{imagename}.image')}}")
     if not os.path.exists('{os.path.basename(imagename)}.image.pbcor'):
         logprint('Creating pbcor image {os.path.basename(imagename)}.image.pbcor')
         try:
@@ -508,14 +508,14 @@ if manybeam:
                     pbimage='{os.path.basename(imagename)}.pb',
                     outfile='{os.path.basename(imagename)}.image.pbcor',)
         except RuntimeError as ex:
-            print(f"RuntimeError: {{ex}} - trying again with overwrite=False and to .image.pbcor-temp instead")
+            logprint(f"RuntimeError: {{ex}} - trying again with overwrite=False and to .image.pbcor-temp instead")
             impbcor(imagename='{os.path.basename(imagename)}.image',
                     pbimage='{os.path.basename(imagename)}.pb',
                     outfile='{os.path.basename(imagename)}.image.pbcor-temp',)
             if os.path.exists('{imagename}.image.pbcor'):
                 shutil.rmtree('{imagename}.image.pbcor')
             shutil.move('{imagename}.image.pbcor-temp', '{imagename}.image.pbcor')
-        print(f"Successfully created {os.path.basename(imagename)}.image.pbcor: {{os.path.exists('{imagename}.image.pbcor')}}")
+        logprint(f"Successfully created {os.path.basename(imagename)}.image.pbcor: {{os.path.exists('{imagename}.image.pbcor')}}")
 
     image_rbeam = ia.restoringbeam()
     image_cbeam = ia.commonbeam()
@@ -523,7 +523,7 @@ if manybeam:
         image_manybeam = check_manybeam(image_rbeam, image_cbeam)
         assert not image_manybeam, "FAILURE: image_manybeam is True, so the conversion to convolved-beam failed"
 
-    print("Fitsifying .image and .image.pbcor")
+    logprint("Fitsifying .image and .image.pbcor")
     exportfits(imagename='{os.path.basename(imagename)}.image',
                fitsimage='{os.path.basename(imagename)}.image.fits',
                overwrite=True
@@ -533,7 +533,7 @@ if manybeam:
                overwrite=True
                )
 
-    print("Done with manybeam")
+    logprint("Done with manybeam")
 
 def check_file(fn):
     from spectral_cube import SpectralCube
@@ -551,28 +551,28 @@ for suffix in suffixes_to_merge_and_export:
         check_file(outfile)
         check_file(outfile+".fits")
 
-        print(f"Moving {{outfile}} to {{savedir}}")
+        logprint(f"Moving {{outfile}} to {{savedir}}")
         full_outfile = os.path.join(savedir, outfile)
         if os.path.exists(full_outfile):
-            print(f"Outfile {{full_outfile}} already exists.  Check what's up.")
+            logprint(f"Outfile {{full_outfile}} already exists.  Check what's up.")
         elif os.path.exists(full_outfile+".fits"):
-            print(f"Outfile {{full_outfile}}.fits already exists.  Check what's up.")
+            logprint(f"Outfile {{full_outfile}}.fits already exists.  Check what's up.")
         else:
             shutil.move(outfile, savedir)
             shutil.move(outfile+".fits", savedir)
 
             if not os.path.exists(full_outfile):
-                print(f"FAILURE: attempt to move {{outfile}} to {{savedir}} had no effect")
+                logprint(f"FAILURE: attempt to move {{outfile}} to {{savedir}} had no effect")
     else:
-        print(f"Savedir {{savedir}} does not exist")
+        logprint(f"Savedir {{savedir}} does not exist")
 
 
 # Cleanup stage
 
-print("Beginning cleanup")
+logprint("Beginning cleanup")
 for suffix in necessary_suffixes:
     if suffix not in suffixes_to_merge_and_export:
-        print(f"Cleanup: Removing {imagename}.{{suffix}}", flush=True)
+        logprint(f"Cleanup: Removing {imagename}.{{suffix}}", flush=True)
         shutil.rmtree(f'{imagename}.{{suffix}}')
 
 
@@ -589,16 +589,16 @@ for vis in tclean_kwargs['vis']:
 
 
 # if we've gotten to this point, merging has been successful so we can delete the components
-print(f"Final cleanup stage: removing individual chunks", flush=True)
+logprint(f"Final cleanup stage: removing individual chunks", flush=True)
 for suffix in necessary_suffixes:
     infiles = [f'{imagename}.{{start:04d}}.{nchan_per:03d}.{{suffix}}'
                for start in range(0, {nchan}, {nchan_per})]
-    print(f"Removing {{infiles}}", flush=True)
+    logprint(f"Removing {{infiles}}", flush=True)
     for fn in infiles:
-        print(f"Final cleanup: Removing {{fn}}", flush=True)
+        logprint(f"Final cleanup: Removing {{fn}}", flush=True)
         shutil.rmtree(fn)
 
-print("Final cleanup complete", flush=True)
+logprint("Final cleanup complete", flush=True)
 # report success forcefully - not clear why this is needed but CASA is not exiting cleanly
 sys.exit(0)
 
