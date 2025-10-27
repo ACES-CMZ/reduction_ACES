@@ -133,7 +133,7 @@ def make_latex_table(savename='continuum_data_summary'):
     sorted_indices = [x[0] for x in sorted(enumerate(ftbl['Region']), key=lambda x: (len(x[1]), x[1]))]
     ftbl = ftbl[sorted_indices]
 
-    nrows = 50
+    nrows = 35
     for ii in range(0, len(ftbl), nrows):
         latexdict['header_start'] = f'\\label{{tab:continuum_data_summary_{ii}-{ii+nrows}}}'#\n\\footnotesize'
         if ii == 0:
