@@ -20,7 +20,7 @@ from aces.visualization.figure_configuration import mymap, mymap2, distance
 
 from aces import conf
 
-pl.rcParams['font.size'] = 16
+pl.rcParams['font.size'] = 18
 
 basepath = conf.basepath
 

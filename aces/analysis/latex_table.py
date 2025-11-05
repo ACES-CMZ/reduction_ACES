@@ -13,6 +13,17 @@ from tqdm.auto import tqdm
 import casa_formats_io
 import radio_beam
 from astropy.io import fits
+import requests
+from astroquery.alma import Alma
+import time
+from astropy.time import Time
+from astropy.io import ascii
+from astropy.coordinates import SkyCoord
+
+from astroquery.alma import Alma
+from astropy.time import Time
+import numpy as np
+from astropy.table import Table
 
 from aces.analysis.latex_info import (latexdict, format_float, round_to_n, rounded,
                                       rounded_arr, strip_trailing_zeros, exp_to_tex)
@@ -194,10 +205,7 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
     if len(schedblock_meta) == 152:
         return schedblock_meta
 
-    import requests
     if access_token is None:
-        from astroquery.alma import Alma
-        import time
         Alma.login(username)
         self = Alma._auth
         login_url = f'https://{self.get_valid_host()}{self._LOGIN_ENDPOINT}'
@@ -242,10 +250,6 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
 
 
 def make_observation_table(access_token=None, use_cache=True):
-    from astroquery.alma import Alma
-    from astropy.time import Time
-    import numpy as np
-    from astropy.table import Table
 
     if use_cache:
         usub_meta_tm = Table.read(f'{basepath}/tables/observation_metadata_12m.ecsv')
@@ -274,6 +278,11 @@ def make_observation_table(access_token=None, use_cache=True):
         metadata['Observation End Time'] = Time(metadata['t_max'], format='mjd')
         metadata['Observation End Time'].format = 'fits'
         metadata = metadata[metadata['target_name'] == 'Sgr_A_star']
+
+        # overwrite galactic lat/lon because of the bug found in the archive in which fields a and r are way off
+        coordinates = SkyCoord(metadata['s_ra'], metadata['s_dec'], unit='deg', frame='icrs').galactic
+        metadata['gal_longitude'] = coordinates.l.deg
+        metadata['gal_latitude'] = coordinates.b.deg
 
         sub_meta = metadata['schedblock_name', 'Observation Start Time',
                             'Observation End Time', 'pwv', 't_exptime',
@@ -393,9 +402,6 @@ def make_observation_table(access_token=None, use_cache=True):
 
         configuration_schedules = requests.get('https://almascience.eso.org/observing/observing-configuration-schedule/prior-cycle-observing-and-configuration-schedule')
 
-        from astropy.time import Time
-        from astropy.io import ascii
-
         def try_read_table(index):
             try:
                 return ascii.read(configuration_schedules.text, format='html', htmldict={'table_id': index})
@@ -437,8 +443,12 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta.rename_column('time_per_eb', 'Time')
         usub_meta.rename_column('gal_longitude', 'GLON')
         usub_meta.rename_column('gal_latitude', 'GLAT')
+
         usub_meta['Center'] = [f"G{x:06.2f}{'-' if y < 0 else '+'}{abs(y):05.2f}" for x, y in zip(usub_meta['GLON'], usub_meta['GLAT'])]
-        print(f"usub-meta Center: {usub_meta['Center']}", flush=True)
+        print(f"usub-meta Center: {usub_meta['Field', 'Center', 'GLON', 'GLAT']}", flush=True)
+        usub_meta.add_index('Field')
+        print(f"usub-meta Center: {usub_meta.loc['a']['Field', 'Center', 'GLON', 'GLAT']}", flush=True)
+        print(f"usub-meta Center: {usub_meta.loc['r']['Field', 'Center', 'GLON', 'GLAT']}", flush=True)
 
         updated = (np.char.find(usub_meta['schedblock_name'], 'updated') >= 0)
         print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()}")
