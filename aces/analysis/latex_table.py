@@ -444,7 +444,7 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta.rename_column('gal_longitude', 'GLON')
         usub_meta.rename_column('gal_latitude', 'GLAT')
 
-        usub_meta['Center'] = [f"G{x:06.2f}{'-' if y < 0 else '+'}{abs(y):05.2f}" for x, y in zip(usub_meta['GLON'], usub_meta['GLAT'])]
+        usub_meta['Center'] = [f"G{x:07.3f}{'-' if y < 0 else '+'}{abs(y):06.3f}" for x, y in zip(usub_meta['GLON'], usub_meta['GLAT'])]
         print(f"usub-meta Center: {usub_meta['Field', 'Center', 'GLON', 'GLAT']}", flush=True)
         usub_meta.add_index('Field')
         print(f"usub-meta Center: {usub_meta.loc['a']['Field', 'Center', 'GLON', 'GLAT']}", flush=True)
