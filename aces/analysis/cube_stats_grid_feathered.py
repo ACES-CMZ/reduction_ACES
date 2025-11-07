@@ -160,9 +160,9 @@ def main(num_workers=None):
     cache_stats_file = open(tbldir / "feathered_cube_stats.txt", 'w')
 
     filelists = (glob.glob(f"{basepath}/upload/HCOp_feather_images/MOPRA_12M_7M_feather/*statcont.contsub.fits") +
-                 glob.glob(f"{basepath}/upload/Feather_12m_7m_TP/SPW*/cubes/*statcont.contsub.fits") +
-                 glob.glob(f"{basepath}/MOPRA_12M_7M_feather/*statcont.contsub.fits") +
-                 glob.glob(f"{basepath}/upload/HCOp_feather_images/*statcont.contsub.fits")
+                 glob.glob(f"{basepath}/upload/Feather_12m_7m_TP/SPW*/cubes/*statcont.contsub.fits") # +
+                 # path does not exist glob.glob(f"{basepath}/MOPRA_12M_7M_feather/*statcont.contsub.fits") +
+                 # path does not exist glob.glob(f"{basepath}/upload/HCOp_feather_images/*statcont.contsub.fits")
                 )
     ufilelist = np.unique(filelists)
     print(f"Found {len(ufilelist)} unique files out of {len(filelists)} total files")
@@ -171,9 +171,12 @@ def main(num_workers=None):
         print(f"Processing {fullpath}")
         fn = fullpath
         basename = os.path.basename(fullpath)
-        field = basename[9:11]
+        field = basename[9:11].strip(".")
 
-        config = 'TP_7M_12M_'
+        if 'MOPRA' in fullpath:
+            config = 'MOPRA_12M_7M_'
+        else:
+            config = 'TP_7M_12M_'
         suffix = '.image.statcont.contsub.fits'
         if 'SPW' in fullpath:
             spw = fullpath.split("SPW")[1][:2]
