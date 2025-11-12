@@ -34,7 +34,7 @@ basepath = conf.basepath
 latexdict = latexdict.copy()
 
 
-def make_latex_table(savename='continuum_data_summary'):
+def make_latex_table():
 
     tbl = Table.read(f'{basepath}/tables/metadata_image.tt0.ecsv')
     tbl['mad'] = tbl['mad'] * 1000
@@ -67,6 +67,11 @@ def make_latex_table(savename='continuum_data_summary'):
     jtok = u.Quantity([Beam(x['bmaj'] * u.arcsec, x['bmin'] * u.arcsec, x['bpa']).jtok(nueff[x['spws']]) for x in tbl])
     tbl['peak_K'] = (tbl['peak'] * jtok / 1000)
     tbl['mad_K'] = (tbl['mad'] * jtok)
+
+    # change region "name" to region coordinated, e.g., a > G000.00+00.00
+    usub_meta_tm = Table.read(f'{basepath}/tables/observation_metadata_12m.ecsv')
+    usub_meta_tm.add_index('Field')
+    tbl['region'] = [usub_meta_tm.loc[x]['Center'] for x in tbl['region']]
 
     cols_to_keep = {'region': 'Region',
                     'bmaj': r'$\theta_{\mathrm{maj}}$',
@@ -140,9 +145,14 @@ def make_latex_table(savename='continuum_data_summary'):
                              )
 
     # replacement for ftbl.sort(['Region'])
-    ftbl.sort('SPWs')
-    sorted_indices = [x[0] for x in sorted(enumerate(ftbl['Region']), key=lambda x: (len(x[1]), x[1]))]
-    ftbl = ftbl[sorted_indices]
+    # old, alphabeticalsorted_indices = [x[0] for x in sorted(enumerate(ftbl['Region']), key=lambda x: (len(x[1]), x[1]))]
+    # sort by glon, which isn't in its own column any more
+    ells = np.array([x[1:1+7] for x in ftbl['Region']], dtype='float')
+    ells = ells - 360 * (ells > 180.0)
+    # do it this way to preserve SPW sorting
+    ftbl.add_column(ells, name='ells')
+    ftbl.sort(['ells', 'SPWs'])
+    ftbl.remove_column('ells')
 
     nrows = 35
     for ii in range(0, len(ftbl), nrows):
@@ -260,7 +270,8 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta = table.vstack([usub_meta_tm, usub_meta_sm, usub_meta_tp])
 
         # Sort usub_meta by 'Field' in natural order
-        sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
+        #sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
+        sorted_indices = np.argsort(usub_meta['GLON'] - 360.0 * (usub_meta['GLON'] > 180.0))
         usub_meta = usub_meta[sorted_indices]
 
         sm = usub_meta['Configuration'] == '7M'
@@ -393,7 +404,8 @@ def make_observation_table(access_token=None, use_cache=True):
 
         # Sort usub_meta by 'Field' in natural order
         usub_meta['Field'] = [x.split("_")[3] for x in usub_meta['schedblock_name']]
-        sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
+        # sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
+        sorted_indices = np.argsort(usub_meta['gal_longitude'] - 360.0 * (usub_meta['gal_longitude'] > 180.0))
         usub_meta = usub_meta[sorted_indices]
 
         tm = np.char.find(usub_meta['schedblock_name'], '_TM') > 0
@@ -463,7 +475,7 @@ def make_observation_table(access_token=None, use_cache=True):
                     #print(fieldname, match.sum(), sub[sub].sum())
         print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()} (after filtering for updated)")
 
-        colnames = ['Field', 'Center', 'Execution Dates', 'EB ID', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
+        colnames = ['Center', 'Field', 'Execution Dates', 'EB ID', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
         usub_meta['LAS'].unit = u.arcsec
         usub_meta['Res.'].unit = u.arcsec
         #usub_meta['Exposure Time'].unit = u.s
@@ -499,15 +511,22 @@ def make_observation_table(access_token=None, use_cache=True):
     formats = {key: lambda x: str(sigfig.round(str(x), sigfigs=2))
                for key in float_cols}
 
+    # sort by field coordinate...
+    usub_meta.sort('Center')
+    sorted_indices_359 = np.argsort(usub_meta['Center'])[np.array(['G359' in x for x in usub_meta['Center']])]
+    sorted_indices_000 = np.argsort(usub_meta['Center'])[np.array(['G000' in x for x in usub_meta['Center']])]
+    usub_meta = table.vstack([usub_meta[sorted_indices_359], usub_meta[sorted_indices_000]])
+
+    n_per_page = 25
     for sel, nm in ((tm, '12m'), (sm, '7m'), (tp, 'TP')):
         latexdict['header_start'] = f'\\label{{tab:observation_metadata_{nm}}}'#\n\\footnotesize'
         preamble = '{counter}\n\\caption{{{nm} Observation Metadata{contd}}}\n\\resizebox{{\\textwidth}}{{!}}{{'
-        for ii in range(0, sel.sum(), 25):
+        for ii in range(0, sel.sum(), n_per_page):
             if ii == 0:
                 latexdict['preamble'] = preamble.format(nm=nm, contd='', counter='')
             else:
                 latexdict['preamble'] = preamble.format(nm=nm, contd=' continued', counter=r'\addtocounter{table}{-1}')
-            usub_meta[colnames][sel][ii:ii+25].write(f"{basepath}/papers/continuum_data/tables/observation_metadata_{nm}_rows{ii}-{ii+25}.tex",
+            usub_meta[colnames][sel][ii:ii+n_per_page].write(f"{basepath}/papers/continuum_data/tables/observation_metadata_{nm}_rows{ii}-{ii+n_per_page}.tex",
                                                      formats=formats,
                                                      overwrite=True,
                                                      latexdict=latexdict)
@@ -555,7 +574,9 @@ def make_spw_table():
     #formats = {key: lambda x: str(sigfig.round(str(x), sigfigs=2))
     #           for key in float_cols}
 
-    lines = [", ".join([x for x in linetbl['Line'][(linetbl['12m SPW'] == row['SPW']) & (np.char.find(linetbl['col9'], '**') != -1)]])
+    # mid-day 2025-11-12 this line suddenly started failing; it was working in the morning
+    # we have to use '.filled('--')' now, for no apparent reason
+    lines = [", ".join([x for x in linetbl['Line'][(linetbl['12m SPW'] == row['SPW']) & (np.char.find(linetbl['col9'].filled('--'), '**') != -1)]])
              for row in ftbl]
     lines = [x.replace("HC3N", "HC$_3$N").replace("13", "$^{13}$")
              .replace(" Alpha", r"$\alpha$").replace("15", "$^{15}$")
@@ -565,7 +586,7 @@ def make_spw_table():
     linefreqs = [", ".join(
                            [str(x)
                             for x in linetbl['Rest (GHz)'][((linetbl['12m SPW'] == row['SPW']) &
-                                                            (np.char.find(linetbl['col9'], '**') != -1))]])
+                                                            (np.char.find(linetbl['col9'].filled('--'), '**') != -1))]])
                  for row in ftbl]
 
     ftbl['Lines'] = [f'{x}\\\\ \n &&&&& {y}' for x, y in zip(lines, linefreqs)]
