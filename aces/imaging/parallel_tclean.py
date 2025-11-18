@@ -3,6 +3,7 @@ import textwrap
 import datetime
 from astropy import units as u
 import subprocess
+import ast
 
 
 def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
@@ -241,9 +242,13 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         """)
 
     splitscriptname = os.path.join(workdir, f"{imagename}_parallel_split_script.py")
+
     with open(splitscriptname, 'w') as fh:
         fh.write(splitscript)
-    print(f"Wrote splitscript {splitscriptname}")
+
+    ast.parse(splitscript)
+    print(f"Wrote splitscript {splitscriptname}", flush=True)
+
 
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
 
@@ -253,7 +258,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                    f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                    ' --nologger --nogui '
                    ' --logfile=${LOGFILENAME} '
-                   f' -c "execfile(\'{splitscriptname}\')"')
+                   f' -c "execfile(\'{splitscriptname}\')"\n')
 
     slurmsplitcmdsh = imagename + "_split_slurm_cmd.sh"
     with open(slurmsplitcmdsh, 'w') as fh:
@@ -282,6 +287,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     scriptname = os.path.join(workdir, f"{imagename}_parallel_script.py")
     with open(scriptname, 'w') as fh:
         fh.write(script)
+    ast.parse(script)
     print(f"Wrote script {scriptname}")
 
 
@@ -606,6 +612,8 @@ sys.exit(0)
 
     with open(mergescriptname, 'w') as fh:
         fh.write(mergescript)
+    ast.parse(mergescript)
+    print(f"Wrote mergescript {mergescriptname}", flush=True)
 
 
     #now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
@@ -632,4 +640,4 @@ sys.exit(0)
     else:
         print(cmd.split())
         sbatch = subprocess.check_output(cmd.split())
-        print(f'{sbatch.decode()} with jobname={jobname}_merge')
+        print(f'{sbatch.decode()} with jobname={jobname}_merge', flush=True)
