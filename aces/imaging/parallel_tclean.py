@@ -92,11 +92,14 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
         import sys
 
+        logprint("Defining test_valid")
+
         def test_valid(vis):
             try:
                 msmd.open(vis)
                 nchan_max = msmd.nchan(0)
                 msmd.close()
+                logprint(f"vis {{vis}} is valid with {{nchan_max}} channels")
                 return True
             except RuntimeError as ex:
                 logprint(f"vis {{vis}} was invalid.  Removing.")
@@ -104,9 +107,13 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                 shutil.rmtree(vis)
                 return False
 
+        logprint("Beginning loop over tclean_kwargs['vis']")
+
+        logprint(f'tclean kwargs are {{tclean_kwargs}}')
 
         for vis in {tclean_kwargs['vis']}:
             outputvis=f'{{rename_vis(vis)}}'
+            logprint(f"Trying to move or check existence of {{outputvis}}")
             if not os.path.exists(outputvis) or not test_valid(outputvis):
                 try:
                     logprint(f"Splitting {{vis}} with defaults")
@@ -132,6 +139,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         for vis in {tclean_kwargs['vis']}:
             outputvis=f'{{rename_vis(vis)}}'
             if not os.path.exists(outputvis):
+                logprint(f"ERROR: split vis {{outputvis}} does not exist after splitting.")
                 # fail!
                 sys.exit(1)
 
@@ -154,6 +162,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         """)
     script += logprint
     script += "\nlogprint(f'Log file name is {os.getenv(\"LOGFILENAME\")}')\n"
+    script += "\nlogprint('This is the next line')\n"
     script += rename_vis
     splitscript = script + splitcmd
 
@@ -249,7 +258,6 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     ast.parse(splitscript)
     print(f"Wrote splitscript {splitscriptname}", flush=True)
 
-
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
 
     runsplitcmd = ("#!/bin/bash\n"
@@ -258,7 +266,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                    f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                    ' --nologger --nogui '
                    ' --logfile=${LOGFILENAME} '
-                   f' -c "execfile(\'{splitscriptname}\')"\n')
+                   f' -c "execfile(\'{splitscriptname}\')"\n'
+                   )
 
     slurmsplitcmdsh = imagename + "_split_slurm_cmd.sh"
     with open(slurmsplitcmdsh, 'w') as fh:
@@ -282,7 +291,6 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         sbatch = subprocess.check_output(slurmsplitcmd.split())
         scriptjobid = sbatch.decode().split()[-1]
         print(f'Split: {sbatch.decode()} with jobname={jobname}')
-
 
     scriptname = os.path.join(workdir, f"{imagename}_parallel_script.py")
     with open(scriptname, 'w') as fh:
