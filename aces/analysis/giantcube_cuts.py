@@ -533,7 +533,7 @@ def main():
         if os.path.getsize(src_cubefilename) > 3e11:
             # too big for local
             print("Using local (copying to /red)")
-            cubefilename = os.path.join('/red/adamginsburg/ACES/workdir/', os.path.basename(src_cubefilename))
+            cubefilename = os.path.join('/blue/adamginsburg/adamginsburg/ACES/workdir/', os.path.basename(src_cubefilename))
         else:
             print("Using local (copying to /tmp)")
             cubefilename = os.path.join(os.getenv('TMPDIR'), os.path.basename(src_cubefilename))

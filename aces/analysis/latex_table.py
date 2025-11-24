@@ -202,7 +202,7 @@ def find_schedblock_elements(data, results=None):
 
 def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
                                 username='keflavich', timeout=30, retry=5, access_token=None,
-                                cache='/red/adamginsburg/ACES/logs/execution_metadata.json'
+                                cache='/blue/adamginsburg/adamginsburg/ACES/logs/execution_metadata.json'
                                 ):
 
     if cache and os.path.exists(cache):
