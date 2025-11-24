@@ -5,7 +5,7 @@ date
 . ~/.gh_token
 echo $GITHUB_TOKEN
 
-cd /red/adamginsburg/ACES/workdir/
+cd /blue/adamginsburg/adamginsburg/ACES/workdir/
 pwd
 
 # use_dask=False resulted in an immediate OOM, which doesn't make sense
@@ -45,13 +45,13 @@ for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H
         export DO_PV=True
 
         echo "Giant ${MOLNAME} cube"
-        #/red/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/analysis/giantcube_cuts.py || exit 1
+        #/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/analysis/giantcube_cuts.py || exit 1
         sbatch --job-name=aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT} \
-               --output=/red/adamginsburg/ACES/logs/aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT}_%j.log \
+               --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT}_%j.log \
                --account=astronomy-dept --qos=astronomy-dept-b --ntasks=32 --nodes=1 \
                --mem=${mem}gb --time=96:00:00 \
                --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},USE_LOCAL=${USE_LOCAL},DASK_CLIENT=${DASK_CLIENT},DOWNSAMPLE=${DOWNSAMPLE},DO_PV=${DO_PV} \
-               --wrap /red/adamginsburg/miniconda3/envs/python312/bin/aces_giantcube_analysis
+               --wrap /blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/aces_giantcube_analysis
     else
         echo "${MOLNAME}_CubeMosaic.fits does not exist"
         ls -lh ${MOLNAME}*fits
@@ -59,4 +59,4 @@ for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H
 done
 
 # one=line version
-# export MOLNAME=SiO21 DOWNSAMPLE=True DOPV=True mem=256 USE_LOCAL=True USE_DASK=False;            sbatch --job-name=aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT}                --output=/red/adamginsburg/ACES/logs/aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT}_%j.log                --account=astronomy-dept --qos=astronomy-dept-b --ntasks=32 --nodes=1                --mem=${mem}gb --time=96:00:00                --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},USE_LOCAL=${USE_LOCAL},DASK_CLIENT=${DASK_CLIENT},DOWNSAMPLE=${DOWNSAMPLE},DO_PV=${DO_PV}                --wrap /red/adamginsburg/miniconda3/envs/python312/bin/aces_giantcube_analysis
+# export MOLNAME=SiO21 DOWNSAMPLE=True DOPV=True mem=256 USE_LOCAL=True USE_DASK=False;            sbatch --job-name=aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT}                --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT}_%j.log                --account=astronomy-dept --qos=astronomy-dept-b --ntasks=32 --nodes=1                --mem=${mem}gb --time=96:00:00                --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},USE_LOCAL=${USE_LOCAL},DASK_CLIENT=${DASK_CLIENT},DOWNSAMPLE=${DOWNSAMPLE},DO_PV=${DO_PV}                --wrap /red/adamginsburg/miniconda3/envs/python312/bin/aces_giantcube_analysis

@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --mem=4gb                     # Job memory request
 #SBATCH --time=5:00:00               # Time limit hrs:min:sec
-#SBATCH --output=/red/adamginsburg/ACES/logs/make_ACES_scripts_%j.log
+#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/make_ACES_scripts_%j.log
 #SBATCH --export=ALL
 #SBATCH --job-name=make_ACES_scripts
 #SBATCH --qos=astronomy-dept
@@ -14,7 +14,7 @@ pwd; hostname; date
 
 export ACES="/orange/adamginsburg/ACES/"
 export WORK_DIR="/orange/adamginsburg/ACES/reduction_ACES/"
-export WORK_DIR="/red/adamginsburg/ACES/workdir"
+export WORK_DIR="/blue/adamginsburg/adamginsburg/ACES/workdir"
 export ACES_DATADIR="${ACES}/data/"
 export WEBLOG_DIR="${ACES}/data/2021.1.00172.L/weblogs/"
 
@@ -46,7 +46,7 @@ export ENVIRON='BATCH'
 export DASK_THREADS=$SLURM_NTASKS
 
 export TRYDROPTARGET=True
-export TEMPORARY_WORKING_DIRECTORY="/red/adamginsburg/ACES/workdir"
+export TEMPORARY_WORKING_DIRECTORY="/blue/adamginsburg/adamginsburg/ACES/workdir"
 
 env
 

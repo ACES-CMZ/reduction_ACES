@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --mem=256gb                     # Job memory request
 #SBATCH --time=96:00:00               # Time limit hrs:min:sec
-#SBATCH --output=/red/adamginsburg/ACES/logs/cube_stats_grid_feathered_ACES_%j.log
+#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/cube_stats_grid_feathered_ACES_%j.log
 #SBATCH --export=ALL
 #SBATCH --job-name=cube_stats_grid_ACES
 #SBATCH --qos=astronomy-dept-b

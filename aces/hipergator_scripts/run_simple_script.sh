@@ -2,7 +2,7 @@
 #SBATCH --mail-type=NONE          # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=adamginsburg@ufl.edu     # Where to send mail
 #SBATCH --nodes=1
-#SBATCH --output=/red/adamginsburg/ACES/logs/run_simple_%j.log   # Standard output and error log
+#SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/run_simple_%j.log   # Standard output and error log
 
 # https://stackoverflow.com/a/2853811/814354
 set -o xtrace
@@ -20,10 +20,10 @@ fi
 #module load cuda/11.0.207
 module load intel/2020.0.166 openmpi/4.1.1 libfuse/3.10.4
 
-LOG_DIR=/red/adamginsburg/ACES/logs
+LOG_DIR=/blue/adamginsburg/adamginsburg/ACES/logs
 export LOGFILENAME="${LOG_DIR}/casa_log_${jobname}_${SLURM_JOB_ID}_$(date +%Y-%m-%d_%H_%M_%S).log"
 
-WORK_DIR='/red/adamginsburg/ACES/workdir/'
+WORK_DIR='/blue/adamginsburg/adamginsburg/ACES/workdir/'
 cd ${WORK_DIR}
 # this directory should contain a folder pipeline_scripts/ if any overloaded pipeline scripts are expected
 export ACES_ROOTDIR="/orange/adamginsburg/ACES/reduction_ACES/"

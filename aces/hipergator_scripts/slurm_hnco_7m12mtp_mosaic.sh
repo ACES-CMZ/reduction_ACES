@@ -1,6 +1,6 @@
 
 jobid=$(sbatch --job-name=aces_hnco7m12mtp_mos_arr \
-    --output=/red/adamginsburg/ACES/logs/aces_hnco7m12mtp_mosaic_%j_%A_%a.log  \
+    --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_hnco7m12mtp_mosaic_%j_%A_%a.log  \
     --array=0-99 \
     --account=astronomy-dept --qos=astronomy-dept-b \
     --ntasks=8 --nodes=1 --mem=64gb --time=96:00:00 --parsable \
@@ -10,7 +10,7 @@ echo "Job IDs are ${jobid}"
 
 # 2024-06-15: 'skip' doesn't do anything because now we're trying full-cube mode
 sbatch --job-name=aces_hnco7m12mtp_mosaic_merge \
-    --output=/red/adamginsburg/ACES/logs/aces_hnco7m12mtp_mosaic_merge_%j.log  \
+    --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_hnco7m12mtp_mosaic_merge_%j.log  \
     --account=astronomy-dept --qos=astronomy-dept-b \
     --dependency=afterok:$jobid \
     --ntasks=16 --nodes=1 --mem=64gb --time=96:00:00 \
