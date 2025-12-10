@@ -19,6 +19,7 @@ basepath = conf.basepath
 
 pl.rcParams['font.size'] = 16
 
+
 def format_ax(ax, label="", cb=True, hidey=False, hidex=False, cbar_size="5%"):
     ax.coords[0].set_axislabel("Right Ascension")
     ax.coords[1].set_axislabel("Declination")

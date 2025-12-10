@@ -187,10 +187,10 @@ diff = -(meerkat_to_brick * meerkat_jtok.value / frequency_scale_meeralma
          - ACES_conv_MEER)
 pl.imshow(diff[slc], cmap=mymap, norm=norm)
 
-ax1.text(0.95, 0.95, f"MEERKAT", transform=ax1.transAxes, horizontalalignment='right')
+ax1.text(0.95, 0.95, "MEERKAT", transform=ax1.transAxes, horizontalalignment='right')
 ax2.text(0.95, 0.95, "ACES smooth", transform=ax2.transAxes, horizontalalignment='right',)
 ax3.text(0.95, 0.95, "$\\alpha$(ACESsm / MEERKAT)", transform=ax3.transAxes, horizontalalignment='right')
-ax4.text(0.95, 0.95, f"ACESsm-MEERKAT", transform=ax4.transAxes, horizontalalignment='right')
+ax4.text(0.95, 0.95, "ACESsm-MEERKAT", transform=ax4.transAxes, horizontalalignment='right')
 
 format_ax(ax1, label="", cb=False, hidex=True)
 format_ax(ax4, label="", cb=False)
@@ -240,12 +240,12 @@ ax5 = pl.subplot(3, 2, 6, projection=ww[75:-75, 125:-125])
 pl.imshow(brick_feather_conv_MEER[75:-75, 125:-125] * jtok_Brick.value,
           cmap=mymap, norm=norm)
 
-ax1.text(0.95, 0.95, f"MEERKAT", transform=ax1.transAxes, horizontalalignment='right')
+ax1.text(0.95, 0.95, "MEERKAT", transform=ax1.transAxes, horizontalalignment='right')
 ax2.text(0.95, 0.95, "ACES smooth", transform=ax2.transAxes, horizontalalignment='right', color='w')
-ax3.text(0.95, 0.95, f"ACESsm-MEERKAT", transform=ax3.transAxes, horizontalalignment='right', color='w')
+ax3.text(0.95, 0.95, "ACESsm-MEERKAT", transform=ax3.transAxes, horizontalalignment='right', color='w')
 ax4.text(0.95, 0.95, "$\\alpha$ ACES/MEERKAT", transform=ax4.transAxes, horizontalalignment='right', color='k')
 ax5.text(0.95, 0.95, "BrickC0", transform=ax5.transAxes, horizontalalignment='right')
-ax6.text(0.95, 0.95, f"ACESsm-MEERKAT-C0", transform=ax6.transAxes, horizontalalignment='right')
+ax6.text(0.95, 0.95, "ACESsm-MEERKAT-C0", transform=ax6.transAxes, horizontalalignment='right')
 
 format_ax(ax1, label="", cb=False, hidex=True)
 format_ax(ax3, label="", cb=False, hidex=True)
