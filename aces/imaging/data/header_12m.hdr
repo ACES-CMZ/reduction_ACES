@@ -1,5 +1,5 @@
 SIMPLE  =                    T / conforms to FITS standard
-BITPIX  =                  -64 / array data type
+BITPIX  =                  -32 / array data type
 NAXIS   =                    2 / number of array dimensions
 NAXIS1  =                11120
 NAXIS2  =                 4080
