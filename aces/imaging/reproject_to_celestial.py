@@ -9,10 +9,14 @@ renaming: reprojected files should go in {ACES_rootdir}//products_for_ALMA/group
 
 sbatch --job-name=reproject_aces_cel --account=astronomy-dept --qos=astronomy-dept-b --nodes=1 --ntasks=32 --mem=512gb --time=96:00:00 --output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_%j.log --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py --serial"
 
+# parallel version
+/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py
+
 
 To use dask, we need to handle:
 https://github.com/dask/dask/issues/11850#issuecomment-3035792958
 https://github.com/dask/dask/pull/11524
+(but this is probably handled by reproject now)
 """
 
 import os
@@ -33,8 +37,9 @@ from dask import delayed
 # Configuration
 ACES_rootdir = Path("/orange/adamginsburg/ACES")
 header_file = ACES_rootdir / "reduction_ACES/aces/imaging/data/header_12m_radec.hdr"
-source_dir = ACES_rootdir / "products_for_ALMA/group.uid___A001_X1590_X30a9.lp_slongmore"
-output_dir = source_dir / "icrs"
+header_file_downsampled = ACES_rootdir / "reduction_ACES/aces/imaging/data/header_12m_radec_downsampled.hdr"
+source_dir = ACES_rootdir / "products_for_ALMA/group.uid___A001_X1590_X30a9.lp_slongmore.galactic"
+output_dir = ACES_rootdir / "products_for_ALMA/group.uid___A001_X1590_X30a9.lp_slongmore"
 
 # Set up Dask temporary directory for Slurm environment
 # Use SLURM_TMPDIR if available, otherwise fall back to /blue scratch space
@@ -214,12 +219,17 @@ def calculate_memory_allocation(file_size_bytes):
         return 512
 
 
+def check_file(filename):
+    cube = SpectralCube.read(filename, use_dask=True)
+    mx = cube.max()
+    if np.isnan(mx) or mx == 0:
+        return False
+    return True
+
+
 def main_serial():
     """Serial reprojection workflow (original main function)."""
     print("ACES Data Reprojection to ICRS (RA/Dec) - Serial Mode")
-
-    # Load target header
-    target_header = load_target_header(header_file)
 
     # Create output directory if it doesn't exist
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -235,17 +245,28 @@ def main_serial():
         # Insert .icrs after cmz_mosaic in the filename
         output_path = output_dir / input_path.name.replace('cmz_mosaic.', 'cmz_mosaic.icrs.')
 
-        if os.path.exists(output_path):
-            print(f"    Skipping {output_path.name}, already exists.")
+        if 'downsampled_spatially' in input_path.name:
+            target_header = load_target_header(header_file_downsampled)
         else:
-            #reproject_file(input_path, target_header, output_path)
-            reproject_interp(input_path, target_header, output_path)
+            target_header = load_target_header(header_file)
+
+
+        if os.path.exists(output_path):
+            is_ok = check_file(output_path)
+            if is_ok:
+                print(f"    Skipping {output_path.name}: already exists and seems OK.")
+                continue
+            else:
+                print(f"    Removing {output_path.name}: exists but failed check.")
+                os.remove(output_path)
+
+        reproject_file(input_path, target_header, output_path)
 
     # Summary
     print(f"Reprojection complete!  Total: {len(files_to_reproject)}")
 
 
-def main():
+def main(check_files=False):
     """Submit SLURM array job for parallel reprojection."""
     import subprocess
     import sys
@@ -266,6 +287,13 @@ def main():
         if not os.path.exists(output_path):
             files_needed.append(input_path)
         else:
+            if check_files:
+                is_ok = check_file(output_path)
+                if not is_ok:
+                    print(f"    Removing {output_path.name}: exists but failed check.")
+                    os.remove(output_path)
+                else:
+                    print(f"    Skipping {output_path.name}, already exists and seems OK.")
             print(f"    Skipping {output_path.name}, already exists.")
 
     if not files_needed:
@@ -363,19 +391,22 @@ def array_task_worker():
 
     print(f"Processing file {task_id + 1}/{len(files)}: {input_path.name}")
 
-    # Load target header
-    target_header = load_target_header(header_file)
+    if 'downsampled_spatially' in input_path.name:
+        target_header = load_target_header(header_file_downsampled)
+    else:
+        target_header = load_target_header(header_file)
 
-    # Reproject this file
-    try:
-        reproject_file(input_path, target_header, output_path)
-        print(f"✓ Task {task_id} completed successfully")
-    except Exception as e:
-        print(f"✗ Task {task_id} failed with error:")
-        print(e)
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    if os.path.exists(output_path):
+        is_ok = check_file(output_path)
+        if is_ok:
+            print(f"    Skipping {output_path.name}: already exists and seems OK.")
+            return
+        else:
+            print(f"    Removing {output_path.name}: exists but failed check.")
+            os.remove(output_path)
+
+    reproject_file(input_path, target_header, output_path)
+
 
 if __name__ == "__main__":
     import sys
