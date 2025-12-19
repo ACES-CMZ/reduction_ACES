@@ -57,7 +57,7 @@ def axis_is_spatial(t: str) -> bool:
 
 
 def axis_is_spectral(t: str) -> bool:
-    return bool(t) and (t.startswith('em.') or t.startswith('spect.') or 
+    return bool(t) and (t.startswith('em.') or t.startswith('spect.') or
                         'freq' in t.lower() or 'velo' in t.lower())
 
 
@@ -83,14 +83,14 @@ def convert_velocity_to_frequency(header) -> list[str]:
     equiv = u.doppler_radio(rest_freq)
     freq_ref = vel_ref.to(u.Hz, equivalencies=equiv)
     freq_delta = (vel_ref + vel_delta).to(u.Hz, equivalencies=equiv) - freq_ref
-    
+
     header["CTYPE3"] = "FREQ"
     header["CUNIT3"] = "Hz"
     header["CRVAL3"] = freq_ref.value
     header["CDELT3"] = freq_delta.value
     header["SPECSYS"] = "LSRK"
     header["VELREF"] = 257
-    
+
     return ["converted axis 3 velocity -> frequency; set SPECSYS='LSRK', VELREF=257"]
 
 
@@ -113,16 +113,16 @@ def extract_spectral_wcs(cube_path: Path) -> Optional[dict]:
         naxis = hdr.get("NAXIS")
         if not isinstance(naxis, int) or naxis < 3:
             raise ValueError(f"Cube found at {cube_path} but NAXIS is {naxis} (expected >= 3)")
-        
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             wcs = WCS(hdr, naxis=naxis)
             axis_types = wcs.world_axis_physical_types
-            
+
             spec_idx = next((i for i, t in enumerate(axis_types) if axis_is_spectral(t)), None)
             if spec_idx is None:
                 raise ValueError(f"Cube found at {cube_path} but no spectral axis identified")
-            
+
             ax = spec_idx + 1
             return {
                 "CTYPE3": hdr.get(f"CTYPE{ax}"),
@@ -142,7 +142,7 @@ def should_add_freq_axis(header, cont_params: Optional[dict]) -> bool:
     if not cont_params or header.get("NAXIS") != 2:
         return False
     axis_types = get_axis_types(header)
-    return (axis_types and len(axis_types) >= 2 and 
+    return (axis_types and len(axis_types) >= 2 and
             axis_is_spatial(axis_types[0]) and axis_is_spatial(axis_types[1]))
 
 
@@ -159,54 +159,54 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
     """Apply all fixes to a FITS file. Returns (changed, error_messages)."""
     errors = []
     fname_lower = fits_path.name.lower()
-    
+
     with fits.open(fits_path, mode="update", lazy_load_hdus=False) as hdul:
         if not hdul:
             return False, [f"no HDUs in {fits_path.name}"]
-        
+
         h0 = hdul[0]
         hdr = h0.header
-        
+
         # Identify file type
         is_model_resid = ".model" in fname_lower or ".residual" in fname_lower
         is_pv = ".pv" in fname_lower
         is_mosaic = "cmz_mosaic" in fname_lower
         is_moment = any(fname_lower.endswith(s.lower()) for s in MOMENT_SUFFIXES)
-        
+
         target = None if is_mosaic else extract_gal_target(fits_path.name)
         cont_params = identify_continuum(fits_path)
-        
+
         # Handle moment maps
         cube_wcs = None
         if is_moment and (cube_file := find_cube_for_moment(fits_path)):
             cube_wcs = extract_spectral_wcs(cube_file)
-        
+
         # === Apply fixes ===
-        
+
         # 1. Static mandatory keywords
         hdr["OBJECT"] = "Sgr_A_star"
         hdr["TELESCOP"] = "ALMA"
         hdr["INSTRUME"] = "ALMA"
         hdr["RADESYS"] = "ICRS"
-        
+
         # ORIGIN / CASAVERS
         cur_origin = hdr.get("ORIGIN")
         if cur_origin and "casa" in str(cur_origin).lower():
             hdr["CASAVERS"] = (cur_origin, "CASA version used for processing")
         hdr["ORIGIN"] = DEFAULT_ORIGIN
-        
+
         # DATE-OBS
         if not (dob := hdr.get("DATE-OBS")):
             hdr["DATE-OBS"] = DEFAULT_DATE_OBS
         elif " " in str(dob) and "T" not in str(dob):
             hdr["DATE-OBS"] = str(dob).replace(" ", "T", 1)
-        
+
         if target:
             hdr["TARGET"] = target
-        
+
         # 2. Dimension updates
         data = h0.data
-        
+
         # Moment maps: 2D -> 3D
         if is_moment and cube_wcs and hdr.get("NAXIS") == 2:
             if should_add_freq_axis(hdr, {"freq": 1, "bw": 1}) and data is not None:
@@ -221,7 +221,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
                 hdr["CUNIT3"] = cube_wcs["CUNIT3"]
                 if cube_wcs.get("RESTFRQ"):
                     hdr["RESTFRQ"] = cube_wcs["RESTFRQ"]
-        
+
         # Continuum: 2D -> 3D
         elif should_add_freq_axis(hdr, cont_params) and data is not None:
             h0.data = data[np.newaxis, ...]
@@ -233,7 +233,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
             hdr["CRPIX3"] = 1.0
             hdr["CDELT3"] = float(cont_params['bw'])
             hdr["CUNIT3"] = "Hz"
-        
+
         # 3D -> 4D with Stokes
         if should_add_stokes_axis(hdr, is_pv) and data is not None:
             with warnings.catch_warnings():
@@ -246,18 +246,18 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
                 hdr["NAXIS"] = 4
                 hdr["NAXIS4"] = 1
                 hdr["CUNIT4"] = ""
-        
+
         # Ensure CUNIT4 on existing 4D files
         if hdr.get("NAXIS") == 4 and "CUNIT4" not in hdr:
             hdr["CUNIT4"] = ""
-        
+
         # 3. Velocity -> Frequency conversion
         if is_velocity_axis(hdr)[0]:
             convert_velocity_to_frequency(hdr)
         else:
             hdr["SPECSYS"] = "LSRK"
             hdr["VELREF"] = 257
-        
+
         # 4. Data min/max
         if data is not None:
             finite = data[np.isfinite(data)]
@@ -266,15 +266,16 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
                     hdr["DATAMIN"] = float(finite.min())
                 if "DATAMAX" not in hdr:
                     hdr["DATAMAX"] = float(finite.max())
-        
+
         # 5. BUNIT standardisation
         if not is_model_resid:
             bunit = hdr.get("BUNIT")
             if bunit and bunit.strip() in MALFORMED_BUNIT:
                 hdr["BUNIT"] = "Jy/beam"
-        
+
         hdul.flush()
         return True, errors
+
 
 def main():
     fits_list = sorted([
@@ -282,12 +283,12 @@ def main():
         if ".icrs" not in f.name # Skip the reprojected files (they should inherit header info from Galactic files, right???)
     ])
     total = len(fits_list)
-    
+
     print(f"Processing {total} FITS files in {BASE_DIR}")
-    
+
     n_ok = n_err = 0
     error_files = []
-    
+
     for f in fits_list:
         ok, errs = apply_fixes(f)
         if ok:
@@ -295,14 +296,14 @@ def main():
         else:
             n_err += 1
             error_files.append((f.name, errs))
-    
-    print(f"\n--- Summary ---")
+
+    print("\n--- Summary ---")
     print(f"Total files: {total}")
     print(f"Successfully updated: {n_ok}")
     print(f"Errors: {n_err}")
-    
+
     if error_files:
-        print(f"\nFiles with errors:")
+        print("\nFiles with errors:")
         for name, errs in error_files:
             print(f"  {name}: {'; '.join(errs)}")
 
