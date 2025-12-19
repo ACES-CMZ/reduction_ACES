@@ -7,7 +7,7 @@ target folder is {ACES_rootdir}/products_for_ALMA/group.uid___A001_X1590_X30a9.l
 
 renaming: reprojected files should go in {ACES_rootdir}//products_for_ALMA/group.uid___A001_X1590_X30a9.lp_slongmore/icrs/, and .icrs should be added to each file's name after `cmz_mosaic`
 
-sbatch --job-name=reproject_aces_cel --account=astronomy-dept --qos=astronomy-dept-b --nodes=1 --ntasks=32 --mem=512gb --time=96:00:00 --output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_%j.log --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py --serial"
+sbatch --job-name=reproject_aces_cel --account=astronomy-dept --qos=astronomy-dept-b --nodes=1 --ntasks=32 --mem=512gb --time=96:00:00 --output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_%j.log --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py --serial"  # noqa: E501
 
 # parallel version
 /blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py

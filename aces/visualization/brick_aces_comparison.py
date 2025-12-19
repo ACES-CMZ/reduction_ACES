@@ -264,22 +264,19 @@ pl.savefig(f'{basepath}/papers/continuum_data/figures/BrickMEERKAT_comparison_la
 print(f'Effective spectral index assumed={effective_index:0.3f}')
 
 
-
-
-
 fig = pl.figure(figsize=(12, 11))
 ax1 = pl.subplot(2, 2, 1, projection=ww_big)
 norm = simple_norm(meerkat_conv_MUSTANG * meerkat_jtok.value * frequency_scale_meeralma,
-                   stretch='linear', vmin=-10, vmax=50) #max_percent=99.95, min_percent=1)
+                   stretch='linear', vmin=-10, vmax=50)  # max_percent=99.95, min_percent=1
 pl.imshow(meerkat_conv_MUSTANG * meerkat_jtok.value * frequency_scale_meeralma,
           cmap=mymap, norm=norm)
 ax2 = pl.subplot(2, 2, 2, projection=ww_big)
-pl.imshow(mustang_to_brick, cmap=mymap, norm=norm) #simple_norm(mustang_to_brick, stretch='linear', max_percent=99.5, min_percent=1))
+pl.imshow(mustang_to_brick, cmap=mymap, norm=norm)  # simple_norm(mustang_to_brick, stretch='linear', max_percent=99.5, min_percent=1)
 ax3 = pl.subplot(2, 2, 3, projection=ww_big)
-pl.imshow(mustang_meerkat_difference, 
+pl.imshow(mustang_meerkat_difference,
           norm=simple_norm(mustang_meerkat_difference, vmin=-5, vmax=5),
           cmap=mymap)
-          #norm=simple_norm(mustang_meerkat_ratio, stretch='linear', vmin=-0.001, vmax=0.005))
+# norm=simple_norm(mustang_meerkat_ratio, stretch='linear', vmin=-0.001, vmax=0.005)
 ax4 = pl.subplot(2, 2, 4, projection=ww_big)
 pl.imshow(alpha_mustang_meerkat, norm=simple_norm(alpha_mustang_meerkat, stretch='linear', vmin=-1.25, vmax=0.1))
 

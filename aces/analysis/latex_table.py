@@ -13,17 +13,11 @@ from tqdm.auto import tqdm
 import casa_formats_io
 import radio_beam
 from astropy.io import fits
-import requests
 from astroquery.alma import Alma
 import time
 from astropy.time import Time
 from astropy.io import ascii
 from astropy.coordinates import SkyCoord
-
-from astroquery.alma import Alma
-from astropy.time import Time
-import numpy as np
-from astropy.table import Table
 
 from aces.analysis.latex_info import (latexdict, format_float, round_to_n, rounded,
                                       rounded_arr, strip_trailing_zeros, exp_to_tex)
@@ -304,11 +298,12 @@ def make_observation_table(access_token=None, use_cache=True):
 
         schedblock_meta = retrieve_execution_metadata(access_token=access_token)
 
-        usub_meta['EB ID'] = [rf'\makecell[l]{{{",\\\\ ".join([r'\texttt{' + (x['execblockuid']) + '}'
-                                                                    for x in schedblock_meta[schedblock_name]['executions']
-                                                                    if x['status'] == 'Pass'
-                                                                    ])}. \vspace{{1.5mm}}}}'
-                                    for schedblock_name in usub_meta['schedblock_name']]
+        usub_meta['EB ID'] = [rf'''\makecell[l]{{{",,\\\\ ".join([r'\texttt{' + (x['execblockuid']) + '}'
+                                                                for x in schedblock_meta[schedblock_name]['executions']
+                                                                if x['status'] == 'Pass'
+                                                                ])
+                                                }. \vspace{{1.5mm}}}}'''
+                              for schedblock_name in usub_meta['schedblock_name']]
         usub_meta['executions'] = [', '.join([x['date']
                                               for x in schedblock_meta[schedblock_name]['executions']
                                               if x['status'] == 'Pass'
@@ -527,9 +522,9 @@ def make_observation_table(access_token=None, use_cache=True):
             else:
                 latexdict['preamble'] = preamble.format(nm=nm, contd=' continued', counter=r'\addtocounter{table}{-1}')
             usub_meta[colnames][sel][ii:ii+n_per_page].write(f"{basepath}/papers/continuum_data/tables/observation_metadata_{nm}_rows{ii}-{ii+n_per_page}.tex",
-                                                     formats=formats,
-                                                     overwrite=True,
-                                                     latexdict=latexdict)
+                                                             formats=formats,
+                                                             overwrite=True,
+                                                             latexdict=latexdict)
 
     return usub_meta, (tm, sm, tp)
 
@@ -657,11 +652,12 @@ def main():
     make_table_3()
 
     print("Starting make_latex_table", flush=True)
-    result = make_latex_table()
+    make_latex_table()
     print("Completed make_latex_table", flush=True)
 
     make_observation_table(use_cache=False)
     print("Completed make_observation_table", flush=True)
+
 
 if __name__ == "__main__":
     print("Running main()", flush=True)
