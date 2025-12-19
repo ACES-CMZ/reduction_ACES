@@ -33,6 +33,7 @@ import dask.array as da
 from dask.diagnostics import ProgressBar
 import dask
 from dask import delayed
+from spectral_cube import SpectralCube
 
 # Configuration
 ACES_rootdir = Path("/orange/adamginsburg/ACES")
@@ -169,12 +170,12 @@ def reproject_file(input_path, target_header, output_path, block_size='auto'):
     with fits.open(output_path, mode='update', memmap=True) as output_hdul:
         # Reproject into the memory-mapped array
         if naxis == 2:
-            print(f"    Reprojecting 2D image")
+            print("    Reprojecting 2D image")
             reproject_interp((input_dask, WCS(input_header)), target_header,
-                            output_array=output_hdul[0].data, return_footprint=False,
-                            parallel=True)
+                             output_array=output_hdul[0].data, return_footprint=False,
+                             parallel=True)
         elif naxis == 3:
-            print(f"    Reprojecting 3D cube with Dask")
+            print("    Reprojecting 3D cube with Dask")
             n_planes = output_shape[0]
             wcs_3d = WCS(input_header)
             wcs_2d = wcs_3d.celestial
@@ -183,8 +184,8 @@ def reproject_file(input_path, target_header, output_path, block_size='auto'):
                 # Dask slice is lazy - only computed when needed
                 plane_data = input_dask[i, :, :]
                 reproject_interp((plane_data, wcs_2d), target_header,
-                                output_array=output_hdul[0].data[i, :, :],
-                                return_footprint=False, parallel=True)
+                                 output_array=output_hdul[0].data[i, :, :],
+                                 return_footprint=False, parallel=True)
         else:
             # really this is a 'NotRelevantError'
             raise NotImplementedError("Reprojection for 4D data is not implemented yet.")
@@ -192,7 +193,7 @@ def reproject_file(input_path, target_header, output_path, block_size='auto'):
         # Flush changes to disk
         output_hdul.flush()
 
-    print(f"    ✓ Complete")
+    print("    ✓ Complete")
 
 
 def calculate_memory_allocation(file_size_bytes):
@@ -249,7 +250,6 @@ def main_serial():
             target_header = load_target_header(header_file_downsampled)
         else:
             target_header = load_target_header(header_file)
-
 
         if os.path.exists(output_path):
             is_ok = check_file(output_path)
@@ -319,7 +319,7 @@ def main(check_files=False):
             mem_gb = calculate_memory_allocation(file_size)
             memory_allocations.append(mem_gb)
             f.write(f"{mem_gb}\n")
-            print(f"  {input_path.name}: {file_size/(1024**3):.2f} GB -> allocate {mem_gb} GB")
+            print(f"  {input_path.name}: {file_size / (1024**3):.2f} GB -> allocate {mem_gb} GB")
 
     print(f"Memory allocations written to: {memory_file_path}")
 
