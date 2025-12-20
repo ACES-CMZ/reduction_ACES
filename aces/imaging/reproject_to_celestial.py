@@ -7,7 +7,11 @@ target folder is {ACES_rootdir}/products_for_ALMA/group.uid___A001_X1590_X30a9.l
 
 renaming: reprojected files should go in {ACES_rootdir}//products_for_ALMA/group.uid___A001_X1590_X30a9.lp_slongmore/icrs/, and .icrs should be added to each file's name after `cmz_mosaic`
 
-sbatch --job-name=reproject_aces_cel --account=astronomy-dept --qos=astronomy-dept-b --nodes=1 --ntasks=32 --mem=512gb --time=96:00:00 --output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_%j.log --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py --serial"  # noqa: E501
+sbatch --job-name=reproject_aces_cel --account=astronomy-dept --qos=astronomy-dept-b --nodes=1 --ntasks=32 --mem=512gb --time=96:00:00 --output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_%j.log --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py --serial"  # noqa
+
+
+Just the code runner (this should spawn other jobs)
+sbatch --job-name=reproject_aces_cel_runner --account=astronomy-dept --qos=astronomy-dept --nodes=1 --ntasks=4 --mem=64gb --time=1:00:00 --output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_runner_%j.log --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py --check-files"  # noqa
 
 # parallel version
 /blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py
@@ -34,6 +38,7 @@ from dask.diagnostics import ProgressBar
 import dask
 from dask import delayed
 from spectral_cube import SpectralCube
+from spectral_cube.utils import FITSReadError
 
 # Configuration
 ACES_rootdir = Path("/orange/adamginsburg/ACES")
@@ -220,11 +225,26 @@ def calculate_memory_allocation(file_size_bytes):
         return 512
 
 
-def check_file(filename):
-    cube = SpectralCube.read(filename, use_dask=True)
-    mx = cube.max()
-    if np.isnan(mx) or mx == 0:
-        return False
+def check_file(filename, threshold=0.75):
+    print(f"    Checking file integrity: {filename} with size {os.path.getsize(filename) / (1024**3):.2f} GB")
+    try:
+        cube = SpectralCube.read(filename, use_dask=True)
+
+        # bad form, but I really really need dask to do both these operations at once
+        # default fill is nan
+        mx, nnan = dask.compute(da.nanmax(cube.filled_data[:]),
+                                da.isnan(cube.filled_data[:]).sum())
+        print("Computed mx and nnan = {mx}, {nnan}".format(mx=mx, nnan=nnan))
+
+        if np.isnan(mx) or mx == 0 or nnan / cube.size > threshold:
+            return False
+    except FITSReadError:
+        print("SpectralCube could not read the file.")
+        data = fits.getdata(filename)
+        nnan = np.isnan(data).sum()
+        mx = np.nanmax(data)
+        if nnan > 0 or mx == 0 or nnan / data.size > threshold:
+            return False
     return True
 
 
@@ -416,5 +436,7 @@ if __name__ == "__main__":
         array_task_worker()
     elif '--serial' in sys.argv:
         main_serial()
+    elif '--check-files' in sys.argv:
+        main(check_files=True)
     else:
         main()

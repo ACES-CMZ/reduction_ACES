@@ -299,9 +299,9 @@ def make_observation_table(access_token=None, use_cache=True):
         schedblock_meta = retrieve_execution_metadata(access_token=access_token)
 
         usub_meta['EB ID'] = [rf'''\makecell[l]{{{",,\\\\ ".join([r'\texttt{' + (x['execblockuid']) + '}'
-                                                                for x in schedblock_meta[schedblock_name]['executions']
-                                                                if x['status'] == 'Pass'
-                                                                ])
+                                                                  for x in schedblock_meta[schedblock_name]['executions']
+                                                                  if x['status'] == 'Pass'
+                                                                  ])
                                                 }. \vspace{{1.5mm}}}}'''
                               for schedblock_name in usub_meta['schedblock_name']]
         usub_meta['executions'] = [', '.join([x['date']
