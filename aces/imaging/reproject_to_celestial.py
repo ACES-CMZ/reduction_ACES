@@ -11,7 +11,7 @@ sbatch --job-name=reproject_aces_cel --account=astronomy-dept --qos=astronomy-de
 
 
 Just the code runner (this should spawn other jobs)
-sbatch --job-name=reproject_aces_cel_runner --account=astronomy-dept --qos=astronomy-dept --nodes=1 --ntasks=4 --mem=128gb --time=24:00:00 --output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_runner_%j.log --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py --check-files"  # noqa
+sbatch --job-name=reproject_aces_cel_runner --account=astronomy-dept --qos=astronomy-dept --nodes=1 --ntasks=16 --mem=256gb --time=24:00:00 --output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_runner_%j.log --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py --check-files"  # noqa
 
 # parallel version
 /blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py
@@ -118,28 +118,24 @@ def reproject_file(input_path, target_header, output_path, block_size='auto'):
         new_header.update(target_header)
 
         # Get shape from header (not data) to avoid loading
-        naxis = input_header.get('NAXIS', 0)
-        if naxis == 2:
-            input_shape = (input_header['NAXIS2'], input_header['NAXIS1'])
-            output_shape = (int(target_header['NAXIS2']), int(target_header['NAXIS1']))
-        elif naxis == 3:
-            input_shape = (input_header['NAXIS3'], input_header['NAXIS2'], input_header['NAXIS1'])
-            output_shape = (input_header['NAXIS3'], int(target_header['NAXIS2']), int(target_header['NAXIS1']))
+        naxis = input_header.get('NAXIS')  #  'None' will raise an exception, which is what we want.
+        input_shape = (input_header['NAXIS2'], input_header['NAXIS1'])
+        output_shape = (int(target_header['NAXIS2']), int(target_header['NAXIS1']))
+        if naxis >= 3:
+            spectral_size = input_header['NAXIS3']
+            input_shape = (spectral_size, ) + input_shape
+            output_shape = (spectral_size, ) + output_shape
+
             if block_size == 'auto':
-                chunk_size = min(50, input_shape[0])
+                chunk_size = min(50, spectral_size)
             else:
                 chunk_size = block_size
             chunks = (chunk_size, input_shape[1], input_shape[2])
-        elif naxis == 4:
-            input_shape = (input_header['NAXIS4'], input_header['NAXIS3'], input_header['NAXIS2'], input_header['NAXIS1'])
-            output_shape = (input_header['NAXIS4'], input_header['NAXIS3'], int(target_header['NAXIS2']), int(target_header['NAXIS1']))
-            if block_size == 'auto':
-                chunk_size = min(50, input_shape[1])
-            else:
-                chunk_size = block_size
-            chunks = (1, chunk_size, input_shape[2], input_shape[3])
-        else:
-            raise ValueError(f"Unsupported NAXIS={naxis}")
+
+            if naxis == 4:
+                input_shape = (input_header['NAXIS4'], ) + input_shape
+                output_shape = (input_header['NAXIS4'], ) + output_shape
+                chunks = (1, ) + chunks
 
         # Create lazy Dask array using delayed loading
         if naxis > 2:
@@ -226,14 +222,19 @@ def calculate_memory_allocation(file_size_bytes):
 
 
 def check_file(filename, threshold=0.75):
+    """
+    This keeps running out of memory when it should not.
+    """
     print(f"    Checking file integrity: {filename} with size {os.path.getsize(filename) / (1024**3):.2f} GB")
     try:
         cube = SpectralCube.read(filename, use_dask=True)
+        sched = cube.use_dask_scheduler(scheduler='threads', num_workers=16)
 
-        # bad form, but I really really need dask to do both these operations at once
-        # default fill is nan
-        mx, nnan = dask.compute(da.nanmax(cube.filled_data[:]),
-                                da.isnan(cube.filled_data[:]).sum())
+        with sched:
+            # bad form, but I really really need dask to do both these operations at once
+            # default fill is nan
+            mx, nnan = dask.compute(da.nanmax(cube.filled_data[:]),
+                                    da.isnan(cube.filled_data[:]).sum())
         print("Computed mx and nnan = {mx}, {nnan}".format(mx=mx, nnan=nnan))
 
         if np.isnan(mx) or mx == 0 or nnan / cube.size > threshold:
