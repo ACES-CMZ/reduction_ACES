@@ -11,7 +11,7 @@ sbatch --job-name=reproject_aces_cel --account=astronomy-dept --qos=astronomy-de
 
 
 Just the code runner (this should spawn other jobs)
-sbatch --job-name=reproject_aces_cel_runner --account=astronomy-dept --qos=astronomy-dept --nodes=1 --ntasks=4 --mem=64gb --time=1:00:00 --output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_runner_%j.log --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py --check-files"  # noqa
+sbatch --job-name=reproject_aces_cel_runner --account=astronomy-dept --qos=astronomy-dept --nodes=1 --ntasks=4 --mem=128gb --time=24:00:00 --output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_runner_%j.log --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py --check-files"  # noqa
 
 # parallel version
 /blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python /orange/adamginsburg/ACES/reduction_ACES/aces/imaging/reproject_to_celestial.py
@@ -59,12 +59,12 @@ dask_tempdir.mkdir(parents=True, exist_ok=True)
 # Configure Dask
 dask.config.set(temporary_directory=str(dask_tempdir))
 dask.config.set({'array.slicing.split_large_chunks': True})
-print(f"Dask temporary directory: {dask_tempdir}")
+print(f"Dask temporary directory: {dask_tempdir}", flush=True)
 
 
 def load_target_header(header_path):
     """Load the target header from a .hdr file."""
-    print(f"Loading target header from {header_path}")
+    print(f"Loading target header from {header_path}", flush=True)
     header = fits.Header.fromtextfile(str(header_path))
     return header
 
@@ -82,9 +82,9 @@ def get_files_to_reproject(directory):
     # Exclude PV files and files without cmz_mosaic in their name
     valid_files = [f for f in all_fits if ".PV_" not in f.name and "cmz_mosaic" in f.name]
 
-    print(f"Found {len(all_fits)} total FITS files")
-    print(f"Excluding {len(all_fits) - len(valid_files)} files (PV files or missing 'cmz_mosaic')")
-    print(f"Will reproject {len(valid_files)} files")
+    print(f"Found {len(all_fits)} total FITS files", flush=True)
+    print(f"Excluding {len(all_fits) - len(valid_files)} files (PV files or missing 'cmz_mosaic')", flush=True)
+    print(f"Will reproject {len(valid_files)} files", flush=True)
 
     return sorted(valid_files)
 
@@ -106,7 +106,7 @@ def reproject_file(input_path, target_header, output_path, block_size='auto'):
         output_path: Path for output FITS file
         block_size: Chunk size for Dask arrays (spectral axis for cubes)
     """
-    print(f"\nReprojecting: {input_path.name}")
+    print(f"\nReprojecting: {input_path.name}", flush=True)
 
     # Read header only (no data loading)
     with fits.open(input_path, memmap=True, mode='readonly') as hdul:
