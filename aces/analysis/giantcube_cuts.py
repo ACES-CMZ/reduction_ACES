@@ -275,6 +275,22 @@ def do_pvs(cube, molname, mask=None, mompath=f'{basepath}/mosaics/cubes/moments/
             stretch='asinh', min_percent=1, max_percent=99.5)
 
 
+def update_mom0(mom0path, fwidth, cube):
+    with fits.open(mom0path, mode='update') as hdul:
+        hdul[0].header['CDELT3'] = (fwidth.value, 'Bandwidth integrated to make moment 0 map')
+        hdul[0].header['CUNIT3'] = fwidth.unit.to_string('fits')
+        hdul[0].header['CRPIX3'] = 1
+        hdul[0].header['CRVAL3'] = (cube.spectral_axis.min().value, 'Value of first pixel in parent cube')
+
+
+def update_mom1(mom1path, chwidth, cube):
+    with fits.open(mom1path, mode='update') as hdul:
+        hdul[0].header['CDELT3'] = (chwidth.value, 'Channel width integrated to make moment 1 map')
+        hdul[0].header['CUNIT3'] = chwidth.unit.to_string('fits')
+        hdul[0].header['CRPIX3'] = 1
+        hdul[0].header['CRVAL3'] = (cube.spectral_axis.mean().value, 'Value of central pixel in parent cube')
+
+
 def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
                  howargs={}):
 
@@ -354,8 +370,12 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     print(f"masked mom0.  dt={time.time() - t0}")
     mcube = cube.with_mask(cube > noise)
+    fwidth = cube.spectral_axis.max() - cube.spectral_axis.min()
     mom0 = mcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_mom0.fits", overwrite=True)
+    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_masked_mom0.fits",
+                fwidth=fwidth,
+                cube=cube)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
@@ -381,12 +401,19 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     mdcube_both = cube.with_mask(BooleanArrayMask(signal_mask_both, cube.wcs))
     mom0 = mdcube_both.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits", overwrite=True)
+    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits",
+                fwidth=fwidth,
+                cube=cube)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     print(f"Dilated mask high-to-low sigma moment 1. dt={time.time() - t0}")
+    chwid = mdcube_both.spectral_axis[1] - mdcube_both.spectral_axis[0]
     mom1 = mdcube_both.moment1(axis=0, **howargs)
     mom1.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom1.fits", overwrite=True)
+    update_mom1(mom1path=f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom1.fits",
+                chwidth=chwid,
+                cube=cube)
     makepng(data=mom1.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom1.png",
             stretch='linear', vmin=-0.1, max_percent=99.5, cmap=pl.cm.RdBu)
 
@@ -434,6 +461,9 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     mdcube = cube.with_mask(BooleanArrayMask(mask=signal_mask, wcs=cube.wcs))
     mom0 = mdcube.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
+    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits",
+                fwidth=fwidth,
+                cube=cube)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
@@ -449,6 +479,9 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     mdcube_2p5 = cube.with_mask(BooleanArrayMask(mask=signal_mask_2p5, wcs=cube.wcs))
     mom0 = mdcube_2p5.moment0(axis=0, **howargs)
     mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.fits", overwrite=True)
+    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.fits",
+                fwidth=fwidth,
+                cube=cube)
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
@@ -463,6 +496,9 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     hdu = fits.PrimaryHDU(data=vmax.value, header=header)
     print(f"Done computing vmax, now writing. dt={time.time() - t0}")
     hdu.writeto(f"{mompath}/{molname}_CubeMosaic_vpeak.fits", overwrite=True)
+    update_mom1(mom1path=f"{mompath}/{molname}_CubeMosaic_vpeak.fits",
+                chwidth=chwid,
+                cube=cube)
     print(f"Done writing vpeak, now pnging. dt={time.time() - t0}")
     makepng(data=vmax.value, wcs=wcs, imfn=f"{mompath}/{molname}_CubeMosaic_vpeak.png",
             stretch='asinh', min_percent=0.1, max_percent=99.9)
@@ -472,6 +508,9 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     mom0 = cube.moment0(axis=0, **howargs)
     print(f"Done computing mom0, now writing. dt={time.time() - t0}")
     mom0.write(f"{mompath}/{molname}_CubeMosaic_mom0.fits", overwrite=True)
+    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_mom0.fits",
+                fwidth=fwidth,
+                cube=cube)
     print(f"Done writing mom0, now pnging. dt={time.time() - t0}")
     makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
@@ -481,6 +520,9 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     nemx = cube.with_mask(noedge).max(axis=0, **howargs)
     print(f"Done computing no-edge max, now writing. dt={time.time() - t0}")
     nemx.write(f"{mompath}/{molname}_CubeMosaic_edgelessmax.fits", overwrite=True)
+    update_mom1(mom1path=f"{mompath}/{molname}_CubeMosaic_edgelessmax.fits",
+                chwidth=chwid,
+                cube=cube)
     print(f"Done writing no-edge max, now pnging. dt={time.time() - t0}")
     makepng(data=nemx.value, wcs=nemx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_edgelessmax.png",
             stretch='asinh', min_percent=0.1, max_percent=99.9)
@@ -495,6 +537,9 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
         noise_madstd = cube.with_mask(noedge).mad_std(axis=0, how='ray', progressbar=True)
     print(f"Done with no-edge madstd. Writing noisemap to {mompath}/{molname}_CubeMosaic_madstd.fits.  dt={time.time() - t0}")
     noise_madstd.write(f"{mompath}/{molname}_CubeMosaic_edgelessmadstd.fits", overwrite=True)
+    update_mom1(mom1path=f"{mompath}/{molname}_CubeMosaic_edgelessmadstd.fits",
+                chwidth=chwid,
+                cube=cube)
     makepng(data=noise_madstd.value, wcs=noise_madstd.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_edgelessmadstd.png",
             stretch='asinh', min_percent=0.5, max_percent=99.5)
 
@@ -533,7 +578,7 @@ def main():
         if os.path.getsize(src_cubefilename) > 3e11:
             # too big for local
             print("Using local (copying to /red)")
-            cubefilename = os.path.join('/red/adamginsburg/ACES/workdir/', os.path.basename(src_cubefilename))
+            cubefilename = os.path.join('/blue/adamginsburg/adamginsburg/ACES/workdir/', os.path.basename(src_cubefilename))
         else:
             print("Using local (copying to /tmp)")
             cubefilename = os.path.join(os.getenv('TMPDIR'), os.path.basename(src_cubefilename))

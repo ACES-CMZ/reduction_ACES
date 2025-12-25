@@ -26,7 +26,10 @@ from radio_beam import Beam
 
 # based on alpha=0
 mustang_reffreq = 87.85e9
+# for merge with Planck...
+mustang_central_frequency = 91.5 * u.GHz
 
+TENS_DIR = '/orange/adamginsburg/ACES/TENS/'
 
 def get_mustang_data_old():
     mustangfn = '/orange/adamginsburg/mgps/mgps/SgrB2/SgrB2_5pass_1_.0.2_10mJy_10mJy_w_session5_final_smooth4_PlanckCombined.fits'
@@ -70,6 +73,8 @@ def get_mustang_data():
     fn = f"{TENS_DIR}/{fn}"
 
     fh = fits.open(fn)
+    fh[0].header.update(mgps_beam.to_fits_header())
+    fh[0].header['REFFREQ'] = mustang_reffreq
     ww = wcs.WCS(fh[0].header)
 
     return fh

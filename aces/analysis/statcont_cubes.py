@@ -39,7 +39,7 @@ basepath = conf.basepath
 
 # for zarr storage
 if not os.getenv('SLURM_TMPDIR'):
-    os.environ['TMPDIR'] = '/red/adamginsburg/tmp'
+    os.environ['TMPDIR'] = '/blue/adamginsburg/adamginsburg/tmp'
 
 
 def get_size(start_path='.'):

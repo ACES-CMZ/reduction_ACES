@@ -49,8 +49,8 @@ export OPAL_PREFIX="${CASAPATH}/lib/mpi"
 
 # use /red because it will put the hacked CASA stuff into the same place... in theory...
 # (or, more sensible, create a symlink....)
-#export TMPDIR=/red/adamginsburg/
-#export SLURM_TMPDIR=/red/adamginsburg/
+#export TMPDIR=/blue/adamginsburg/adamginsburg/
+#export SLURM_TMPDIR=/blue/adamginsburg/adamginsburg/
 export IPYTHONDIR=$SLURM_TMPDIR
 export IPYTHON_DIR=$IPYTHONDIR
 cp ~/.casa/config.py $SLURM_TMPDIR
