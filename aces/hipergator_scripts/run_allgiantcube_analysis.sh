@@ -28,8 +28,8 @@ for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H
 
     if [[ $MOLNAME == *"HNCO"* ]]; then
         export mem=512
-    #elif [[ $MOLNAME == *"HCOP"* ]]; then
-    #    export mem=512
+    elif [[ $MOLNAME == *"H40"* ]]; then
+        export mem=512
     else
         export mem=256
     fi
@@ -41,7 +41,7 @@ for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H
 
         export MOLNAME
         # optional
-        export DOWNSAMPLE=False
+        export DOWNSAMPLE=True
         export DO_PV=True
 
         echo "Giant ${MOLNAME} cube"

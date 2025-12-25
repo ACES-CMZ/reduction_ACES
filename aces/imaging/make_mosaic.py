@@ -1007,9 +1007,13 @@ def slurm_set_channels(nchan):
 
 def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
                           smooth=True, smooth_beam=5 * u.arcsec,
-                          use_dask=True, spectrally_too=True):
+                          use_dask=True, spectrally_too=True,
+                          nchan_chunk=5,
+                          ):
     """
     TODO: may need to dump-to-temp while reprojecting
+
+    2025-12-23: Added looping over cube chunks to enable resuming partially completed runs
     """
     cube = SpectralCube.read(cubename, use_dask=use_dask)
     if use_dask:
@@ -1020,20 +1024,59 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
         import contextlib
         DaskProgressBar = contextlib.nullcontext
 
+    import warnings
+    # suppress 'WARNING: nan_treatment='interpolate', however, NaN values detected post convolution. A contiguous region of NaN values, larger than the kernel size, are present in the input array. Increase the kernel size to avoid this. [astropy.convolution.convolve]'
+    warnings.simplefilter('ignore')
+
     print(f"Downsampling cube {cubename} -> {outcubename}")
-    print(cube)
+    print(cube, flush=True)
+
     start = 0
-    with DaskProgressBar():
-        if smooth:
-            scube = cube.convolve_to(radio_beam.Beam(smooth_beam))
-        else:
-            scube = cube
-        dscube = scube[:, start::factor, start::factor]
-        # this is a hack; see https://github.com/astropy/astropy/pull/10897
-        # the spectral-cube approach is right normally, but we're cheating here
-        # and just taking every 9th pixel, we're not smoothing first.
-        dscube.wcs.celestial.wcs.crpix[:] = (dscube.wcs.celestial.wcs.crpix[:] - 1 - start) / factor + 1
-        dscube.write(outcubename, overwrite=overwrite)
+    outwcs = cube.wcs.celestial
+    outwcs.wcs.crpix[:] = (outwcs.wcs.crpix[:] - 1 - start) / factor + 1
+    header = cube.header.copy()
+    header.update(outwcs.to_header())
+
+    if not os.path.exists(outcubename):
+        empty_data = np.zeros((0, int(cube.shape[1] / factor), int(cube.shape[2] / factor)),
+                              dtype=np.float32)
+        fits.PrimaryHDU(data=empty_data, header=header).writeto(outcubename, overwrite=False)
+
+    with fits.open(outcubename, mode='update') as outfh:
+        for ii in range(0, cube.shape[0], nchan_chunk):
+            if np.any(outfh[0].data[ii:ii+nchan_chunk].sum(axis=(1,2)) == 0):
+                print(f"Chunk {ii} to {min(ii + nchan_chunk, cube.shape[0])} of {cube.shape[0]} processing", flush=True)
+                with DaskProgressBar():
+                    if smooth:
+                        scube = cube[ii:ii+nchan_chunk].convolve_to(radio_beam.Beam(smooth_beam),
+                                                                    convolve=convolve_fft,
+                                                                    allow_huge=True
+                                                                    )
+                    else:
+                        scube = cube[ii:ii+nchan_chunk]
+                    dscube = scube[:, start::factor, start::factor]
+                    dscube.allow_huge_operations = True
+
+                    # no compute should happen prior to this step:
+                    outfh[0].data[ii:ii+nchan_chunk, :, :] = dscube.filled_data[:]
+                    outfh.flush()
+            else:
+                print(f"Chunk {ii} to {min(ii + nchan_chunk, cube.shape[0])} already filled, skipping", flush=True)
+
+
+    # old version
+    # with DaskProgressBar():
+    #     if smooth:
+    #         scube = cube.convolve_to(radio_beam.Beam(smooth_beam), convolve=convolve_fft)
+    #     else:
+    #         scube = cube
+    #     dscube = scube[:, start::factor, start::factor]
+    #     # this is a hack; see https://github.com/astropy/astropy/pull/10897
+    #     # the spectral-cube approach is right normally, but we're cheating here
+    #     # and just taking every 9th pixel, we're not smoothing first.
+    #     dscube.wcs.celestial.wcs.crpix[:] = (dscube.wcs.celestial.wcs.crpix[:] - 1 - start) / factor + 1
+    #     # no compute should happen prior to this step:
+    #     dscube.write(outcubename, overwrite=overwrite)
     # else:
     #     cube = SpectralCube.read(cubename, use_dask=False)
     #     #hdr = cube.header.copy()
@@ -1054,6 +1097,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
     #         #dscube.write(outcubename, overwrite=overwrite)
 
     if spectrally_too:
+        dscube = SpectralCube.read(outcubename, use_dask=use_dask)
         if smooth:
             from astropy.convolution import Gaussian1DKernel
             # smooth with half the downsampling

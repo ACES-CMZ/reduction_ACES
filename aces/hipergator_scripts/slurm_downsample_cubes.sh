@@ -1,5 +1,5 @@
-export USE_DASK=False
-export USE_LOCAL=True
+export USE_DASK=True
+# used by giantcube_cuts but not by giantcube_downsample export USE_LOCAL=True
 
 for MOLNAME in CH3CHO HC15N SO21 H13CN HN13C H13COp CS21 HC3N HCOP SiO21 SO32 HNCO_7m12mTP HNCO NSplus H40a; do
 

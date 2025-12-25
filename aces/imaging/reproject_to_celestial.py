@@ -176,8 +176,10 @@ def reproject_file(input_path, target_header, output_path, block_size='auto'):
                              output_array=output_hdul[0].data, return_footprint=False,
                              parallel=True)
         elif naxis == 3:
-            print("    Reprojecting 3D cube with Dask")
             n_planes = output_shape[0]
+            if 'downsampled_spatially.pbcor.fits' in input_path.name:
+                assert n_planes > 1
+            print(f"    Reprojecting 3D cube with Dask and n_planes = {n_planes}")
             wcs_3d = WCS(input_header)
             wcs_2d = wcs_3d.celestial
 
@@ -350,16 +352,20 @@ def main(check_files=False):
 
     job_ids = []
     for i, (input_path, mem_gb) in enumerate(zip(files_needed, memory_allocations)):
+
+        name = os.path.basename(input_path).split("cmz_mosaic.")[-1]
+        name = name.split('.fits')[0]
+
         sbatch_command = [
             'sbatch',
-            f'--job-name=reproj_cel_{i}',
+            f'--job-name=reproj_cel_{i}_{name}',
             '--account=astronomy-dept',
             '--qos=astronomy-dept-b',
             '--nodes=1',
             '--ntasks=16',
             f'--mem={mem_gb}gb',
             '--time=96:00:00',
-            f'--output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_{i}_%j.log',
+            f'--output=/blue/adamginsburg/adamginsburg/logs/aces_reproject_celestial_{i}_{name}_%j.log',
             '--wrap',
             f'{python_exe} {script_path} --array-task --task-id={i}'
         ]
