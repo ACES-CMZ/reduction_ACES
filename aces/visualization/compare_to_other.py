@@ -17,6 +17,8 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 basepath = conf.basepath
 
+pl.rcParams['font.size'] = 16
+
 
 def format_ax(ax, label="", cb=True, hidey=False, hidex=False, cbar_size="5%"):
     ax.coords[0].set_axislabel("Right Ascension")
@@ -61,6 +63,8 @@ def compare_to_other_data(otherfn,
                           wspace=0.1,
                           figsize=(12, 10),
                           diffnorm_kwargs={'min_percent': 0.1, 'max_percent': 99.9, 'stretch': 'linear'},
+                          ticklabel_pad=None,
+                          ticklabel_rotation=None,
                           ):
 
     # colormap setup
@@ -111,6 +115,10 @@ def compare_to_other_data(otherfn,
     ax2.text(0.95, 0.95, f"{name} (smooth)", transform=ax2.transAxes, horizontalalignment='right')
     ax3.text(0.95, 0.95, "ACES", transform=ax3.transAxes, horizontalalignment='right')
     ax4.text(0.95, 0.95, f"ACES - {name}sm", transform=ax4.transAxes, horizontalalignment='right')
+
+    for lon in (ax3.coords[0], ax4.coords[0]):
+        if ticklabel_rotation is not None:
+            lon.set_ticklabel(rotation=ticklabel_rotation, pad=ticklabel_pad)
 
     pl.subplots_adjust(hspace=hspace, wspace=wspace)
     pl.savefig(f'{basepath}/papers/continuum_data/figures/{name}_comparison.png', bbox_inches='tight', dpi=200)

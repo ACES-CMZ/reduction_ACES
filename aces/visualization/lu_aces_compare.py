@@ -38,6 +38,8 @@ def main():
         '20kmsCloud',
         nueff*u.GHz,
         figsize=(9, 10),
+        ticklabel_pad=35,
+        ticklabel_rotation=25,
         **common_kwargs
     )
 

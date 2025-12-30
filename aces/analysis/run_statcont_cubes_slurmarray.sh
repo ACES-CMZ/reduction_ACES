@@ -10,7 +10,7 @@ echo "Sub-list is $flist"
 if [ $flist ]; then
 
     jobid=$(sbatch --job-name=aces_statcont_arr \
-        --output=/red/adamginsburg/ACES/logs/aces_statcont_arr_%j_%A_%a.log  \
+        --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_statcont_arr_%j_%A_%a.log  \
         --array=$flist \
         --account=astronomy-dept --qos=astronomy-dept-b \
         --ntasks=16 --nodes=1 --mem=128gb --time=96:00:00 --parsable \

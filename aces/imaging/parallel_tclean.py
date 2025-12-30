@@ -3,6 +3,7 @@ import textwrap
 import datetime
 from astropy import units as u
 import subprocess
+import ast
 
 
 def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
@@ -11,12 +12,15 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                          jobtime='96:00:00',
                          CASAVERSION='casa-6.4.3-2-pipeline-2021.3.0.17',
                          field='Sgr_A_star',
-                         workdir='/red/adamginsburg/ACES/workdir',
-                         logdir='/red/adamginsburg/ACES/logs',
+                         workdir='/blue/adamginsburg/adamginsburg/ACES/workdir',
+                         logdir='/blue/adamginsburg/adamginsburg/ACES/logs',
                          dry=False,
                          savedir=None,
                          remove_incomplete_psf=True,
                          remove_incomplete_weight=True,
+                         suffixes_to_merge_and_export=None,
+                         array_jobs=None,
+                         merge_only=False,
                          **kwargs):
     """
     Parameters
@@ -27,7 +31,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         Where to store the intermediate files
     """
 
-    print(f"Starting parallel clean in workdir={workdir} with casa={CASAVERSION}")
+    print(f"Starting parallel clean in workdir={workdir} with casa={CASAVERSION}", flush=True)
 
     try:
         hasunit = False
@@ -40,6 +44,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
     NARRAY = nchan // nchan_per
     assert NARRAY > 1
+    if array_jobs is None:
+        array_jobs = f'0-{NARRAY}'
 
     tclean_kwargs = {'nchan': nchan_per, }
     tclean_kwargs.update(**kwargs)
@@ -51,6 +57,12 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     assert 'interactive' not in tclean_kwargs
     tclean_kwargs['calcres'] = True
     tclean_kwargs['calcpsf'] = True
+
+    if tclean_kwargs.get('gridder') == 'mosaic':
+        # is mask necessary?  don't think so?
+        necessary_suffixes = ("image", "pb", "psf", "model", "residual", "weight")
+    else:
+        necessary_suffixes = ("image", "pb", "psf", "model", "residual")
 
     # TODO:
     # since we're no longer splitting out subsections of the MS, the split should only be done once
@@ -67,8 +79,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                                  """)
     logprint = textwrap.dedent("""
 
-        def logprint(x):
-            print(x, flush=True)
+        def logprint(x, flush=True):
+            print(x, flush=flush)
             casalog.post(str(x), origin='parallel_tclean')
 
                                """)
@@ -80,11 +92,14 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
 
         import sys
 
+        logprint("Defining test_valid")
+
         def test_valid(vis):
             try:
                 msmd.open(vis)
                 nchan_max = msmd.nchan(0)
                 msmd.close()
+                logprint(f"vis {{vis}} is valid with {{nchan_max}} channels")
                 return True
             except RuntimeError as ex:
                 logprint(f"vis {{vis}} was invalid.  Removing.")
@@ -92,9 +107,13 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                 shutil.rmtree(vis)
                 return False
 
+        logprint("Beginning loop over tclean_kwargs['vis']")
+
+        logprint(f'tclean kwargs are {{tclean_kwargs}}')
 
         for vis in {tclean_kwargs['vis']}:
             outputvis=f'{{rename_vis(vis)}}'
+            logprint(f"Trying to move or check existence of {{outputvis}}")
             if not os.path.exists(outputvis) or not test_valid(outputvis):
                 try:
                     logprint(f"Splitting {{vis}} with defaults")
@@ -114,10 +133,13 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                           field='{field}',
                           datacolumn='data',
                           spw=splitspw)
+            listobs(vis=vis, listfile=f'{{vis}}.listobs', overwrite=True)
+            listobs(vis=outputvis, listfile=f'{{outputvis}}.listobs', overwrite=True)
 
         for vis in {tclean_kwargs['vis']}:
             outputvis=f'{{rename_vis(vis)}}'
             if not os.path.exists(outputvis):
+                logprint(f"ERROR: split vis {{outputvis}} does not exist after splitting.")
                 # fail!
                 sys.exit(1)
 
@@ -140,6 +162,7 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         """)
     script += logprint
     script += "\nlogprint(f'Log file name is {os.getenv(\"LOGFILENAME\")}')\n"
+    script += "\nlogprint('This is the next line')\n"
     script += rename_vis
     splitscript = script + splitcmd
 
@@ -213,12 +236,27 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         if not os.path.exists(tclean_kwargs['imagename'] + ".image"):
             raise ValueError(f"FAILURE: image {{tclean_kwargs['imagename']}}.image was not produced")
 
+        def check_file(fn):
+            " ensure that nonzero values were written, otherwise the imaging task failed "
+            from spectral_cube import SpectralCube
+            import numpy as np
+            cube = SpectralCube.read(fn, format='fits' if fn.endswith('.fits') else 'casa_image', use_dask=True)
+            mx = cube.max()
+            if mx == 0 or np.isnan(mx):
+                raise ValueError(f"File {{fn}} has a maximum value of {{mx}}")
+
+        check_file(tclean_kwargs['imagename'] + ".image")
+        check_file(tclean_kwargs['imagename'] + ".residual")
+
         """)
 
     splitscriptname = os.path.join(workdir, f"{imagename}_parallel_split_script.py")
+
     with open(splitscriptname, 'w') as fh:
         fh.write(splitscript)
-    print(f"Wrote splitscript {splitscriptname}")
+
+    ast.parse(splitscript)
+    print(f"Wrote splitscript {splitscriptname}", flush=True)
 
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
 
@@ -228,7 +266,8 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                    f'xvfb-run -d /orange/adamginsburg/casa/{CASAVERSION}/bin/casa'
                    ' --nologger --nogui '
                    ' --logfile=${LOGFILENAME} '
-                   f' -c "execfile(\'{splitscriptname}\')"')
+                   f' -c "execfile(\'{splitscriptname}\')"\n'
+                   )
 
     slurmsplitcmdsh = imagename + "_split_slurm_cmd.sh"
     with open(slurmsplitcmdsh, 'w') as fh:
@@ -244,16 +283,19 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     if dry:
         print(slurmsplitcmd.split())
         scriptjobid = 'PLACEHOLDER'
+    elif merge_only:
+        print("Skipping split job")
+        scriptjobid = 'PLACEHOLDER'
     else:
         print(slurmsplitcmd.split())
         sbatch = subprocess.check_output(slurmsplitcmd.split())
         scriptjobid = sbatch.decode().split()[-1]
         print(f'Split: {sbatch.decode()} with jobname={jobname}')
 
-
     scriptname = os.path.join(workdir, f"{imagename}_parallel_script.py")
     with open(scriptname, 'w') as fh:
         fh.write(script)
+    ast.parse(script)
     print(f"Wrote script {scriptname}")
 
 
@@ -274,12 +316,15 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks} '
            f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_%j_%A_%a.log '
            f'--job-name={jobname}_arr --account={account} '
-           f'--array=0-{NARRAY} '
+           f'--array={array_jobs} '
            f'--dependency=afterok:{scriptjobid} '
            f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd}\n')
 
     if dry:
         print(cmd.split())
+        jobid = 'PLACEHOLDER'
+    elif merge_only:
+        print("Skipping array jobs")
         jobid = 'PLACEHOLDER'
     else:
         print(cmd.split())
@@ -297,47 +342,58 @@ import glob, os, shutil, datetime
 
 {logprint}
 
-
+suffixes_to_merge_and_export = {suffixes_to_merge_and_export}
 savedir = '{savedir}'
 os.chdir('{workdir}')
 
-for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
+necessary_suffixes = {necessary_suffixes}
+logprint(f"Necessary suffixes: {{necessary_suffixes}}", flush=True)
+
+for suffix in necessary_suffixes:
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
     infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
-    print(outfile, infiles)
+    logprint(outfile, infiles)
     if suffix in ("image.pbcor", "sumwt"):
         # these may not always exist
-        print(f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}")
+        logprint(f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}")
     else:
         assert len(infiles) > 0, f"Found only {{len(infiles)}} files: {{infiles}}.  suffix={{suffix}}"
 
+if suffixes_to_merge_and_export is None and os.getenv('SUFFIXES_TO_MERGE_AND_EXPORT') is not None:
+    suffixes_to_merge_and_export = os.getenv('SUFFIXES_TO_MERGE_AND_EXPORT').split(',')
+elif suffixes_to_merge_and_export is None:
+    suffixes_to_merge_and_export = {necessary_suffixes}
 
-for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
+logprint(f"Suffixes to merge and export: {{suffixes_to_merge_and_export}}", flush=True)
+
+for suffix in necessary_suffixes:
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
     #infiles = sorted(glob.glob(os.path.basename(f'{imagename}.[0-9]*.{{suffix}}')))
     infiles = [f'{imagename}.{{start:04d}}.{nchan_per:03d}.{{suffix}}'
                for start in range(0, {nchan}, {nchan_per})]
     if len(infiles) == 0:
-        print(f"Skipped suffix {{suffix}}")
+        logprint(f"Skipped suffix {{suffix}}")
         continue
     for fn in infiles:
         if not os.path.exists(fn):
-            print(f"Failure: file {{fn}} did not exist")
+            logprint(f"Failure: file {{fn}} did not exist")
 
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
     if os.path.exists(outfile):
         backup_outfile = outfile+f".backup_{{now}}"
-        print(f"Found existing file {{outfile}}.  Moving to {{backup_outfile}}")
+        logprint(f"Found existing file {{outfile}}.  Moving to {{backup_outfile}}")
         os.rename(outfile, backup_outfile)
     if os.path.exists(outfile+".move"):
         backup_outfile = outfile+".move"+f".backup_{{now}}"
-        print(f"Found existing file {{outfile+'.move'}}.  Moving to {{backup_outfile}}")
+        logprint(f"Found existing file {{outfile+'.move'}}.  Moving to {{backup_outfile}}")
         os.rename(outfile+".move", backup_outfile)
 
     # reads much more efficiently, is consistent with other cubes
+    logprint(f"Concatenating length {{len(infiles)}} files {{infiles}} to {{outfile}}", flush=True)
     ia.imageconcat(outfile=outfile,
                    infiles=infiles,
                    mode='p')
+    ia.close()
 
 
     # consolidates the remainder into a single virtual cube
@@ -362,71 +418,177 @@ rbeam = ia.restoringbeam()
 ia.close()
 
 # if any beam is not the common beam...
-manybeam = False
-if 'beams' in rbeam:
-    for beam in rbeam['beams'].values():
-        if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
-            print(f"Manybeam: beam={{beam['*0']}}, commonbeam={{commonbeam}}")
-            manybeam = True
-            break
+def check_manybeam(rbeam, commonbeam):
+    if 'beams' in rbeam:
+        for beam in rbeam['beams'].values():
+            if beam['*0']['major'] != commonbeam['major'] or beam['*0']['minor'] != commonbeam['minor']:
+                logprint(f"Manybeam: beam={{beam['*0']}}, commonbeam={{commonbeam}}")
+                return True
+    return False
+
+manybeam = check_manybeam(rbeam, commonbeam)
+
+if os.path.exists('{imagename}.image.multibeam') and os.path.exists('{imagename}.image'):
+    logprint(f"Found {imagename}.image.multibeam and {imagename}.image.")
+    if manybeam:
+        logprint("However, the image has multiple beams, so it is not a commonbeam image.")
+        logprint("Removing {imagename}.image.multibeam so that .image can be moved to .image.multibeam")
+        shutil.rmtree('{imagename}.image.multibeam')
+
+def imsmooth_spectral_cube(imagename, outfile, commonbeam):
+    '''
+    Use spectral-cube to imsmooth without loading the whole thing into memory
+    '''
+
+    from spectral_cube import SpectralCube
+    import radio_beam
+    from astropy import units as u
+
+    # dask is used here; no choice
+    cube = SpectralCube.read('{imagename}.model', format='casa_image')
+    # set the beam size to the pixel scale
+    try:
+        pixscale = cube.wcs.proj_plane_pixel_scales()[0]
+    except AttributeError:
+        pixscale = np.abs(cube.wcs.wcs.cdelt[0]) * u.deg
+    cube = cube.with_beam(radio_beam.Beam(major=pixscale))
+    cbeam = radio_beam.Beam(major=commonbeam['major']['value']*u.Unit(commonbeam['major']['unit']),
+                            minor=commonbeam['minor']['value']*u.Unit(commonbeam['minor']['unit']),
+                            pa=commonbeam['pa']['value']*u.Unit(commonbeam['pa']['unit']))
+    convcube = cube.convolve_to(cbeam)
+
+    convcube.write(outfile + ".fits", format='fits', overwrite=True)
+    importfits(fitsimage=outfile + ".fits", imagename=outfile)
+
 
 if manybeam:
+    logprint("Beginning manybeam", flush=True)
     try:
         os.rename('{imagename}.image', '{imagename}.image.multibeam')
+        logprint(f"Successfully moved {imagename}.image -> {imagename}.image.multibeam")
     except Exception as ex:
-        print("Failed to move {imagename}.image -> {imagename}.image.multibeam, probably because the latter exists")
-        print(ex)
-    try:
-        os.rename('{imagename}.image.pbcor', '{imagename}.image.pbcor.multibeam')
-    except Exception as ex:
-        print("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
-        print(ex)
-    if not os.path.exists('{imagename}.convmodel'):
-        logprint('Creating convmodel {os.path.basename(imagename)}.convmodel')
-        imsmooth(imagename='{imagename}.model',
-                outfile='{imagename}.convmodel',
-                beam=commonbeam)
-    if not os.path.exists('{os.path.basename(imagename)}.image'):
-        logprint('Creating image {os.path.basename(imagename)}.image')
-        ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
-                    pixels='{os.path.basename(imagename)}.convmodel + {os.path.basename(imagename)}.residual',
-                    imagemd='{os.path.basename(imagename)}.convmodel',
-                    overwrite=True)
-        ia.close()
-    if not os.path.exists('{os.path.basename(imagename)}.image.pbcor',):
-        logprint('Creating pbcor image {os.path.basename(imagename)}.image.pbcor')
-        impbcor(imagename='{os.path.basename(imagename)}.image',
-                pbimage='{os.path.basename(imagename)}.pb',
-                outfile='{os.path.basename(imagename)}.image.pbcor',)
+        logprint("Failed to move {imagename}.image -> {imagename}.image.multibeam, probably because the latter exists")
+        logprint(ex)
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+        os.rename('{imagename}.image', f'{imagename}.image.{{timestamp}}')
+        logprint(f"INSTEAD moved {imagename}.image -> {imagename}.image.{{timestamp}}")
+        # the above is needed because we do _not_ want to declare victory when there are multibeam images
 
-    exportfits(imagename='{os.path.basename(imagename)}.image.pbcor',
-               fitsimage='{os.path.basename(imagename)}.image.pbcor.fits',
-               overwrite=True
-               )
+    assert not os.path.exists('{imagename}.image'), "FAILURE: {imagename}.image exists after moving it to {imagename}.image.multibeam"
+
+    # it's possible for pbcor to not exist if we're not doing pbcor (to save space)
+    if os.path.exists('{imagename}.image.pbcor'):
+        try:
+            os.rename('{imagename}.image.pbcor', '{imagename}.image.pbcor.multibeam')
+            logprint(f"Successfully moved {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam")
+        except Exception as ex:
+            logprint("Failed to move {imagename}.image.pbcor -> {imagename}.image.pbcor.multibeam, probably because the latter exists")
+            logprint(ex)
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+            os.rename('{imagename}.image.pbcor', f'{imagename}.image.pbcor.{{timestamp}}')
+            logprint(f"INSTEAD moved {imagename}.image.pbcor -> {imagename}.image.pbcor.{{timestamp}}")
+
+    if not os.path.exists('{imagename}.convmodel'):
+        # Convmodel frequenty runs out of memory, so we use spectral-cube instead
+        logprint('Creating convmodel {os.path.basename(imagename)}.convmodel')
+        imsmooth_spectral_cube(imagename='{imagename}.model',
+                               outfile='{imagename}.convmodel',
+                               commonbeam=commonbeam)
+        logprint(f"Successfully created convolved model {os.path.basename(imagename)}.convmodel: {{os.path.exists('{imagename}.convmodel')}}")
+    if not os.path.exists('{os.path.basename(imagename)}.image'):
+        logprint('Creating image {os.path.basename(imagename)}.image (it did not exist)')
+        try:
+            ia.imagecalc(outfile='{os.path.basename(imagename)}.image',
+                        pixels='"{os.path.basename(imagename)}.convmodel" + "{os.path.basename(imagename)}.residual"',
+                        imagemd='{os.path.basename(imagename)}.convmodel',
+                        overwrite=False)
+            ia.close()
+        except RuntimeError as ex:
+            ia.close()
+            logprint(f"RuntimeError: {{ex}} - trying again with overwrite=False and to .image-temp instead")
+            ia.imagecalc(outfile='{os.path.basename(imagename)}.image-temp',
+                        pixels='"{os.path.basename(imagename)}.convmodel" + "{os.path.basename(imagename)}.residual"',
+                        imagemd='{os.path.basename(imagename)}.convmodel',
+                        overwrite=False)
+            ia.close()
+            if os.path.exists('{imagename}.image'):
+                shutil.rmtree('{imagename}.image')
+            shutil.move('{imagename}.image-temp', '{imagename}.image')
+        logprint(f"Successfully created {os.path.basename(imagename)}.image: {{os.path.exists('{imagename}.image')}}")
+    if not os.path.exists('{os.path.basename(imagename)}.image.pbcor'):
+        logprint('Creating pbcor image {os.path.basename(imagename)}.image.pbcor')
+        try:
+            impbcor(imagename='{os.path.basename(imagename)}.image',
+                    pbimage='{os.path.basename(imagename)}.pb',
+                    outfile='{os.path.basename(imagename)}.image.pbcor',)
+        except RuntimeError as ex:
+            logprint(f"RuntimeError: {{ex}} - trying again with overwrite=False and to .image.pbcor-temp instead")
+            impbcor(imagename='{os.path.basename(imagename)}.image',
+                    pbimage='{os.path.basename(imagename)}.pb',
+                    outfile='{os.path.basename(imagename)}.image.pbcor-temp',)
+            if os.path.exists('{imagename}.image.pbcor'):
+                shutil.rmtree('{imagename}.image.pbcor')
+            shutil.move('{imagename}.image.pbcor-temp', '{imagename}.image.pbcor')
+        logprint(f"Successfully created {os.path.basename(imagename)}.image.pbcor: {{os.path.exists('{imagename}.image.pbcor')}}")
+
+    image_rbeam = ia.restoringbeam()
+    image_cbeam = ia.commonbeam()
+    if 'beams' in image_rbeam:
+        image_manybeam = check_manybeam(image_rbeam, image_cbeam)
+        assert not image_manybeam, "FAILURE: image_manybeam is True, so the conversion to convolved-beam failed"
+
+    logprint("Fitsifying .image and .image.pbcor")
     exportfits(imagename='{os.path.basename(imagename)}.image',
                fitsimage='{os.path.basename(imagename)}.image.fits',
                overwrite=True
                )
+    exportfits(imagename='{os.path.basename(imagename)}.image.pbcor',
+               fitsimage='{os.path.basename(imagename)}.image.pbcor.fits',
+               overwrite=True
+               )
+
+    logprint("Done with manybeam")
+
+def check_file(fn):
+    from spectral_cube import SpectralCube
+    import numpy as np
+    cube = SpectralCube.read(fn, format='fits' if fn.endswith('.fits') else 'casa_image', use_dask=True)
+    mx = cube.max()
+    if mx == 0 or np.isnan(mx):
+        raise ValueError(f"File {{fn}} has a maximum value of {{mx}}")
 
 
-for suffix in ("image", "pb", "psf", "model", "residual", "weight", "mask", "image.pbcor", "sumwt"):
+for suffix in suffixes_to_merge_and_export:
     outfile = os.path.basename(f'{imagename}.{{suffix}}')
     if savedir and os.path.exists(savedir):
-        print(f"Moving {{outfile}} to {{savedir}}")
+        # ensure we don't do any moving or cleanup if the files are junk
+        check_file(outfile)
+        check_file(outfile+".fits")
+
+        logprint(f"Moving {{outfile}} to {{savedir}}")
         full_outfile = os.path.join(savedir, outfile)
         if os.path.exists(full_outfile):
-            print(f"Outfile {{full_outfile}} already exists.  Check what's up.")
+            logprint(f"Outfile {{full_outfile}} already exists.  Check what's up.")
+        elif os.path.exists(full_outfile+".fits"):
+            logprint(f"Outfile {{full_outfile}}.fits already exists.  Check what's up.")
         else:
             shutil.move(outfile, savedir)
             shutil.move(outfile+".fits", savedir)
 
             if not os.path.exists(full_outfile):
-                print(f"FAILURE: attempt to move {{outfile}} to {{savedir}} had no effect")
+                logprint(f"FAILURE: attempt to move {{outfile}} to {{savedir}} had no effect")
     else:
-        print(f"Savedir {{savedir}} does not exist")
+        logprint(f"Savedir {{savedir}} does not exist")
 
 
 # Cleanup stage
+
+logprint("Beginning cleanup")
+for suffix in necessary_suffixes:
+    if suffix not in suffixes_to_merge_and_export:
+        logprint(f"Cleanup: Removing {imagename}.{{suffix}}", flush=True)
+        shutil.rmtree(f'{imagename}.{{suffix}}')
+
 
 os.chdir('{workdir}')
 tclean_kwargs = {tclean_kwargs}
@@ -434,14 +596,32 @@ tclean_kwargs = {tclean_kwargs}
 {rename_vis}
 
 for vis in tclean_kwargs['vis']:
-    vis = rename_vis(vis)
     logprint(f"Removing visibility {{vis}}")
+    vis = rename_vis(vis)
     assert 'orange' not in vis
     shutil.rmtree(vis)
+
+
+# if we've gotten to this point, merging has been successful so we can delete the components
+logprint(f"Final cleanup stage: removing individual chunks", flush=True)
+for suffix in necessary_suffixes:
+    infiles = [f'{imagename}.{{start:04d}}.{nchan_per:03d}.{{suffix}}'
+               for start in range(0, {nchan}, {nchan_per})]
+    logprint(f"Removing {{infiles}}", flush=True)
+    for fn in infiles:
+        logprint(f"Final cleanup: Removing {{fn}}", flush=True)
+        shutil.rmtree(fn)
+
+logprint("Final cleanup complete", flush=True)
+# report success forcefully - not clear why this is needed but CASA is not exiting cleanly
+sys.exit(0)
+
 """)
 
     with open(mergescriptname, 'w') as fh:
         fh.write(mergescript)
+    ast.parse(mergescript)
+    print(f"Wrote mergescript {mergescriptname}", flush=True)
 
 
     #now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
@@ -459,8 +639,8 @@ for vis in tclean_kwargs['vis']:
         fh.write(runcmd_merge)
 
     cmd = (f'/opt/slurm/bin/sbatch --ntasks={ntasks * 4} '
-           f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_merge_%j_%A_%a.log --job-name={jobname}_merge --account={account} '
-           f'--dependency=afterok:{jobid} '
+           f'--mem-per-cpu={mem_per_cpu} --output={logdir}/{jobname}_merge_%j_%A_%a.log --job-name={jobname}_merge --account={account} ' +
+           ('' if merge_only else f'--dependency=afterok:{jobid} ') +
            f'--qos={qos} --export=ALL --time={jobtime} {slurmcmd_merge}')
 
     if dry:
@@ -468,4 +648,4 @@ for vis in tclean_kwargs['vis']:
     else:
         print(cmd.split())
         sbatch = subprocess.check_output(cmd.split())
-        print(f'{sbatch.decode()} with jobname={jobname}_merge')
+        print(f'{sbatch.decode()} with jobname={jobname}_merge', flush=True)

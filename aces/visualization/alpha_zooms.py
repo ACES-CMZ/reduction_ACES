@@ -40,7 +40,7 @@ def add_cb(ax, label):
     return cb
 
 
-pl.rcParams['font.size'] = 14
+pl.rcParams['font.size'] = 16
 
 zoomregs = regions.Regions.read(f'{basepath}/reduction_ACES/aces/data/regions/zoom_regions.reg')
 

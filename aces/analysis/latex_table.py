@@ -13,6 +13,11 @@ from tqdm.auto import tqdm
 import casa_formats_io
 import radio_beam
 from astropy.io import fits
+from astroquery.alma import Alma
+import time
+from astropy.time import Time
+from astropy.io import ascii
+from astropy.coordinates import SkyCoord
 
 from aces.analysis.latex_info import (latexdict, format_float, round_to_n, rounded,
                                       rounded_arr, strip_trailing_zeros, exp_to_tex)
@@ -23,7 +28,7 @@ basepath = conf.basepath
 latexdict = latexdict.copy()
 
 
-def make_latex_table(savename='continuum_data_summary'):
+def make_latex_table():
 
     tbl = Table.read(f'{basepath}/tables/metadata_image.tt0.ecsv')
     tbl['mad'] = tbl['mad'] * 1000
@@ -57,20 +62,25 @@ def make_latex_table(savename='continuum_data_summary'):
     tbl['peak_K'] = (tbl['peak'] * jtok / 1000)
     tbl['mad_K'] = (tbl['mad'] * jtok)
 
+    # change region "name" to region coordinated, e.g., a > G000.00+00.00
+    usub_meta_tm = Table.read(f'{basepath}/tables/observation_metadata_12m.ecsv')
+    usub_meta_tm.add_index('Field')
+    tbl['region'] = [usub_meta_tm.loc[x]['Center'] for x in tbl['region']]
+
     cols_to_keep = {'region': 'Region',
-                    'bmaj': r'$\theta_{maj}$',
-                    'bmin': r'$\theta_{min}$',
+                    'bmaj': r'$\theta_{\mathrm{maj}}$',
+                    'bmin': r'$\theta_{\mathrm{min}}$',
                     'bpa': 'BPA',
                     'robust': 'Robust',
                     'spws': 'SPWs',
                     #'Req_Res': r"$\theta_{req}$",
                     #'BeamVsReq': r"$\Omega_{syn}^{1/2}/\Omega_{req}^{1/2}$",
                     #'peak/mad': "DR",
-                    'casaversion': 'CASA Version',
-                    'peak': '$S_{peak}$',
-                    'mad': r'$\sigma_{MAD}$',
-                    'peak_K': '$T_{B,peak}$',
-                    'mad_K': r'$\sigma_{MAD,mK}$',
+                    #'casaversion': 'CASA Version',
+                    'peak': r'$S_{\mathrm{peak}}$',
+                    'mad': r'$\sigma_{\mathrm{MAD}}$',
+                    'peak_K': r'$T_{\mathrm{B,peak}}$',
+                    'mad_K': r'$\sigma_{\mathrm{MAD,mK}}$',
                     #'Req_Sens': r"$\sigma_{req}$",
                     #'SensVsReq': r"$\sigma_{MAD}/\sigma_{req}$",
                     #'dr_pre': "DR$_{pre}$",
@@ -78,14 +88,14 @@ def make_latex_table(savename='continuum_data_summary'):
                     #'dr_improvement': "DR$_{post}$/DR$_{pre}$"
                     }
 
-    units = {'$S_{peak}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
-             '$T_{B,peak}$': (u.K).to_string(u.format.LatexInline),
-             r'$\sigma_{MAD}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
-             r'$\sigma_{MAD,mK}$': (u.mK).to_string(u.format.LatexInline),
+    units = {r'$S_{\mathrm{peak}}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
+             r'$T_{\mathrm{B,peak}}$': (u.K).to_string(u.format.LatexInline),
+             r'$\sigma_{\mathrm{MAD}}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
+             r'$\sigma_{\mathrm{MAD,mK}}$': (u.mK).to_string(u.format.LatexInline),
              #r'$\sigma_{req}$': (u.mJy / u.beam).to_string(u.format.LatexInline),
              #r'$\theta_{req}$': u.arcsec.to_string(u.format.LatexInline),
-             r'$\theta_{maj}$': u.arcsec.to_string(u.format.LatexInline),
-             r'$\theta_{min}$': u.arcsec.to_string(u.format.LatexInline),
+             r'$\theta_{\mathrm{maj}}$': u.arcsec.to_string(u.format.LatexInline),
+             r'$\theta_{\mathrm{min}}$': u.arcsec.to_string(u.format.LatexInline),
              r'PA': u.deg.to_string(u.format.LatexInline),
              r'BPA': u.deg.to_string(u.format.LatexInline),
             }
@@ -100,13 +110,13 @@ def make_latex_table(savename='continuum_data_summary'):
             if new in units:
                 ftbl[new].unit = units[new]
 
-    float_cols = ['$\\theta_{maj}$',
-                  '$\\theta_{min}$',
+    float_cols = [r'$\theta_{\mathrm{maj}}$',
+                  r'$\theta_{\mathrm{min}}$',
                   'BPA',
-                  '$S_{peak}$',
-                  '$T_{B,peak}$',
-                  '$\\sigma_{MAD}$',
-                  '$\\sigma_{MAD,mK}$',
+                  r'$S_{\mathrm{peak}}$',
+                  r'$T_{\mathrm{B,peak}}$',
+                  r'$\sigma_{\mathrm{MAD}}$',
+                  r'$\sigma_{\mathrm{MAD,mK}}$',
                   #'$\\theta_{req}$',
                   #'\\sigma_{req}$',
                   #'$\\sigma_{MAD}/\\sigma_{req}$',
@@ -129,11 +139,16 @@ def make_latex_table(savename='continuum_data_summary'):
                              )
 
     # replacement for ftbl.sort(['Region'])
-    ftbl.sort('SPWs')
-    sorted_indices = [x[0] for x in sorted(enumerate(ftbl['Region']), key=lambda x: (len(x[1]), x[1]))]
-    ftbl = ftbl[sorted_indices]
+    # old, alphabeticalsorted_indices = [x[0] for x in sorted(enumerate(ftbl['Region']), key=lambda x: (len(x[1]), x[1]))]
+    # sort by glon, which isn't in its own column any more
+    ells = np.array([x[1:1+7] for x in ftbl['Region']], dtype='float')
+    ells = ells - 360 * (ells > 180.0)
+    # do it this way to preserve SPW sorting
+    ftbl.add_column(ells, name='ells')
+    ftbl.sort(['ells', 'SPWs'])
+    ftbl.remove_column('ells')
 
-    nrows = 50
+    nrows = 35
     for ii in range(0, len(ftbl), nrows):
         latexdict['header_start'] = f'\\label{{tab:continuum_data_summary_{ii}-{ii+nrows}}}'#\n\\footnotesize'
         if ii == 0:
@@ -181,7 +196,7 @@ def find_schedblock_elements(data, results=None):
 
 def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
                                 username='keflavich', timeout=30, retry=5, access_token=None,
-                                cache='/red/adamginsburg/ACES/logs/execution_metadata.json'
+                                cache='/blue/adamginsburg/adamginsburg/ACES/logs/execution_metadata.json'
                                 ):
 
     if cache and os.path.exists(cache):
@@ -194,10 +209,7 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
     if len(schedblock_meta) == 152:
         return schedblock_meta
 
-    import requests
     if access_token is None:
-        from astroquery.alma import Alma
-        import time
         Alma.login(username)
         self = Alma._auth
         login_url = f'https://{self.get_valid_host()}{self._LOGIN_ENDPOINT}'
@@ -210,7 +222,7 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
 
         login_response = self._request('POST', login_url, data=data, cache=False)
         access_token = login_response.json()["access_token"]
-        print(login_response.json()['access_token'])
+        print(login_response.json()['access_token'], flush=True)
         time.sleep(1)
     project_uidstr = project_uid.replace("/", "%7C")
     resp2 = requests.get(f'https://asa.alma.cl/snoopi/restapi/project/{project_uidstr}',
@@ -242,10 +254,6 @@ def retrieve_execution_metadata(project_uid='uid://A001/X1525/X290',
 
 
 def make_observation_table(access_token=None, use_cache=True):
-    from astroquery.alma import Alma
-    from astropy.time import Time
-    import numpy as np
-    from astropy.table import Table
 
     if use_cache:
         usub_meta_tm = Table.read(f'{basepath}/tables/observation_metadata_12m.ecsv')
@@ -256,13 +264,14 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta = table.vstack([usub_meta_tm, usub_meta_sm, usub_meta_tp])
 
         # Sort usub_meta by 'Field' in natural order
-        sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
+        #sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
+        sorted_indices = np.argsort(usub_meta['GLON'] - 360.0 * (usub_meta['GLON'] > 180.0))
         usub_meta = usub_meta[sorted_indices]
 
         sm = usub_meta['Configuration'] == '7M'
         tp = usub_meta['Configuration'] == 'TP'
         tm = (~tp) & (~sm)
-        colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
+        colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS', 'GLON', 'GLAT']
         colnames_noconfig = colnames[:2] + colnames[3:]
 
     else:
@@ -275,13 +284,26 @@ def make_observation_table(access_token=None, use_cache=True):
         metadata['Observation End Time'].format = 'fits'
         metadata = metadata[metadata['target_name'] == 'Sgr_A_star']
 
+        # overwrite galactic lat/lon because of the bug found in the archive in which fields a and r are way off
+        coordinates = SkyCoord(metadata['s_ra'], metadata['s_dec'], unit='deg', frame='icrs').galactic
+        metadata['gal_longitude'] = coordinates.l.deg
+        metadata['gal_latitude'] = coordinates.b.deg
+
         sub_meta = metadata['schedblock_name', 'Observation Start Time',
                             'Observation End Time', 'pwv', 't_exptime',
-                            's_resolution', 'spatial_scale_max', 'member_ous_uid']
+                            's_resolution', 'spatial_scale_max', 'member_ous_uid',
+                            'gal_longitude', 'gal_latitude',
+                            ]
         usub_meta = Table(np.unique(sub_meta))
 
         schedblock_meta = retrieve_execution_metadata(access_token=access_token)
 
+        usub_meta['EB ID'] = [rf'''\makecell[l]{{{",,\\\\ ".join([r'\texttt{' + (x['execblockuid']) + '}'
+                                                                  for x in schedblock_meta[schedblock_name]['executions']
+                                                                  if x['status'] == 'Pass'
+                                                                  ])
+                                                }. \vspace{{1.5mm}}}}'''
+                              for schedblock_name in usub_meta['schedblock_name']]
         usub_meta['executions'] = [', '.join([x['date']
                                               for x in schedblock_meta[schedblock_name]['executions']
                                               if x['status'] == 'Pass'
@@ -330,12 +352,23 @@ def make_observation_table(access_token=None, use_cache=True):
                             raise ValueError("No water table found")
                         med_pwv = np.median(tbl['water'])
                         if np.isnan(med_pwv):
+                            if '7M' in sbname:
+                                print(f"Skipping {sbname} {mous} {xid} in filename {path}")
+                                these_pwvs.append(np.nan)
+                                continue
                             raise ValueError("WTF?")
                         these_pwvs.append(med_pwv * 1000)
                     except ValueError:
                         lltbl = casa_formats_io.table_reader.CASATable.read(path + "/ASDM_CALWVR")
                         #watercol = [x for x in lltbl.column_set.columns if x.name == 'water']
                         tbl = lltbl.as_astropy_table(include_columns=['water'])
+                        if len(tbl) == 0:
+                            print(f"No water table found for {sbname} {mous} {xid} in filename {path}")
+                            if '7M' in sbname:
+                                print(f"Skipping {sbname} {mous} {xid} in filename {path}")
+                                these_pwvs.append(np.nan)
+                                continue
+                            raise ValueError("No water table found")
                         med_pwv = np.median(tbl['water'])
                         if np.isnan(med_pwv):
                             raise ValueError("WTF?")
@@ -365,7 +398,9 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta['pwv'] = pwvs
 
         # Sort usub_meta by 'Field' in natural order
-        sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
+        usub_meta['Field'] = [x.split("_")[3] for x in usub_meta['schedblock_name']]
+        # sorted_indices = [x[0] for x in sorted(enumerate(usub_meta['Field']), key=lambda x: (len(x[1]), x[1]))]
+        sorted_indices = np.argsort(usub_meta['gal_longitude'] - 360.0 * (usub_meta['gal_longitude'] > 180.0))
         usub_meta = usub_meta[sorted_indices]
 
         tm = np.char.find(usub_meta['schedblock_name'], '_TM') > 0
@@ -373,9 +408,6 @@ def make_observation_table(access_token=None, use_cache=True):
         tp = np.char.find(usub_meta['schedblock_name'], '_TP') > 0
 
         configuration_schedules = requests.get('https://almascience.eso.org/observing/observing-configuration-schedule/prior-cycle-observing-and-configuration-schedule')
-
-        from astropy.time import Time
-        from astropy.io import ascii
 
         def try_read_table(index):
             try:
@@ -408,7 +440,6 @@ def make_observation_table(access_token=None, use_cache=True):
                     row['block'] = config_sched_tbl[match]['Block'][0]
                     #print(f"Matched {row['schedblock_name']} to cycle {cycle_id} config {row['config_id']} block {row['block']}")
 
-        usub_meta['Field'] = [x.split("_")[3] for x in usub_meta['schedblock_name']]
         usub_meta.rename_column('pwv', 'PWV')
         usub_meta.rename_column('t_exptime', 'Exposure Time')
         usub_meta.rename_column('s_resolution', 'Res.')
@@ -417,6 +448,14 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta.rename_column('executions', 'Execution Dates')
         usub_meta.rename_column('npointings', 'N(P)')
         usub_meta.rename_column('time_per_eb', 'Time')
+        usub_meta.rename_column('gal_longitude', 'GLON')
+        usub_meta.rename_column('gal_latitude', 'GLAT')
+
+        usub_meta['Center'] = [f"G{x:07.3f}{'-' if y < 0 else '+'}{abs(y):06.3f}" for x, y in zip(usub_meta['GLON'], usub_meta['GLAT'])]
+        print(f"usub-meta Center: {usub_meta['Field', 'Center', 'GLON', 'GLAT']}", flush=True)
+        usub_meta.add_index('Field')
+        print(f"usub-meta Center: {usub_meta.loc['a']['Field', 'Center', 'GLON', 'GLAT']}", flush=True)
+        print(f"usub-meta Center: {usub_meta.loc['r']['Field', 'Center', 'GLON', 'GLAT']}", flush=True)
 
         updated = (np.char.find(usub_meta['schedblock_name'], 'updated') >= 0)
         print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()}")
@@ -431,7 +470,7 @@ def make_observation_table(access_token=None, use_cache=True):
                     #print(fieldname, match.sum(), sub[sub].sum())
         print(f"Total rows for tm={tm.sum()} tp={tp.sum()} 7m={sm.sum()} (after filtering for updated)")
 
-        colnames = ['Field', 'Execution Dates', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
+        colnames = ['Center', 'Field', 'Execution Dates', 'EB ID', 'Configuration', 'PWV', 'Time', 'N(P)', 'Res.', 'LAS']
         usub_meta['LAS'].unit = u.arcsec
         usub_meta['Res.'].unit = u.arcsec
         #usub_meta['Exposure Time'].unit = u.s
@@ -444,7 +483,7 @@ def make_observation_table(access_token=None, use_cache=True):
         usub_meta[colnames_noconfig][sm].write(f'{basepath}/tables/observation_metadata_7m.ecsv', format='ascii.ecsv', overwrite=True)
         usub_meta[colnames_noconfig][tp].write(f'{basepath}/tables/observation_metadata_TP.ecsv', format='ascii.ecsv', overwrite=True)
 
-    usub_meta['Execution Dates'] = [fr'\makecell[l]{{{",\\\\ ".join([x for x in ed.split(", ")])}.}}' for ed in usub_meta['Execution Dates']]
+    usub_meta['Execution Dates'] = [fr'\makecell[l]{{{",\\\\ ".join([x for x in ed.split(", ")])}. \vspace{{1.5mm}}}}' for ed in usub_meta['Execution Dates']]
 
     #latexdict['header_start'] = '\\label{tab:observation_metadata_12m}'#\n\\footnotesize'
     #latexdict['preamble'] = '\\caption{12m Observation Metadata}\n\\resizebox{\\textwidth}{!}{'
@@ -467,18 +506,25 @@ def make_observation_table(access_token=None, use_cache=True):
     formats = {key: lambda x: str(sigfig.round(str(x), sigfigs=2))
                for key in float_cols}
 
+    # sort by field coordinate...
+    usub_meta.sort('Center')
+    sorted_indices_359 = np.argsort(usub_meta['Center'])[np.array(['G359' in x for x in usub_meta['Center']])]
+    sorted_indices_000 = np.argsort(usub_meta['Center'])[np.array(['G000' in x for x in usub_meta['Center']])]
+    usub_meta = table.vstack([usub_meta[sorted_indices_359], usub_meta[sorted_indices_000]])
+
+    n_per_page = 25
     for sel, nm in ((tm, '12m'), (sm, '7m'), (tp, 'TP')):
         latexdict['header_start'] = f'\\label{{tab:observation_metadata_{nm}}}'#\n\\footnotesize'
         preamble = '{counter}\n\\caption{{{nm} Observation Metadata{contd}}}\n\\resizebox{{\\textwidth}}{{!}}{{'
-        for ii in range(0, sel.sum(), 25):
+        for ii in range(0, sel.sum(), n_per_page):
             if ii == 0:
                 latexdict['preamble'] = preamble.format(nm=nm, contd='', counter='')
             else:
                 latexdict['preamble'] = preamble.format(nm=nm, contd=' continued', counter=r'\addtocounter{table}{-1}')
-            usub_meta[colnames][sel][ii:ii+25].write(f"{basepath}/papers/continuum_data/tables/observation_metadata_{nm}_rows{ii}-{ii+25}.tex",
-                                                     formats=formats,
-                                                     overwrite=True,
-                                                     latexdict=latexdict)
+            usub_meta[colnames][sel][ii:ii+n_per_page].write(f"{basepath}/papers/continuum_data/tables/observation_metadata_{nm}_rows{ii}-{ii+n_per_page}.tex",
+                                                             formats=formats,
+                                                             overwrite=True,
+                                                             latexdict=latexdict)
 
     return usub_meta, (tm, sm, tp)
 
@@ -523,7 +569,9 @@ def make_spw_table():
     #formats = {key: lambda x: str(sigfig.round(str(x), sigfigs=2))
     #           for key in float_cols}
 
-    lines = [", ".join([x for x in linetbl['Line'][(linetbl['12m SPW'] == row['SPW']) & (np.char.find(linetbl['col9'], '**') != -1)]])
+    # mid-day 2025-11-12 this line suddenly started failing; it was working in the morning
+    # we have to use '.filled('--')' now, for no apparent reason
+    lines = [", ".join([x for x in linetbl['Line'][(linetbl['12m SPW'] == row['SPW']) & (np.char.find(linetbl['col9'].filled('--'), '**') != -1)]])
              for row in ftbl]
     lines = [x.replace("HC3N", "HC$_3$N").replace("13", "$^{13}$")
              .replace(" Alpha", r"$\alpha$").replace("15", "$^{15}$")
@@ -533,7 +581,7 @@ def make_spw_table():
     linefreqs = [", ".join(
                            [str(x)
                             for x in linetbl['Rest (GHz)'][((linetbl['12m SPW'] == row['SPW']) &
-                                                            (np.char.find(linetbl['col9'], '**') != -1))]])
+                                                            (np.char.find(linetbl['col9'].filled('--'), '**') != -1))]])
                  for row in ftbl]
 
     ftbl['Lines'] = [f'{x}\\\\ \n &&&&& {y}' for x, y in zip(lines, linefreqs)]
@@ -549,7 +597,9 @@ def make_spw_table():
         "ACES Spectral Configuration, including a non-exhaustive list of prominent, "
         "potentially continuum-affecting, lines.  The included lines are those that are, "
         "in at least some portion of the survey, masked out (see Section \\ref{sec:continuum_selection}).  "
-        "The rest frequencies of the targeted lines are given in GHz in the row below their names."
+        "The rest frequencies of the targeted lines are given in GHz in the row below their names.  "
+        "The columns $\\nu_{L}$, $\\nu_{U}$, and $\\Delta\\nu$ are the lower frequency, upper frequency, and frequency resolution, respectively.  "
+
     )
 
     ftbl.write(f"{basepath}/papers/continuum_data/tables/spectral_setup.tex", formats=formats,
@@ -593,6 +643,23 @@ def make_table_3():
     return table3
 
 
-if __name__ == "__main__":
+def main():
 
-    result = make_latex_table()
+    print("Making spw table", flush=True)
+    make_spw_table()
+
+    print("Making table 3", flush=True)
+    make_table_3()
+
+    print("Starting make_latex_table", flush=True)
+    make_latex_table()
+    print("Completed make_latex_table", flush=True)
+
+    make_observation_table(use_cache=False)
+    print("Completed make_observation_table", flush=True)
+
+
+if __name__ == "__main__":
+    print("Running main()", flush=True)
+    main()
+    print("Done", flush=True)
