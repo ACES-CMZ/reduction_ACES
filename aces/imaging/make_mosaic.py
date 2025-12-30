@@ -1025,7 +1025,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
         DaskProgressBar = contextlib.nullcontext
 
     import warnings
-    # suppress 'WARNING: nan_treatment='interpolate', however, NaN values detected post convolution. A contiguous region of NaN values, larger than the kernel size, are present in the input array. Increase the kernel size to avoid this. [astropy.convolution.convolve]'
+    # suppress 'WARNING: nan_treatment='interpolate', however, NaN values detected post convolution. A contiguous region of NaN values, larger than the kernel size, are present in the input array. Increase the kernel size to avoid this. [astropy.convolution.convolve]'  # noqa
     warnings.simplefilter('ignore')
 
     print(f"Downsampling cube {cubename} -> {outcubename}")
@@ -1036,11 +1036,23 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
     outwcs.wcs.crpix[:] = (outwcs.wcs.crpix[:] - 1 - start) / factor + 1
     header = cube.header.copy()
     header.update(outwcs.to_header())
+    header['NAXIS1'] = int(header['NAXIS1'] // factor)
+    header['NAXIS2'] = int(header['NAXIS2'] // factor)
+    header['BITPIX'] = -32
 
     if not os.path.exists(outcubename):
-        empty_data = np.zeros((0, int(cube.shape[1] / factor), int(cube.shape[2] / factor)),
-                              dtype=np.float32)
-        fits.PrimaryHDU(data=empty_data, header=header).writeto(outcubename, overwrite=False)
+        header.tofile(outcubename, overwrite=False)
+        # https://docs.astropy.org/en/stable/io/fits/appendix/faq.html#how-can-i-create-a-very-large-fits-file-from-scratch
+        with open(outcubename, "rb+") as fobj:
+            # header already contains the downsampled dimensions, so just use them directly
+            outsize = header['NAXIS3'] * header['NAXIS2'] * header['NAXIS1']
+            file_length = len(header.tostring()) + (outsize * (np.abs(header['BITPIX'])//8))
+            file_length = ((file_length + 2880 - 1) // 2880) * 2880 - 1
+            fobj.seek(file_length)
+            fobj.write(b"\0")
+
+    print("Outcube:")
+    print(SpectralCube.read(outcubename), flush=True)
 
     with fits.open(outcubename, mode='update') as outfh:
         for ii in range(0, cube.shape[0], nchan_chunk):
@@ -1055,6 +1067,8 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
                     else:
                         scube = cube[ii:ii+nchan_chunk]
                     dscube = scube[:, start::factor, start::factor]
+                    # this next step shouldn't be necessary, but it was for H40a.
+                    dscube = dscube[:, :header['NAXIS2'], :header['NAXIS1']]
                     dscube.allow_huge_operations = True
 
                     # no compute should happen prior to this step:
