@@ -1056,7 +1056,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
 
     with fits.open(outcubename, mode='update') as outfh:
         for ii in range(0, cube.shape[0], nchan_chunk):
-            if np.any(outfh[0].data[ii:ii+nchan_chunk].sum(axis=(1,2)) == 0):
+            if np.any(outfh[0].data[ii:ii+nchan_chunk].sum(axis=(1, 2)) == 0):
                 print(f"Chunk {ii} to {min(ii + nchan_chunk, cube.shape[0])} of {cube.shape[0]} processing", flush=True)
                 with DaskProgressBar():
                     if smooth:
@@ -1076,7 +1076,6 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
                     outfh.flush()
             else:
                 print(f"Chunk {ii} to {min(ii + nchan_chunk, cube.shape[0])} already filled, skipping", flush=True)
-
 
     # old version
     # with DaskProgressBar():
