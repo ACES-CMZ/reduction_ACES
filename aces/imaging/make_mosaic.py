@@ -1033,6 +1033,7 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
 
     start = 0
     outwcs = cube.wcs.celestial
+    outwcs.wcs.cdelt[:] = outwcs.wcs.cdelt[:] * factor
     outwcs.wcs.crpix[:] = (outwcs.wcs.crpix[:] - 1 - start) / factor + 1
     header = cube.header.copy()
     header.update(outwcs.to_header())
@@ -1068,7 +1069,9 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
                         scube = cube[ii:ii+nchan_chunk]
                     dscube = scube[:, start::factor, start::factor]
                     # this next step shouldn't be necessary, but it was for H40a.
-                    dscube = dscube[:, :header['NAXIS2'], :header['NAXIS1']]
+                    if header['NAXIS2'] != dscube.shape[1] or header['NAXIS1'] != dscube.shape[2]:
+                        print(f"Adjusting dscube shape from {dscube.shape} to match header NAXIS1/2={header['NAXIS1']},{header['NAXIS2']}", flush=True)
+                        dscube = dscube[:, :header['NAXIS2'], :header['NAXIS1']]
                     dscube.allow_huge_operations = True
 
                     # no compute should happen prior to this step:
