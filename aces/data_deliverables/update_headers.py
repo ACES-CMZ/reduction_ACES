@@ -280,7 +280,6 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
 def main():
     fits_list = sorted([
         f for f in BASE_DIR.glob("*/*.fits")
-        if ".icrs" not in f.name # Skip the reprojected files (they should inherit header info from Galactic files, right???)
     ])
     total = len(fits_list)
 
