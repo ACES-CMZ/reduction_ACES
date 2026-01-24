@@ -317,7 +317,7 @@ def main():
         f for f in BASE_DIR.glob("*/*.fits")
     ])
     # PV files aren't valid anyway, no need to update them
-    fits_list = [x for x in fits_list if 'PV' not in x]
+    fits_list = [x for x in fits_list if 'PV' not in str(x)]
     total = len(fits_list)
 
     print(f"Processing {total} FITS files in {BASE_DIR}", flush=True)
