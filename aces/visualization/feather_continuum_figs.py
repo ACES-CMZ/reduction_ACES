@@ -233,6 +233,26 @@ def mustang_feather_zoomregions():
 
     fig.savefig(f'{basepath}/mosaics/continuum/MUSTANG_12m_feather_afmhot.png', bbox_inches='tight', dpi=300)
 
+    TENS_DIR = '/orange/adamginsburg/ACES/TENS/'
+    mustang_name = 'SgrB2_flux_cut_dt6_filtp05to49_noShift_final_map_PlanckCombined.fits'
+    mustangfn = f'{TENS_DIR}/{mustang_name}'
+
+    fig = plot_fullwidth_figure(mustangfn, scale=1, normkwargs={'vmin': 0.0001, 'vmax': 1.5, 'stretch': 'log'},
+                                colormap=mymap,
+                                label=r"$T_B$ [K]", figsize=(14, 4), dpi=250, scalebar=True, beam=True,
+                                scalebar_color='w',
+                                scalebarstart=SkyCoord(-0.75*u.deg, -0.4*u.deg, frame='galactic'),
+                                subset_label=False)
+
+    cb = fig.axes[0].images[-1].colorbar
+    cb.set_ticks([0.001, 0.01, 0.05, 0.1, 0.2, 0.4, 0.8, 1.4])
+    
+    fig.axes[0].coords[0].set_ticks(spacing=0.5*u.deg)
+
+    fig.savefig(f'{basepath}/mosaics/continuum/MUSTANG.png', bbox_inches='tight', dpi=300)
+    fig.savefig(f'{basepath}/mosaics/continuum/MUSTANG.pdf', bbox_inches='tight', dpi=300)
+
+
 
 if __name__ == '__main__':
     mustang_feather_zoomregions()

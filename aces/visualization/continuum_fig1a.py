@@ -28,6 +28,7 @@ def plot_fullwidth_figure(fn, imgdata=None,
                           scale=1e3,
                           scalebar_color='k',
                           subset_label=False,
+                          scalebarstart=SkyCoord(0.5*u.deg, -0.28*u.deg, frame='galactic'),
                           ax=None,
                           fig=None):
     if fig is None:
@@ -69,7 +70,7 @@ def plot_fullwidth_figure(fn, imgdata=None,
 
     if scalebar:
         mpl_plot_templates.inset_plots.make_scalebar(ax,
-                                                     left_side=SkyCoord(0.5*u.deg, -0.28*u.deg, frame='galactic'),
+                                                     left_side=scalebarstart,
                                                      length=(25*u.pc/distance).to(u.arcsec, u.dimensionless_angles()),
                                                      color=scalebar_color,
                                                      label='25 pc')
@@ -282,6 +283,7 @@ if __name__ == '__main__':
         filenames = [x[0] for x in iterables]
         fname_labels = [x[1] for x in iterables]
         fig = plot_three_panel_figure(*filenames, names=fname_labels, colormap=colormap, subset_label=True,
+                                      label="RMS [mJy beam$^{-1}$]",
                                       normkwargs={'vmin': 0.0, 'vmax': 1, 'stretch': 'asinh'})
         fig.savefig(f'{diag_dir}/RMS_three_panel_{cmname}.png', bbox_inches='tight', dpi=300)
         fig.savefig(f'{diag_dir}/RMS_three_panel_{cmname}.pdf', bbox_inches='tight', dpi=300)
