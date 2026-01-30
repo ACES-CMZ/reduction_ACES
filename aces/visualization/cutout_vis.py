@@ -69,19 +69,40 @@ data_files = {
     # ACES 3mm continuum
     'ACES 3mm': '/orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits',
     
-    # VLA radio continuum
-    # for VLA 6cm, see also: /orange/adamginsburg/cmz/xinglu/*fits
-    'VLA 6cm': '/orange/adamginsburg/cmz/xinglu/SgrA_CONT_tclean_nterm2.image.tt0.fits',
+    # VLA radio continuum - multiple files covering different regions
+    'VLA 6cm': [
+        '/orange/adamginsburg/cmz/xinglu/20kms_VLA_continuum_IM.fits',
+        '/orange/adamginsburg/cmz/xinglu/c20kms_cont_merged.fits',
+        '/orange/adamginsburg/cmz/xinglu/c20kms_cont_pbcor_merged.fits',
+        '/orange/adamginsburg/cmz/xinglu/c50kms_cont.image.fits',
+        '/orange/adamginsburg/cmz/xinglu/c50kms_cont.image.pbcor.fits',
+        '/orange/adamginsburg/cmz/xinglu/DustRidge_CONT_tclean_nterm2.image.tt0.fits',
+        '/orange/adamginsburg/cmz/xinglu/SgrA_CONT_tclean_nterm2.image.tt0.fits',
+        '/orange/adamginsburg/cmz/xinglu/sgrb1off_cont_merged.fits',
+        '/orange/adamginsburg/cmz/xinglu/sgrb1off_cont_pbcor_merged.fits',
+        '/orange/adamginsburg/cmz/xinglu/SgrB1off_VLA_continuum_IM.fits',
+        '/orange/adamginsburg/cmz/xinglu/sgrc_cont_merged.fits',
+        '/orange/adamginsburg/cmz/xinglu/sgrc_cont_pbcor_merged.fits',
+        '/orange/adamginsburg/cmz/xinglu/SgrC_CONT_tclean_nterm2.pbcor.image.tt0.fits',
+    ],
     'MEERKAT 20cm': '/orange/adamginsburg/cmz/meerkat/MeerKAT_Galactic_Centre_1284MHz-StokesI.fits'
 }
 
 # Filter to only existing files
 existing_files = {}
 for label, filepath in data_files.items():
-    if Path(filepath).exists():
-        existing_files[label] = filepath
+    if isinstance(filepath, list):
+        # For lists (e.g., VLA 6cm), keep all existing files
+        existing = [f for f in filepath if Path(f).exists()]
+        if existing:
+            existing_files[label] = existing
+        else:
+            print(f"Warning: No files found for {label}")
     else:
-        print(f"Warning: File not found: {filepath}")
+        if Path(filepath).exists():
+            existing_files[label] = filepath
+        else:
+            print(f"Warning: File not found: {filepath}")
 
 print(f"\nFound {len(existing_files)} existing data files")
 
@@ -132,6 +153,93 @@ beam_sizes = {
     'VLA 20cm': None,
     'MEERKAT 20cm': None
 }
+
+# Cache for file WCS and bounds to avoid repeated file opening
+_file_cache = {}
+
+def select_best_file(coord, filepaths):
+    """
+    Select the best file from a list based on overlap and beam size.
+    
+    Parameters
+    ----------
+    coord : SkyCoord
+        Source coordinate
+    filepaths : list
+        List of file paths to check
+        
+    Returns
+    -------
+    best_file : str or None
+        Path to the best file, or None if no overlap
+    """
+    candidates = []
+    
+    for filepath in filepaths:
+        # Check cache first
+        if filepath not in _file_cache:
+            try:
+                with fits.open(filepath) as hdul:
+                    # Find image HDU
+                    image_hdu = None
+                    for h in hdul:
+                        if h.data is not None and len(h.data.shape) >= 2:
+                            image_hdu = h
+                            break
+                    
+                    if image_hdu is None:
+                        _file_cache[filepath] = None
+                        continue
+                    
+                    # Get WCS
+                    try:
+                        wcs = WCS(image_hdu.header).celestial
+                    except (AttributeError, ValueError):
+                        wcs = WCS(image_hdu.header)
+                        if wcs.naxis > 2:
+                            wcs = wcs.sub(['longitude', 'latitude'])
+                    
+                    # Get data shape
+                    data_shape = image_hdu.data.shape
+                    while len(data_shape) > 2:
+                        data_shape = data_shape[1:]
+                    
+                    # Get beam size
+                    try:
+                        beam = radio_beam.Beam.from_fits_header(image_hdu.header)
+                        beam_area = beam.sr.value
+                    except (radio_beam.NoBeamException, KeyError):
+                        # Should not happen for VLA data, but handle gracefully
+                        beam_area = 1e10  # Large value = low priority
+                    
+                    _file_cache[filepath] = (wcs, data_shape, beam_area)
+            except Exception:
+                # Skip files that can't be opened
+                _file_cache[filepath] = None
+                continue
+        
+        # Use cached info
+        cache_info = _file_cache.get(filepath)
+        if cache_info is None:
+            continue
+            
+        wcs, data_shape, beam_area = cache_info
+        
+        # Check if coordinate is within image bounds
+        try:
+            xx, yy = wcs.world_to_pixel(coord)
+            if 0 <= xx < data_shape[1] and 0 <= yy < data_shape[0]:
+                candidates.append((filepath, beam_area))
+        except Exception:
+            continue
+    
+    if not candidates:
+        return None
+    
+    # Select file with smallest beam (best resolution)
+    candidates.sort(key=lambda x: x[1])
+    return candidates[0][0]
+
 
 def galactic_cutout(coord, hdu, size=50*u.arcsec):
     """
@@ -190,8 +298,9 @@ def galactic_cutout(coord, hdu, size=50*u.arcsec):
         co = msk.cutout(data)
         if co is None:
             return None, None
-    except Exception as e:
-        print(f"    Error creating cutout mask: {e}")
+    except (ValueError, IndexError, AttributeError) as e:
+        # Expected: coordinate outside image bounds, invalid WCS, attribute errors
+        print(f"    Error creating cutout mask: {type(e).__name__}: {e}")
         return None, None
     
     # Reproject to Galactic frame with optimal WCS
@@ -200,8 +309,9 @@ def galactic_cutout(coord, hdu, size=50*u.arcsec):
         newdata, _ = reproject.reproject_interp(input_data=(co, wcs[slcs]),
                                                 output_projection=csys,
                                                 shape_out=sz)
-    except Exception as e:
-        print(f"    Error reprojecting to Galactic: {e}")
+    except (ValueError, TypeError, AttributeError) as e:
+        # Expected: WCS problems, incompatible projections, shape issues
+        print(f"    Error reprojecting to Galactic: {type(e).__name__}: {e}")
         return None, None
     
     # Create the target rectangular region in the reprojected data
@@ -214,8 +324,9 @@ def galactic_cutout(coord, hdu, size=50*u.arcsec):
             return None, None
         final_data = newdata[slcs2]
         final_wcs = csys[slcs2]
-    except Exception as e:
-        print(f"    Error extracting final region: {e}")
+    except (ValueError, IndexError, AttributeError) as e:
+        # Expected: slicing issues, WCS problems
+        print(f"    Error extracting final region: {type(e).__name__}: {e}")
         return None, None
     
     return final_data, final_wcs
@@ -288,6 +399,14 @@ def extract_sed(coord, data_files, source, detection_sigma=5.0):
         # Skip if we already added from catalog
         if label in ['3mm', '1mm', 'ACES 3mm', 'CMZoom 1mm']:
             continue
+        
+        # Handle lists of files (e.g., VLA 6cm)
+        if isinstance(filepath, list):
+            best_file = select_best_file(coord, filepath)
+            if best_file is None:
+                print(f"    SED: {label} - no overlapping files")
+                continue
+            filepath = best_file
             
         try:
             with fits.open(filepath) as hdul:
@@ -313,7 +432,9 @@ def extract_sed(coord, data_files, source, detection_sigma=5.0):
                 # Get WCS
                 try:
                     wcs = WCS(header).celestial
-                except:
+                except (AttributeError, ValueError) as e:
+                    # If celestial WCS extraction fails, try subsetting
+                    print(f"    SED: {label} - WCS.celestial failed ({type(e).__name__}), trying sub")
                     wcs = WCS(header)
                     if wcs.naxis > 2:
                         wcs = wcs.sub(['longitude', 'latitude'])
@@ -339,9 +460,11 @@ def extract_sed(coord, data_files, source, detection_sigma=5.0):
                     if '6cm' in label or '20cm' in label:
                         try:
                             beam = radio_beam.Beam.from_fits_header(header)
-                        except:
-                            beam = Beam(10*u.arcsec)  # fallback
-                            print(f"    SED: {label} - using fallback beam")
+                        except (radio_beam.NoBeamException, KeyError) as e:
+                            # VLA/MeerKAT data should always have beams - this indicates a real problem
+                            print(f"    SED: {label} - ERROR: missing beam in header ({type(e).__name__}: {e})")
+                            # this outcome isn't OK.
+                            raise e
                     else:
                         print(f"    SED: {label} - no beam size defined, skipping")
                         continue
@@ -370,11 +493,14 @@ def extract_sed(coord, data_files, source, detection_sigma=5.0):
                 flux_val = abs(flux.value) if flux.value < 0 else flux.value
                 flux = flux_val * u.Jy
                 
-                # Check if this is a significant local peak
-                # Extract a local region (5x5 pixels around the source)
-                is_local_peak = False
+                # Check if this is a significant detection at the catalog position
+                # Calculate SNR using local background subtraction
+                is_detection = False
+                peak_snr = 0
                 try:
-                    half_size = 2
+                    # Extract local region for background estimation
+                    # Use annulus: inner radius excludes source (3 pixels), outer radius for background
+                    half_size = 10  # pixels for background region
                     x_min = max(0, xx - half_size)
                     x_max = min(data.shape[1], xx + half_size + 1)
                     y_min = max(0, yy - half_size)
@@ -382,46 +508,48 @@ def extract_sed(coord, data_files, source, detection_sigma=5.0):
                     
                     local_region = data[y_min:y_max, x_min:x_max]
                     
-                    # Only consider finite values
-                    finite_mask = np.isfinite(local_region)
-                    if np.any(finite_mask):
-                        local_values = local_region[finite_mask]
-                        
-                        # Check if center is the maximum in the region
-                        is_maximum = val >= np.nanmax(local_region)
-                        
-                        # Calculate local background and RMS
-                        # Exclude the central pixel for background calculation
+                    if np.any(np.isfinite(local_region)):
+                        # Create mask excluding central 3x3 pixels (inner aperture containing source)
                         center_y = yy - y_min
                         center_x = xx - x_min
-                        mask_no_center = np.ones_like(local_region, dtype=bool)
-                        if 0 <= center_y < mask_no_center.shape[0] and 0 <= center_x < mask_no_center.shape[1]:
-                            mask_no_center[center_y, center_x] = False
+                        bg_mask = np.ones_like(local_region, dtype=bool)
                         
-                        background_region = local_region[mask_no_center & finite_mask]
-                        if len(background_region) > 0:
-                            local_median = np.nanmedian(background_region)
-                            local_rms = np.nanstd(background_region)
+                        # Exclude inner 3x3 region
+                        for dy in range(-1, 2):
+                            for dx in range(-1, 2):
+                                cy, cx = center_y + dy, center_x + dx
+                                if 0 <= cy < bg_mask.shape[0] and 0 <= cx < bg_mask.shape[1]:
+                                    bg_mask[cy, cx] = False
+                        
+                        # Get background pixels
+                        bg_pixels = local_region[bg_mask & np.isfinite(local_region)]
+                        
+                        if len(bg_pixels) > 10:
+                            # Calculate background statistics using median and MAD
+                            bg_median = np.median(bg_pixels)
+                            mad = np.median(np.abs(bg_pixels - bg_median))
+                            bg_rms = 1.4826 * mad  # Convert MAD to standard deviation
                             
-                            # Source is significant if it's:
-                            # 1. The local maximum
-                            # 2. More than 3-sigma above local background
-                            if is_maximum and local_rms > 0:
-                                snr_local = (val - local_median) / local_rms
-                                is_local_peak = snr_local > 3.0
-                except Exception as e:
-                    # If local peak check fails, assume it's not a peak
-                    is_local_peak = False
+                            # Calculate SNR at the catalog position
+                            if bg_rms > 0:
+                                snr = (val - bg_median) / bg_rms
+                                peak_snr = snr
+                                
+                                # Detection if SNR > 3
+                                if snr > 3.0:
+                                    is_detection = True
+                except (IndexError, ValueError, TypeError, AttributeError) as e:
+                    # If detection check fails, assume upper limit
+                    print(f"    SED: {label} - detection check failed ({type(e).__name__})")
+                    is_detection = False
                 
-                # Estimate error
-                if is_local_peak:
+                # Estimate error based on detection status
+                if is_detection:
                     # For detections, use 20% calibration uncertainty
                     error = max(flux * 0.2, 0.001*u.Jy)
-                    is_detection = True
                 else:
                     # For upper limits, use 30% uncertainty
                     error = max(flux * 0.3, 0.001*u.Jy)
-                    is_detection = False
                 
                 sed_data['wavelength'].append(wavelengths[label])
                 sed_data['flux'].append(flux)
@@ -429,11 +557,12 @@ def extract_sed(coord, data_files, source, detection_sigma=5.0):
                 sed_data['is_detection'].append(is_detection)
                 sed_data['label'].append(label)
                 
-                det_type = "LOCAL PEAK" if is_local_peak else "upper limit"
-                print(f"    SED: {label} - flux={flux.value:.4f} Jy, det={is_detection} ({det_type})")
+                det_type = f"DETECTION (SNR={peak_snr:.1f})" if is_detection else "upper limit"
+                print(f"    SED: {label} - flux={flux.value:.4g} Jy, det={is_detection} ({det_type})")
                 
-        except Exception as e:
-            print(f"    SED: Error processing {label}: {e}")
+        except (OSError, IOError, ValueError, KeyError) as e:
+            # Expected errors: file issues, WCS problems, unit conversions
+            print(f"    SED: Error processing {label}: {type(e).__name__}: {e}")
             continue
     
     return sed_data
@@ -504,6 +633,15 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
     # Prepare cutouts
     cutouts = {}
     for label, filepath in data_files.items():
+        # Handle lists of files (e.g., VLA 6cm)
+        if isinstance(filepath, list):
+            best_file = select_best_file(coord, filepath)
+            if best_file is None:
+                print(f"  Skipping {label}: no overlapping files")
+                continue
+            filepath = best_file
+            print(f"  Using {Path(filepath).name} for {label}")
+        
         try:
             with fits.open(filepath) as hdul:
                 cutout_data, cutout_wcs = galactic_cutout(coord, hdul, size=size)
@@ -513,8 +651,9 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
                     cutouts[label] = (cutout_data, cutout_wcs)
                 else:
                     print(f"  Skipping {label}: no valid data")
-        except Exception as e:
-            print(f"  Skipping {label}: {e}")
+        except (OSError, IOError, ValueError) as e:
+            # Expected errors: file issues, WCS/reprojection problems
+            print(f"  Skipping {label}: {type(e).__name__}: {e}")
     
     if len(cutouts) == 0:
         print(f"  No valid cutouts for source {source['index']}, skipping")
@@ -676,8 +815,14 @@ def main():
         try:
             plot_multiwavelength_cutout(i, catalog, existing_files, output_dir,
                                        size=50*u.arcsec, save=True)
+        except (KeyboardInterrupt, SystemExit):
+            # Don't catch user interrupts
+            raise
         except Exception as e:
-            print(f"Error processing source {i}: {e}")
+            # Catch any unexpected errors to continue processing
+            print(f"ERROR: Unexpected error processing source {i}: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             continue
     
     print(f"\nDone! Created cutouts in {output_dir}")
