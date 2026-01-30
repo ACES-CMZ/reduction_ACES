@@ -12,7 +12,9 @@ Processes files in "products_for_ALMA" directory to ensure compliance with ALMA 
 """
 
 import re
+import os
 import sys
+import time
 import warnings
 from pathlib import Path
 from typing import Optional
@@ -21,6 +23,7 @@ from astropy import units as u
 from astropy.io import fits
 from astropy.wcs import WCS
 from astropy.wcs.utils import add_stokes_axis_to_wcs
+from spectral_cube import SpectralCube
 
 BASE_DIR = Path("/orange/adamginsburg/ACES/products_for_ALMA/")
 DEFAULT_DATE_OBS = "2021-10-17T01:21:04"
@@ -159,11 +162,11 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
     """Apply all fixes to a FITS file. Returns (changed, error_messages)."""
     errors = []
     fname_lower = fits_path.name.lower()
+    t0 = time.time()
 
-    with fits.open(fits_path, mode="update", lazy_load_hdus=False) as hdul:
-        if not hdul:
-            return False, [f"no HDUs in {fits_path.name}"]
+    with fits.open(fits_path, mode="update") as hdul:
 
+        print(f"Loaded header of {os.path.basename(fits_path)}. dt={time.time() - t0:.2f}s", flush=True)
         h0 = hdul[0]
         hdr = h0.header
 
@@ -179,6 +182,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
         # Handle moment maps
         cube_wcs = None
         if is_moment and (cube_file := find_cube_for_moment(fits_path)):
+            print("Extracting spectral WCS from cube:", cube_file, flush=True)
             cube_wcs = extract_spectral_wcs(cube_file)
 
         # === Apply fixes ===
@@ -204,12 +208,22 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
         if target:
             hdr["TARGET"] = target
 
+        print(f"Loading cube from {fits_path} for further analysis... dt={time.time() - t0:.2f}s", flush=True)
         # 2. Dimension updates
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                cube = SpectralCube.read(fits_path, use_dask=True)
+        except Exception as ex:
+            print(ex, flush=True)
+            cube = h0.data
+
         data = h0.data
 
         # Moment maps: 2D -> 3D
         if is_moment and cube_wcs and hdr.get("NAXIS") == 2:
             if should_add_freq_axis(hdr, {"freq": 1, "bw": 1}) and data is not None:
+                print(f"Converting moment map from 2d to 3d. dt={time.time() - t0:.2f}s", flush=True)
                 h0.data = data[np.newaxis, ...]
                 data = h0.data
                 hdr["NAXIS"] = 3
@@ -224,6 +238,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
 
         # Continuum: 2D -> 3D
         elif should_add_freq_axis(hdr, cont_params) and data is not None:
+            print(f"Converting continuum map from 2d to 3d. dt={time.time() - t0:.2f}s", flush=True)
             h0.data = data[np.newaxis, ...]
             data = h0.data
             hdr["NAXIS"] = 3
@@ -236,6 +251,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
 
         # 3D -> 4D with Stokes
         if should_add_stokes_axis(hdr, is_pv) and data is not None:
+            print(f"Adding Stokes axis to make 4D. dt={time.time() - t0:.2f}s", flush=True)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 old_wcs = WCS(hdr, naxis=3)
@@ -259,13 +275,35 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
             hdr["VELREF"] = 257
 
         # 4. Data min/max
-        if data is not None:
-            finite = data[np.isfinite(data)]
-            if finite.size > 0:
+        if data is not None and ('DATAMIN' not in hdr or 'DATAMAX' not in hdr):
+            print(f"Calculating datamin/datamax for data with size {data.size/1024**3}Gpix... dt={time.time() - t0:.2f}s", flush=True)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                try:
+                    datamax = cube.max()
+                    datamin = cube.min()
+
+                    # this shouldn't be necessary, but it has happened: they should _always_ be qty's
+                    if hasattr(datamax, 'value'):
+                        datamax = datamax.value
+                    if hasattr(datamin, 'value'):
+                        datamin = datamin.value
+                except TypeError:
+                    # it's a moment map, we can afford to load the whole data
+                    datamax = np.nanmax(cube)
+                    datamin = np.nanmin(cube)
+
+            if np.isnan(datamax) or np.isnan(datamin):
+                errors.append("Could not compute DATAMIN/DATAMAX (resulted in NaN)")
+                print(f"Warning: could not compute DATAMIN/DATAMAX for file {fits_path} (resulted in NaN). dt={time.time() - t0:.2f}s", flush=True)
+            else:
                 if "DATAMIN" not in hdr:
-                    hdr["DATAMIN"] = float(finite.min())
+                    hdr["DATAMIN"] = float(datamin)
                 if "DATAMAX" not in hdr:
-                    hdr["DATAMAX"] = float(finite.max())
+                    hdr["DATAMAX"] = float(datamax)
+            print(f"Computed datamin/datamax for file {fits_path}, datamax={hdr.get('DATAMAX')}, datamin={hdr.get('DATAMIN')}. dt={time.time() - t0:.2f}s", flush=True)
+        else:
+            print(f"for file {fits_path}, datamax={hdr.get('DATAMAX')}, datamin={hdr.get('DATAMIN')}. dt={time.time() - t0:.2f}s", flush=True)
 
         # 5. BUNIT standardisation
         if not is_model_resid:
@@ -273,6 +311,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
             if bunit and bunit.strip() in MALFORMED_BUNIT:
                 hdr["BUNIT"] = "Jy/beam"
 
+        print(f"Starting final flush to disk... dt={time.time() - t0:.2f}s", flush=True)
         hdul.flush()
         return True, errors
 
@@ -281,14 +320,21 @@ def main():
     fits_list = sorted([
         f for f in BASE_DIR.glob("*/*.fits")
     ])
+    # PV files aren't valid anyway, no need to update them
+    fits_list = [x for x in fits_list if 'PV' not in str(x)]
     total = len(fits_list)
 
-    print(f"Processing {total} FITS files in {BASE_DIR}")
+    print(f"Processing {total} FITS files in {BASE_DIR}", flush=True)
 
     n_ok = n_err = 0
     error_files = []
 
-    for f in fits_list:
+    # Shuffle so we can parallelize
+    import random
+    random.shuffle(fits_list)
+
+    for ii, f in enumerate(fits_list):
+        print(f"Processing {f} ({ii} of {len(fits_list)})", flush=True)
         ok, errs = apply_fixes(f)
         if ok:
             n_ok += 1
@@ -296,15 +342,15 @@ def main():
             n_err += 1
             error_files.append((f.name, errs))
 
-    print("\n--- Summary ---")
-    print(f"Total files: {total}")
-    print(f"Successfully updated: {n_ok}")
-    print(f"Errors: {n_err}")
+    print("\n--- Summary ---", flush=True)
+    print(f"Total files: {total}", flush=True)
+    print(f"Successfully updated: {n_ok}", flush=True)
+    print(f"Errors: {n_err}", flush=True)
 
     if error_files:
-        print("\nFiles with errors:")
+        print("\nFiles with errors:", flush=True)
         for name, errs in error_files:
-            print(f"  {name}: {'; '.join(errs)}")
+            print(f"  {name}: {'; '.join(errs)}", flush=True)
 
 
 if __name__ == "__main__":
