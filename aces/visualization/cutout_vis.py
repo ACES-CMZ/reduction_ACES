@@ -26,6 +26,8 @@ from reproject import reproject_interp
 import regions
 import warnings
 from pathlib import Path
+from radio_beam import Beam
+import radio_beam
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
@@ -70,7 +72,7 @@ data_files = {
     # VLA radio continuum
     # for VLA 6cm, see also: /orange/adamginsburg/cmz/xinglu/*fits
     'VLA 6cm': '/orange/adamginsburg/cmz/xinglu/SgrA_CONT_tclean_nterm2.image.tt0.fits',
-    'VLA 20cm': '/orange/adamginsburg/cmz/meerkat/MeerKAT_Galactic_Centre_1284MHz-StokesI.fits'
+    'MEERKAT 20cm': '/orange/adamginsburg/cmz/meerkat/MeerKAT_Galactic_Centre_1284MHz-StokesI.fits'
 }
 
 # Filter to only existing files
@@ -82,6 +84,54 @@ for label, filepath in data_files.items():
         print(f"Warning: File not found: {filepath}")
 
 print(f"\nFound {len(existing_files)} existing data files")
+
+# Define wavelengths and beams for SED extraction
+wavelengths = {
+    'Spitzer 3.6μm': 3.6*u.um,
+    'Spitzer 4.5μm': 4.5*u.um,
+    'Spitzer 5.8μm': 5.8*u.um,
+    'Spitzer 8.0μm': 8.0*u.um,
+    '24um': 24*u.um,
+    '70um': 70*u.um,
+    'Herschel 70um': 70*u.um,
+    '160um': 160*u.um,
+    'Herschel 160um': 160*u.um,
+    '250um': 250*u.um,
+    'Herschel 250um': 250*u.um,
+    '1mm': (230*u.GHz).to(u.um, u.spectral()),
+    'CMZoom 1mm': (230*u.GHz).to(u.um, u.spectral()),
+    '3mm': (96*u.GHz).to(u.um, u.spectral()),
+    'ACES 3mm': (96*u.GHz).to(u.um, u.spectral()),
+    '6cm': 6*u.cm,
+    'VLA 6cm': 6*u.cm,
+    '20cm': 20*u.cm,
+    'VLA 20cm': 20*u.cm,
+    'MEERKAT 20cm': 20*u.cm
+}
+
+# Beam sizes from Traficante+ 2011 and instrument specs
+beam_sizes = {
+    'Spitzer 3.6μm': Beam(2*u.arcsec),
+    'Spitzer 4.5μm': Beam(2*u.arcsec),
+    'Spitzer 5.8μm': Beam(2*u.arcsec),
+    'Spitzer 8.0μm': Beam(2*u.arcsec),
+    '24um': Beam(6*u.arcsec),
+    '70um': Beam(10.7*u.arcsec, 9.7*u.arcsec),
+    'Herschel 70um': Beam(10.7*u.arcsec, 9.7*u.arcsec),
+    '160um': Beam(13.9*u.arcsec, 13.2*u.arcsec),
+    'Herschel 160um': Beam(13.9*u.arcsec, 13.2*u.arcsec),
+    '250um': Beam(23.9*u.arcsec, 22.8*u.arcsec),
+    'Herschel 250um': Beam(23.9*u.arcsec, 22.8*u.arcsec),
+    '1mm': Beam(3*u.arcsec),  # CMZoom typical
+    'CMZoom 1mm': Beam(3*u.arcsec),
+    '3mm': Beam(1.5*u.arcsec),  # ACES typical
+    'ACES 3mm': Beam(1.5*u.arcsec),
+    '6cm': None,  # Will be read from FITS header
+    'VLA 6cm': None,
+    '20cm': None,  # Will be read from FITS header
+    'VLA 20cm': None,
+    'MEERKAT 20cm': None
+}
 
 def galactic_cutout(coord, hdu, size=50*u.arcsec):
     """
@@ -193,6 +243,238 @@ def create_custom_colormap():
     return custom_cmap
 
 
+def extract_sed(coord, data_files, source, detection_sigma=5.0):
+    """
+    Extract SED by measuring flux at source position in each image.
+    
+    Parameters
+    ----------
+    coord : SkyCoord
+        Source coordinate
+    data_files : dict
+        Dictionary of wavelength labels to file paths
+    source : Table row
+        Source catalog entry
+    detection_sigma : float
+        S/N threshold for detections
+        
+    Returns
+    -------
+    sed_table : dict
+        Dictionary with wavelengths, fluxes, errors, and detection flags
+    """
+    sed_data = {'wavelength': [], 'flux': [], 'error': [], 'is_detection': [], 'label': []}
+    
+    # Always add ACES 3mm point from catalog (this is a detection by definition)
+    if 'flux' in source.colnames and source['flux'] > 0:
+        sed_data['wavelength'].append((96*u.GHz).to(u.um, u.spectral()))
+        sed_data['flux'].append(source['flux'] * u.Jy)
+        sed_data['error'].append(source.get('flux_err', source['flux']*0.1) * u.Jy)
+        sed_data['is_detection'].append(True)
+        sed_data['label'].append('3mm (ACES)')
+    
+    # Add CMZoom 1mm if available
+    if 'cmzoom_flux' in source.colnames and not np.isnan(source['cmzoom_flux']) and source['cmzoom_flux'] > 0:
+        cmz_err = source.get('cmzoom_flux_err', source['cmzoom_flux']*0.2)
+        is_det = (source['cmzoom_flux'] / cmz_err) > detection_sigma if not np.isnan(cmz_err) else False
+        sed_data['wavelength'].append((230*u.GHz).to(u.um, u.spectral()))
+        sed_data['flux'].append(source['cmzoom_flux'] * u.Jy)
+        sed_data['error'].append(cmz_err * u.Jy)
+        sed_data['is_detection'].append(is_det)
+        sed_data['label'].append('1mm (CMZoom)')
+    
+    # Extract from other data files
+    for label, filepath in data_files.items():
+        # Skip if we already added from catalog
+        if label in ['3mm', '1mm', 'ACES 3mm', 'CMZoom 1mm']:
+            continue
+            
+        try:
+            with fits.open(filepath) as hdul:
+                # Find image HDU
+                image_hdu = None
+                for h in hdul:
+                    if h.data is not None and len(h.data.shape) >= 2:
+                        image_hdu = h
+                        break
+                
+                if image_hdu is None:
+                    print(f"    SED: No valid HDU in {label}")
+                    continue
+                
+                # Get data and WCS
+                data = image_hdu.data.copy()
+                header = image_hdu.header
+                
+                # Handle multi-dimensional data
+                while len(data.shape) > 2:
+                    data = data[0]
+                
+                # Get WCS
+                try:
+                    wcs = WCS(header).celestial
+                except:
+                    wcs = WCS(header)
+                    if wcs.naxis > 2:
+                        wcs = wcs.sub(['longitude', 'latitude'])
+                
+                # Get pixel coordinates
+                xx, yy = wcs.world_to_pixel(coord)
+                xx, yy = int(np.round(xx)), int(np.round(yy))
+                
+                # Check bounds
+                if not (0 <= xx < data.shape[1] and 0 <= yy < data.shape[0]):
+                    print(f"    SED: {label} - coordinate outside image bounds")
+                    continue
+                
+                val = data[yy, xx]
+                
+                if np.isnan(val) or not np.isfinite(val):
+                    print(f"    SED: {label} - NaN or non-finite value at position")
+                    continue
+                
+                # Get beam for flux conversion
+                beam = beam_sizes.get(label)
+                if beam is None:
+                    if '6cm' in label or '20cm' in label:
+                        try:
+                            beam = radio_beam.Beam.from_fits_header(header)
+                        except:
+                            beam = Beam(10*u.arcsec)  # fallback
+                            print(f"    SED: {label} - using fallback beam")
+                    else:
+                        print(f"    SED: {label} - no beam size defined, skipping")
+                        continue
+                
+                # Convert to Jy based on wavelength and units
+                bunit = str(header.get('BUNIT', '')).upper()
+                
+                if wavelengths[label] < 1*u.mm:  # IR: typically in MJy/sr
+                    if 'MJY/SR' in bunit or 'MJY.SR' in bunit:
+                        flux = (val * u.MJy/u.sr * beam.sr).to(u.Jy)
+                    elif 'JY' in bunit:
+                        flux = val * u.Jy
+                    else:
+                        # Assume MJy/sr for IR
+                        flux = (val * u.MJy/u.sr * beam.sr).to(u.Jy)
+                else:  # Radio: typically in Jy/beam or Jy
+                    if 'JY/BEAM' in bunit:
+                        flux = val * u.Jy
+                    elif 'JY' in bunit:
+                        flux = val * u.Jy
+                    else:
+                        # Assume Jy/beam for radio
+                        flux = val * u.Jy
+                
+                # For upper limits, use absolute value
+                flux_val = abs(flux.value) if flux.value < 0 else flux.value
+                flux = flux_val * u.Jy
+                
+                # Check if this is a significant local peak
+                # Extract a local region (5x5 pixels around the source)
+                is_local_peak = False
+                try:
+                    half_size = 2
+                    x_min = max(0, xx - half_size)
+                    x_max = min(data.shape[1], xx + half_size + 1)
+                    y_min = max(0, yy - half_size)
+                    y_max = min(data.shape[0], yy + half_size + 1)
+                    
+                    local_region = data[y_min:y_max, x_min:x_max]
+                    
+                    # Only consider finite values
+                    finite_mask = np.isfinite(local_region)
+                    if np.any(finite_mask):
+                        local_values = local_region[finite_mask]
+                        
+                        # Check if center is the maximum in the region
+                        is_maximum = val >= np.nanmax(local_region)
+                        
+                        # Calculate local background and RMS
+                        # Exclude the central pixel for background calculation
+                        center_y = yy - y_min
+                        center_x = xx - x_min
+                        mask_no_center = np.ones_like(local_region, dtype=bool)
+                        if 0 <= center_y < mask_no_center.shape[0] and 0 <= center_x < mask_no_center.shape[1]:
+                            mask_no_center[center_y, center_x] = False
+                        
+                        background_region = local_region[mask_no_center & finite_mask]
+                        if len(background_region) > 0:
+                            local_median = np.nanmedian(background_region)
+                            local_rms = np.nanstd(background_region)
+                            
+                            # Source is significant if it's:
+                            # 1. The local maximum
+                            # 2. More than 3-sigma above local background
+                            if is_maximum and local_rms > 0:
+                                snr_local = (val - local_median) / local_rms
+                                is_local_peak = snr_local > 3.0
+                except Exception as e:
+                    # If local peak check fails, assume it's not a peak
+                    is_local_peak = False
+                
+                # Estimate error
+                if is_local_peak:
+                    # For detections, use 20% calibration uncertainty
+                    error = max(flux * 0.2, 0.001*u.Jy)
+                    is_detection = True
+                else:
+                    # For upper limits, use 30% uncertainty
+                    error = max(flux * 0.3, 0.001*u.Jy)
+                    is_detection = False
+                
+                sed_data['wavelength'].append(wavelengths[label])
+                sed_data['flux'].append(flux)
+                sed_data['error'].append(error)
+                sed_data['is_detection'].append(is_detection)
+                sed_data['label'].append(label)
+                
+                det_type = "LOCAL PEAK" if is_local_peak else "upper limit"
+                print(f"    SED: {label} - flux={flux.value:.4f} Jy, det={is_detection} ({det_type})")
+                
+        except Exception as e:
+            print(f"    SED: Error processing {label}: {e}")
+            continue
+    
+    return sed_data
+
+
+def modified_blackbody_simple(wavelength, temperature, normalization):
+    """
+    Simple modified blackbody with fixed beta=1.5.
+    
+    Parameters
+    ----------
+    wavelength : Quantity
+        Wavelengths to evaluate
+    temperature : Quantity
+        Dust temperature
+    normalization : Quantity
+        Flux at reference wavelength to normalize to
+        
+    Returns
+    -------
+    flux : Quantity
+        Model flux at each wavelength
+    """
+    from astropy.modeling.models import BlackBody
+    
+    nu = wavelength.to(u.Hz, u.spectral())
+    nu_ref = (3*u.mm).to(u.Hz, u.spectral())
+    
+    beta = 1.5
+    
+    bb = BlackBody(temperature)
+    bb_ratio = bb(nu) / bb(nu_ref)
+    
+    # Include dust opacity scaling
+    opacity_ratio = (nu / nu_ref) ** beta
+    
+    flux = normalization * bb_ratio * opacity_ratio
+    
+    return flux
+
+
 def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir, 
                                  size=50*u.arcsec, save=True):
     """
@@ -238,10 +520,13 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
         print(f"  No valid cutouts for source {source['index']}, skipping")
         return
     
-    # Create figure with gridspec
+    # Extract SED
+    sed_data = extract_sed(coord, data_files, source)
+    
+    # Create figure with gridspec (reserve bottom-right for SED)
     n_panels = len(cutouts)
     n_cols = 4
-    n_rows = int(np.ceil(n_panels / n_cols))
+    n_rows = int(np.ceil((n_panels + 1) / n_cols))  # +1 for SED panel
     
     fig = plt.figure(figsize=(16, 4 * n_rows))
     gs = gridspec.GridSpec(n_rows, n_cols, figure=fig, hspace=0.3, wspace=0.3)
@@ -297,6 +582,69 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
         # Add colorbar
         cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         cbar.set_label('Intensity', fontsize=10)
+    
+    # Add SED panel in bottom-right position
+    if len(sed_data['wavelength']) > 0:
+        # Determine position for SED (bottom-right corner)
+        sed_row = n_rows - 1
+        sed_col = n_cols - 1
+        
+        ax_sed = fig.add_subplot(gs[sed_row, sed_col])
+        
+        # Sort by wavelength for plotting
+        sorted_idx = np.argsort([w.value for w in sed_data['wavelength']])
+        wl_sorted = [sed_data['wavelength'][i] for i in sorted_idx]
+        flux_sorted = [sed_data['flux'][i] for i in sorted_idx]
+        error_sorted = [sed_data['error'][i] for i in sorted_idx]
+        is_det_sorted = [sed_data['is_detection'][i] for i in sorted_idx]
+        
+        # Convert to arrays for plotting
+        wl_vals = u.Quantity(wl_sorted)
+        flux_vals = u.Quantity(flux_sorted)
+        error_vals = u.Quantity(error_sorted)
+        
+        # Plot detections and upper limits
+        for i, (wl, flux, err, is_det) in enumerate(zip(wl_vals, flux_vals, error_vals, is_det_sorted)):
+            if is_det:
+                # Detection: plot as square
+                ax_sed.errorbar(wl.to(u.um).value, flux.to(u.Jy).value,
+                              yerr=err.to(u.Jy).value,
+                              marker='s', markersize=6, color='blue',
+                              markeredgecolor='k', capsize=3, capthick=1.5)
+            else:
+                # Upper limit: plot as downward arrow
+                ax_sed.errorbar(wl.to(u.um).value, flux.to(u.Jy).value,
+                              yerr=err.to(u.Jy).value, uplims=True,
+                              marker='v', markersize=6, color='gray',
+                              markerfacecolor='none', markeredgecolor='k',
+                              capsize=3, capthick=1.5)
+        
+        # Add 50K modified blackbody through ACES 3mm point
+        if 'flux' in source.colnames and source['flux'] > 0:
+            model_wl = np.geomspace(1*u.um, 1*u.m, 500)
+            model_flux = modified_blackbody_simple(
+                model_wl,
+                temperature=50*u.K,
+                normalization=source['flux']*u.Jy
+            )
+            ax_sed.plot(model_wl.to(u.um).value, model_flux.to(u.Jy).value,
+                       'r--', linewidth=1.5, alpha=0.7, label='50K MBB', zorder=-5)
+        
+        ax_sed.set_xscale('log')
+        ax_sed.set_yscale('log')
+        ax_sed.set_xlabel('Wavelength [μm]', fontsize=11)
+        ax_sed.set_ylabel('Flux Density [Jy]', fontsize=11)
+        ax_sed.set_title('SED', fontsize=12, fontweight='bold')
+        ax_sed.grid(True, alpha=0.3)
+        ax_sed.legend(loc='best', fontsize=9)
+        
+        # Set reasonable axis limits
+        if len(wl_vals) > 0:
+            ax_sed.set_xlim(wl_vals.min().to(u.um).value * 0.5,
+                           wl_vals.max().to(u.um).value * 2)
+            flux_min = flux_vals[flux_vals > 0].min().to(u.Jy).value if np.any(flux_vals > 0) else 1e-3
+            flux_max = flux_vals.max().to(u.Jy).value
+            ax_sed.set_ylim(flux_min * 0.3, flux_max * 3)
     
     # Add overall title
     title = f"Source {source['index']}: GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°"
