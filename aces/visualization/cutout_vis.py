@@ -28,6 +28,7 @@ import warnings
 from pathlib import Path
 from radio_beam import Beam
 import radio_beam
+from astroquery.simbad import Simbad
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
@@ -105,6 +106,120 @@ for label, filepath in data_files.items():
             print(f"Warning: File not found: {filepath}")
 
 print(f"\nFound {len(existing_files)} existing data files")
+
+# SIMBAD cache and configuration
+simbad_cache_file = output_dir / 'simbad_matches_cache.pkl'
+simbad_cache = {}
+enable_simbad = True  # Set to False to disable SIMBAD queries
+
+# Load existing SIMBAD cache if available
+if simbad_cache_file.exists():
+    try:
+        import pickle
+        with open(simbad_cache_file, 'rb') as f:
+            simbad_cache = pickle.load(f)
+        print(f"Loaded SIMBAD cache with {len(simbad_cache)} entries from {simbad_cache_file}")
+    except Exception as e:
+        print(f"Warning: Could not load SIMBAD cache ({type(e).__name__})")
+        simbad_cache = {}
+else:
+    print(f"No existing SIMBAD cache found. Will create new cache at {simbad_cache_file}")
+
+
+def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec):
+    """
+    Query SIMBAD for a single source with caching.
+    
+    Parameters
+    ----------
+    coord : SkyCoord
+        Coordinate of the source
+    source_idx : int
+        Source index for caching
+    search_radius : Quantity
+        Search radius around the source (default 3 arcsec)
+    
+    Returns
+    -------
+    dict or None
+        Dictionary with SIMBAD match info if found:
+        {'name': str, 'otype': str, 'nbref': int, 'separation': Quantity}
+        Returns None if no match or query disabled
+    """
+    global simbad_cache, enable_simbad
+    
+    # Check cache first
+    if source_idx in simbad_cache:
+        return simbad_cache[source_idx]
+    
+    # Return None if SIMBAD queries disabled
+    if not enable_simbad:
+        return None
+    
+    try:
+        # Configure SIMBAD query
+        custom_simbad = Simbad()
+        custom_simbad.add_votable_fields('otype', 'nbref')
+        custom_simbad.ROW_LIMIT = 0
+        custom_simbad.TIMEOUT = 30  # 30 second timeout
+        
+        # Query SIMBAD
+        result = custom_simbad.query_region(coord, radius=search_radius)
+        
+        if result is not None and len(result) > 0:
+            # Calculate separations
+            result_coords = SkyCoord(result['ra'], result['dec'], 
+                                    unit=u.deg, frame='icrs')
+            separations = coord.separation(result_coords)
+            
+            # Filter to within search radius
+            within_radius = separations < search_radius
+            if np.any(within_radius):
+                result_filtered = result[within_radius]
+                separations_filtered = separations[within_radius]
+                
+                # Get citation counts
+                nbref_values = []
+                for row in result_filtered:
+                    try:
+                        nbref = int(row['nbref']) if row['nbref'] is not None else 0
+                    except (ValueError, TypeError, KeyError):
+                        nbref = 0
+                    nbref_values.append(nbref)
+                nbref_values = np.array(nbref_values)
+                
+                # Select source with most citations
+                best_idx = np.argmax(nbref_values)
+                best_match = result_filtered[best_idx]
+                
+                match_info = {
+                    'name': best_match['main_id'].strip(),
+                    'otype': best_match['otype'].strip() if 'otype' in best_match.colnames else 'Unknown',
+                    'nbref': nbref_values[best_idx],
+                    'separation': separations_filtered[best_idx]
+                }
+                
+                # Cache the result
+                simbad_cache[source_idx] = match_info
+                
+                # Save cache periodically (every 10 new entries)
+                if len(simbad_cache) % 10 == 0:
+                    try:
+                        import pickle
+                        simbad_cache_file.parent.mkdir(parents=True, exist_ok=True)
+                        with open(simbad_cache_file, 'wb') as f:
+                            pickle.dump(simbad_cache, f)
+                    except Exception:
+                        pass  # Silently ignore cache save errors
+                
+                return match_info
+    except Exception as e:
+        # Silently skip failed queries (timeout, connection issues, etc.)
+        pass
+    
+    # Cache negative result to avoid re-querying
+    simbad_cache[source_idx] = None
+    return None
 
 # Define wavelengths and beams for SED extraction
 wavelengths = {
@@ -627,6 +742,9 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
     source = catalog[source_idx]
     coord = SkyCoord(source['GLON_peak'], source['GLAT_peak'],
                      unit=u.deg, frame='galactic')
+    
+    # Query SIMBAD for this source
+    simbad_info = query_simbad_source(coord, source['index'])
 
     print(f"\nProcessing source {source['index']} at ({source['GLON_peak']:.4f}, {source['GLAT_peak']:.4f})")
 
@@ -785,8 +903,19 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
             flux_max = flux_vals.max().to(u.Jy).value
             ax_sed.set_ylim(flux_min * 0.3, flux_max * 3)
 
-    # Add overall title
-    title = f"Source {source['index']}: GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°"
+    # Add overall title with SIMBAD match if available
+    source_idx_val = source['index']
+    
+    if simbad_info is not None:
+        # Include SIMBAD name and object type
+        simbad_name = simbad_info['name']
+        simbad_otype = simbad_info['otype']
+        simbad_sep = simbad_info['separation'].to(u.arcsec).value
+        title = (f"Source {source_idx_val}: {simbad_name} ({simbad_otype}, {simbad_sep:.2f}\")\n"
+                f"GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°")
+    else:
+        title = f"Source {source_idx_val}: GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°"
+    
     if 'flux' in source.colnames:
         title += f"\nFlux (3mm) = {source['flux']:.3f} Jy"
     if 'cmzoom_flux' in source.colnames and not np.isnan(source['cmzoom_flux']):
