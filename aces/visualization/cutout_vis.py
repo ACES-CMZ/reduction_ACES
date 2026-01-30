@@ -156,66 +156,59 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec):
     if not enable_simbad:
         return None
     
-    try:
-        # Configure SIMBAD query
-        custom_simbad = Simbad()
-        custom_simbad.add_votable_fields('otype', 'nbref')
-        custom_simbad.ROW_LIMIT = 0
-        custom_simbad.TIMEOUT = 30  # 30 second timeout
+    # Configure SIMBAD query
+    custom_simbad = Simbad()
+    custom_simbad.add_votable_fields('otype', 'nbref')
+    custom_simbad.ROW_LIMIT = 0
+    custom_simbad.TIMEOUT = 30  # 30 second timeout
+    
+    # Query SIMBAD
+    result = custom_simbad.query_region(coord, radius=search_radius)
+    
+    if result is not None and len(result) > 0:
+        # Calculate separations
+        result_coords = SkyCoord(result['ra'], result['dec'], 
+                                unit=u.deg, frame='icrs')
+        separations = coord.separation(result_coords)
         
-        # Query SIMBAD
-        result = custom_simbad.query_region(coord, radius=search_radius)
-        
-        if result is not None and len(result) > 0:
-            # Calculate separations
-            result_coords = SkyCoord(result['ra'], result['dec'], 
-                                    unit=u.deg, frame='icrs')
-            separations = coord.separation(result_coords)
+        # Filter to within search radius
+        within_radius = separations < search_radius
+        if np.any(within_radius):
+            result_filtered = result[within_radius]
+            separations_filtered = separations[within_radius]
             
-            # Filter to within search radius
-            within_radius = separations < search_radius
-            if np.any(within_radius):
-                result_filtered = result[within_radius]
-                separations_filtered = separations[within_radius]
-                
-                # Get citation counts
-                nbref_values = []
-                for row in result_filtered:
-                    try:
-                        nbref = int(row['nbref']) if row['nbref'] is not None else 0
-                    except (ValueError, TypeError, KeyError):
-                        nbref = 0
-                    nbref_values.append(nbref)
-                nbref_values = np.array(nbref_values)
-                
-                # Select source with most citations
-                best_idx = np.argmax(nbref_values)
-                best_match = result_filtered[best_idx]
-                
-                match_info = {
-                    'name': best_match['main_id'].strip(),
-                    'otype': best_match['otype'].strip() if 'otype' in best_match.colnames else 'Unknown',
-                    'nbref': nbref_values[best_idx],
-                    'separation': separations_filtered[best_idx]
-                }
-                
-                # Cache the result
-                simbad_cache[source_idx] = match_info
-                
-                # Save cache periodically (every 10 new entries)
-                if len(simbad_cache) % 10 == 0:
-                    try:
-                        import pickle
-                        simbad_cache_file.parent.mkdir(parents=True, exist_ok=True)
-                        with open(simbad_cache_file, 'wb') as f:
-                            pickle.dump(simbad_cache, f)
-                    except Exception:
-                        pass  # Silently ignore cache save errors
-                
-                return match_info
-    except Exception as e:
-        # Silently skip failed queries (timeout, connection issues, etc.)
-        pass
+            # Get citation counts
+            nbref_values = []
+            for row in result_filtered:
+                try:
+                    nbref = int(row['nbref']) if row['nbref'] is not None else 0
+                except (ValueError, TypeError, KeyError):
+                    nbref = 0
+                nbref_values.append(nbref)
+            nbref_values = np.array(nbref_values)
+            
+            # Select source with most citations
+            best_idx = np.argmax(nbref_values)
+            best_match = result_filtered[best_idx]
+            
+            match_info = {
+                'name': best_match['main_id'].strip(),
+                'otype': best_match['otype'].strip() if 'otype' in best_match.colnames else 'Unknown',
+                'nbref': nbref_values[best_idx],
+                'separation': separations_filtered[best_idx]
+            }
+            
+            # Cache the result
+            simbad_cache[source_idx] = match_info
+            
+            # Save cache periodically (every 10 new entries)
+            if len(simbad_cache) % 10 == 0:
+                import pickle
+                simbad_cache_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(simbad_cache_file, 'wb') as f:
+                    pickle.dump(simbad_cache, f)
+            
+            return match_info
     
     # Cache negative result to avoid re-querying
     simbad_cache[source_idx] = None
@@ -293,45 +286,40 @@ def select_best_file(coord, filepaths):
     for filepath in filepaths:
         # Check cache first
         if filepath not in _file_cache:
-            try:
-                with fits.open(filepath) as hdul:
-                    # Find image HDU
-                    image_hdu = None
-                    for h in hdul:
-                        if h.data is not None and len(h.data.shape) >= 2:
-                            image_hdu = h
-                            break
+            with fits.open(filepath) as hdul:
+                # Find image HDU
+                image_hdu = None
+                for h in hdul:
+                    if h.data is not None and len(h.data.shape) >= 2:
+                        image_hdu = h
+                        break
 
-                    if image_hdu is None:
-                        _file_cache[filepath] = None
-                        continue
+                if image_hdu is None:
+                    _file_cache[filepath] = None
+                    continue
 
-                    # Get WCS
-                    try:
-                        wcs = WCS(image_hdu.header).celestial
-                    except (AttributeError, ValueError):
-                        wcs = WCS(image_hdu.header)
-                        if wcs.naxis > 2:
-                            wcs = wcs.sub(['longitude', 'latitude'])
+                # Get WCS
+                try:
+                    wcs = WCS(image_hdu.header).celestial
+                except (AttributeError, ValueError):
+                    wcs = WCS(image_hdu.header)
+                    if wcs.naxis > 2:
+                        wcs = wcs.sub(['longitude', 'latitude'])
 
-                    # Get data shape
-                    data_shape = image_hdu.data.shape
-                    while len(data_shape) > 2:
-                        data_shape = data_shape[1:]
+                # Get data shape
+                data_shape = image_hdu.data.shape
+                while len(data_shape) > 2:
+                    data_shape = data_shape[1:]
 
-                    # Get beam size
-                    try:
-                        beam = radio_beam.Beam.from_fits_header(image_hdu.header)
-                        beam_area = beam.sr.value
-                    except (radio_beam.NoBeamException, KeyError):
-                        # Should not happen for VLA data, but handle gracefully
-                        beam_area = 1e10  # Large value = low priority
+                # Get beam size
+                try:
+                    beam = radio_beam.Beam.from_fits_header(image_hdu.header)
+                    beam_area = beam.sr.value
+                except (radio_beam.NoBeamException, KeyError):
+                    # Should not happen for VLA data, but handle gracefully
+                    beam_area = 1e10  # Large value = low priority
 
-                    _file_cache[filepath] = (wcs, data_shape, beam_area)
-            except Exception:
-                # Skip files that can't be opened
-                _file_cache[filepath] = None
-                continue
+                _file_cache[filepath] = (wcs, data_shape, beam_area)
 
         # Use cached info
         cache_info = _file_cache.get(filepath)
@@ -341,12 +329,9 @@ def select_best_file(coord, filepaths):
         wcs, data_shape, beam_area = cache_info
 
         # Check if coordinate is within image bounds
-        try:
-            xx, yy = wcs.world_to_pixel(coord)
-            if 0 <= xx < data_shape[1] and 0 <= yy < data_shape[0]:
-                candidates.append((filepath, beam_area))
-        except Exception:
-            continue
+        xx, yy = wcs.world_to_pixel(coord)
+        if 0 <= xx < data_shape[1] and 0 <= yy < data_shape[0]:
+            candidates.append((filepath, beam_area))
 
     if not candidates:
         return None
@@ -952,7 +937,7 @@ def main():
             print(f"ERROR: Unexpected error processing source {i}: {type(e).__name__}: {e}")
             import traceback
             traceback.print_exc()
-            continue
+            raise ex
 
     print(f"\nDone! Created cutouts in {output_dir}")
 
