@@ -276,7 +276,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
 
         # 4. Data min/max
         if data is not None and ('DATAMIN' not in hdr or 'DATAMAX' not in hdr):
-            print(f"Calculating datamin/datamax... dt={time.time() - t0:.2f}s", flush=True)
+            print(f"Calculating datamin/datamax for data with size {data.size/1024**3}Gpix... dt={time.time() - t0:.2f}s", flush=True)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 try:
@@ -290,13 +290,17 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
                         datamin = datamin.value
                 except TypeError:
                     # it's a moment map, we can afford to load the whole data
-                    datamax = cube.max()
-                    datamin = cube.min()
+                    datamax = np.nanmax(cube)
+                    datamin = np.nanmin(cube)
 
-            if "DATAMIN" not in hdr:
-                hdr["DATAMIN"] = float(datamin)
-            if "DATAMAX" not in hdr:
-                hdr["DATAMAX"] = float(datamax)
+            if np.isnan(datamax) or np.isnan(datamin):
+                errors.append("Could not compute DATAMIN/DATAMAX (resulted in NaN)")
+                print(f"Warning: could not compute DATAMIN/DATAMAX for file {fits_path} (resulted in NaN). dt={time.time() - t0:.2f}s", flush=True)
+            else:
+                if "DATAMIN" not in hdr:
+                    hdr["DATAMIN"] = float(datamin)
+                if "DATAMAX" not in hdr:
+                    hdr["DATAMAX"] = float(datamax)
             print(f"Computed datamin/datamax for file {fits_path}, datamax={hdr.get('DATAMAX')}, datamin={hdr.get('DATAMIN')}. dt={time.time() - t0:.2f}s", flush=True)
         else:
             print(f"for file {fits_path}, datamax={hdr.get('DATAMAX')}, datamin={hdr.get('DATAMIN')}. dt={time.time() - t0:.2f}s", flush=True)
