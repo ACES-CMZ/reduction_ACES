@@ -22,11 +22,22 @@ There are spectral index maps:
 /orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_alphaerror_mosaic.fits
 
 Using this 'final' catalog, first:
-1. compute the local column density and temperature derived from the Herschel data and the Tang 1mm data.  Just use the central position and store that as a new column in a new table:
-/orange/adamginsburg/ACES/tables/aces_compact_catalog_v0_withExtras.fits
-2. Compute the alpha values and uncertainties on those alpha values from each of the alpha maps listed above, again just at the central position, and store those as new columns in the same table.  Also compute spectral index by adding in the CMZoom flux and measuring it using the 1mm/3mm line ratio.
-3. Bin the sources by column density with a range 5e21-5e23 and compute mean properties: flux, R_pc, Mean_CS, Mean_MS, alpha (each version of alpha).  Weight the mean by signal-to-noise of the flux.
-4. Stack the sources in each column density bin to produce average images.  i.e., at each position, cut out a small image (e.g., 50x50 pixels) around each source in that bin, and average them together to produce a stacked image for that bin.  Weight the stack by the inverse variance of the image at each position.
+1. compute the local column density and temperature derived from the Herschel
+   data and the Tang 1mm data.  Just use the central position and store that
+   as a new column in a new table:
+   /orange/adamginsburg/ACES/tables/aces_compact_catalog_v0_withExtras.fits
+2. Compute the alpha values and uncertainties on those alpha values from each
+   of the alpha maps listed above, again just at the central position, and
+   store those as new columns in the same table.  Also compute spectral index
+   by adding in the CMZoom flux and measuring it using the 1mm/3mm line ratio.
+3. Bin the sources by column density with a range 5e21-5e23 and compute mean
+   properties: flux, R_pc, Mean_CS, Mean_MS, alpha (each version of alpha).
+   Weight the mean by signal-to-noise of the flux.
+4. Stack the sources in each column density bin to produce average images.
+   i.e., at each position, cut out a small image (e.g., 50x50 pixels) around
+   each source in that bin, and average them together to produce a stacked
+   image for that bin.  Weight the stack by the inverse variance of the image
+   at each position.
 The image and uncertainty to use are:
 /orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits
 /orange/adamginsburg/ACES/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_maskedrms_mosaic.fits
@@ -495,7 +506,7 @@ def stack_images_by_coldens_bin(catalog, output_dir='/orange/adamginsburg/ACES/a
         n_in_bin = np.sum(bin_mask)
 
         if n_in_bin == 0:
-            print(f"    No sources in bin")
+            print("    No sources in bin")
             continue
 
         # Get sources in this bin
@@ -530,7 +541,11 @@ def stack_images_by_coldens_bin(catalog, output_dir='/orange/adamginsburg/ACES/a
 
             except Exception as e:
                 # Skip sources that can't be cut out (e.g., near edges)
-                # but we need to know what specific exceptions cause edges, we don't want to accidentally skip any so we're going to run until we catch an exception, then if it is caused by something we understand (like an edge case), we can catch that exception and continue.
+                # but we need to know what specific exceptions cause edges,
+                # we don't want to accidentally skip any so we're going to
+                # run until we catch an exception, then if it is caused by
+                # something we understand (like an edge case), we can catch
+                # that exception and continue.
                 raise e
 
         # Normalize by weights
@@ -784,7 +799,7 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
             cmzoom_catalog = Table.read('/orange/adamginsburg/ACES/tables/cmzoom_complete_with_aces.fits')
 
     # Get nondetections
-    nondetection_mask = cmzoom_catalog['aces_detection'] == False
+    nondetection_mask = cmzoom_catalog['aces_detection'] is False
     nondetections = cmzoom_catalog[nondetection_mask]
 
     print(f"  Found {len(nondetections)} nondetections to stack")
@@ -877,7 +892,7 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
         header['CRPIX2'] = cutout_size[1] / 2
         header['NSOURCES'] = n_cutouts
         header['BUNIT'] = 'Jy/beam'
-        header['COMMENT'] = f'Stacked ACES at CMZoom nondetections'
+        header['COMMENT'] = 'Stacked ACES at CMZoom nondetections'
 
         hdu = fits.PrimaryHDU(data=stacked_image, header=header)
         hdu.writeto(output_path, overwrite=True)
@@ -1040,7 +1055,7 @@ def main():
     print("PART 3: Stacking Images by Column Density")
     print("="*70)
 
-    stacked_images = stack_images_by_coldens_bin(catalog)
+    stack_images_by_coldens_bin(catalog)
 
     # Part 4: CMZoom analysis
     print("\n" + "="*70)
