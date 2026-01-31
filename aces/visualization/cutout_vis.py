@@ -29,6 +29,7 @@ from pathlib import Path
 from radio_beam import Beam
 import radio_beam
 from astroquery.simbad import Simbad
+import time
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
@@ -126,10 +127,10 @@ else:
     print(f"No existing SIMBAD cache found. Will create new cache at {simbad_cache_file}")
 
 
-def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec):
+def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec, max_retries=3, retry_delay=10):
     """
-    Query SIMBAD for a single source with caching.
-    
+    Query SIMBAD for a single source with caching and retry logic.
+
     Parameters
     ----------
     coord : SkyCoord
@@ -138,7 +139,11 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec):
         Source index for caching
     search_radius : Quantity
         Search radius around the source (default 3 arcsec)
-    
+    max_retries : int
+        Maximum number of retry attempts (default 3)
+    retry_delay : int
+        Delay in seconds between retries (default 10)
+
     Returns
     -------
     dict or None
@@ -147,36 +152,54 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec):
         Returns None if no match or query disabled
     """
     global simbad_cache, enable_simbad
-    
+
     # Check cache first
     if source_idx in simbad_cache:
         return simbad_cache[source_idx]
-    
+
     # Return None if SIMBAD queries disabled
     if not enable_simbad:
         return None
-    
+
     # Configure SIMBAD query
     custom_simbad = Simbad()
     custom_simbad.add_votable_fields('otype', 'nbref')
     custom_simbad.ROW_LIMIT = 0
     custom_simbad.TIMEOUT = 30  # 30 second timeout
-    
-    # Query SIMBAD
-    result = custom_simbad.query_region(coord, radius=search_radius)
-    
+
+    # Retry loop for SIMBAD query
+    result = None
+    last_exception = None
+
+    for attempt in range(max_retries):
+        try:
+            # Query SIMBAD
+            result = custom_simbad.query_region(coord, radius=search_radius)
+            # If we got here, query succeeded
+            break
+        except Exception as e:
+            last_exception = e
+            if attempt < max_retries - 1:
+                print(f"  SIMBAD query failed (attempt {attempt + 1}/{max_retries}): {type(e).__name__}: {e}")
+                print(f"  Waiting {retry_delay} seconds before retry...")
+                time.sleep(retry_delay)
+            else:
+                # Last attempt failed - re-raise the exception
+                print(f"  SIMBAD query failed after {max_retries} attempts")
+                raise
+
     if result is not None and len(result) > 0:
         # Calculate separations
-        result_coords = SkyCoord(result['ra'], result['dec'], 
+        result_coords = SkyCoord(result['ra'], result['dec'],
                                 unit=u.deg, frame='icrs')
         separations = coord.separation(result_coords)
-        
+
         # Filter to within search radius
         within_radius = separations < search_radius
         if np.any(within_radius):
             result_filtered = result[within_radius]
             separations_filtered = separations[within_radius]
-            
+
             # Get citation counts
             nbref_values = []
             for row in result_filtered:
@@ -186,30 +209,30 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec):
                     nbref = 0
                 nbref_values.append(nbref)
             nbref_values = np.array(nbref_values)
-            
+
             # Select source with most citations
             best_idx = np.argmax(nbref_values)
             best_match = result_filtered[best_idx]
-            
+
             match_info = {
                 'name': best_match['main_id'].strip(),
                 'otype': best_match['otype'].strip() if 'otype' in best_match.colnames else 'Unknown',
                 'nbref': nbref_values[best_idx],
                 'separation': separations_filtered[best_idx]
             }
-            
+
             # Cache the result
             simbad_cache[source_idx] = match_info
-            
+
             # Save cache periodically (every 10 new entries)
             if len(simbad_cache) % 10 == 0:
                 import pickle
                 simbad_cache_file.parent.mkdir(parents=True, exist_ok=True)
                 with open(simbad_cache_file, 'wb') as f:
                     pickle.dump(simbad_cache, f)
-            
+
             return match_info
-    
+
     # Cache negative result to avoid re-querying
     simbad_cache[source_idx] = None
     return None
@@ -704,6 +727,102 @@ def modified_blackbody_simple(wavelength, temperature, normalization):
     return flux
 
 
+def plot_spectra(source_idx, fig, gs, spec_row_start, n_cols=4):
+    """
+    Plot ACES spectra for SPW 25, 27, 33, 35.
+
+    Parameters
+    ----------
+    source_idx : int
+        Source index from catalog
+    fig : Figure
+        Matplotlib figure object
+    gs : GridSpec
+        GridSpec object for subplot layout
+    spec_row_start : int
+        Starting row index for spectra in the GridSpec
+    n_cols : int
+        Number of columns in the grid
+
+    Returns
+    -------
+    bool
+        True if spectra were plotted, False otherwise
+    """
+    spectrum_dir = Path('/orange/adamginsburg/ACES/spectra')
+    catalog_name_prefix = 'mp179'  # Standard prefix used by spectral_extraction_everywhere
+
+    # SPWs to plot
+    spws = [25, 27, 33, 35]
+
+    # Find spectral files for this source
+    spectral_files = {}
+    for spw in spws:
+        # Pattern: {catalog_name_prefix}_source{index}_ellipseaverage_*spw{spw}*.fits
+        pattern = f"{catalog_name_prefix}_source{source_idx}_ellipseaverage_*spw{spw}.cube.I.iter1.image.pbcor.fits"
+        matches = list(spectrum_dir.glob(pattern))
+
+        if matches:
+            # If multiple files, use the first one (could be multiple observations)
+            spectral_files[spw] = matches[0]
+
+    if not spectral_files:
+        print(f"  No spectra found for source {source_idx}")
+        return False
+
+    print(f"  Found {len(spectral_files)} spectral windows: {list(spectral_files.keys())}")
+
+    # Plot each spectrum
+    for i, (spw, spec_file) in enumerate(sorted(spectral_files.items())):
+        row = spec_row_start + i // n_cols
+        col = i % n_cols
+
+        ax = fig.add_subplot(gs[row, col])
+
+        with fits.open(spec_file) as hdul:
+            data = hdul[0].data
+            header = hdul[0].header
+
+            # Get spectral axis (frequency)
+            wcs = WCS(header)
+            n_chan = data.shape[0]
+            freq = wcs.spectral.array_index_to_world(np.arange(n_chan))
+            freq_ghz = freq.to(u.GHz).value
+
+            # Extract spectrum (data shape is [nchan, 1, 1])
+            spectrum = data[:, 0, 0]
+
+            # Convert to mJy if in Jy
+            bunit = header.get('BUNIT', 'Jy beam-1')
+            if 'Jy' in bunit.upper() and 'MJY' not in bunit.upper():
+                spectrum_mjy = spectrum * 1000  # Jy to mJy
+                ylabel = 'Flux (mJy/beam)'
+            else:
+                spectrum_mjy = spectrum
+                ylabel = f'Flux ({bunit})'
+
+            # Plot spectrum
+            ax.plot(freq_ghz, spectrum_mjy, 'k-', linewidth=0.5, alpha=0.7)
+            ax.axhline(0, color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
+
+            # Formatting
+            ax.set_xlabel('Frequency (GHz)', fontsize=9)
+            ax.set_ylabel(ylabel, fontsize=9)
+            ax.set_title(f'SPW {spw}', fontsize=10, fontweight='bold')
+            ax.tick_params(labelsize=8)
+            ax.grid(True, alpha=0.2)
+
+            # Set reasonable y-limits (exclude extreme outliers)
+            finite_spec = spectrum_mjy[np.isfinite(spectrum_mjy)]
+            if len(finite_spec) > 0:
+                p1, p99 = np.percentile(finite_spec, [1, 99])
+                y_range = p99 - p1
+                ax.set_ylim(p1 - 0.1*y_range, p99 + 0.1*y_range)
+
+
+    return True
+
+
 def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
                                  size=50*u.arcsec, save=True):
     """
@@ -727,7 +846,7 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
     source = catalog[source_idx]
     coord = SkyCoord(source['GLON_peak'], source['GLAT_peak'],
                      unit=u.deg, frame='galactic')
-    
+
     # Query SIMBAD for this source
     simbad_info = query_simbad_source(coord, source['index'])
 
@@ -765,10 +884,13 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
     # Extract SED
     sed_data = extract_sed(coord, data_files, source)
 
-    # Create figure with gridspec (reserve bottom-right for SED)
+    # Create figure with gridspec (reserve bottom-right for SED, extra row for spectra)
     n_panels = len(cutouts)
     n_cols = 4
-    n_rows = int(np.ceil((n_panels + 1) / n_cols))  # +1 for SED panel
+    n_cutout_rows = int(np.ceil((n_panels + 1) / n_cols))  # +1 for SED panel
+
+    # Add one extra row for spectra (4 SPW spectra will fit in 1 row with n_cols=4)
+    n_rows = n_cutout_rows + 1
 
     fig = plt.figure(figsize=(16, 4 * n_rows))
     gs = gridspec.GridSpec(n_rows, n_cols, figure=fig, hspace=0.3, wspace=0.3)
@@ -825,10 +947,10 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
         cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         cbar.set_label('Intensity', fontsize=10)
 
-    # Add SED panel in bottom-right position
+    # Add SED panel in bottom-right position (of cutout rows)
     if len(sed_data['wavelength']) > 0:
-        # Determine position for SED (bottom-right corner)
-        sed_row = n_rows - 1
+        # Determine position for SED (bottom-right corner of cutout section)
+        sed_row = n_cutout_rows - 1
         sed_col = n_cols - 1
 
         ax_sed = fig.add_subplot(gs[sed_row, sed_col])
@@ -888,9 +1010,13 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
             flux_max = flux_vals.max().to(u.Jy).value
             ax_sed.set_ylim(flux_min * 0.3, flux_max * 3)
 
+    # Add spectral plots in the bottom row
+    spec_row_start = n_cutout_rows  # Start at the row after cutouts+SED
+    plot_spectra(source['index'], fig, gs, spec_row_start, n_cols=n_cols)
+
     # Add overall title with SIMBAD match if available
     source_idx_val = source['index']
-    
+
     if simbad_info is not None:
         # Include SIMBAD name and object type
         simbad_name = simbad_info['name']
@@ -900,7 +1026,7 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
                 f"GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°")
     else:
         title = f"Source {source_idx_val}: GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°"
-    
+
     if 'flux' in source.colnames:
         title += f"\nFlux (3mm) = {source['flux']:.3f} Jy"
     if 'cmzoom_flux' in source.colnames and not np.isnan(source['cmzoom_flux']):

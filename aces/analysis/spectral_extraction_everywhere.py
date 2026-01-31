@@ -45,7 +45,7 @@ def extract_from_mask(cube, maskhdu, maskid):
 
 if __name__ == "__main__":
 
-    maskfile = fits.open(f"{basepath}/upload/Cont_catalog_stuff/ACES_leaf_mask_3_1_mp179.fits")
+    #maskfile = fits.open(f"{basepath}/upload/Cont_catalog_stuff/ACES_leaf_mask_3_1_mp179.fits")
     #catalog = Table.read(f"{basepath}/upload/Cont_catalog_stuff/aces_catalog_3_1_mp179.fits")
     catalog = Table.read(f'{basepath}/upload/compact_cont_source_catalog/official_cont_catalog_files/aces_compact_catalog_v0.fits')
     catalog_name_prefix = 'ACEScatalog_v0_20260130'
@@ -53,19 +53,18 @@ if __name__ == "__main__":
     product_dir = f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/"
     spectrum_dir = f"{basepath}/spectra"
 
-    field_map = fits.open(f'{basepath}/mosaics/12m_continuum_field_number_map.fits')
+    field_map = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_field_number_map.fits')
     fieldmapwcs = WCS(field_map[0].header)
     fieldmapdata = field_map[0].data
 
     uidtbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
 
     for row in catalog:
-        center = SkyCoord(row['GLON'], row['GLAT'], frame='galactic', unit=(u.deg, u.deg))
+        center = SkyCoord(row['GLON_peak'], row['GLAT_peak'], frame='galactic', unit=(u.deg, u.deg))
         reg = regions.EllipseSkyRegion(center,
-                                       width=row['major_sigma'] * u.arcsec,
-                                       height=row['minor_sigma'] * u.arcsec,
-                                       angle=row['position_angle'] * u.deg)
-
+                                       width=row['fitted_major'] * u.arcsec,
+                                       height=row['fitted_minor'] * u.arcsec,
+                                       angle=row['pa'] * u.deg)
         pixcrd = list(map(lambda x: int(x), fieldmapwcs.world_to_pixel(center)))
         field_id = fieldmapdata[pixcrd[1], pixcrd[0]]
         if field_id == 0:
@@ -107,31 +106,32 @@ if __name__ == "__main__":
                     hdu.header.update(ww.to_header())
                     hdu.data = hdu.data[:, None, None]
                     hdu.header['CATINDX'] = row['index']
-                    hdu.header['CATGLON'] = row['GLON']
-                    hdu.header['CATGLAT'] = row['GLAT']
-                    hdu.header['CATMAJS'] = row['major_sigma']
-                    hdu.header['CATMINS'] = row['minor_sigma']
-                    hdu.header['CATPA'] = row['position_angle']
+                    hdu.header['CATGLON'] = row['GLON_peak']
+                    hdu.header['CATGLAT'] = row['GLAT_peak']
+                    hdu.header['CATMAJS'] = row['fitted_major']
+                    hdu.header['CATMINS'] = row['fitted_minor']
+                    hdu.header['CATPA'] = row['pa']
 
                     outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_ellipseaverage_" + cubefn.split("/")[-1]
                     hdu.writeto(outfn, overwrite=True)
 
-                    try:
-                        spec = extract_from_mask(cube, maskfile[0], row['index'] + 1)
-                    except Exception as ex:
-                        print(f"Failed for cube {cubefn} for id {row['index']} with exception {ex}")
-                        continue
-                    hdu = spec.hdu
-                    hdu.header.update(ww.to_header())
-                    hdu.data = hdu.data[:, None, None]
-                    hdu.header['CATINDX'] = row['index']
-                    hdu.header['CATGLON'] = row['GLON']
-                    hdu.header['CATGLAT'] = row['GLAT']
-                    hdu.header['CATMAJS'] = row['major_sigma']
-                    hdu.header['CATMINS'] = row['minor_sigma']
-                    hdu.header['CATPA'] = row['position_angle']
-
-                    outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
-                    hdu.writeto(outfn, overwrite=True)
+                    # old version with masks ("final" catalog doesn't have masks)
+                    # try:
+                    #     spec = extract_from_mask(cube, maskfile[0], row['index'] + 1)
+                    # except Exception as ex:
+                    #     print(f"Failed for cube {cubefn} for id {row['index']} with exception {ex}")
+                    #     continue
+                    # hdu = spec.hdu
+                    # hdu.header.update(ww.to_header())
+                    # hdu.data = hdu.data[:, None, None]
+                    # hdu.header['CATINDX'] = row['index']
+                    # hdu.header['CATGLON'] = row['GLON']
+                    # hdu.header['CATGLAT'] = row['GLAT']
+                    # hdu.header['CATMAJS'] = row['major_sigma']
+                    # hdu.header['CATMINS'] = row['minor_sigma']
+                    # hdu.header['CATPA'] = row['position_angle']
+                      
+                    # outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
+                    # hdu.writeto(outfn, overwrite=True)
                 else:
                     print('WTF?', row['index'], cubefn)
