@@ -130,7 +130,7 @@ if __name__ == "__main__":
                     # hdu.header['CATMAJS'] = row['major_sigma']
                     # hdu.header['CATMINS'] = row['minor_sigma']
                     # hdu.header['CATPA'] = row['position_angle']
-                      
+
                     # outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
                     # hdu.writeto(outfn, overwrite=True)
                 else:

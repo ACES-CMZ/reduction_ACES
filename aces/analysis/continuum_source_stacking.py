@@ -60,8 +60,8 @@ Author: GitHub Copilot
 Date: January 29, 2026
 """
 
-import numpy as np
 from astropy.io import fits
+import numpy as np
 from astropy.table import Table, Column
 from astropy.coordinates import SkyCoord
 from astropy.wcs import WCS
@@ -70,8 +70,8 @@ import astropy.units as u
 from scipy.stats import binned_statistic
 from astropy.nddata.utils import NoOverlapError
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import warnings
+import matplotlib.gridspec as gridspec
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 # ==================== FILE PATHS ====================
@@ -107,7 +107,7 @@ CMZOOM_COMPLETE_PATH = "/orange/adamginsburg/cmz/cmzoom/catalog/catalog_complete
 def extract_value_at_position(image_path, lon, lat, wcs=None):
     """
     Extract pixel value from a FITS image at given sky coordinates.
-    
+
     Parameters
     ----------
     image_path : str
@@ -118,7 +118,7 @@ def extract_value_at_position(image_path, lon, lat, wcs=None):
         Galactic latitude(s) in degrees
     wcs : WCS object, optional
         Pre-loaded WCS. If None, will be loaded from the image.
-        
+
     Returns
     -------
     values : float or array
@@ -128,15 +128,15 @@ def extract_value_at_position(image_path, lon, lat, wcs=None):
         data = hdul[0].data
         if wcs is None:
             wcs = WCS(hdul[0].header, naxis=2)
-        
+
         # Handle different dimensionality
         if data.ndim > 2:
             data = data.squeeze()
-        
+
         # Ensure WCS is 2D
         if wcs.naxis > 2:
             wcs = wcs.celestial
-        
+
         # Convert coordinates to pixel positions
         # Handle case where lon/lat might already have units
         if hasattr(lon, 'unit') and lon.unit is not None:
@@ -144,7 +144,7 @@ def extract_value_at_position(image_path, lon, lat, wcs=None):
         else:
             coords = SkyCoord(lon, lat, unit='deg', frame='galactic')
         px, py = wcs.world_to_pixel(coords)
-        
+
         # Handle scalar vs array
         if np.isscalar(px):
             px, py = int(round(px)), int(round(py))
@@ -164,9 +164,9 @@ def extract_value_at_position(image_path, lon, lat, wcs=None):
 def compute_spectral_index(flux1, flux2, freq1, freq2, flux1_err=None, flux2_err=None):
     """
     Compute spectral index: S_nu ~ nu^alpha
-    
+
     alpha = ln(S1/S2) / ln(nu1/nu2)
-    
+
     Parameters
     ----------
     flux1, flux2 : float or array
@@ -175,7 +175,7 @@ def compute_spectral_index(flux1, flux2, freq1, freq2, flux1_err=None, flux2_err
         Frequencies in GHz
     flux1_err, flux2_err : float or array, optional
         Uncertainties in flux densities
-        
+
     Returns
     -------
     alpha : float or array
@@ -185,7 +185,7 @@ def compute_spectral_index(flux1, flux2, freq1, freq2, flux1_err=None, flux2_err
     """
     with np.errstate(divide='ignore', invalid='ignore'):
         alpha = np.log(flux1 / flux2) / np.log(freq1 / freq2)
-    
+
     if flux1_err is not None and flux2_err is not None:
         # Error propagation for spectral index
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -193,21 +193,21 @@ def compute_spectral_index(flux1, flux2, freq1, freq2, flux1_err=None, flux2_err
             term2 = (flux2_err / flux2) ** 2
             alpha_err = np.abs(alpha) * np.sqrt(term1 + term2)
         return alpha, alpha_err
-    
+
     return alpha
 
 
 def weighted_mean(values, weights):
     """
     Compute weighted mean, handling NaNs.
-    
+
     Parameters
     ----------
     values : array
         Values to average
     weights : array
         Weights for each value
-        
+
     Returns
     -------
     mean : float
@@ -224,96 +224,96 @@ def weighted_mean(values, weights):
 def add_column_density_and_temperature(catalog):
     """
     Add column density and temperature columns from Herschel and Tang data.
-    
+
     Parameters
     ----------
     catalog : Table
         ACES catalog table
-        
+
     Returns
     -------
     catalog : Table
         Updated catalog with new columns
     """
     print("Extracting column density and temperature...")
-    
+
     lon = catalog['GLON_peak']
     lat = catalog['GLAT_peak']
-    
+
     # Extract Herschel column density
     print("  - Herschel column density...")
     herschel_coldens = extract_value_at_position(HERSCHEL_COLDENS_PATH, lon, lat)
-    catalog['herschel_coldens'] = Column(herschel_coldens, unit='cm-2', 
+    catalog['herschel_coldens'] = Column(herschel_coldens, unit='cm-2',
                                          description='Herschel column density at source position')
-    
+
     # Extract Tang column density
     print("  - Tang 1mm column density...")
     tang_coldens = extract_value_at_position(TANG_COLDENS_PATH, lon, lat)
     catalog['tang_coldens'] = Column(tang_coldens, unit='cm-2',
                                      description='Tang 1mm column density at source position')
-    
+
     # Extract Tang temperature
     print("  - Tang temperature...")
     tang_temp = extract_value_at_position(TANG_TEMP_PATH, lon, lat)
     catalog['tang_temp'] = Column(tang_temp, unit='K',
                                   description='Tang 1mm temperature at source position')
-    
+
     return catalog
 
 
 def add_spectral_indices(catalog):
     """
     Add spectral index values from various alpha maps.
-    
+
     Parameters
     ----------
     catalog : Table
         ACES catalog table
-        
+
     Returns
     -------
     catalog : Table
         Updated catalog with spectral index columns
     """
     print("Extracting spectral indices from alpha maps...")
-    
+
     lon = catalog['GLON_peak']
     lat = catalog['GLAT_peak']
-    
+
     for key, path in ALPHA_MAPS.items():
         print(f"  - {key}...")
         alpha_values = extract_value_at_position(path, lon, lat)
         catalog[key] = Column(alpha_values, description=f'Spectral index from {key}')
-    
+
     return catalog
 
 
 def add_cmzoom_spectral_index(catalog):
     """
     Compute spectral index using CMZoom flux and ACES flux (1mm/3mm ratio).
-    
+
     Parameters
     ----------
     catalog : Table
         ACES catalog table with cmzoom_id column
-        
+
     Returns
     -------
     catalog : Table
         Updated catalog with CMZoom spectral index
     """
     print("Computing CMZoom-ACES spectral indices...")
-    
+
     # Load CMZoom catalog
     cmzoom_cat = Table.read(CMZOOM_ROBUST_PATH)
-    
+
     # Initialize columns
     n_sources = len(catalog)
     cmzoom_flux = np.full(n_sources, np.nan)
     cmzoom_flux_err = np.full(n_sources, np.nan)
     alpha_cmzoom_aces = np.full(n_sources, np.nan)
     alpha_cmzoom_aces_err = np.full(n_sources, np.nan)
-    
+
     # Match ACES sources with CMZoom
     for i, cmzoom_id in enumerate(catalog['cmzoom_id']):
         if cmzoom_id >= 0:  # Valid CMZoom match
@@ -325,30 +325,30 @@ def add_cmzoom_spectral_index(catalog):
                     if col in cmzoom_match.colnames:
                         flux_col = col
                         break
-                
+
                 if flux_col:
                     cmzoom_flux[i] = cmzoom_match[flux_col][0]
                     flux_err_col = f'{flux_col}_err'
                     if flux_err_col in cmzoom_match.colnames:
                         cmzoom_flux_err[i] = cmzoom_match[flux_err_col][0]
-    
+
     # Compute spectral index (CMZoom at 1mm, ACES at 3mm)
     # alpha = log(S_3mm / S_1mm) / log(nu_3mm / nu_1mm)
     freq_aces = 96.0  # GHz (3mm)
     freq_cmzoom = 260.0  # GHz (1mm)
-    
+
     mask = np.isfinite(cmzoom_flux) & (cmzoom_flux > 0)
     if np.sum(mask) > 0:
         alpha_cmzoom_aces[mask], alpha_cmzoom_aces_err[mask] = compute_spectral_index(
-            catalog['flux'][mask], 
+            catalog['flux'][mask],
             cmzoom_flux[mask],
-            freq_aces, 
+            freq_aces,
             freq_cmzoom,
             catalog['flux_err'][mask],
             cmzoom_flux_err[mask]
         )
-    
-    catalog['cmzoom_flux'] = Column(cmzoom_flux, unit='Jy', 
+
+    catalog['cmzoom_flux'] = Column(cmzoom_flux, unit='Jy',
                                     description='CMZoom 1mm flux for matched sources')
     catalog['cmzoom_flux_err'] = Column(cmzoom_flux_err, unit='Jy',
                                         description='CMZoom 1mm flux uncertainty')
@@ -356,55 +356,55 @@ def add_cmzoom_spectral_index(catalog):
                                           description='Spectral index from ACES (3mm) to CMZoom (1mm)')
     catalog['alpha_cmzoom_aces_err'] = Column(alpha_cmzoom_aces_err,
                                               description='Uncertainty in ACES-CMZoom spectral index')
-    
+
     return catalog
 
 
 def bin_and_compute_mean_properties(catalog, output_table_path=None):
     """
     Bin sources by column density and compute weighted mean properties.
-    
+
     Parameters
     ----------
     catalog : Table
         ACES catalog with column density information
     output_table_path : str, optional
         Path to save binned statistics table
-        
+
     Returns
     -------
     binned_stats : Table
         Table with mean properties for each column density bin
     """
     print("Binning sources by column density and computing mean properties...")
-    
+
     # Define column density bins (5e21 to 5e23 cm^-2)
     coldens_bins = np.logspace(np.log10(5e21), np.log10(5e23), 11)  # 10 bins
-    
+
     # Use Herschel column density for binning (more complete than Tang)
     coldens = catalog['herschel_coldens']
-    
+
     # Compute signal-to-noise weights
     snr = catalog['flux'] / catalog['flux_err']
     weights = snr
-    
+
     # Properties to compute means for
-    properties = ['flux', 'R_pc', 'Mean_CS', 'Mean_MS', 
+    properties = ['flux', 'R_pc', 'Mean_CS', 'Mean_MS',
                   'alpha_manual', 'alpha_aces_meerkat', 'alpha_auto', 'alpha_cmzoom_aces']
-    
+
     # Initialize results
     bin_centers = []
     bin_counts = []
     mean_properties = {prop: [] for prop in properties}
     err_properties = {prop: [] for prop in properties}
-    
+
     for i in range(len(coldens_bins) - 1):
         bin_mask = (coldens >= coldens_bins[i]) & (coldens < coldens_bins[i+1])
         n_in_bin = np.sum(bin_mask)
-        
+
         bin_centers.append(np.sqrt(coldens_bins[i] * coldens_bins[i+1]))
         bin_counts.append(n_in_bin)
-        
+
         if n_in_bin > 0:
             for prop in properties:
                 if prop in catalog.colnames:
@@ -412,7 +412,7 @@ def bin_and_compute_mean_properties(catalog, output_table_path=None):
                     bin_weights = weights[bin_mask]
                     mean_val = weighted_mean(values, bin_weights)
                     mean_properties[prop].append(mean_val)
-                    
+
                     # Compute weighted standard error
                     valid = np.isfinite(values) & np.isfinite(bin_weights) & (bin_weights > 0)
                     if np.sum(valid) > 1:
@@ -428,124 +428,124 @@ def bin_and_compute_mean_properties(catalog, output_table_path=None):
             for prop in properties:
                 mean_properties[prop].append(np.nan)
                 err_properties[prop].append(np.nan)
-    
+
     # Create output table
     binned_stats = Table()
     binned_stats['coldens_bin_center'] = Column(bin_centers, unit='cm-2')
     binned_stats['n_sources'] = Column(bin_counts)
-    
+
     for prop in properties:
         if prop in catalog.colnames:
             unit = catalog[prop].unit if hasattr(catalog[prop], 'unit') else None
             binned_stats[f'mean_{prop}'] = Column(mean_properties[prop], unit=unit)
             binned_stats[f'err_{prop}'] = Column(err_properties[prop], unit=unit)
-    
+
     print(f"  Created {len(coldens_bins)-1} bins with sources in each")
-    
+
     if output_table_path:
         binned_stats.write(output_table_path, overwrite=True)
         print(f"  Saved binned statistics to {output_table_path}")
-    
+
     return binned_stats
 
 
 def stack_images_by_coldens_bin(catalog, output_dir='/orange/adamginsburg/ACES/analysis/stacked_images'):
     """
     Stack images in each column density bin.
-    
+
     Parameters
     ----------
     catalog : Table
         ACES catalog with column density information
     output_dir : str
         Directory to save stacked images
-        
+
     Returns
     -------
     stacked_images : dict
         Dictionary with bin indices as keys and stacked image arrays as values
     """
     print("Stacking images by column density bin...")
-    
+
     import os
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Define column density bins
     coldens_bins = np.logspace(np.log10(5e21), np.log10(5e23), 11)
     coldens = catalog['herschel_coldens']
-    
+
     # Load ACES image and RMS
     with fits.open(ACES_IMAGE_PATH) as hdul:
         aces_data = hdul[0].data.squeeze()
         aces_header = hdul[0].header
         aces_wcs = WCS(aces_header).celestial
-    
+
     with fits.open(ACES_RMS_PATH) as hdul:
         aces_rms = hdul[0].data.squeeze()
-    
+
     # Cutout size (50x50 pixels)
     cutout_size = (50, 50)
-    
+
     stacked_images = {}
-    
+
     for i in range(len(coldens_bins) - 1):
         print(f"  Bin {i+1}/{len(coldens_bins)-1}...")
-        
+
         bin_mask = (coldens >= coldens_bins[i]) & (coldens < coldens_bins[i+1])
         n_in_bin = np.sum(bin_mask)
-        
+
         if n_in_bin == 0:
             print(f"    No sources in bin")
             continue
-        
+
         # Get sources in this bin
         bin_sources = catalog[bin_mask]
-        
+
         # Initialize stacked arrays
         stacked_flux = np.zeros(cutout_size)
         stacked_weights = np.zeros(cutout_size)
         n_cutouts = 0
-        
+
         for source in bin_sources:
             try:
                 # Create SkyCoord for source position
-                source_coord = SkyCoord(source['GLON_peak'], 
-                                       source['GLAT_peak'], 
-                                       unit='deg',
-                                       frame='galactic')
-                
+                source_coord = SkyCoord(source['GLON_peak'],
+                                        source['GLAT_peak'],
+                                        unit='deg',
+                                        frame='galactic')
+
                 # Create cutout
                 cutout = Cutout2D(aces_data, source_coord, cutout_size, wcs=aces_wcs)
                 cutout_rms = Cutout2D(aces_rms, source_coord, cutout_size, wcs=aces_wcs)
-                
+
                 # Weight by inverse variance
                 with np.errstate(divide='ignore', invalid='ignore'):
                     inv_var = 1.0 / cutout_rms.data**2
                     inv_var[~np.isfinite(inv_var)] = 0
-                
+
                 # Add to stack
                 stacked_flux += cutout.data * inv_var
                 stacked_weights += inv_var
                 n_cutouts += 1
-                
+
             except Exception as e:
                 # Skip sources that can't be cut out (e.g., near edges)
                 # but we need to know what specific exceptions cause edges, we don't want to accidentally skip any so we're going to run until we catch an exception, then if it is caused by something we understand (like an edge case), we can catch that exception and continue.
                 raise e
-        
+
         # Normalize by weights
         with np.errstate(divide='ignore', invalid='ignore'):
             stacked_image = stacked_flux / stacked_weights
             stacked_image[stacked_weights == 0] = np.nan
-        
+
         stacked_images[i] = stacked_image
-        
+
         print(f"    Stacked {n_cutouts} sources")
-        
+
         # Save stacked image
         if n_cutouts > 0:
             output_path = os.path.join(output_dir, f'stacked_coldens_bin{i:02d}.fits')
-            
+
             # Create a simple header for the stacked image
             header = fits.Header()
             header['NAXIS'] = 2
@@ -558,41 +558,41 @@ def stack_images_by_coldens_bin(catalog, output_dir='/orange/adamginsburg/ACES/a
             header['CDMAX'] = coldens_bins[i+1]
             header['BUNIT'] = 'Jy/beam'
             header['COMMENT'] = f'Stacked image from {n_cutouts} sources'
-            
+
             hdu = fits.PrimaryHDU(data=stacked_image, header=header)
             hdu.writeto(output_path, overwrite=True)
             print(f"    Saved to {output_path}")
-    
+
     return stacked_images
 
 
 def create_cmzoom_catalog_with_aces_flux(output_path='/orange/adamginsburg/ACES/tables/cmzoom_complete_with_aces.fits'):
     """
     Create CMZoom complete catalog with ACES flux measurements.
-    
+
     Parameters
     ----------
     output_path : str
         Path to save the enhanced CMZoom catalog
-        
+
     Returns
     -------
     catalog : Table
         CMZoom catalog with ACES flux measurements
     """
     print("Creating CMZoom catalog with ACES flux measurements...")
-    
+
     # Load CMZoom complete catalog
     cmzoom_cat = Table.read(CMZOOM_COMPLETE_PATH)
     print(f"  Loaded {len(cmzoom_cat)} CMZoom sources")
-    
+
     # Extract ACES flux and RMS at CMZoom positions
     # Assume CMZoom has GLON and GLAT columns (need to check actual column names)
     # Common column names might be: glon, glat, ra, dec, l, b, etc.
-    
+
     # Check available columns
     print(f"  CMZoom catalog columns: {cmzoom_cat.colnames[:10]}...")  # Print first 10
-    
+
     # Try to find coordinate columns
     lon_col = None
     lat_col = None
@@ -602,7 +602,7 @@ def create_cmzoom_catalog_with_aces_flux(output_path='/orange/adamginsburg/ACES/
             lon_col = col
         if 'glat' in col_lower or col_lower in ['b', 'lat']:
             lat_col = col
-    
+
     if lon_col is None or lat_col is None:
         # Try RA/Dec instead
         for col in cmzoom_cat.colnames:
@@ -611,7 +611,7 @@ def create_cmzoom_catalog_with_aces_flux(output_path='/orange/adamginsburg/ACES/
                 lon_col = col
             if 'dec' in col_lower:
                 lat_col = col
-        
+
         if lon_col and lat_col:
             # Convert RA/Dec to Galactic
             coords = SkyCoord(cmzoom_cat[lon_col], cmzoom_cat[lat_col], unit='deg', frame='icrs')
@@ -622,28 +622,28 @@ def create_cmzoom_catalog_with_aces_flux(output_path='/orange/adamginsburg/ACES/
     else:
         lon = cmzoom_cat[lon_col]
         lat = cmzoom_cat[lat_col]
-    
+
     # Extract ACES flux and RMS
     print("  Extracting ACES flux at CMZoom positions...")
     aces_flux = extract_value_at_position(ACES_IMAGE_PATH, lon, lat)
     aces_rms = extract_value_at_position(ACES_RMS_PATH, lon, lat)
-    
+
     # Add to catalog
     cmzoom_cat['aces_flux'] = Column(aces_flux, unit='Jy/beam',
                                      description='ACES 3mm flux at CMZoom position')
     cmzoom_cat['aces_rms'] = Column(aces_rms, unit='Jy/beam',
-                                   description='ACES 3mm RMS at CMZoom position')
-    
+                                    description='ACES 3mm RMS at CMZoom position')
+
     # Compute spectral index between CMZoom and ACES
     print("  Computing CMZoom-ACES spectral indices...")
-    
+
     # Get CMZoom flux
     cmzoom_flux_col = None
     for col in ['flux_integrated', 'flux', 'total_flux', 'peak_flux', 'int_flux']:
         if col in cmzoom_cat.colnames:
             cmzoom_flux_col = col
             break
-    
+
     if cmzoom_flux_col is None:
         print("  Warning: Could not find flux column in CMZoom catalog")
         cmzoom_flux = np.full(len(cmzoom_cat), np.nan)
@@ -660,19 +660,19 @@ def create_cmzoom_catalog_with_aces_flux(output_path='/orange/adamginsburg/ACES/
                 cmzoom_flux_err = cmzoom_cat['noise']
             else:
                 cmzoom_flux_err = np.full(len(cmzoom_cat), np.nan)
-    
+
     # Frequencies
     freq_aces = 96.0  # GHz (3mm)
     freq_cmzoom = 226.0  # GHz (1mm)
-    
+
     # Compute spectral index for detections
     alpha = np.full(len(cmzoom_cat), np.nan)
     alpha_err = np.full(len(cmzoom_cat), np.nan)
     alpha_limit = np.full(len(cmzoom_cat), np.nan)  # Upper/lower limits for nondetections
-    
+
     # Detections: S/N > 5 in ACES
     detection_mask = (aces_flux / aces_rms) > 5
-    
+
     if np.sum(detection_mask) > 0:
         alpha[detection_mask], alpha_err[detection_mask] = compute_spectral_index(
             aces_flux[detection_mask],
@@ -682,7 +682,7 @@ def create_cmzoom_catalog_with_aces_flux(output_path='/orange/adamginsburg/ACES/
             aces_rms[detection_mask],
             cmzoom_flux_err[detection_mask]
         )
-    
+
     # Non-detections: compute limit assuming 5-sigma upper limit
     nondetection_mask = ~detection_mask & np.isfinite(aces_rms) & (cmzoom_flux > 0)
     if np.sum(nondetection_mask) > 0:
@@ -693,7 +693,7 @@ def create_cmzoom_catalog_with_aces_flux(output_path='/orange/adamginsburg/ACES/
             freq_aces,
             freq_cmzoom
         )
-    
+
     cmzoom_cat['alpha_cmzoom_aces'] = Column(alpha,
                                              description='Spectral index from CMZoom to ACES')
     cmzoom_cat['alpha_cmzoom_aces_err'] = Column(alpha_err,
@@ -701,13 +701,13 @@ def create_cmzoom_catalog_with_aces_flux(output_path='/orange/adamginsburg/ACES/
     cmzoom_cat['alpha_limit'] = Column(alpha_limit,
                                        description='Spectral index limit for nondetections')
     cmzoom_cat['aces_detection'] = Column(detection_mask,
-                                         description='ACES detection flag (S/N > 5)')
-    
+                                          description='ACES detection flag (S/N > 5)')
+
     # Save catalog
     cmzoom_cat.write(output_path, overwrite=True)
     print(f"  Saved enhanced CMZoom catalog to {output_path}")
     print(f"  ACES detections: {np.sum(detection_mask)}/{len(cmzoom_cat)}")
-    
+
     return cmzoom_cat
 
 
@@ -717,7 +717,7 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
                                        catalog_name='CMZoom'):
     """
     Stack ACES images at positions of CMZoom nondetections.
-    
+
     Parameters
     ----------
     cmzoom_catalog : Table, optional
@@ -728,20 +728,20 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
         Path to save stacked image
     catalog_name : str
         Name for display purposes
-        
+
     Returns
     -------
     stacked_image : array
         Stacked ACES image
     """
     print(f"Stacking ACES images at {catalog_name} nondetection positions...")
-    
+
     if cmzoom_catalog is None:
         if cmzoom_catalog_path is not None:
             # Load catalog and add ACES flux
             cmzoom_catalog = Table.read(cmzoom_catalog_path)
             print(f"  Loaded {len(cmzoom_catalog)} {catalog_name} sources")
-            
+
             # Find coordinates
             lon_col = None
             lat_col = None
@@ -751,7 +751,7 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
                     lon_col = col
                 if 'glat' in col_lower or col_lower in ['b', 'lat']:
                     lat_col = col
-            
+
             if lon_col is None or lat_col is None:
                 for col in cmzoom_catalog.colnames:
                     col_lower = col.lower()
@@ -759,7 +759,7 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
                         lon_col = col
                     if 'dec' in col_lower:
                         lat_col = col
-                
+
                 if lon_col and lat_col:
                     coords = SkyCoord(cmzoom_catalog[lon_col], cmzoom_catalog[lat_col], unit='deg', frame='icrs')
                     lon = coords.galactic.l.deg
@@ -767,49 +767,49 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
             else:
                 lon = cmzoom_catalog[lon_col]
                 lat = cmzoom_catalog[lat_col]
-            
+
             # Extract ACES flux and RMS
             print("  Extracting ACES flux at CMZoom positions...")
             aces_flux = extract_value_at_position(ACES_IMAGE_PATH, lon, lat)
             aces_rms = extract_value_at_position(ACES_RMS_PATH, lon, lat)
-            
+
             # Add to catalog and compute detection flag
             cmzoom_catalog['aces_flux'] = Column(aces_flux, unit='Jy/beam')
             cmzoom_catalog['aces_rms'] = Column(aces_rms, unit='Jy/beam')
             detection_mask = (aces_flux / aces_rms) > 5
             cmzoom_catalog['aces_detection'] = Column(detection_mask)
-            
+
             print(f"  ACES detections: {np.sum(detection_mask)}/{len(cmzoom_catalog)}")
         else:
             cmzoom_catalog = Table.read('/orange/adamginsburg/ACES/tables/cmzoom_complete_with_aces.fits')
-    
+
     # Get nondetections
     nondetection_mask = cmzoom_catalog['aces_detection'] == False
     nondetections = cmzoom_catalog[nondetection_mask]
-    
+
     print(f"  Found {len(nondetections)} nondetections to stack")
-    
+
     if len(nondetections) == 0:
         print("  No nondetections to stack")
         return None
-    
+
     # Load ACES image and RMS
     with fits.open(ACES_IMAGE_PATH) as hdul:
         aces_data = hdul[0].data.squeeze()
         aces_header = hdul[0].header
         aces_wcs = WCS(aces_header).celestial
-    
+
     with fits.open(ACES_RMS_PATH) as hdul:
         aces_rms = hdul[0].data.squeeze()
-    
+
     # Cutout size
     cutout_size = (50, 50)
-    
+
     # Initialize stacked arrays
     stacked_flux = np.zeros(cutout_size)
     stacked_weights = np.zeros(cutout_size)
     n_cutouts = 0
-    
+
     # Get coordinates
     lon_col, lat_col = None, None
     for col in cmzoom_catalog.colnames:
@@ -818,7 +818,7 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
             lon_col = col
         if 'glat' in col_lower or col_lower in ['b', 'lat']:
             lat_col = col
-    
+
     for source in nondetections:
         try:
             if lon_col and lat_col:
@@ -826,23 +826,23 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
             else:
                 # Try RA/Dec
                 source_coord = SkyCoord(source['ra'], source['dec'], unit='deg', frame='icrs')
-            
+
             # Create cutout
             cutout = Cutout2D(aces_data, source_coord, cutout_size, wcs=aces_wcs)
             cutout_rms = Cutout2D(aces_rms, source_coord, cutout_size, wcs=aces_wcs)
-            
+
             # Weight by inverse variance
             with np.errstate(divide='ignore', invalid='ignore'):
                 inv_var = 1.0 / cutout_rms.data**2
                 inv_var[~np.isfinite(inv_var)] = 0
-            
+
             # Add to stack
             to_stack = cutout.data * inv_var
             to_stack[~np.isfinite(to_stack)] = 0
             stacked_flux += to_stack
             stacked_weights += inv_var
             n_cutouts += 1
-            
+
         except NoOverlapError:
             # skip because out of bounds - this case is OK.
             continue
@@ -856,19 +856,19 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
         except Exception as e:
             # as above, only catch exceptions we understand
             raise e
-    
+
     # Normalize
     with np.errstate(divide='ignore', invalid='ignore'):
         stacked_image = stacked_flux / stacked_weights
         stacked_image[stacked_weights == 0] = np.nan
-    
+
     print(f"  Stacked {n_cutouts} nondetections")
-    
+
     # Save
     if n_cutouts > 0:
         import os
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        
+
         header = fits.Header()
         header['NAXIS'] = 2
         header['NAXIS1'] = cutout_size[0]
@@ -878,18 +878,18 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
         header['NSOURCES'] = n_cutouts
         header['BUNIT'] = 'Jy/beam'
         header['COMMENT'] = f'Stacked ACES at CMZoom nondetections'
-        
+
         hdu = fits.PrimaryHDU(data=stacked_image, header=header)
         hdu.writeto(output_path, overwrite=True)
         print(f"  Saved to {output_path}")
-    
+
     return stacked_image
 
 
 def plot_binned_statistics(binned_stats, output_path='/orange/adamginsburg/ACES/diagnostic_plots/binned_statistics_plots.png'):
     """
     Create a grid of plots showing binned statistics vs column density.
-    
+
     Parameters
     ----------
     binned_stats : Table
@@ -898,52 +898,52 @@ def plot_binned_statistics(binned_stats, output_path='/orange/adamginsburg/ACES/
         Path to save the plot
     """
     print("\nCreating binned statistics plots...")
-    
+
     # Define which properties to plot
     properties = ['n_sources', 'mean_flux', 'mean_R_pc', 'mean_Mean_CS', 'mean_Mean_MS',
-                  'mean_alpha_manual', 'mean_alpha_aces_meerkat', 'mean_alpha_auto', 
+                  'mean_alpha_manual', 'mean_alpha_aces_meerkat', 'mean_alpha_auto',
                   'mean_alpha_cmzoom_aces']
-    
+
     # Filter to properties that exist and have at least some finite values
     properties_to_plot = []
     for prop in properties:
         if prop in binned_stats.colnames:
             if prop == 'n_sources' or np.sum(np.isfinite(binned_stats[prop])) > 0:
                 properties_to_plot.append(prop)
-    
+
     n_plots = len(properties_to_plot)
-    
+
     # Create figure with grid layout
     ncols = 3
     nrows = int(np.ceil(n_plots / ncols))
-    
+
     fig = plt.figure(figsize=(15, 4*nrows))
     gs = gridspec.GridSpec(nrows, ncols, figure=fig, hspace=0.3, wspace=0.3)
-    
+
     coldens = binned_stats['coldens_bin_center']
-    
+
     for idx, prop in enumerate(properties_to_plot):
         row = idx // ncols
         col = idx % ncols
         ax = fig.add_subplot(gs[row, col])
-        
+
         values = binned_stats[prop]
-        
+
         if prop == 'n_sources':
             # Histogram plot for number of sources
             ax.bar(np.arange(len(values)), values, width=0.8, alpha=0.7, edgecolor='black')
             ax.set_xlabel('Bin Number')
             ax.set_ylabel('Number of Sources')
             ax.set_title('Source Count by Bin')
-            
+
             # Add total count
             total = np.sum(values)
             ax.text(0.95, 0.95, f'Total: {total}', transform=ax.transAxes,
-                   ha='right', va='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+                    ha='right', va='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
         else:
             # Scatter plot with error bars for other properties
             mask = np.isfinite(values) & np.isfinite(coldens)
-            
+
             # Get error bars if available
             err_prop = prop.replace('mean_', 'err_')
             if err_prop in binned_stats.colnames:
@@ -952,42 +952,42 @@ def plot_binned_statistics(binned_stats, output_path='/orange/adamginsburg/ACES/
             else:
                 errors = None
                 err_mask = mask
-            
+
             if np.sum(err_mask) > 0:
                 if errors is not None:
                     ax.errorbar(coldens[err_mask], values[err_mask], yerr=errors[err_mask],
-                               fmt='o-', markersize=8, linewidth=2, capsize=5, capthick=2, alpha=0.7)
+                                fmt='o-', markersize=8, linewidth=2, capsize=5, capthick=2, alpha=0.7)
                 else:
                     ax.plot(coldens[mask], values[mask], 'o-', markersize=8, linewidth=2, alpha=0.7)
-                
+
                 ax.set_xscale('log')
                 ax.set_xlabel('Column Density (cm$^{-2}$)')
-                
+
                 # Format y-label
                 ylabel = prop.replace('mean_', '').replace('_', ' ').title()
                 if 'alpha' in prop.lower():
                     ylabel = ylabel.replace('Alpha', 'α')
                 ax.set_ylabel(ylabel)
-                
+
                 ax.set_title(ylabel)
-                
+
                 # Add horizontal line at y=0 for alpha plots
                 if 'alpha' in prop.lower():
                     ax.axhline(0, color='k', linestyle='--', alpha=0.3, linewidth=1)
             else:
                 ax.text(0.5, 0.5, 'No finite data', transform=ax.transAxes,
-                       ha='center', va='center', fontsize=14)
+                        ha='center', va='center', fontsize=14)
                 ax.set_xlabel('Column Density (cm$^{-2}$)')
                 ax.set_ylabel(prop.replace('mean_', ''))
-    
+
     # Add overall title
     fig.suptitle('ACES Binned Statistics vs Column Density', fontsize=16, y=0.995)
-    
+
     # Save figure
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"  Saved plot to {output_path}")
     plt.close()
-    
+
     return fig
 
 
@@ -1000,60 +1000,60 @@ def main():
     print("="*70)
     print("ACES Catalog Enhancement and Stacking Analysis")
     print("="*70)
-    
+
     # Load ACES catalog
     print("\nLoading ACES catalog...")
     catalog = Table.read(ACES_CATALOG_PATH)
     print(f"Loaded {len(catalog)} sources")
-    
+
     # Part 1: Enhance ACES catalog
     print("\n" + "="*70)
     print("PART 1: Enhancing ACES Catalog")
     print("="*70)
-    
+
     catalog = add_column_density_and_temperature(catalog)
     catalog = add_spectral_indices(catalog)
     catalog = add_cmzoom_spectral_index(catalog)
-    
+
     # Save enhanced catalog
     print(f"\nSaving enhanced catalog to {OUTPUT_CATALOG_PATH}...")
     catalog.write(OUTPUT_CATALOG_PATH, overwrite=True)
     print("Done!")
-    
+
     # Part 2: Bin and compute mean properties
     print("\n" + "="*70)
     print("PART 2: Binning by Column Density")
     print("="*70)
-    
+
     binned_stats = bin_and_compute_mean_properties(
-        catalog, 
+        catalog,
         output_table_path='/orange/adamginsburg/ACES/tables/aces_binned_by_coldens.fits'
     )
     print("\nBinned statistics:")
     print(binned_stats)
-    
+
     # Plot binned statistics
     plot_binned_statistics(binned_stats)
-    
+
     # Part 3: Stack images
     print("\n" + "="*70)
     print("PART 3: Stacking Images by Column Density")
     print("="*70)
-    
+
     stacked_images = stack_images_by_coldens_bin(catalog)
-    
+
     # Part 4: CMZoom analysis
     print("\n" + "="*70)
     print("PART 4: CMZoom Catalog Analysis")
     print("="*70)
-    
+
     cmzoom_cat = create_cmzoom_catalog_with_aces_flux()
-    
+
     # Part 5: Stack CMZoom nondetections
     print("\n" + "="*70)
     print("PART 5: Stacking CMZoom Nondetections")
     print("="*70)
-    
+
     # Stack complete catalog nondetections (using the catalog we just created)
     print("\n--- CMZoom Complete Catalog ---")
     stack_aces_at_cmzoom_nondetections(
@@ -1061,7 +1061,7 @@ def main():
         output_path='/orange/adamginsburg/ACES/analysis/stacked_images/stacked_cmzoom_complete_nondetections.fits',
         catalog_name='CMZoom Complete'
     )
-    
+
     # Stack robust catalog nondetections (load from file)
     print("\n--- CMZoom Robust Catalog ---")
     stack_aces_at_cmzoom_nondetections(
@@ -1069,7 +1069,7 @@ def main():
         output_path='/orange/adamginsburg/ACES/analysis/stacked_images/stacked_cmzoom_robust_nondetections.fits',
         catalog_name='CMZoom Robust'
     )
-    
+
     print("\n" + "="*70)
     print("Analysis Complete!")
     print("="*70)

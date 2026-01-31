@@ -31,6 +31,7 @@ mustang_central_frequency = 91.5 * u.GHz
 
 TENS_DIR = '/orange/adamginsburg/ACES/TENS/'
 
+
 def get_mustang_data_old():
     mustangfn = '/orange/adamginsburg/mgps/mgps/SgrB2/SgrB2_5pass_1_.0.2_10mJy_10mJy_w_session5_final_smooth4_PlanckCombined.fits'
     mustang_planck_image = fits.open(mustangfn)
@@ -69,7 +70,7 @@ def get_mustang_data():
 
     #fn = 'AGBT23A_268_niter_2_25_gal.fits'
     fn = 'SgrB2_flux_cut_dt6_filtp05to49_noShift_final_map.fits'
-    mustang_plus_planck_fn = f"{TENS_DIR}/{fn.replace('.fits','')}_PlanckCombined.fits"
+    mustang_plus_planck_fn = f"{TENS_DIR}/{fn.replace('.fits', '')}_PlanckCombined.fits"
     fn = f"{TENS_DIR}/{fn}"
 
     fh = fits.open(fn)
@@ -110,7 +111,6 @@ def get_planck_data():
         planck_image.data = planck_image.data * (reffreq_hz / mustang_reffreq)**-3
         planck_image.header['REFFREQ'] = mustang_reffreq
         planck_image.writeto(planckfn_scaled, overwrite=True)
-
 
     fh[0].header['BMAJ'] = mustang_beam_fwhm.to(u.deg).value
     fh[0].header['BMIN'] = mustang_beam_fwhm.to(u.deg).value

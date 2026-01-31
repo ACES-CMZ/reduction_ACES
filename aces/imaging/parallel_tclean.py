@@ -279,7 +279,6 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
                      f'--job-name={jobname}_split --account={account} '
                      f'--qos={qos} --export=ALL --time={jobtime} {slurmsplitcmdsh}\n')
 
-
     if dry:
         print(slurmsplitcmd.split())
         scriptjobid = 'PLACEHOLDER'
@@ -297,8 +296,6 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         fh.write(script)
     ast.parse(script)
     print(f"Wrote script {scriptname}")
-
-
 
     runcmd = ("#!/bin/bash\n"
               f'LOGFILENAME="{logdir}/casa_log_line_{jobname}_${{SLURM_JOBID}}_${{SLURM_ARRAY_TASK_ID}}_{now}.log"\n'
@@ -331,7 +328,6 @@ def parallel_clean_slurm(nchan, imagename, spw, start=0, width=1, nchan_per=128,
         sbatch = subprocess.check_output(cmd.split())
         jobid = sbatch.decode().split()[-1]
         print(f'{sbatch.decode()} with jobname={jobname}')
-
 
     mergescriptname = os.path.join(workdir, imagename + "_merge_script.py")
 
@@ -622,7 +618,6 @@ sys.exit(0)
         fh.write(mergescript)
     ast.parse(mergescript)
     print(f"Wrote mergescript {mergescriptname}", flush=True)
-
 
     #now = datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
     #LOGFILENAME = f"casa_log_line_{jobname}_merge_{now}.log"

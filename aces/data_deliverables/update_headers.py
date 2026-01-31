@@ -324,33 +324,56 @@ def main():
     fits_list = [x for x in fits_list if 'PV' not in str(x)]
     total = len(fits_list)
 
-    print(f"Processing {total} FITS files in {BASE_DIR}", flush=True)
+    print(f"Total of {total} FITS files in {BASE_DIR}", flush=True)
 
-    n_ok = n_err = 0
-    error_files = []
+    # Check if running as SLURM array job
+    if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
+        slurm_array_task_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
-    # Shuffle so we can parallelize
-    import random
-    random.shuffle(fits_list)
+        if slurm_array_task_id >= total:
+            print(f"SLURM_ARRAY_TASK_ID={slurm_array_task_id} >= total files ({total}), nothing to do", flush=True)
+            return
 
-    for ii, f in enumerate(fits_list):
-        print(f"Processing {f} ({ii} of {len(fits_list)})", flush=True)
+        # Process only the file assigned to this array task
+        f = fits_list[slurm_array_task_id]
+        print(f"SLURM array task {slurm_array_task_id}: Processing {f}", flush=True)
         ok, errs = apply_fixes(f)
+
         if ok:
-            n_ok += 1
+            print(f"Successfully updated: {f.name}", flush=True)
         else:
-            n_err += 1
-            error_files.append((f.name, errs))
+            print(f"ERROR updating {f.name}: {'; '.join(errs)}", flush=True)
+            sys.exit(1)
 
-    print("\n--- Summary ---", flush=True)
-    print(f"Total files: {total}", flush=True)
-    print(f"Successfully updated: {n_ok}", flush=True)
-    print(f"Errors: {n_err}", flush=True)
+    else:
+        # Non-parallel mode: process all files sequentially
+        print(f"Processing {total} FITS files in {BASE_DIR}", flush=True)
 
-    if error_files:
-        print("\nFiles with errors:", flush=True)
-        for name, errs in error_files:
-            print(f"  {name}: {'; '.join(errs)}", flush=True)
+        n_ok = n_err = 0
+        error_files = []
+
+        # Shuffle so we can parallelize
+        import random
+        random.shuffle(fits_list)
+
+        for ii, f in enumerate(fits_list):
+            print(f"Processing {f} ({ii} of {len(fits_list)})", flush=True)
+            ok, errs = apply_fixes(f)
+            if ok:
+                n_ok += 1
+            else:
+                n_err += 1
+                error_files.append((f.name, errs))
+
+        print("\n--- Summary ---", flush=True)
+        print(f"Total files: {total}", flush=True)
+        print(f"Successfully updated: {n_ok}", flush=True)
+        print(f"Errors: {n_err}", flush=True)
+
+        if error_files:
+            print("\nFiles with errors:", flush=True)
+            for name, errs in error_files:
+                print(f"  {name}: {'; '.join(errs)}", flush=True)
 
 
 if __name__ == "__main__":

@@ -3,9 +3,12 @@ The "final" catalog of sources in ACES is here:
 /orange/adamginsburg/ACES/upload/compact_cont_source_catalog/official_cont_catalog_files/ACES_catalog_v0_README.txt
 /orange/adamginsburg/ACES/upload/compact_cont_source_catalog/official_cont_catalog_files/aces_compact_catalog_v0.fits
 
-Following the example of /orange/adamginsburg/ACES/broadline_sources/G0.025-0.073/MUBLO_MultiwavelengthCutouts.ipynb, create cutout visualizations for each source in the catalog.
+Following the example of /orange/adamginsburg/ACES/broadline_sources/G0.025-0.073/MUBLO_MultiwavelengthCutouts.ipynb,
+create cutout visualizations for each source in the catalog.
 
-some of the file paths may be different.  For example, the Spitzer images can be found at /orange/adamginsburg/galactic_plane_surveys/glimpse/, and instead of the 850um data, we can use the CMZoom data: /orange/adamginsburg/cmz/cmzoom/continuum_mosaic/CMZoom_continuum_pbcor.fits
+some of the file paths may be different.  For example, the Spitzer images can be found at
+/orange/adamginsburg/galactic_plane_surveys/glimpse/, and instead of the 850um data, we can use the CMZoom data:
+/orange/adamginsburg/cmz/cmzoom/continuum_mosaic/CMZoom_continuum_pbcor.fits
 
 For each of the ancillary data sets, the panel should only be created if the selected source is covered; if the cutout is blank or all NaN, it should not be included.
 
@@ -151,7 +154,6 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec, max_retries
         {'name': str, 'otype': str, 'nbref': int, 'separation': Quantity}
         Returns None if no match or query disabled
     """
-    global simbad_cache, enable_simbad
 
     # Check cache first
     if source_idx in simbad_cache:
@@ -169,7 +171,6 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec, max_retries
 
     # Retry loop for SIMBAD query
     result = None
-    last_exception = None
 
     for attempt in range(max_retries):
         try:
@@ -178,7 +179,6 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec, max_retries
             # If we got here, query succeeded
             break
         except Exception as e:
-            last_exception = e
             if attempt < max_retries - 1:
                 print(f"  SIMBAD query failed (attempt {attempt + 1}/{max_retries}): {type(e).__name__}: {e}")
                 print(f"  Waiting {retry_delay} seconds before retry...")
@@ -191,7 +191,7 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec, max_retries
     if result is not None and len(result) > 0:
         # Calculate separations
         result_coords = SkyCoord(result['ra'], result['dec'],
-                                unit=u.deg, frame='icrs')
+                                 unit=u.deg, frame='icrs')
         separations = coord.separation(result_coords)
 
         # Filter to within search radius
@@ -236,6 +236,7 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec, max_retries
     # Cache negative result to avoid re-querying
     simbad_cache[source_idx] = None
     return None
+
 
 # Define wavelengths and beams for SED extraction
 wavelengths = {
@@ -287,6 +288,7 @@ beam_sizes = {
 
 # Cache for file WCS and bounds to avoid repeated file opening
 _file_cache = {}
+
 
 def select_best_file(coord, filepaths):
     """
@@ -386,7 +388,6 @@ def galactic_cutout(coord, hdu, size=50*u.arcsec):
         WCS of the cutout in Galactic coordinates
     """
     import reproject.mosaicking
-    import regions
 
     # Get the image HDU
     if isinstance(hdu, fits.HDUList):
@@ -819,12 +820,11 @@ def plot_spectra(source_idx, fig, gs, spec_row_start, n_cols=4):
                 y_range = p99 - p1
                 ax.set_ylim(p1 - 0.1*y_range, p99 + 0.1*y_range)
 
-
     return True
 
 
 def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
-                                 size=50*u.arcsec, save=True):
+                                size=50*u.arcsec, save=True):
     """
     Create a multiwavelength cutout visualization for a single source.
 
@@ -934,8 +934,8 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
 
             # Create ellipse (PA measured from North through East in Galactic)
             ellipse = Ellipse(xy=center_pix, width=major_pix, height=minor_pix,
-                            angle=pa.value, edgecolor='cyan', facecolor='none',
-                            linewidth=1.5, linestyle='--', alpha=0.7)
+                              angle=pa.value, edgecolor='cyan', facecolor='none',
+                              linewidth=1.5, linestyle='--', alpha=0.7)
             ax.add_patch(ellipse)
 
         # Set labels
@@ -972,16 +972,16 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
             if is_det:
                 # Detection: plot as square
                 ax_sed.errorbar(wl.to(u.um).value, flux.to(u.Jy).value,
-                              yerr=err.to(u.Jy).value,
-                              marker='s', markersize=6, color='blue',
-                              markeredgecolor='k', capsize=3, capthick=1.5)
+                                yerr=err.to(u.Jy).value,
+                                marker='s', markersize=6, color='blue',
+                                markeredgecolor='k', capsize=3, capthick=1.5)
             else:
                 # Upper limit: plot as downward arrow
                 ax_sed.errorbar(wl.to(u.um).value, flux.to(u.Jy).value,
-                              yerr=err.to(u.Jy).value, uplims=True,
-                              marker='v', markersize=6, color='gray',
-                              markerfacecolor='none', markeredgecolor='k',
-                              capsize=3, capthick=1.5)
+                                yerr=err.to(u.Jy).value, uplims=True,
+                                marker='v', markersize=6, color='gray',
+                                markerfacecolor='none', markeredgecolor='k',
+                                capsize=3, capthick=1.5)
 
         # Add 50K modified blackbody through ACES 3mm point
         if 'flux' in source.colnames and source['flux'] > 0:
@@ -992,7 +992,7 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
                 normalization=source['flux']*u.Jy
             )
             ax_sed.plot(model_wl.to(u.um).value, model_flux.to(u.Jy).value,
-                       'r--', linewidth=1.5, alpha=0.7, label='50K MBB', zorder=-5)
+                        'r--', linewidth=1.5, alpha=0.7, label='50K MBB', zorder=-5)
 
         ax_sed.set_xscale('log')
         ax_sed.set_yscale('log')
@@ -1005,7 +1005,7 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
         # Set reasonable axis limits
         if len(wl_vals) > 0:
             ax_sed.set_xlim(wl_vals.min().to(u.um).value * 0.5,
-                           wl_vals.max().to(u.um).value * 2)
+                            wl_vals.max().to(u.um).value * 2)
             flux_min = flux_vals[flux_vals > 0].min().to(u.Jy).value if np.any(flux_vals > 0) else 1e-3
             flux_max = flux_vals.max().to(u.Jy).value
             ax_sed.set_ylim(flux_min * 0.3, flux_max * 3)
@@ -1023,7 +1023,7 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
         simbad_otype = simbad_info['otype']
         simbad_sep = simbad_info['separation'].to(u.arcsec).value
         title = (f"Source {source_idx_val}: {simbad_name} ({simbad_otype}, {simbad_sep:.2f}\")\n"
-                f"GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°")
+                 f"GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°")
     else:
         title = f"Source {source_idx_val}: GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°"
 
@@ -1054,7 +1054,7 @@ def main():
     for i in range(len(catalog)):
         try:
             plot_multiwavelength_cutout(i, catalog, existing_files, output_dir,
-                                       size=50*u.arcsec, save=True)
+                                        size=50*u.arcsec, save=True)
         except (KeyboardInterrupt, SystemExit):
             # Don't catch user interrupts
             raise
