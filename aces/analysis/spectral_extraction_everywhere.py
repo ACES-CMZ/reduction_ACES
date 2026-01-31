@@ -46,7 +46,9 @@ def extract_from_mask(cube, maskhdu, maskid):
 if __name__ == "__main__":
 
     maskfile = fits.open(f"{basepath}/upload/Cont_catalog_stuff/ACES_leaf_mask_3_1_mp179.fits")
-    catalog = Table.read(f"{basepath}/upload/Cont_catalog_stuff/aces_catalog_3_1_mp179.fits")
+    #catalog = Table.read(f"{basepath}/upload/Cont_catalog_stuff/aces_catalog_3_1_mp179.fits")
+    catalog = Table.read(f'{basepath}/upload/compact_cont_source_catalog/official_cont_catalog_files/aces_compact_catalog_v0.fits')
+    catalog_name_prefix = 'ACEScatalog_v0_20260130'
 
     product_dir = f"{basepath}/rawdata/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/"
     spectrum_dir = f"{basepath}/spectra"
@@ -82,7 +84,7 @@ if __name__ == "__main__":
         for cubefn in cubefns:
 
             # there are two fns to check, but we're only checking the second
-            outfn = f"{spectrum_dir}/mp179_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
+            outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
 
             if not os.path.exists(outfn):
 
@@ -111,7 +113,7 @@ if __name__ == "__main__":
                     hdu.header['CATMINS'] = row['minor_sigma']
                     hdu.header['CATPA'] = row['position_angle']
 
-                    outfn = f"{spectrum_dir}/mp179_source{row['index']}_ellipseaverage_" + cubefn.split("/")[-1]
+                    outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_ellipseaverage_" + cubefn.split("/")[-1]
                     hdu.writeto(outfn, overwrite=True)
 
                     try:
@@ -129,7 +131,7 @@ if __name__ == "__main__":
                     hdu.header['CATMINS'] = row['minor_sigma']
                     hdu.header['CATPA'] = row['position_angle']
 
-                    outfn = f"{spectrum_dir}/mp179_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
+                    outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
                     hdu.writeto(outfn, overwrite=True)
                 else:
                     print('WTF?', row['index'], cubefn)

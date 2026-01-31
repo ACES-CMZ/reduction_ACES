@@ -937,7 +937,7 @@ def main():
             print(f"ERROR: Unexpected error processing source {i}: {type(e).__name__}: {e}")
             import traceback
             traceback.print_exc()
-            raise ex
+            raise e
 
     print(f"\nDone! Created cutouts in {output_dir}")
 
