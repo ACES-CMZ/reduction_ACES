@@ -45,6 +45,16 @@ MOMENT_SUFFIXES = (
 MALFORMED_BUNIT = {'Jy beam-1', 'Jy.beam-1', 'beam-1.Jy', 'Jy beam^-1', 'Jy.beam^-1'}
 
 
+def has_datamax(fits_path: Path) -> bool:
+    """Check if a FITS file has DATAMAX header using astropy.io.fits."""
+    try:
+        with fits.open(fits_path, mode='readonly', memmap=True) as hdul:
+            return 'DATAMAX' in hdul[0].header
+    except (OSError, IOError):
+        # If file can't be opened, there's a big problem
+        raise
+
+
 def extract_gal_target(name: str) -> Optional[str]:
     return m.group(1) if (m := GAL_COORD_RE.search(name)) else None
 
@@ -215,6 +225,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
                 warnings.simplefilter('ignore')
                 cube = SpectralCube.read(fits_path, use_dask=True)
         except Exception as ex:
+            print("This should only happen for 2D images and so we shouldn't be catching generic exceptions")
             print(ex, flush=True)
             cube = h0.data
 
@@ -316,15 +327,31 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
         return True, errors
 
 
-def main():
+def main(force: bool = False):
+    """
+    Process FITS files to update headers.
+
+    Parameters
+    ----------
+    force : bool, optional
+        If True, process all files even if they already have DATAMAX.
+        If False (default), only process files missing DATAMAX.
+    """
     fits_list = sorted([
         f for f in BASE_DIR.glob("*/*.fits")
     ])
     # PV files aren't valid anyway, no need to update them
     fits_list = [x for x in fits_list if 'PV' not in str(x)]
-    total = len(fits_list)
 
-    print(f"Total of {total} FITS files in {BASE_DIR}", flush=True)
+    if not force:
+        print(f"Found {len(fits_list)} FITS files (excluding PV), checking for DATAMAX...", flush=True)
+        # Filter out files that already have DATAMAX
+        fits_list = [f for f in fits_list if not has_datamax(f)]
+        print(f"Total of {len(fits_list)} FITS files without DATAMAX in {BASE_DIR}", flush=True)
+    else:
+        print(f"Force mode: processing all {len(fits_list)} FITS files in {BASE_DIR}", flush=True)
+
+    total = len(fits_list)
 
     # Check if running as SLURM array job
     if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
