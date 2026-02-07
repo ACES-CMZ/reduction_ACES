@@ -19,15 +19,26 @@ import warnings
 from pathlib import Path
 from typing import Optional
 import numpy as np
+import dask
 from astropy import units as u
 from astropy.io import fits
+from astropy.table import Table
 from astropy.wcs import WCS
 from astropy.wcs.utils import add_stokes_axis_to_wcs
 from spectral_cube import SpectralCube
+from dask.diagnostics import ProgressBar
 
 BASE_DIR = Path("/orange/adamginsburg/ACES/products_for_ALMA/")
+STATS_DIR = Path("/orange/adamginsburg/ACES/reduction_ACES/aces/data/tables/")
+CUBE_STATS_PATH = STATS_DIR / "cube_stats.ecsv"
+FEATHERED_STATS_PATH = STATS_DIR / "feathered_cube_stats.ecsv"
+
 DEFAULT_DATE_OBS = "2021-10-17T01:21:04"
 DEFAULT_ORIGIN = "ACES team: see https://github.com/ACES-CMZ/"
+
+# Global cache for stats tables
+_CUBE_STATS = None
+_FEATHERED_STATS = None
 
 GAL_COORD_RE = re.compile(r"(G\d{1,3}\.\d+[pm]\d{1,2}\.\d+)")
 
@@ -53,6 +64,105 @@ def has_datamax(fits_path: Path) -> bool:
     except (OSError, IOError):
         # If file can't be opened, there's a big problem
         raise
+
+
+def load_stats_tables():
+    """Load the stats tables once and cache them."""
+    global _CUBE_STATS, _FEATHERED_STATS
+
+    if _CUBE_STATS is None and CUBE_STATS_PATH.exists():
+        print(f"Loading cube stats from {CUBE_STATS_PATH}", flush=True)
+        _CUBE_STATS = Table.read(CUBE_STATS_PATH)
+
+    if _FEATHERED_STATS is None and FEATHERED_STATS_PATH.exists():
+        print(f"Loading feathered stats from {FEATHERED_STATS_PATH}", flush=True)
+        _FEATHERED_STATS = Table.read(FEATHERED_STATS_PATH)
+
+    return _CUBE_STATS, _FEATHERED_STATS
+
+
+def get_original_filename(current_path: Path) -> str:
+    """
+    Map from current filename to original filename used in stats tables.
+
+    The files were renamed by update_fns.py which changed:
+    'lp_2021.1.00172.L.slongmore' -> 'lp_slongmore'
+
+    Also need to handle the different naming conventions:
+    - products_for_ALMA uses: group.uid___A001_X1590_X30a9.lp_slongmore.*.fits
+    - cube_stats uses: uid___*.image
+    - feathered_stats uses: Sgr_A_st*.fits
+    """
+    filename = current_path.name
+
+    # Try to extract the core filename for matching
+    # For feathered files: look for pattern like Sgr_A_st_*.TP_7M_12M_feather*
+    if '12m7mTP' in filename or 'feather' in filename.lower():
+        # Try to match feathered naming pattern
+        # e.g., group...lp_slongmore.cmz_mosaic.icrs.12m7mTP.CH3CHO.cube.pbcor.fits
+        # might match: Sgr_A_st_*.TP_7M_12M_feather_all.SPW_*.image.statcont.contsub.fits
+        # This is complex, so we'll try to extract key parts
+        return filename  # For now return as-is, will refine
+    else:
+        # For non-feathered: might be in cube_stats
+        # Look for uid pattern in the filename
+        # e.g., group.uid___A001_X1590_X30a9.lp_slongmore.G000.029p0.041.12m7m.89.1-89.2GHz.cube.pbcor.fits
+        # should map to something in cube_stats
+        return filename
+
+
+def lookup_precomputed_stats(fits_path: Path) -> Optional[tuple[float, float]]:
+    """
+    Look up precomputed datamin and datamax from stats tables.
+
+    NOTE: Currently disabled - the mapping between current filenames in products_for_ALMA
+    and the original filenames in the stats tables is complex:
+    1. Stats tables (cube_stats, feathered_cube_stats) were created from intermediate
+       processing files with different UIDs and naming conventions
+    2. Files in products_for_ALMA went through renaming (update_fns.py) and reorganization
+    3. No direct mapping file exists between the two naming schemes
+
+    TODO: Create a proper mapping from products_for_ALMA filenames back to the original
+    intermediate filenames used when generating the stats tables. This would require:
+    - Tracking the processing pipeline to link final products to intermediate cubes
+    - Building a lookup table during the processing/renaming steps
+    - Or recomputing stats from the final products and saving a new stats table
+
+    For now, this function returns None and datamin/datamax are computed fresh.
+
+    Returns
+    -------
+    tuple of (datamin, datamax) or None if not found (currently always None)
+    """
+    # Disabled for now - uncomment and fix matching logic when mapping is available
+    return None
+
+    # The code below shows the intended structure:
+    #
+    # cube_stats, feathered_stats = load_stats_tables()
+    #
+    # if cube_stats is None and feathered_stats is None:
+    #     return None
+    #
+    # filename = fits_path.name
+    #
+    # # Extract UID and SPW for matching
+    # uid_match = re.search(r'(uid___A\d+_X[0-9a-f]+_X[0-9a-f]+)', filename)
+    # uid_str = uid_match.group(1) if uid_match else None
+    #
+    # if cube_stats is not None and uid_str:
+    #     for row in cube_stats:
+    #         table_filename = row['filename']
+    #         if uid_str in table_filename:
+    #             spw_match = re.search(r'spw(\d+)', filename.lower())
+    #             table_spw_match = re.search(r'spw(\d+)', table_filename.lower())
+    #
+    #             if spw_match and table_spw_match and spw_match.group(1) == table_spw_match.group(1):
+    #                 datamin = float(row['min'].value if hasattr(row['min'], 'value') else row['min'])
+    #                 datamax = float(row['max'].value if hasattr(row['max'], 'value') else row['max'])
+    #                 return (datamin, datamax)
+    #
+    # return None
 
 
 def extract_gal_target(name: str) -> Optional[str]:
@@ -287,22 +397,32 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
 
         # 4. Data min/max
         if data is not None and ('DATAMIN' not in hdr or 'DATAMAX' not in hdr):
-            print(f"Calculating datamin/datamax for data with size {data.size/1024**3}Gpix... dt={time.time() - t0:.2f}s", flush=True)
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                try:
-                    datamax = cube.max()
-                    datamin = cube.min()
+            # First try to get precomputed values from stats tables
+            precomputed = lookup_precomputed_stats(fits_path)
 
-                    # this shouldn't be necessary, but it has happened: they should _always_ be qty's
-                    if hasattr(datamax, 'value'):
-                        datamax = datamax.value
-                    if hasattr(datamin, 'value'):
-                        datamin = datamin.value
-                except TypeError:
-                    # it's a moment map, we can afford to load the whole data
-                    datamax = np.nanmax(cube)
-                    datamin = np.nanmin(cube)
+            if precomputed is not None:
+                datamin, datamax = precomputed
+                print(f"Using precomputed datamin/datamax from stats tables. dt={time.time() - t0:.2f}s", flush=True)
+            else:
+                # Calculate from scratch
+                print(f"Calculating datamin/datamax for data with size {data.size/1024**3}Gpix... dt={time.time() - t0:.2f}s", flush=True)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    try:
+                        with dask.config.set(scheduler='threads'):
+                            with ProgressBar():
+                                datamax = cube.max()
+                                datamin = cube.min()
+
+                        # this shouldn't be necessary, but it has happened: they should _always_ be qty's
+                        if hasattr(datamax, 'value'):
+                            datamax = datamax.value
+                        if hasattr(datamin, 'value'):
+                            datamin = datamin.value
+                    except TypeError:
+                        # it's a moment map, we can afford to load the whole data
+                        datamax = np.nanmax(cube)
+                        datamin = np.nanmin(cube)
 
             if np.isnan(datamax) or np.isnan(datamin):
                 errors.append("Could not compute DATAMIN/DATAMAX (resulted in NaN)")

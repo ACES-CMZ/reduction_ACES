@@ -46,6 +46,10 @@ catalog_path = '/orange/adamginsburg/ACES/tables/aces_compact_catalog_v0_withExt
 catalog = Table.read(catalog_path)
 print(f"Loaded {len(catalog)} sources from catalog")
 
+# DEBUG
+#catalog.add_index('index')
+#catalog = [catalog.loc[11314]]
+
 # Define data files for different wavelengths
 # Using exact paths from MUBLO notebook
 data_files = {
@@ -114,7 +118,6 @@ print(f"\nFound {len(existing_files)} existing data files")
 # SIMBAD cache and configuration
 simbad_cache_file = output_dir / 'simbad_matches_cache.pkl'
 simbad_cache = {}
-enable_simbad = True  # Set to False to disable SIMBAD queries
 
 # Load existing SIMBAD cache if available
 if simbad_cache_file.exists():
@@ -124,8 +127,9 @@ if simbad_cache_file.exists():
             simbad_cache = pickle.load(f)
         print(f"Loaded SIMBAD cache with {len(simbad_cache)} entries from {simbad_cache_file}")
     except Exception as e:
-        print(f"Warning: Could not load SIMBAD cache ({type(e).__name__})")
+        print(f"Could not load SIMBAD cache ({type(e).__name__})")
         simbad_cache = {}
+        raise
 else:
     print(f"No existing SIMBAD cache found. Will create new cache at {simbad_cache_file}")
 
@@ -159,14 +163,10 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec, max_retries
     if source_idx in simbad_cache:
         return simbad_cache[source_idx]
 
-    # Return None if SIMBAD queries disabled
-    if not enable_simbad:
-        return None
-
     # Configure SIMBAD query
     custom_simbad = Simbad()
     custom_simbad.add_votable_fields('otype', 'nbref')
-    custom_simbad.ROW_LIMIT = 0
+    custom_simbad.ROW_LIMIT = 10
     custom_simbad.TIMEOUT = 30  # 30 second timeout
 
     # Retry loop for SIMBAD query
@@ -234,7 +234,7 @@ def query_simbad_source(coord, source_idx, search_radius=3*u.arcsec, max_retries
             return match_info
 
     # Cache negative result to avoid re-querying
-    simbad_cache[source_idx] = None
+    #simbad_cache[source_idx] = None
     return None
 
 
@@ -478,7 +478,7 @@ def create_custom_colormap():
     return custom_cmap
 
 
-def extract_sed(coord, data_files, source, detection_sigma=5.0):
+def extract_sed(coord, data_files, source, detection_sigma=3.0):
     """
     Extract SED by measuring flux at source position in each image.
 
@@ -491,7 +491,7 @@ def extract_sed(coord, data_files, source, detection_sigma=5.0):
     source : Table row
         Source catalog entry
     detection_sigma : float
-        S/N threshold for detections
+        S/N threshold for detections (default 3.0)
 
     Returns
     -------
@@ -511,7 +511,7 @@ def extract_sed(coord, data_files, source, detection_sigma=5.0):
     # Add CMZoom 1mm if available
     if 'cmzoom_flux' in source.colnames and not np.isnan(source['cmzoom_flux']) and source['cmzoom_flux'] > 0:
         cmz_err = source.get('cmzoom_flux_err', source['cmzoom_flux']*0.2)
-        is_det = (source['cmzoom_flux'] / cmz_err) > detection_sigma if not np.isnan(cmz_err) else False
+        is_det = (source['cmzoom_flux'] / cmz_err) > detection_sigma if not np.isnan(cmz_err) and cmz_err > 0 else False
         sed_data['wavelength'].append((230*u.GHz).to(u.um, u.spectral()))
         sed_data['flux'].append(source['cmzoom_flux'] * u.Jy)
         sed_data['error'].append(cmz_err * u.Jy)
@@ -571,6 +571,35 @@ def extract_sed(coord, data_files, source, detection_sigma=5.0):
                 if not (0 <= xx < data.shape[1] and 0 <= yy < data.shape[0]):
                     print(f"    SED: {label} - coordinate outside image bounds")
                     continue
+
+                # For IR data (especially 24um), search for peak within small window to handle offsets
+                # Allow up to 2 pixel (typically ~2-6 arcsec) offset for 24um and other IR bands
+                if wavelengths.get(label, 1*u.m) < 100*u.um:  # IR bands
+                    search_radius = 2  # pixels
+                    x_min = max(0, xx - search_radius)
+                    x_max = min(data.shape[1], xx + search_radius + 1)
+                    y_min = max(0, yy - search_radius)
+                    y_max = min(data.shape[0], yy + search_radius + 1)
+
+                    search_region = data[y_min:y_max, x_min:x_max]
+                    if np.any(np.isfinite(search_region)):
+                        # Find peak within search region
+                        finite_mask = np.isfinite(search_region)
+                        if np.any(finite_mask):
+                            peak_idx = np.unravel_index(np.nanargmax(search_region), search_region.shape)
+                            yy_offset, xx_offset = peak_idx
+                            yy_peak = y_min + yy_offset
+                            xx_peak = x_min + xx_offset
+
+                            # Use peak position if significantly brighter (>20% increase)
+                            val_center = data[yy, xx] if np.isfinite(data[yy, xx]) else np.nan
+                            val_peak = data[yy_peak, xx_peak]
+
+                            if np.isfinite(val_peak) and (np.isnan(val_center) or val_peak > val_center * 1.2):
+                                offset_pix = np.sqrt((xx_peak - xx)**2 + (yy_peak - yy)**2)
+                                if offset_pix > 0:
+                                    print(f"    SED: {label} - using peak {offset_pix:.1f} pixels from catalog position")
+                                xx, yy = xx_peak, yy_peak
 
                 val = data[yy, xx]
 
@@ -659,8 +688,9 @@ def extract_sed(coord, data_files, source, detection_sigma=5.0):
                                 snr = (val - bg_median) / bg_rms
                                 peak_snr = snr
 
-                                # Detection if SNR > 3
-                                if snr > 3.0:
+                                # Detection if SNR > detection_sigma (default 3.0)
+                                # Using a slightly lower threshold (2.5) to catch marginal but real sources
+                                if snr > max(2.5, detection_sigma - 0.5):
                                     is_detection = True
                 except (IndexError, ValueError, TypeError, AttributeError) as e:
                     # If detection check fails, assume upper limit
@@ -728,7 +758,7 @@ def modified_blackbody_simple(wavelength, temperature, normalization):
     return flux
 
 
-def plot_spectra(source_idx, fig, gs, spec_row_start, n_cols=4):
+def plot_spectra(source_idx, fig, gs, spec_row_start, n_cols=4, glon=None, glat=None):
     """
     Plot ACES spectra for SPW 25, 27, 33, 35.
 
@@ -744,6 +774,10 @@ def plot_spectra(source_idx, fig, gs, spec_row_start, n_cols=4):
         Starting row index for spectra in the GridSpec
     n_cols : int
         Number of columns in the grid
+    glon : float or None
+        Galactic longitude of the source (optional)
+    glat : float or None
+        Galactic latitude of the source (optional)
 
     Returns
     -------
@@ -751,7 +785,7 @@ def plot_spectra(source_idx, fig, gs, spec_row_start, n_cols=4):
         True if spectra were plotted, False otherwise
     """
     spectrum_dir = Path('/orange/adamginsburg/ACES/spectra')
-    catalog_name_prefix = 'mp179'  # Standard prefix used by spectral_extraction_everywhere
+    catalog_name_prefix = 'ACEScatalog_v0_20260130'  # Standard prefix used by spectral_extraction_everywhere
 
     # SPWs to plot
     spws = [25, 27, 33, 35]
@@ -768,7 +802,9 @@ def plot_spectra(source_idx, fig, gs, spec_row_start, n_cols=4):
             spectral_files[spw] = matches[0]
 
     if not spectral_files:
-        print(f"  No spectra found for source {source_idx}")
+        print(f"MAJOR ERROR:  No spectra found for source {source_idx}")
+        print(pattern)
+        # raise ValueError("WHAT?!")
         return False
 
     print(f"  Found {len(spectral_files)} spectral windows: {list(spectral_files.keys())}")
@@ -783,6 +819,13 @@ def plot_spectra(source_idx, fig, gs, spec_row_start, n_cols=4):
         with fits.open(spec_file) as hdul:
             data = hdul[0].data
             header = hdul[0].header
+
+            if glon and glat:
+                source_coord = SkyCoord(glon, glat, unit=u.deg, frame='galactic')
+                header_coord = SkyCoord(header['CATGLON'], header['CATGLAT'],
+                                        unit=u.deg, frame='galactic')
+                sep = source_coord.separation(header_coord)
+                assert sep < 5*u.arcsec, f"Catalog source coord and spectrum header coord differ by {sep.to(u.arcsec)}"
 
             # Get spectral axis (frequency)
             wcs = WCS(header)
@@ -850,7 +893,7 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
     # Query SIMBAD for this source
     simbad_info = query_simbad_source(coord, source['index'])
 
-    print(f"\nProcessing source {source['index']} at ({source['GLON_peak']:.4f}, {source['GLAT_peak']:.4f})")
+    print(f"\nProcessing source {source['index']} at ({source['GLON_peak']:.4f}, {source['GLAT_peak']:.4f}, simbad={simbad_info})")
 
     # Prepare cutouts
     cutouts = {}
@@ -913,7 +956,7 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
         im = ax.imshow(data, origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
 
         # Mark the source with scatter_coord (like MUBLO notebook)
-        ax.scatter_coord(coord, marker='o', facecolor='none', edgecolor='g', s=100)
+        #ax.scatter_coord(coord, marker='o', facecolor='none', edgecolor='g', s=100)
 
         # Also add ellipse if we have fitted parameters
         if 'fitted_major' in source.colnames and not np.isnan(source['fitted_major']):
@@ -934,7 +977,7 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
 
             # Create ellipse (PA measured from North through East in Galactic)
             ellipse = Ellipse(xy=center_pix, width=major_pix, height=minor_pix,
-                              angle=pa.value, edgecolor='cyan', facecolor='none',
+                              angle=90-pa.value, edgecolor='cyan', facecolor='none',
                               linewidth=1.5, linestyle='--', alpha=0.7)
             ax.add_patch(ellipse)
 
@@ -1012,7 +1055,7 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
 
     # Add spectral plots in the bottom row
     spec_row_start = n_cutout_rows  # Start at the row after cutouts+SED
-    plot_spectra(source['index'], fig, gs, spec_row_start, n_cols=n_cols)
+    plot_spectra(source['index'], fig, gs, spec_row_start, n_cols=n_cols, glon=source['GLON_peak'], glat=source['GLAT_peak'])
 
     # Add overall title with SIMBAD match if available
     source_idx_val = source['index']
@@ -1032,6 +1075,8 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
     if 'cmzoom_flux' in source.colnames and not np.isnan(source['cmzoom_flux']):
         title += f", Flux (1mm) = {source['cmzoom_flux']:.3f} Jy"
 
+    title += f"\n CS={source['Mean_CS']:0.2f} MS={source['Mean_MS']:0.2f}"
+
     fig.suptitle(title, fontsize=14, fontweight='bold', y=0.98)
 
     if save:
@@ -1049,6 +1094,7 @@ def main():
     """
     print(f"Creating cutouts for {len(catalog)} sources")
     print(f"Output directory: {output_dir}")
+
 
     # Process each source
     for i in range(len(catalog)):

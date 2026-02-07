@@ -59,7 +59,9 @@ if __name__ == "__main__":
 
     uidtbl = Table.read(f'{basepath}/reduction_ACES/aces/data/tables/aces_SB_uids.csv')
 
-    for row in catalog:
+    catalog.add_column([' ' * 60]*len(catalog), name='homecube')
+
+    for row in catalog[::-1]:
         center = SkyCoord(row['GLON_peak'], row['GLAT_peak'], frame='galactic', unit=(u.deg, u.deg))
         reg = regions.EllipseSkyRegion(center,
                                        width=row['fitted_major'] * u.arcsec,
@@ -80,12 +82,16 @@ if __name__ == "__main__":
         # print(row['index'], field_id, uidtbl[field_id]['12m MOUS ID'])
         # print(cubefns)
         # break
+
         for cubefn in cubefns:
 
-            # there are two fns to check, but we're only checking the second
-            outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
+            # there are two fns to check, but we're only checking the first
+            outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_ellipseaverage_" + cubefn.split("/")[-1]
 
-            if not os.path.exists(outfn):
+            if os.path.exists(outfn):
+                print(f"Skipping existing {outfn}", flush=True)
+                row['homecube'] = os.path.basename(cubefn)
+            else:
 
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
@@ -95,9 +101,11 @@ if __name__ == "__main__":
                     ww._naxis = cube.shape[1:]
 
                 if ww.footprint_contains(center):
-                    scube = cube.subcube_from_regions([reg])
                     print(row['index'], cubefn)
-                    avg = scube.mean(axis=(1, 2))
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('ignore')
+                        scube = cube.subcube_from_regions([reg])
+                        avg = scube.mean(axis=(1, 2))
                     hdu = avg.hdu
 
                     y, x = scube.wcs.celestial.world_to_pixel(reg.center)
@@ -114,6 +122,8 @@ if __name__ == "__main__":
 
                     outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_ellipseaverage_" + cubefn.split("/")[-1]
                     hdu.writeto(outfn, overwrite=True)
+                    print(outfn, flush=True)
+                    row['homecube'] = cubefn
 
                     # old version with masks ("final" catalog doesn't have masks)
                     # try:
@@ -133,5 +143,9 @@ if __name__ == "__main__":
 
                     # outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
                     # hdu.writeto(outfn, overwrite=True)
-                else:
-                    print('WTF?', row['index'], cubefn)
+        if row['homecube']:
+            print(f"Source {row['index']} used cube {row['homecube']}", flush=True)
+        else:
+            print(f"ERROR: Source {row['index']} was not in any cube", flush=True)
+
+    print(f"There were {len(catalog)} total sources in the catalog, of which {np.sum(catalog['homecube'] != ' ' * 60)} were not in a cube", flush=True)
