@@ -177,18 +177,14 @@ def xmatch_vizier(aces_table: Table, vizier_id: str, radius_arcsec: float,
     # CDS XMatch wants a vizier:<catalog> string for cat2
     cat2 = f"vizier:{vizier_id}"
 
-    try:
-        result = XMatch.query(
-            cat1=upload,
-            cat2=cat2,
-            max_distance=radius_arcsec * u.arcsec,
-            colRA1="RA_J2000",
-            colDec1="Dec_J2000",
-        )
-        print(f"{len(result)} matches")
-    except Exception as exc:
-        print(f"FAILED ({exc})")
-        result = Table()
+    result = XMatch.query(
+        cat1=upload,
+        cat2=cat2,
+        max_distance=radius_arcsec * u.arcsec,
+        colRA1="RA_J2000",
+        colDec1="Dec_J2000",
+    )
+    print(f"{len(result)} matches")
 
     return result
 
@@ -248,27 +244,22 @@ def query_simbad_bulk(aces_table: Table,
         upload2["index"]    = aces_table["index"]
         upload2["RA_J2000"] = aces_table["RA_J2000"]
         upload2["Dec_J2000"] = aces_table["Dec_J2000"]
-        try:
-            result = XMatch.query(
-                cat1=upload2,
-                cat2="simbad",
-                max_distance=radius_arcsec * u.arcsec,
-                colRA1="RA_J2000",
-                colDec1="Dec_J2000",
-            )
-            print(f"    → {len(result)} XMatch/simbad matches")
-            # Rename columns to uniform names
-            if "main_id" in result.colnames:
-                result.rename_column("main_id", "simbad_name")
-            if "main_type" in result.colnames:
-                result.rename_column("main_type", "simbad_otype")
-            if "angDist" in result.colnames:
-                result["simbad_sep_arcsec"] = result["angDist"]
-            result.rename_column("index", "aces_idx")
-        except Exception as exc2:
-            print(f"    XMatch fallback also failed ({exc2})")
-            result = Table({"aces_idx": [], "simbad_name": [],
-                            "simbad_otype": [], "simbad_sep_arcsec": []})
+        result = XMatch.query(
+            cat1=upload2,
+            cat2="simbad",
+            max_distance=radius_arcsec * u.arcsec,
+            colRA1="RA_J2000",
+            colDec1="Dec_J2000",
+        )
+        print(f"    → {len(result)} XMatch/simbad matches")
+        # Rename columns to uniform names
+        if "main_id" in result.colnames:
+            result.rename_column("main_id", "simbad_name")
+        if "main_type" in result.colnames:
+            result.rename_column("main_type", "simbad_otype")
+        if "angDist" in result.colnames:
+            result["simbad_sep_arcsec"] = result["angDist"]
+        result.rename_column("index", "aces_idx")
         return _deduplicate_simbad(result)
 
     # Convert separation from degrees to arcsec
