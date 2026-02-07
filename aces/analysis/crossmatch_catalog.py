@@ -208,7 +208,7 @@ def query_simbad_bulk(aces_table: Table,
     print(f"  SIMBAD bulk query (r = {radius_arcsec}″) …", flush=True)
 
     simbad = Simbad()
-    simbad.ROW_LIMIT = 0  # no limit
+    simbad.ROW_LIMIT = 1000 # chatbots like to set this to zero, which is _not_ unlimited, it literally means zero and will return nothing
 
     # ---- strategy: upload the whole catalog and run an ADQL cross-match
     # Note: column name "dec" is reserved in some ADQL parsers, so we use
