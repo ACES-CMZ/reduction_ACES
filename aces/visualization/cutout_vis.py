@@ -46,6 +46,11 @@ catalog_path = '/orange/adamginsburg/ACES/tables/aces_compact_catalog_v0_withExt
 catalog = Table.read(catalog_path)
 print(f"Loaded {len(catalog)} sources from catalog")
 
+# Load crossmatched catalog for object classifications
+crossmatched_catalog_path = '/orange/adamginsburg/ACES/tables/aces_crossmatched_catalog.fits'
+crossmatched_catalog = Table.read(crossmatched_catalog_path)
+print(f"Loaded crossmatched catalog with {len(crossmatched_catalog)} sources")
+
 # DEBUG
 #catalog.add_index('index')
 #catalog = [catalog.loc[11314]]
@@ -1060,6 +1065,14 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
     # Add overall title with SIMBAD match if available
     source_idx_val = source['index']
 
+    # Get object classification from crossmatched catalog
+    object_type = None
+    if crossmatched_catalog is not None:
+        # Find matching source by index
+        matched_row = crossmatched_catalog[crossmatched_catalog['index'] == source_idx_val]
+        if len(matched_row) > 0 and 'object_type' in matched_row.colnames:
+            object_type = str(matched_row['object_type'][0]).strip()
+
     if simbad_info is not None:
         # Include SIMBAD name and object type
         simbad_name = simbad_info['name']
@@ -1069,6 +1082,9 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
                  f"GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°")
     else:
         title = f"Source {source_idx_val}: GLON={source['GLON_peak']:.4f}°, GLAT={source['GLAT_peak']:.4f}°"
+
+    if object_type:
+        title += f" — Classification: {object_type}"
 
     if 'flux' in source.colnames:
         title += f"\nFlux (3mm) = {source['flux']:.3f} Jy"
