@@ -1,6 +1,7 @@
 import regions
 import os
 import warnings
+import numpy as np
 from numpy import floor, ceil
 from astropy import coordinates
 from astropy import units as u
@@ -41,6 +42,67 @@ def extract_from_mask(cube, maskhdu, maskid):
     spec = scube.mean(axis=(1, 2))
 
     return spec
+
+
+def extract_background_spectrum(cube, center, source_major, source_minor,
+                                inner_scale=1.5, outer_scale=3.0):
+    """Extract a background annulus spectrum around a source.
+    
+    Parameters
+    ----------
+    cube : SpectralCube
+        The spectral cube.
+    center : SkyCoord
+        Center of the source.
+    source_major : float
+        Source major axis in arcsec.
+    source_minor : float
+        Source minor axis in arcsec.
+    inner_scale : float
+        Scale factor for inner radius (relative to max(major, minor)).
+    outer_scale : float
+        Scale factor for outer radius (relative to max(major, minor)).
+        
+    Returns
+    -------
+    bg_spectrum : Spectrum1D-like
+        Background spectrum (mean of annulus).
+    """
+    # Use circular annulus based on larger axis
+    radius = max(source_major, source_minor)
+    inner_radius = radius * inner_scale * u.arcsec
+    outer_radius = radius * outer_scale * u.arcsec
+    
+    # Create inner and outer circular regions
+    inner_reg = regions.CircleSkyRegion(center, radius=inner_radius)
+    outer_reg = regions.CircleSkyRegion(center, radius=outer_radius)
+    
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        # Extract outer region
+        outer_scube = cube.subcube_from_regions([outer_reg])
+        outer_mean = outer_scube.mean(axis=(1, 2))
+        
+        # Extract inner region
+        inner_scube = cube.subcube_from_regions([inner_reg])
+        inner_mean = inner_scube.mean(axis=(1, 2))
+    
+    # Calculate annulus spectrum with proper weighting
+    outer_mask = outer_scube.mask.include()
+    inner_mask = inner_scube.mask.include()
+    n_outer = np.sum(outer_mask, axis=(1, 2)).astype(float)
+    n_inner = np.sum(inner_mask, axis=(1, 2)).astype(float)
+    n_annulus = n_outer - n_inner
+    n_annulus[n_annulus <= 0] = 1.0
+    
+    bg_data = ((outer_mean.value * n_outer - inner_mean.value * n_inner)
+               / n_annulus)
+    
+    # Create a spectrum with the same structure as outer_mean
+    bg_spectrum = outer_mean.copy()
+    bg_spectrum._data = bg_data
+    
+    return bg_spectrum
 
 
 if __name__ == "__main__":
@@ -130,6 +192,28 @@ if __name__ == "__main__":
                 hdu.writeto(outfn, overwrite=True)
                 print(outfn, flush=True)
                 row['homecube'] = cubefn
+                
+                # Extract and save background spectrum
+                bg_outfn = outfn.replace('.fits', '_background.fits')
+                if not os.path.exists(bg_outfn):
+                    bg_spectrum = extract_background_spectrum(
+                        cube, center,
+                        row['fitted_major'], row['fitted_minor']
+                    )
+                    bg_hdu = bg_spectrum.hdu
+                    bg_hdu.header.update(ww.to_header())
+                    bg_hdu.data = bg_hdu.data[:, None, None]
+                    bg_hdu.header['CATINDX'] = row['index']
+                    bg_hdu.header['CATGLON'] = row['GLON_peak']
+                    bg_hdu.header['CATGLAT'] = row['GLAT_peak']
+                    bg_hdu.header['CATMAJS'] = row['fitted_major']
+                    bg_hdu.header['CATMINS'] = row['fitted_minor']
+                    bg_hdu.header['CATPA'] = row['pa']
+                    bg_hdu.header['BKGTYPE'] = 'annulus'
+                    bg_hdu.header['BKGINNER'] = (1.5, 'Inner radius scale factor')
+                    bg_hdu.header['BKGOUTER'] = (3.0, 'Outer radius scale factor')
+                    bg_hdu.writeto(bg_outfn, overwrite=True)
+                    print(f"  Background: {bg_outfn}", flush=True)
 
                 # old version with masks ("final" catalog doesn't have masks)
                 # try:

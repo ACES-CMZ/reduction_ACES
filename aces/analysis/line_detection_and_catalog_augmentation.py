@@ -20,6 +20,9 @@ import pickle
 import re
 import warnings
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy import constants as const
 from astropy import units as u
@@ -31,6 +34,7 @@ from astropy.wcs import WCS
 from astropy import log
 
 from aces import conf
+from aces.analysis.spectral_extraction_everywhere import extract_background_spectrum
 
 basepath = conf.basepath
 
@@ -69,6 +73,7 @@ CACHE_DIR = os.path.join(
 )
 CACHE_DETECTIONS = os.path.join(CACHE_DIR, 'all_detections.pkl')
 CACHE_LINE_COUNTS = os.path.join(CACHE_DIR, 'line_counts.pkl')
+CACHE_VERIFIED = os.path.join(CACHE_DIR, 'verified_detections.pkl')
 CACHE_METADATA = os.path.join(CACHE_DIR, 'cache_metadata.json')
 
 # Velocity range for the Galactic center (km/s)
@@ -87,6 +92,10 @@ MIN_DETECTIONS_FOR_COLUMN = 5
 # SPW -> 12m SPW mapping (from linelist)
 LINE_SPWS = {'spw25': 25, 'spw27': 27, 'spw29': 29,
              'spw31': 31, 'spw33': 33, 'spw35': 35}
+
+# Plot directories
+SPECTRA_PLOT_DIR = os.path.join(SPECTRUM_DIR, 'plots')
+SPATIAL_PLOT_DIR = os.path.join(SPECTRUM_DIR, 'spatial_plots')
 
 
 # --------------------------------------------------------------------------
@@ -351,12 +360,43 @@ def get_source_spectra_files(source_id, spectrum_dir=SPECTRUM_DIR,
     return spw_files
 
 
+def get_background_spectrum_path(source_id, spw_label, spectrum_dir=SPECTRUM_DIR,
+                                 prefix=CATALOG_NAME_PREFIX):
+    """Get the path to the background spectrum file for a source.
+    
+    Parameters
+    ----------
+    source_id : int
+        Source index.
+    spw_label : str
+        SPW label (e.g., 'spw25').
+        
+    Returns
+    -------
+    bg_path : str or None
+        Path to background spectrum file, or None if not found.
+    """
+    spw_files = get_source_spectra_files(source_id, spectrum_dir, prefix)
+    if spw_label not in spw_files:
+        return None
+    
+    source_spectrum_path = spw_files[spw_label]
+    bg_path = source_spectrum_path.replace('.fits', '_background.fits')
+    
+    return bg_path
+
+
 def extract_background_spectrum_from_cube(cubefn, center_glon, center_glat,
                                           inner_radius_arcsec,
-                                          outer_radius_arcsec):
+                                          outer_radius_arcsec,
+                                          source_id=None, spw_label=None,
+                                          spectrum_dir=SPECTRUM_DIR,
+                                          prefix=CATALOG_NAME_PREFIX):
     """Extract a mean spectrum from an annulus around a source position.
 
     This extracts directly from the cube to get the background emission level.
+    If source_id and spw_label are provided, will check for cached background
+    and save the result if not cached.
 
     Parameters
     ----------
@@ -368,6 +408,14 @@ def extract_background_spectrum_from_cube(cubefn, center_glon, center_glat,
         Inner radius of the annulus (arcsec).
     outer_radius_arcsec : float
         Outer radius of the annulus (arcsec).
+    source_id : int, optional
+        Source index for caching.
+    spw_label : str, optional
+        SPW label for caching.
+    spectrum_dir : str, optional
+        Directory containing spectra.
+    prefix : str, optional
+        Catalog name prefix.
 
     Returns
     -------
@@ -376,6 +424,15 @@ def extract_background_spectrum_from_cube(cubefn, center_glon, center_glat,
     bg_spectrum : array
         Mean background spectrum.
     """
+    # Check for cached background spectrum
+    if source_id is not None and spw_label is not None:
+        bg_path = get_background_spectrum_path(source_id, spw_label,
+                                               spectrum_dir, prefix)
+        if bg_path and os.path.exists(bg_path):
+            freq_ghz, bg_spectrum, _ = load_spectrum(bg_path)
+            return freq_ghz, bg_spectrum
+    
+    # Extract from cube
     import regions
     from astropy.coordinates import SkyCoord
     from spectral_cube import SpectralCube
@@ -388,36 +445,50 @@ def extract_background_spectrum_from_cube(cubefn, center_glon, center_glat,
         cube = SpectralCube.read(cubefn)
         cube.allow_huge_operations = True
 
-    # Use inner and outer circular apertures to make an annulus
-    inner_reg = regions.CircleSkyRegion(
-        center, radius=inner_radius_arcsec * u.arcsec)
-    outer_reg = regions.CircleSkyRegion(
-        center, radius=outer_radius_arcsec * u.arcsec)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        outer_scube = cube.subcube_from_regions([outer_reg])
-        outer_mean = outer_scube.mean(axis=(1, 2))
-
-        inner_scube = cube.subcube_from_regions([inner_reg])
-        inner_mean = inner_scube.mean(axis=(1, 2))
-
-    # Annulus = (outer * N_outer - inner * N_inner) / (N_outer - N_inner)
-    # For simplicity, approximate as outer average when inner is small
+    # Use the extract_background_spectrum function from spectral_extraction_everywhere
+    # Calculate source major/minor from the annulus radii
+    source_radius = inner_radius_arcsec / 1.5  # Reverse the 1.5 scale factor
+    
+    bg_spec_obj = extract_background_spectrum(
+        cube, center, source_radius, source_radius,
+        inner_scale=1.5, outer_scale=3.0
+    )
+    
     freq_hz = cube.spectral_axis.to(u.Hz).value
     freq_ghz = freq_hz / 1e9
-
-    # Get pixel counts for proper annulus weighting
-    outer_mask = outer_scube.mask.include()
-    inner_mask = inner_scube.mask.include()
-    n_outer = np.sum(outer_mask, axis=(1, 2)).astype(float)
-    n_inner = np.sum(inner_mask, axis=(1, 2)).astype(float)
-    n_annulus = n_outer - n_inner
-    n_annulus[n_annulus <= 0] = 1.0
-
-    bg_spectrum = ((outer_mean.value * n_outer - inner_mean.value * n_inner)
-                   / n_annulus)
-
+    bg_spectrum = bg_spec_obj.value
+    
+    # Validate that we got actual data (not all NaN or zero)
+    if not np.any(np.isfinite(bg_spectrum)):
+        raise ValueError(f"Background spectrum extraction returned all non-finite values "
+                        f"for source {source_id} SPW {spw_label}")
+    
+    # Save the background spectrum if we have caching info
+    if source_id is not None and spw_label is not None and bg_path:
+        from spectral_cube import wcs_utils
+        from aces.analysis.spectral_extraction_everywhere import getslice
+        from numpy import floor, ceil
+        
+        # Create HDU with proper WCS
+        hdu = bg_spec_obj.hdu
+        
+        # Get a simple WCS slice
+        y, x = cube.wcs.celestial.world_to_pixel(center)
+        slc = getslice()[int(floor(x)):int(ceil(x)),
+                        int(floor(y)):int(ceil(y)), :]
+        ww = wcs_utils.slice_wcs(cube.wcs, slc, numpy_order=False)
+        hdu.header.update(ww.to_header())
+        
+        hdu.data = hdu.data[:, None, None]
+        hdu.header['CATINDX'] = source_id
+        hdu.header['CATGLON'] = center_glon
+        hdu.header['CATGLAT'] = center_glat
+        hdu.header['BKGTYPE'] = 'annulus'
+        hdu.header['BKGINNER'] = (1.5, 'Inner radius scale factor')
+        hdu.header['BKGOUTER'] = (3.0, 'Outer radius scale factor')
+        hdu.writeto(bg_path, overwrite=True)
+        print(f"  Saved background spectrum: {bg_path}", flush=True)
+    
     return freq_ghz, bg_spectrum
 
 
@@ -609,6 +680,35 @@ def load_detections_cache():
     return all_detections, line_counts
 
 
+def save_verified_cache(verified_detections):
+    """Save verified detection results to cache.
+    
+    Parameters
+    ----------
+    verified_detections : dict
+        Verified detection results.
+    """
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    print(f"\nSaving verified detections cache to {CACHE_VERIFIED}", flush=True)
+    with open(CACHE_VERIFIED, 'wb') as fh:
+        pickle.dump(verified_detections, fh)
+
+
+def load_verified_cache():
+    """Load verified detection results from cache.
+    
+    Returns
+    -------
+    verified_detections : dict
+        Verified detection results.
+    """
+    if not os.path.exists(CACHE_VERIFIED):
+        return None
+    print(f"\nLoading verified detections from cache: {CACHE_VERIFIED}", flush=True)
+    with open(CACHE_VERIFIED, 'rb') as fh:
+        return pickle.load(fh)
+
+
 # --------------------------------------------------------------------------
 # Main analysis
 # --------------------------------------------------------------------------
@@ -687,6 +787,8 @@ def scan_all_sources(catalog, linelist, spectrum_dir=SPECTRUM_DIR,
 
 
 def verify_source_detections(all_detections, catalog, linelist,
+                             inner_annulus_factor=1.5,
+                             outer_annulus_factor=3.0,
                              spectrum_dir=SPECTRUM_DIR,
                              prefix=CATALOG_NAME_PREFIX):
     """For sources with promising detections, check whether the line emission
@@ -720,8 +822,8 @@ def verify_source_detections(all_detections, catalog, linelist,
         source_major = row['fitted_major']  # arcsec
         source_minor = row['fitted_minor']  # arcsec
         # Use larger of the two axes as inner radius, 3x as outer
-        inner_r = max(source_major, source_minor) * 1.5
-        outer_r = inner_r * 3.0
+        inner_r = max(source_major, source_minor) * inner_annulus_factor
+        outer_r = inner_r * outer_annulus_factor
 
         verified_lines = {}
         for line_name, det in detections.items():
@@ -729,6 +831,7 @@ def verify_source_detections(all_detections, catalog, linelist,
             cubefn = find_parent_cube(src_id, spw_label,
                                       spectrum_dir, prefix)
             if cubefn is None:
+                raise FileNotFoundError(f"Parent cube not found for source {src_id}.")
                 # Cannot verify without the cube; keep it but flag
                 det['verified'] = False
                 verified_lines[line_name] = det
@@ -737,18 +840,16 @@ def verify_source_detections(all_detections, catalog, linelist,
             bg_freq, bg_spec = extract_background_spectrum_from_cube(
                 cubefn,
                 row['GLON_peak'], row['GLAT_peak'],
-                inner_r, outer_r
+                inner_r, outer_r,
+                source_id=src_id, spw_label=spw_label,
+                spectrum_dir=spectrum_dir, prefix=prefix
             )
 
             # Find the peak in background at the same frequency range
             rest_freq = det['rest_freq_ghz']
             bg_mask = find_channels_near_line(
                 bg_freq, rest_freq, VELO_RANGE_KMS)
-            if bg_mask.sum() < 3:
-                det['verified'] = False
-                verified_lines[line_name] = det
-                continue
-
+            
             bg_baseline = np.nanmedian(bg_spec[~bg_mask]) if (~bg_mask).sum() > 0 else 0
             bg_peak = np.nanmax(bg_spec[bg_mask]) - bg_baseline
 
@@ -873,6 +974,266 @@ def augment_catalog(catalog, all_detections, line_counts):
 
 
 # --------------------------------------------------------------------------
+# Plotting functions
+# --------------------------------------------------------------------------
+
+def plot_source_spectra_with_fits(source_id, all_detections, catalog,
+                                   linelist, spectrum_dir=SPECTRUM_DIR,
+                                   prefix=CATALOG_NAME_PREFIX,
+                                   output_dir=SPECTRA_PLOT_DIR):
+    """Plot all spectra for a source with Gaussian fits overlaid.
+    
+    Parameters
+    ----------
+    source_id : int
+        Source index.
+    all_detections : dict
+        Detection results.
+    catalog : astropy Table
+        Catalog.
+    linelist : astropy Table
+        Linelist.
+    """
+    if source_id not in all_detections:
+        return
+    
+    spw_files = get_source_spectra_files(source_id, spectrum_dir, prefix)
+    if not spw_files:
+        return
+    
+    detections = all_detections[source_id]
+    
+    # Create a mapping of line names to their original Line names
+    line_name_map = {row['clean_name']: row['Line'] for row in linelist}
+    
+    # Group detections by SPW
+    detections_by_spw = {}
+    for line_name, det in detections.items():
+        spw = det['spw']
+        if spw not in detections_by_spw:
+            detections_by_spw[spw] = []
+        detections_by_spw[spw].append((line_name, det))
+    
+    # Get the available SPWs (sorted)
+    available_spws = sorted(spw_files.keys())
+    n_spws = len(available_spws)
+    
+    if n_spws == 0:
+        return
+    
+    # Create figure with 4 rows
+    fig, axes = plt.subplots(4, 1, figsize=(16, 12), sharex=False)
+    if n_spws == 1:
+        axes = [axes[0]]
+    
+    for idx, spw_label in enumerate(available_spws[:4]):
+        ax = axes[idx] if n_spws > 1 else axes[0]
+        
+        # Load spectrum
+        freq_ghz, flux, header = load_spectrum(spw_files[spw_label])
+        
+        # Plot spectrum
+        ax.plot(freq_ghz, flux, 'k-', alpha=0.5, linewidth=0.5, label='Data')
+        
+        # Plot fits if available for this SPW
+        if spw_label in detections_by_spw:
+            for line_name, det in detections_by_spw[spw_label]:
+                rest_freq = det['rest_freq_ghz']
+                
+                # Create Gaussian model from fit parameters
+                gauss = models.Gaussian1D(
+                    amplitude=det['amplitude'],
+                    mean=det['mean_freq_ghz'],
+                    stddev=det['stddev_freq_ghz']
+                )
+                baseline_model = models.Const1D(amplitude=det['baseline'])
+                composite = gauss + baseline_model
+                
+                # Evaluate model over the velocity window
+                mask = find_channels_near_line(freq_ghz, rest_freq, VELO_RANGE_KMS)
+                if mask.sum() > 0:
+                    freq_window = freq_ghz[mask]
+                    model_flux = composite(freq_window)
+                    
+                    # Plot fit
+                    original_line_name = line_name_map.get(line_name, line_name)
+                    ax.plot(freq_window, model_flux, '-', linewidth=2,
+                           label=f"{original_line_name} (S/N={det['snr']:.1f})")
+                    
+                    # Mark rest frequency
+                    ax.axvline(rest_freq, color='gray', linestyle='--',
+                              alpha=0.3, linewidth=0.5)
+        
+        ax.set_ylabel('Flux (Jy/beam)', fontsize=10)
+        ax.set_xlabel(f'Frequency (GHz) - {spw_label}', fontsize=10)
+        ax.legend(loc='best', fontsize=8, ncol=2)
+        ax.grid(alpha=0.3)
+    
+    # Hide unused axes
+    for idx in range(n_spws, 4):
+        if n_spws > 1:
+            axes[idx].axis('off')
+    
+    plt.suptitle(f'Source {source_id} - {len(detections)} line detections',
+                fontsize=14, fontweight='bold')
+    plt.tight_layout()
+    
+    os.makedirs(output_dir, exist_ok=True)
+    outfile = os.path.join(output_dir, f'source_{source_id:05d}_spectra.png')
+    plt.savefig(outfile, dpi=150, bbox_inches='tight')
+    plt.close()
+
+
+def plot_spatial_distribution_by_line(line_name, all_detections, catalog,
+                                     linelist, output_dir=SPATIAL_PLOT_DIR):
+    """Plot spatial distribution of sources with a given line detection.
+    
+    Parameters
+    ----------
+    line_name : str
+        Clean line name.
+    all_detections : dict
+        Detection results.
+    catalog : astropy Table
+        Catalog.
+    linelist : astropy Table
+        Linelist.
+    """
+    # Find sources with this line
+    sources_with_line = []
+    for src_id, dets in all_detections.items():
+        if line_name in dets:
+            sources_with_line.append(src_id)
+    
+    if len(sources_with_line) == 0:
+        return
+    
+    # Get line info
+    line_name_map = {row['clean_name']: row['Line'] for row in linelist}
+    original_line_name = line_name_map.get(line_name, line_name)
+    
+    # Create catalog index mapping
+    catalog_by_idx = {row['index']: row for row in catalog}
+    
+    # Get coordinates for all sources and detections
+    all_glon = catalog['GLON_peak']
+    all_glat = catalog['GLAT_peak']
+    
+    det_glon = [catalog_by_idx[src_id]['GLON_peak']
+                for src_id in sources_with_line
+                if src_id in catalog_by_idx]
+    det_glat = [catalog_by_idx[src_id]['GLAT_peak']
+                for src_id in sources_with_line
+                if src_id in catalog_by_idx]
+    
+    # Plot
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    # All sources as small black dots
+    ax.scatter(all_glon, all_glat, c='k', s=1, alpha=0.3,
+              label=f'All sources (N={len(catalog)})')
+    
+    # Detections as larger colored markers
+    ax.scatter(det_glon, det_glat, c='red', s=50, alpha=0.7,
+              marker='s', edgecolors='darkred', linewidths=0.5,
+              label=f'{original_line_name} (N={len(sources_with_line)})')
+    
+    ax.set_xlabel('Galactic Longitude (deg)', fontsize=12)
+    ax.set_ylabel('Galactic Latitude (deg)', fontsize=12)
+    ax.set_title(f'Spatial Distribution: {original_line_name}',
+                fontsize=14, fontweight='bold')
+    ax.legend(loc='best', fontsize=10)
+    ax.grid(alpha=0.3)
+    ax.invert_xaxis()  # Convention for Galactic coords
+    
+    plt.tight_layout()
+    
+    os.makedirs(output_dir, exist_ok=True)
+    outfile = os.path.join(output_dir, f'spatial_{line_name}.png')
+    plt.savefig(outfile, dpi=150, bbox_inches='tight')
+    plt.close()
+
+
+def plot_spatial_by_n_lines(all_detections, catalog,
+                           output_dir=SPATIAL_PLOT_DIR):
+    """Plot spatial distribution with symbol size = number of lines detected.
+    
+    Parameters
+    ----------
+    all_detections : dict
+        Detection results.
+    catalog : astropy Table
+        Catalog.
+    """
+    # Count lines per source
+    n_lines_per_source = {src_id: len(dets)
+                         for src_id, dets in all_detections.items()}
+    
+    # Create catalog index mapping
+    catalog_by_idx = {row['index']: row for row in catalog}
+    
+    # Get coordinates and line counts
+    all_glon = catalog['GLON_peak']
+    all_glat = catalog['GLAT_peak']
+    
+    det_glon = []
+    det_glat = []
+    n_lines = []
+    
+    for src_id, n in n_lines_per_source.items():
+        if src_id in catalog_by_idx:
+            det_glon.append(catalog_by_idx[src_id]['GLON_peak'])
+            det_glat.append(catalog_by_idx[src_id]['GLAT_peak'])
+            n_lines.append(n)
+    
+    det_glon = np.array(det_glon)
+    det_glat = np.array(det_glat)
+    n_lines = np.array(n_lines)
+    
+    # Define bins for symbols
+    bins = [1, 3, 5, 10, 100]
+    markers = ['o', 's', '^', 'D', '*']
+    colors = ['blue', 'green', 'orange', 'red', 'purple']
+    
+    fig, ax = plt.subplots(figsize=(14, 10))
+    
+    # All sources as small black dots
+    ax.scatter(all_glon, all_glat, c='k', s=1, alpha=0.2,
+              label=f'All sources (N={len(catalog)})')
+    
+    # Plot by bins
+    for i in range(len(bins)):
+        if i == len(bins) - 1:
+            mask = n_lines >= bins[i]
+            label = f'{bins[i]}+ lines'
+        else:
+            mask = (n_lines >= bins[i]) & (n_lines < bins[i+1])
+            label = f'{bins[i]}-{bins[i+1]-1} lines'
+        
+        if mask.sum() > 0:
+            sizes = 20 + n_lines[mask] * 10  # Scale size by number of lines
+            ax.scatter(det_glon[mask], det_glat[mask],
+                      c=colors[i], s=sizes, alpha=0.7,
+                      marker=markers[i], edgecolors='black',
+                      linewidths=0.5, label=f'{label} (N={mask.sum()})')
+    
+    ax.set_xlabel('Galactic Longitude (deg)', fontsize=12)
+    ax.set_ylabel('Galactic Latitude (deg)', fontsize=12)
+    ax.set_title('Spatial Distribution by Number of Line Detections',
+                fontsize=14, fontweight='bold')
+    ax.legend(loc='best', fontsize=10, markerscale=0.7)
+    ax.grid(alpha=0.3)
+    ax.invert_xaxis()
+    
+    plt.tight_layout()
+    
+    os.makedirs(output_dir, exist_ok=True)
+    outfile = os.path.join(output_dir, 'spatial_by_n_lines.png')
+    plt.savefig(outfile, dpi=150, bbox_inches='tight')
+    plt.close()
+
+
+# --------------------------------------------------------------------------
 # Entry point
 # --------------------------------------------------------------------------
 
@@ -917,14 +1278,71 @@ if __name__ == "__main__":
         # Tally and save to cache
         line_counts = tally_detections(all_detections)
         save_detections_cache(all_detections, line_counts)
-    print("\nDetection counts per line:")
+    
+    print("\nDetection counts per line (before verification):")
     for ln, cnt in sorted(line_counts.items(), key=lambda x: -x[1]):
         print(f"  {ln}: {cnt}")
 
+    # Verify detections by comparing to background
+    # This step is optional but recommended - it can be slow
+    # Set SKIP_VERIFICATION = True to skip this step
+    SKIP_VERIFICATION = False  # Change to True to skip background verification
+    
+    if SKIP_VERIFICATION:
+        print("\nSkipping background verification step (SKIP_VERIFICATION=True)", flush=True)
+        verified_detections = all_detections
+    else:
+        # Check for cached verified detections
+        cached_verified = load_verified_cache()
+        if cached_verified is not None and is_cache_valid():
+            print("\nUsing cached verified detections", flush=True)
+            verified_detections = cached_verified
+        else:
+            print("\nVerifying detections against background annuli...", flush=True)
+            print("(This step extracts background spectra from parent cubes - may be slow)", flush=True)
+            verified_detections = verify_source_detections(
+                all_detections, catalog, linelist,
+                SPECTRUM_DIR, CATALOG_NAME_PREFIX
+            )
+            save_verified_cache(verified_detections)
+            
+            # Report verification statistics
+            n_verified = len(verified_detections)
+            total_verified = sum(len(d) for d in verified_detections.values())
+            n_rejected_sources = len(all_detections) - n_verified
+            total_rejected = total_dets - total_verified
+            print(f"\nVerification complete:")
+            print(f"  Verified: {n_verified} sources with {total_verified} detections")
+            print(f"  Rejected: {n_rejected_sources} sources, {total_rejected} detections", flush=True)
+    
+    # Use verified detections for catalog augmentation and plotting
+    final_detections = verified_detections
+    final_line_counts = tally_detections(final_detections)
+    
+    print("\nFinal detection counts per line (after verification):")
+    for ln, cnt in sorted(final_line_counts.items(), key=lambda x: -x[1]):
+        print(f"  {ln}: {cnt}")
+
+    # Top sources by number of different lines detected
+    n_lines_per_source = {src_id: len(dets)
+                         for src_id, dets in final_detections.items()}
+    top_sources = sorted(n_lines_per_source.items(),
+                        key=lambda x: -x[1])[:40]
+    
+    print("\n" + "="*70)
+    print("TOP 40 SOURCES BY NUMBER OF DIFFERENT LINES DETECTED")
+    print("="*70)
+    for rank, (src_id, n_lines) in enumerate(top_sources, 1):
+        line_names = list(final_detections[src_id].keys())
+        print(f"{rank:3d}. Source {src_id:5d}: {n_lines:2d} lines - "
+              f"{', '.join(line_names[:5])}"
+              f"{' ...' if len(line_names) > 5 else ''}")
+    print("="*70)
+
     # Augment catalog
     print("\nAugmenting catalog...", flush=True)
-    catalog, sparse_dets = augment_catalog(catalog, all_detections,
-                                           line_counts)
+    catalog, sparse_dets = augment_catalog(catalog, final_detections,
+                                           final_line_counts)
 
     # Write outputs
     print(f"\nWriting augmented catalog to {OUTPUT_CATALOG_PATH}", flush=True)
@@ -939,5 +1357,35 @@ if __name__ == "__main__":
               f"{SPARSE_DETECTIONS_JSON}", flush=True)
         with open(SPARSE_DETECTIONS_JSON, 'w') as fh:
             json.dump(sparse_dets, fh, indent=2)
+
+    # Generate plots
+    print("\n" + "="*70)
+    print("GENERATING PLOTS")
+    print("="*70)
+    
+    # Plot spectra for top 40 sources
+    print(f"\nCreating spectral plots for top 40 sources in {SPECTRA_PLOT_DIR}/...", flush=True)
+    for rank, (src_id, n_lines) in enumerate(top_sources, 1):
+        if rank % 10 == 0:
+            print(f"  Plotted {rank}/40 sources...", flush=True)
+        plot_source_spectra_with_fits(src_id, final_detections, catalog,
+                                     linelist, SPECTRUM_DIR,
+                                     CATALOG_NAME_PREFIX, SPECTRA_PLOT_DIR)
+    print(f"  Spectral plots complete: {len(top_sources)} plots saved", flush=True)
+    
+    # Plot spatial distribution for each line
+    print(f"\nCreating spatial plots for each line in {SPATIAL_PLOT_DIR}/...", flush=True)
+    unique_lines = sorted(final_line_counts.keys())
+    for idx, line_name in enumerate(unique_lines, 1):
+        if idx % 10 == 0:
+            print(f"  Plotted {idx}/{len(unique_lines)} lines...", flush=True)
+        plot_spatial_distribution_by_line(line_name, final_detections,
+                                         catalog, linelist, SPATIAL_PLOT_DIR)
+    print(f"  Spatial line plots complete: {len(unique_lines)} plots saved", flush=True)
+    
+    # Plot spatial distribution by number of lines
+    print(f"\nCreating spatial plot by number of lines...", flush=True)
+    plot_spatial_by_n_lines(final_detections, catalog, SPATIAL_PLOT_DIR)
+    print(f"  Spatial plot by N lines saved", flush=True)
 
     print("\nDone.", flush=True)
