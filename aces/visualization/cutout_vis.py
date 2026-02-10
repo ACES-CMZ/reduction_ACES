@@ -1123,6 +1123,7 @@ def main():
         except Exception as e:
             # Catch any unexpected errors to continue processing
             print(f"ERROR: Unexpected error processing source {i}: {type(e).__name__}: {e}")
+            print(catalog[i])
             import traceback
             traceback.print_exc()
             raise e

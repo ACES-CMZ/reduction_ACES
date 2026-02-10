@@ -25,8 +25,10 @@ from astropy import constants as const
 from astropy import units as u
 from astropy.io import fits
 from astropy.modeling import fitting, models
+from astropy.stats import mad_std, sigma_clip
 from astropy.table import Table
 from astropy.wcs import WCS
+from astropy import log
 
 from aces import conf
 
@@ -200,13 +202,20 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
     xdata = freq_ghz[mask]
     ydata = flux[mask]
 
-    # Estimate baseline and rms from the outer 25% of channels in the window
-    n = len(xdata)
-    n_edge = max(2, n // 4)
-    edge_data = np.concatenate([ydata[:n_edge], ydata[-n_edge:]])
-    baseline_est = np.nanmedian(edge_data)
-    rms = np.nanstd(edge_data)
+    # Estimate baseline and rms using sigma clipping and MAD
+    # Use astropy's sigma_clip to reject outliers (likely line emission)
+    clipped = sigma_clip(ydata, sigma=3.0, maxiters=3, masked=True, stdfunc=mad_std)
+    clipped_data = clipped.compressed()  # Get non-masked values
+    
+    if len(clipped_data) < 3:
+        log.error("Not enough data points after clipping for baseline fit.")
+        return None
+    
+    # Final baseline and RMS estimates
+    baseline_est = np.nanmedian(clipped_data)
+    rms = mad_std(clipped_data, ignore_nan=True)
     if rms == 0:
+        log.error("RMS is zero after baseline estimation.")
         return None
 
     ydata_sub = ydata - baseline_est
@@ -231,6 +240,7 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
     # Check for non-finite values in input data
     finite_mask = np.isfinite(xdata) & np.isfinite(ydata)
     if not np.any(finite_mask):
+        log.error("No finite data points available for fitting.")
         return None
     
     # Use only finite data
@@ -239,19 +249,14 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
     
     gauss = models.Gaussian1D(amplitude=amp_init, mean=mean_init,
                               stddev=stddev_init)
-    baseline = models.Const1D(amplitude=baseline_est)
-    composite = gauss + baseline
     fitter = fitting.LevMarLSQFitter()
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        fitted = fitter(composite, xdata_clean, ydata_clean)
-
-    fit_amp = fitted[0].amplitude.value
-    fit_mean = fitted[0].mean.value
-    fit_stddev = abs(fitted[0].stddev.value)
-    fit_baseline = fitted[1].amplitude.value
-
+        fitted = fitter(gauss, xdata_clean, ydata_clean)
+    fit_amp = fitted.amplitude.value
+    fit_mean = fitted.mean.value
+    fit_stddev = abs(fitted.stddev.value)
     # Sanity checks on fit
     # Mean must be within the velocity window
     fit_vel = freq_to_velocity(fit_mean * u.GHz,
@@ -271,6 +276,7 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
     residuals = ydata - fitted(xdata)
     rms_resid = np.nanstd(residuals)
     if rms_resid == 0:
+        log.error("RMS of residuals is zero after fitting.")
         fit_snr = snr
     else:
         fit_snr = fit_amp / rms_resid
@@ -284,9 +290,9 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
         'stddev_freq_ghz': fit_stddev,
         'centroid_vel_kms': fit_vel,
         'fwhm_kms': fwhm_vel,
-        'peak_flux': fit_amp + fit_baseline,
+        'peak_flux': fit_amp + baseline_est,
         'snr': fit_snr,
-        'baseline': fit_baseline,
+        'baseline': baseline_est,
     }
 
 
@@ -647,12 +653,7 @@ def scan_all_sources(catalog, linelist, spectrum_dir=SPECTRUM_DIR,
         # Loop over each SPW that has a spectrum file
         for spw_label, spw_filepath in spw_files.items():
             # Load the spectrum once for this SPW
-            try:
-                freq_ghz, flux, header = load_spectrum(spw_filepath)
-            # DEBUG REMOVE THIS
-            except Exception as ex:
-                print(f"Error loading spectrum from {spw_filepath}: {ex}", flush=True)
-                continue
+            freq_ghz, flux, header = load_spectrum(spw_filepath)
             
             # Check if we have any lines in this SPW
             if spw_label not in lines_by_spw:

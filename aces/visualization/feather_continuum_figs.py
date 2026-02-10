@@ -239,7 +239,7 @@ def mustang_feather_zoomregions():
 
     fig = plot_fullwidth_figure(mustangfn, scale=1, normkwargs={'vmin': 0.0001, 'vmax': 1.5, 'stretch': 'log'},
                                 colormap=mymap,
-                                label=r"$T_B$ [K]", figsize=(14, 4), dpi=250, scalebar=True, beam=True,
+                                label=r"$T_B$ [K]", figsize=(14, 6), dpi=250, scalebar=True, beam=True,
                                 scalebar_color='w',
                                 scalebarstart=SkyCoord(-0.75*u.deg, -0.4*u.deg, frame='galactic'),
                                 subset_label=False)

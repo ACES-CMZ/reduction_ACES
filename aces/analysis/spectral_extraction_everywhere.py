@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     catalog.add_column([' ' * 60]*len(catalog), name='homecube')
 
-    for row in catalog[::-1]:
+    for row in catalog:
         center = SkyCoord(row['GLON_peak'], row['GLAT_peak'], frame='galactic', unit=(u.deg, u.deg))
         reg = regions.EllipseSkyRegion(center,
                                        width=row['fitted_major'] * u.arcsec,
@@ -89,60 +89,66 @@ if __name__ == "__main__":
             outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_ellipseaverage_" + cubefn.split("/")[-1]
 
             if os.path.exists(outfn):
-                print(f"Skipping existing {outfn}", flush=True)
-                row['homecube'] = os.path.basename(cubefn)
-            else:
+                try:
+                    # test that the file is openable
+                    fh = fits.open(outfn)
+                    fh.close()
+                    print(f"Skipping existing {outfn}", flush=True)
+                    row['homecube'] = os.path.basename(cubefn)
+                    continue
+                except OSError:
+                    print(f"Re-extracting existing {outfn} because it failed to open", flush=True)
 
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                cube = SpectralCube.read(cubefn)
+                cube.allow_huge_operations = True  # suppress future warnings
+                ww = cube.wcs.celestial
+                ww._naxis = cube.shape[1:]
+
+            if ww.footprint_contains(center):
+                print(row['index'], cubefn)
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
-                    cube = SpectralCube.read(cubefn)
-                    cube.allow_huge_operations = True  # suppress future warnings
-                    ww = cube.wcs.celestial
-                    ww._naxis = cube.shape[1:]
+                    scube = cube.subcube_from_regions([reg])
+                    avg = scube.mean(axis=(1, 2))
+                hdu = avg.hdu
 
-                if ww.footprint_contains(center):
-                    print(row['index'], cubefn)
-                    with warnings.catch_warnings():
-                        warnings.simplefilter('ignore')
-                        scube = cube.subcube_from_regions([reg])
-                        avg = scube.mean(axis=(1, 2))
-                    hdu = avg.hdu
+                y, x = scube.wcs.celestial.world_to_pixel(reg.center)
+                slc = getslice()[int(floor(x)):int(ceil(x)), int(floor(y)):int(ceil(y)), :]
+                ww = wcs_utils.slice_wcs(scube.wcs, slc, numpy_order=False)
+                hdu.header.update(ww.to_header())
+                hdu.data = hdu.data[:, None, None]
+                hdu.header['CATINDX'] = row['index']
+                hdu.header['CATGLON'] = row['GLON_peak']
+                hdu.header['CATGLAT'] = row['GLAT_peak']
+                hdu.header['CATMAJS'] = row['fitted_major']
+                hdu.header['CATMINS'] = row['fitted_minor']
+                hdu.header['CATPA'] = row['pa']
 
-                    y, x = scube.wcs.celestial.world_to_pixel(reg.center)
-                    slc = getslice()[int(floor(x)):int(ceil(x)), int(floor(y)):int(ceil(y)), :]
-                    ww = wcs_utils.slice_wcs(scube.wcs, slc, numpy_order=False)
-                    hdu.header.update(ww.to_header())
-                    hdu.data = hdu.data[:, None, None]
-                    hdu.header['CATINDX'] = row['index']
-                    hdu.header['CATGLON'] = row['GLON_peak']
-                    hdu.header['CATGLAT'] = row['GLAT_peak']
-                    hdu.header['CATMAJS'] = row['fitted_major']
-                    hdu.header['CATMINS'] = row['fitted_minor']
-                    hdu.header['CATPA'] = row['pa']
+                outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_ellipseaverage_" + cubefn.split("/")[-1]
+                hdu.writeto(outfn, overwrite=True)
+                print(outfn, flush=True)
+                row['homecube'] = cubefn
 
-                    outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_ellipseaverage_" + cubefn.split("/")[-1]
-                    hdu.writeto(outfn, overwrite=True)
-                    print(outfn, flush=True)
-                    row['homecube'] = cubefn
+                # old version with masks ("final" catalog doesn't have masks)
+                # try:
+                #     spec = extract_from_mask(cube, maskfile[0], row['index'] + 1)
+                # except Exception as ex:
+                #     print(f"Failed for cube {cubefn} for id {row['index']} with exception {ex}")
+                #     continue
+                # hdu = spec.hdu
+                # hdu.header.update(ww.to_header())
+                # hdu.data = hdu.data[:, None, None]
+                # hdu.header['CATINDX'] = row['index']
+                # hdu.header['CATGLON'] = row['GLON']
+                # hdu.header['CATGLAT'] = row['GLAT']
+                # hdu.header['CATMAJS'] = row['major_sigma']
+                # hdu.header['CATMINS'] = row['minor_sigma']
+                # hdu.header['CATPA'] = row['position_angle']
 
-                    # old version with masks ("final" catalog doesn't have masks)
-                    # try:
-                    #     spec = extract_from_mask(cube, maskfile[0], row['index'] + 1)
-                    # except Exception as ex:
-                    #     print(f"Failed for cube {cubefn} for id {row['index']} with exception {ex}")
-                    #     continue
-                    # hdu = spec.hdu
-                    # hdu.header.update(ww.to_header())
-                    # hdu.data = hdu.data[:, None, None]
-                    # hdu.header['CATINDX'] = row['index']
-                    # hdu.header['CATGLON'] = row['GLON']
-                    # hdu.header['CATGLAT'] = row['GLAT']
-                    # hdu.header['CATMAJS'] = row['major_sigma']
-                    # hdu.header['CATMINS'] = row['minor_sigma']
-                    # hdu.header['CATPA'] = row['position_angle']
-
-                    # outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
-                    # hdu.writeto(outfn, overwrite=True)
+                # outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{row['index']}_dendromaskaverage_" + cubefn.split("/")[-1]
+                # hdu.writeto(outfn, overwrite=True)
         if row['homecube']:
             print(f"Source {row['index']} used cube {row['homecube']}", flush=True)
         else:
