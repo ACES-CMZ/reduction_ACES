@@ -3,7 +3,7 @@
 python spectral_extraction_everywhere.py --serial
 
 # Submit parallel jobs
-python spectral_extraction_everywhere.py --submit-parallel --n-jobs 100
+python spectral_extraction_everywhere.py --submit-parallel --n-jobs 500
 
 # Worker mode (called by SLURM script, not directly)
 python spectral_extraction_everywhere.py --parallel-worker 0,1,2,3,4
@@ -468,7 +468,7 @@ if __name__ == "__main__":
                        help='Submit SLURM jobs for parallel processing')
     parser.add_argument('--parallel-worker', type=str,
                        help='Run as parallel worker with comma-separated source indices')
-    parser.add_argument('--n-jobs', type=int, default=100,
+    parser.add_argument('--n-jobs', type=int, default=500,
                        help='Number of SLURM jobs (for --submit-parallel)')
     parser.add_argument('--no-skip-existing', action='store_true',
                        help='Re-extract even if output files exist')

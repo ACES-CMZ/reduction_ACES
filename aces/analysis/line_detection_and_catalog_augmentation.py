@@ -34,6 +34,7 @@ from astropy.stats import mad_std, sigma_clip
 from astropy.table import Table
 from astropy.wcs import WCS
 from astropy import log
+from astropy.coordinates import SkyCoord
 
 from aces import conf
 from aces.analysis.spectral_extraction_everywhere import extract_background_spectrum
@@ -226,8 +227,28 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
         return None
 
     ydata_sub = ydata - baseline_est
-    peak_val = np.nanmax(ydata_sub)
-    peak_idx = np.nanargmax(ydata_sub)
+    
+    # Find the peak closest to rest velocity (v=0)
+    # Convert xdata (frequency) to velocity
+    vel_data = (xdata * u.GHz).to(u.km / u.s, equivalencies=u.doppler_radio(rest_freq_ghz * u.GHz)).value
+    
+    # Prefer peaks within ±50 km/s of rest, otherwise take the absolute max
+    central_mask = np.abs(vel_data) <= 50.0
+    if central_mask.sum() > 0 and np.nanmax(ydata_sub[central_mask]) > 0:
+        # Use peak in central region if it exists
+        central_sub = ydata_sub.copy()
+        central_sub[~central_mask] = -np.inf
+        peak_val = np.nanmax(central_sub)
+        peak_idx = np.nanargmax(central_sub)
+    else:
+        # Fall back to absolute maximum
+        peak_val = np.nanmax(ydata_sub)
+        peak_idx = np.nanargmax(ydata_sub)
+    
+    rms = mad_std(clipped_data, ignore_nan=True)
+    if rms == 0:
+        log.error("RMS is zero after baseline estimation.")
+        return None
     snr = peak_val / rms
 
     if snr < CANDIDATE_SNR:
@@ -428,7 +449,7 @@ def check_velocity_consistency(source_detections, source_id=None, sigma_threshol
 
 
 def load_linelist(filepath=LINELIST_PATH):
-    """Load the ACES linelist CSV and return a table with parsed line info.
+    """Load the ACES linelist CSV and extended linelist, returning a combined table.
 
     Returns
     -------
@@ -436,6 +457,14 @@ def load_linelist(filepath=LINELIST_PATH):
         Columns include: 'Line', 'Rest (GHz)', '12m SPW', 'col9' (importance)
     """
     tbl = Table.read(filepath, format='ascii.csv')
+    
+    # Also load extended linelist if it exists
+    extended_path = filepath.replace('linelist.csv', 'extended_linelist.csv')
+    if os.path.exists(extended_path):
+        extended_tbl = Table.read(extended_path, format='ascii.csv')
+        # Combine tables (append extended to main)
+        from astropy.table import vstack
+        tbl = vstack([tbl, extended_tbl])
 
     # Clean up the rest frequency column
     rest_freqs = []
@@ -1126,7 +1155,8 @@ def augment_catalog(catalog, all_detections, line_counts):
 def plot_source_spectra_with_fits(source_id, all_detections, catalog,
                                    linelist, spectrum_dir=SPECTRUM_DIR,
                                    prefix=CATALOG_NAME_PREFIX,
-                                   output_dir=SPECTRA_PLOT_DIR):
+                                   output_dir=SPECTRA_PLOT_DIR,
+                                   verified_detections=None):
     """Plot all spectra for a source with Gaussian fits overlaid.
 
     Parameters
@@ -1134,11 +1164,14 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
     source_id : int
         Source index.
     all_detections : dict
-        Detection results.
+        All detection results (before verification).
     catalog : astropy Table
         Catalog.
     linelist : astropy Table
         Linelist.
+    verified_detections : dict, optional
+        Verified detection results. If provided, lines not in verified_detections
+        will be marked as background-rejected.
     """
     if source_id not in all_detections:
         return
@@ -1148,6 +1181,21 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
         return
 
     detections = all_detections[source_id]
+    
+    # Identify which lines are background-rejected
+    bg_rejected_lines = set()
+    if verified_detections is not None and source_id in verified_detections:
+        verified_lines = set(verified_detections[source_id].keys())
+        bg_rejected_lines = set(detections.keys()) - verified_lines
+
+    # Get source coordinates from catalog
+    catalog_by_idx = {row['index']: row for row in catalog}
+    source_row = catalog_by_idx.get(source_id)
+    if source_row is not None:
+        source_glon = float(source_row['GLON_peak'])
+        source_glat = float(source_row['GLAT_peak'])
+    else:
+        source_glon = source_glat = None
 
     # Create a mapping of line names to their original Line names
     line_name_map = {row['clean_name']: row['Line'] for row in linelist}
@@ -1169,17 +1217,31 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
 
     # Create figure with 4 rows
     fig, axes = plt.subplots(4, 1, figsize=(16, 12), sharex=False)
-    if n_spws == 1:
-        axes = [axes[0]]
+    if not isinstance(axes, np.ndarray):
+        axes = [axes]
 
     for idx, spw_label in enumerate(available_spws[:4]):
-        ax = axes[idx] if n_spws > 1 else axes[0]
+        ax = axes[idx]
 
         # Load spectrum
         freq_ghz, flux, header = load_spectrum(filepath=spw_files[spw_label])
 
+        # Calculate RMS for offset
+        rms = np.nanstd(flux)
+        offset = -10 * rms  # Offset background by 10-sigma below
+
+        # Load background spectrum if available
+        bg_path = get_background_spectrum_path(source_id, spw_label, spectrum_dir, prefix)
+        has_background = False
+        if bg_path and os.path.exists(bg_path):
+            bg_freq, bg_flux, _ = load_spectrum(bg_path)
+            has_background = True
+            # Plot background spectrum offset below
+            ax.plot(bg_freq, bg_flux + offset, 'b-', alpha=0.7, linewidth=0.5, 
+                    label='Background (offset)')
+
         # Plot spectrum
-        ax.plot(freq_ghz, flux, 'k-', alpha=0.5, linewidth=0.5, label='Data')
+        ax.plot(freq_ghz, flux, 'k-', alpha=0.7, linewidth=0.5, label='Data')
 
         # Plot fits if available for this SPW
         if spw_label in detections_by_spw:
@@ -1205,14 +1267,29 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
                 # Add legend entry with velocity
                 original_line_name = line_name_map.get(line_name, line_name)
                 vel = det['centroid_vel_kms']
+                
+                # Check if this line is background-rejected
+                is_bg_rejected = line_name in bg_rejected_lines
+                marker = " [BG]" if is_bg_rejected else ""
+                
                 legend_entries.append(
-                    f"{original_line_name} "
+                    f"{original_line_name}{marker} "
                     f"(v={vel:.1f} km/s, S/N={det['snr']:.1f})"
                 )
 
                 # Mark rest frequency
                 ax.axvline(det['rest_freq_ghz'], color='gray',
-                          linestyle='--', alpha=0.3, linewidth=0.5)
+                          linestyle='--', alpha=0.2, linewidth=0.5)
+                
+                # For background-rejected lines, plot individual Gaussian in blue
+                # Only plot around the line (within velocity range) to avoid filled baseline
+                if is_bg_rejected:
+                    line_mask = find_channels_near_line(freq_ghz, det['rest_freq_ghz'], VELO_RANGE_KMS)
+                    if line_mask.sum() > 0:
+                        freq_line = freq_ghz[line_mask]
+                        model_single = baseline_val + gauss(freq_line)
+                        include = model_single > baseline_val + 1e-5
+                        ax.plot(freq_line[include], model_single[include], 'b-', linewidth=3.5, alpha=0.6)
 
             # Plot summed model over the full SPW range
             model_flux_total = np.full_like(freq_ghz, baseline_val)
@@ -1220,7 +1297,7 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
                 model_flux_total += gauss(freq_ghz)
 
             ax.plot(freq_ghz, model_flux_total, 'r-', linewidth=1.5,
-                   label='Combined model')
+                   label='Combined model (red=verified, blue=bg-rejected)')
 
             # Add line labels to the legend
             for entry in legend_entries:
@@ -1229,15 +1306,21 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
         ax.set_ylabel('Flux (Jy/beam)', fontsize=10)
         ax.set_xlabel(f'Frequency (GHz) - {spw_label}', fontsize=10)
         ax.legend(loc='best', fontsize=7, ncol=2)
-        ax.grid(alpha=0.3)
+        #ax.grid(alpha=0.3)
 
     # Hide unused axes
     for idx in range(n_spws, 4):
         if n_spws > 1:
             axes[idx].axis('off')
 
-    plt.suptitle(f'Source {source_id} - {len(detections)} line detections',
-                fontsize=14, fontweight='bold')
+    # Create title with coordinates
+    if source_glon is not None and source_glat is not None:
+        title = (f'Source {source_id} - {len(detections)} line detections\n'
+                f'(l={source_glon:.4f}°, b={source_glat:.4f}°)')
+    else:
+        title = f'Source {source_id} - {len(detections)} line detections'
+    
+    plt.suptitle(title, fontsize=14, fontweight='bold')
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
@@ -1281,12 +1364,20 @@ def plot_spatial_distribution_by_line(line_name, all_detections, catalog,
     all_glon = catalog['GLON_peak']
     all_glat = catalog['GLAT_peak']
 
+    crd = SkyCoord(all_glon, all_glat, frame='galactic', unit=(u.deg, u.deg))
+    all_glon = crd.l.wrap_at(180 * u.deg).value
+    all_glat = crd.b.value
+
     det_glon = [catalog_by_idx[src_id]['GLON_peak']
                 for src_id in sources_with_line
                 if src_id in catalog_by_idx]
     det_glat = [catalog_by_idx[src_id]['GLAT_peak']
                 for src_id in sources_with_line
                 if src_id in catalog_by_idx]
+
+    crd = SkyCoord(det_glon, det_glat, frame='galactic', unit=(u.deg, u.deg))
+    det_glon = crd.l.wrap_at(180 * u.deg).value
+    det_glat = crd.b.value
 
     # Plot
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -1337,6 +1428,11 @@ def plot_spatial_by_n_lines(all_detections, catalog,
     # Get coordinates and line counts
     all_glon = catalog['GLON_peak']
     all_glat = catalog['GLAT_peak']
+    
+    # Wrap longitude at 180 degrees
+    crd = SkyCoord(all_glon, all_glat, frame='galactic', unit=(u.deg, u.deg))
+    all_glon = crd.l.wrap_at(180 * u.deg).value
+    all_glat = crd.b.value
 
     det_glon = []
     det_glat = []
@@ -1351,6 +1447,11 @@ def plot_spatial_by_n_lines(all_detections, catalog,
     det_glon = np.array(det_glon)
     det_glat = np.array(det_glat)
     n_lines = np.array(n_lines)
+    
+    # Wrap detection longitudes at 180 degrees
+    crd = SkyCoord(det_glon, det_glat, frame='galactic', unit=(u.deg, u.deg))
+    det_glon = crd.l.wrap_at(180 * u.deg).value
+    det_glat = crd.b.value
 
     # Define bins for symbols
     bins = [1, 3, 5, 10, 100]
@@ -1441,6 +1542,13 @@ if __name__ == "__main__":
                 f"No cached verified detections found at {CACHE_VERIFIED}. "
                 "Run with PLOT_ONLY=False first to generate detections."
             )
+        
+        # Also load all detections (pre-verification) for plotting
+        if os.path.exists(CACHE_DETECTIONS):
+            all_detections_for_plotting, _ = load_detections_cache()
+        else:
+            # If all_detections cache doesn't exist, use verified detections
+            all_detections_for_plotting = verified_detections
 
         # Use verified detections for plotting
         final_detections = verified_detections
@@ -1515,6 +1623,9 @@ if __name__ == "__main__":
         # Use verified detections for catalog augmentation and plotting
         final_detections = verified_detections
         final_line_counts = tally_detections(final_detections)
+        
+        # Keep all_detections for plotting (to show background-rejected lines)
+        all_detections_for_plotting = all_detections
 
         print("\nFinal detection counts per line (after verification):")
         for ln, cnt in sorted(final_line_counts.items(), key=lambda x: -x[1]):
@@ -1565,9 +1676,10 @@ if __name__ == "__main__":
     for rank, (src_id, n_lines) in enumerate(top_sources, 1):
         if rank % 10 == 0:
             print(f"[{time.time()-t0:.1f}s]   Plotted {rank}/40 sources...", flush=True)
-        plot_source_spectra_with_fits(source_id=src_id, all_detections=final_detections, catalog=catalog,
+        plot_source_spectra_with_fits(source_id=src_id, all_detections=all_detections_for_plotting, catalog=catalog,
                                      linelist=linelist, spectrum_dir=SPECTRUM_DIR,
-                                     prefix=CATALOG_NAME_PREFIX, output_dir=SPECTRA_PLOT_DIR)
+                                     prefix=CATALOG_NAME_PREFIX, output_dir=SPECTRA_PLOT_DIR,
+                                     verified_detections=final_detections)
     print(f"[{time.time()-t0:.1f}s]   Spectral plots complete: {len(top_sources)} plots saved", flush=True)
 
     # Plot spatial distribution for each line
