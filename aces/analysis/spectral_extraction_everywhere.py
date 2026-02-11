@@ -120,7 +120,7 @@ def extract_background_spectrum(cube, center, source_major, source_minor,
     # Create a new spectrum with the annulus data
     # We use the outer_mean as a template and create a new object with modified data
     from spectral_cube.lower_dimensional_structures import OneDSpectrum
-    bg_spectrum = OneDSpectrum(value=bg_data, unit=outer_mean.unit, 
+    bg_spectrum = OneDSpectrum(value=bg_data, unit=outer_mean.unit,
                                wcs=outer_mean.wcs, meta=outer_mean.meta)
 
     return bg_spectrum
@@ -383,7 +383,7 @@ def main_parallel_worker(source_indices):
             print(f"ERROR: Source {idx} was not in any cube", flush=True)
 
 
-def submit_slurm_jobs(n_jobs=100, sources_per_job=None):
+def submit_slurm_jobs(n_jobs=500, sources_per_job=None):
     """Submit SLURM jobs for parallel extraction.
 
     Parameters
@@ -404,13 +404,15 @@ def submit_slurm_jobs(n_jobs=100, sources_per_job=None):
           f"({sources_per_job} sources/job)", flush=True)
 
     # Create job script template
+    # 4h is not enough for 100 spectra
+    # 24h is hopefully overkill....
     job_script_template = """#!/bin/bash
 #SBATCH --job-name=aces_spec_extract_{job_id}
 #SBATCH --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_spec_extract_%j_{job_id}.log
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8gb
-#SBATCH --time=4:00:00
+#SBATCH --time=24:00:00
 #SBATCH --qos=astronomy-dept-b
 #SBATCH --account=astronomy-dept
 

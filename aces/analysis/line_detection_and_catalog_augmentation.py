@@ -18,7 +18,9 @@ import json
 import os
 import pickle
 import re
+import time
 import warnings
+import argparse
 
 import matplotlib
 matplotlib.use('Agg')
@@ -968,6 +970,7 @@ def verify_source_detections(all_detections, catalog, linelist,
                 # Load cached background spectrum
                 bg_freq, bg_spec, _ = load_spectrum(bg_path)
             else:
+                print(f"\n  Extracting background for source {src_id}, line {line_name} because {bg_path} was not found", flush=True)
                 # Need to extract from cube - find parent cube first
                 cubefn = find_parent_cube(source_id=src_id, spw_label=spw_label,
                                           spectrum_dir=spectrum_dir, prefix=prefix)
@@ -1397,13 +1400,24 @@ def plot_spatial_by_n_lines(all_detections, catalog,
 # --------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    print("Loading catalog...", flush=True)
-    catalog = Table.read(CATALOG_PATH)
-    print(f"  {len(catalog)} sources", flush=True)
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description='Identify spectral line detections toward ACES compact continuum sources.'
+    )
+    parser.add_argument('--plot-only', action='store_true',
+                        help='Skip detection/verification and only generate plots from cached results')
+    parser.add_argument('--skip-verification', action='store_true',
+                        help='Skip background verification step (use all detections without background check)')
+    args = parser.parse_args()
 
-    print("Loading linelist...", flush=True)
+    t0 = time.time()
+    print(f"[{0.0:.1f}s] Loading catalog...", flush=True)
+    catalog = Table.read(CATALOG_PATH)
+    print(f"[{time.time()-t0:.1f}s]   {len(catalog)} sources", flush=True)
+
+    print(f"[{time.time()-t0:.1f}s] Loading linelist...", flush=True)
     linelist = load_linelist()
-    print(f"  {len(linelist)} lines across {len(set(linelist['12m SPW']))} SPWs",
+    print(f"[{time.time()-t0:.1f}s]   {len(linelist)} lines across {len(set(linelist['12m SPW']))} SPWs",
           flush=True)
 
     # Filter linelist to only lines with importance markers (**, ***) for
@@ -1416,71 +1430,95 @@ if __name__ == "__main__":
             label = imp if imp else '(unmarked)'
             print(f"  {label}: {mask.sum()} lines")
 
-    # Check if we can use cached results
-    print("\nChecking for cached detection results...", flush=True)
-    if is_cache_valid():
-        print("  Cache is valid, loading cached results...", flush=True)
-        all_detections, line_counts = load_detections_cache()
-        n_sources_with_det = len(all_detections)
-        total_dets = sum(len(d) for d in all_detections.values())
-        print(f"  Loaded: {n_sources_with_det} sources with "
-              f"{total_dets} total line detections", flush=True)
-    else:
-        print("  No valid cache found, scanning all sources...", flush=True)
-        print("\nScanning all sources for line detections...", flush=True)
-        all_detections = scan_all_sources(catalog=catalog, linelist=linelist)
-        n_sources_with_det = len(all_detections)
-        total_dets = sum(len(d) for d in all_detections.values())
-        print(f"\nInitial scan complete: {n_sources_with_det} sources with "
-              f"{total_dets} total line detections", flush=True)
+    if args.plot_only:
+        print(f"\n[{time.time()-t0:.1f}s] PLOT_ONLY mode enabled - skipping detection and verification", flush=True)
+        print(f"[{time.time()-t0:.1f}s] Loading cached verified detections...", flush=True)
 
-        # Tally and save to cache
-        line_counts = tally_detections(all_detections=all_detections)
-        save_detections_cache(all_detections=all_detections, line_counts=line_counts)
-
-    print("\nDetection counts per line (before verification):")
-    for ln, cnt in sorted(line_counts.items(), key=lambda x: -x[1]):
-        print(f"  {ln}: {cnt}")
-
-    # Verify detections by comparing to background
-    # This step is optional but recommended - it can be slow
-    # Set SKIP_VERIFICATION = True to skip this step
-    SKIP_VERIFICATION = False  # Change to True to skip background verification
-
-    if SKIP_VERIFICATION:
-        print("\nSkipping background verification step (SKIP_VERIFICATION=True)", flush=True)
-        verified_detections = all_detections
-    else:
-        # Check for cached verified detections
-        cached_verified = load_verified_cache()
-        if cached_verified is not None and is_cache_valid():
-            print("\nUsing cached verified detections", flush=True)
-            verified_detections = cached_verified
-        else:
-            print("\nVerifying detections against background annuli...", flush=True)
-            print("(This step may extract background spectra from parent cubes - may be slow)", flush=True)
-            verified_detections = verify_source_detections(
-                all_detections, catalog, linelist,
-                spectrum_dir=SPECTRUM_DIR, prefix=CATALOG_NAME_PREFIX
+        # Load verified detections from cache
+        verified_detections = load_verified_cache()
+        if verified_detections is None:
+            raise FileNotFoundError(
+                f"No cached verified detections found at {CACHE_VERIFIED}. "
+                "Run with PLOT_ONLY=False first to generate detections."
             )
-            save_verified_cache(verified_detections)
 
-            # Report verification statistics
-            n_verified = len(verified_detections)
-            total_verified = sum(len(d) for d in verified_detections.values())
-            n_rejected_sources = len(all_detections) - n_verified
-            total_rejected = total_dets - total_verified
-            print(f"\nVerification complete:")
-            print(f"  Verified: {n_verified} sources with {total_verified} detections")
-            print(f"  Rejected: {n_rejected_sources} sources, {total_rejected} detections", flush=True)
+        # Use verified detections for plotting
+        final_detections = verified_detections
+        final_line_counts = tally_detections(final_detections)
 
-    # Use verified detections for catalog augmentation and plotting
-    final_detections = verified_detections
-    final_line_counts = tally_detections(final_detections)
+        n_sources_with_det = len(final_detections)
+        total_dets = sum(len(d) for d in final_detections.values())
+        print(f"[{time.time()-t0:.1f}s]   Loaded: {n_sources_with_det} sources with "
+              f"{total_dets} total verified detections", flush=True)
 
-    print("\nFinal detection counts per line (after verification):")
-    for ln, cnt in sorted(final_line_counts.items(), key=lambda x: -x[1]):
-        print(f"  {ln}: {cnt}")
+        print("\nFinal detection counts per line:")
+        for ln, cnt in sorted(final_line_counts.items(), key=lambda x: -x[1]):
+            print(f"  {ln}: {cnt}")
+    else:
+        # Normal mode: run detection and verification
+
+        # Check if we can use cached results
+        print(f"\n[{time.time()-t0:.1f}s] Checking for cached detection results...", flush=True)
+        if is_cache_valid():
+            print(f"[{time.time()-t0:.1f}s]   Cache is valid, loading cached results...", flush=True)
+            all_detections, line_counts = load_detections_cache()
+            n_sources_with_det = len(all_detections)
+            total_dets = sum(len(d) for d in all_detections.values())
+            print(f"[{time.time()-t0:.1f}s]   Loaded: {n_sources_with_det} sources with "
+                  f"{total_dets} total line detections", flush=True)
+        else:
+            print(f"[{time.time()-t0:.1f}s]   No valid cache found, scanning all sources...", flush=True)
+            print(f"\n[{time.time()-t0:.1f}s] Scanning all sources for line detections...", flush=True)
+            all_detections = scan_all_sources(catalog=catalog, linelist=linelist)
+            n_sources_with_det = len(all_detections)
+            total_dets = sum(len(d) for d in all_detections.values())
+            print(f"\n[{time.time()-t0:.1f}s] Initial scan complete: {n_sources_with_det} sources with "
+                  f"{total_dets} total line detections", flush=True)
+
+            # Tally and save to cache
+            line_counts = tally_detections(all_detections=all_detections)
+            save_detections_cache(all_detections=all_detections, line_counts=line_counts)
+
+        print("\nDetection counts per line (before verification):")
+        for ln, cnt in sorted(line_counts.items(), key=lambda x: -x[1]):
+            print(f"  {ln}: {cnt}")
+
+        # Verify detections by comparing to background
+        # This step is optional but recommended - it can be slow
+        if args.skip_verification:
+            print(f"\n[{time.time()-t0:.1f}s] Skipping background verification step (--skip-verification)", flush=True)
+            verified_detections = all_detections
+        else:
+            # Check for cached verified detections
+            cached_verified = load_verified_cache()
+            if cached_verified is not None and is_cache_valid():
+                print(f"\n[{time.time()-t0:.1f}s] Using cached verified detections", flush=True)
+                verified_detections = cached_verified
+            else:
+                print(f"\n[{time.time()-t0:.1f}s] Verifying detections against background annuli...", flush=True)
+                print(f"[{time.time()-t0:.1f}s] (This step may extract background spectra from parent cubes - may be slow)", flush=True)
+                verified_detections = verify_source_detections(
+                    all_detections, catalog, linelist,
+                    spectrum_dir=SPECTRUM_DIR, prefix=CATALOG_NAME_PREFIX
+                )
+                save_verified_cache(verified_detections)
+
+                # Report verification statistics
+                n_verified = len(verified_detections)
+                total_verified = sum(len(d) for d in verified_detections.values())
+                n_rejected_sources = len(all_detections) - n_verified
+                total_rejected = total_dets - total_verified
+                print(f"\n[{time.time()-t0:.1f}s] Verification complete:")
+                print(f"[{time.time()-t0:.1f}s]   Verified: {n_verified} sources with {total_verified} detections")
+                print(f"[{time.time()-t0:.1f}s]   Rejected: {n_rejected_sources} sources, {total_rejected} detections", flush=True)
+
+        # Use verified detections for catalog augmentation and plotting
+        final_detections = verified_detections
+        final_line_counts = tally_detections(final_detections)
+
+        print("\nFinal detection counts per line (after verification):")
+        for ln, cnt in sorted(final_line_counts.items(), key=lambda x: -x[1]):
+            print(f"  {ln}: {cnt}")
 
     # Top sources by number of different lines detected
     n_lines_per_source = {src_id: len(dets)
@@ -1499,52 +1537,52 @@ if __name__ == "__main__":
     print("="*70)
 
     # Augment catalog
-    print("\nAugmenting catalog...", flush=True)
+    print(f"\n[{time.time()-t0:.1f}s] Augmenting catalog...", flush=True)
     catalog, sparse_dets = augment_catalog(catalog=catalog, all_detections=final_detections,
                                            line_counts=final_line_counts)
 
     # Write outputs
-    print(f"\nWriting augmented catalog to {OUTPUT_CATALOG_PATH}", flush=True)
+    print(f"\n[{time.time()-t0:.1f}s] Writing augmented catalog to {OUTPUT_CATALOG_PATH}", flush=True)
     catalog.write(OUTPUT_CATALOG_PATH, overwrite=True)
-    print(f"Writing augmented catalog to {OUTPUT_CATALOG_ECSV_PATH}",
+    print(f"[{time.time()-t0:.1f}s] Writing augmented catalog to {OUTPUT_CATALOG_ECSV_PATH}",
           flush=True)
     catalog.write(OUTPUT_CATALOG_ECSV_PATH, format='ascii.ecsv',
                   overwrite=True)
 
     if sparse_dets:
-        print(f"Writing {len(sparse_dets)} rare-line source entries to "
+        print(f"[{time.time()-t0:.1f}s] Writing {len(sparse_dets)} rare-line source entries to "
               f"{SPARSE_DETECTIONS_JSON}", flush=True)
         with open(SPARSE_DETECTIONS_JSON, 'w') as fh:
             json.dump(sparse_dets, fh, indent=2)
 
     # Generate plots
-    print("\n" + "="*70)
-    print("GENERATING PLOTS")
-    print("="*70)
+    print(f"\n[{time.time()-t0:.1f}s] " + "="*70)
+    print(f"[{time.time()-t0:.1f}s] GENERATING PLOTS")
+    print(f"[{time.time()-t0:.1f}s] " + "="*70)
 
     # Plot spectra for top 40 sources
-    print(f"\nCreating spectral plots for top 40 sources in {SPECTRA_PLOT_DIR}/...", flush=True)
+    print(f"\n[{time.time()-t0:.1f}s] Creating spectral plots for top 40 sources in {SPECTRA_PLOT_DIR}/...", flush=True)
     for rank, (src_id, n_lines) in enumerate(top_sources, 1):
         if rank % 10 == 0:
-            print(f"  Plotted {rank}/40 sources...", flush=True)
+            print(f"[{time.time()-t0:.1f}s]   Plotted {rank}/40 sources...", flush=True)
         plot_source_spectra_with_fits(source_id=src_id, all_detections=final_detections, catalog=catalog,
                                      linelist=linelist, spectrum_dir=SPECTRUM_DIR,
                                      prefix=CATALOG_NAME_PREFIX, output_dir=SPECTRA_PLOT_DIR)
-    print(f"  Spectral plots complete: {len(top_sources)} plots saved", flush=True)
+    print(f"[{time.time()-t0:.1f}s]   Spectral plots complete: {len(top_sources)} plots saved", flush=True)
 
     # Plot spatial distribution for each line
-    print(f"\nCreating spatial plots for each line in {SPATIAL_PLOT_DIR}/...", flush=True)
+    print(f"\n[{time.time()-t0:.1f}s] Creating spatial plots for each line in {SPATIAL_PLOT_DIR}/...", flush=True)
     unique_lines = sorted(final_line_counts.keys())
     for idx, line_name in enumerate(unique_lines, 1):
         if idx % 10 == 0:
-            print(f"  Plotted {idx}/{len(unique_lines)} lines...", flush=True)
+            print(f"[{time.time()-t0:.1f}s]   Plotted {idx}/{len(unique_lines)} lines...", flush=True)
         plot_spatial_distribution_by_line(line_name=line_name, all_detections=final_detections,
                                          catalog=catalog, linelist=linelist, output_dir=SPATIAL_PLOT_DIR)
-    print(f"  Spatial line plots complete: {len(unique_lines)} plots saved", flush=True)
+    print(f"[{time.time()-t0:.1f}s]   Spatial line plots complete: {len(unique_lines)} plots saved", flush=True)
 
     # Plot spatial distribution by number of lines
-    print(f"\nCreating spatial plot by number of lines...", flush=True)
+    print(f"\n[{time.time()-t0:.1f}s] Creating spatial plot by number of lines...", flush=True)
     plot_spatial_by_n_lines(all_detections=final_detections, catalog=catalog, output_dir=SPATIAL_PLOT_DIR)
-    print(f"  Spatial plot by N lines saved", flush=True)
+    print(f"[{time.time()-t0:.1f}s]   Spatial plot by N lines saved", flush=True)
 
-    print("\nDone.", flush=True)
+    print(f"\n[{time.time()-t0:.1f}s] Done. Total elapsed time: {time.time()-t0:.1f}s ({(time.time()-t0)/60:.1f}m)", flush=True)
