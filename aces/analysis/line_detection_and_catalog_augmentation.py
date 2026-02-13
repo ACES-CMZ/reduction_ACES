@@ -18,6 +18,7 @@ import json
 import os
 import pickle
 import re
+import shutil
 import time
 import warnings
 import argparse
@@ -35,6 +36,7 @@ from astropy.table import Table
 from astropy.wcs import WCS
 from astropy import log
 from astropy.coordinates import SkyCoord
+from astroquery.simbad import Simbad
 
 from aces import conf
 from aces.analysis.spectral_extraction_everywhere import extract_background_spectrum
@@ -78,12 +80,18 @@ CACHE_DETECTIONS = os.path.join(CACHE_DIR, 'all_detections.pkl')
 CACHE_LINE_COUNTS = os.path.join(CACHE_DIR, 'line_counts.pkl')
 CACHE_VERIFIED = os.path.join(CACHE_DIR, 'verified_detections.pkl')
 CACHE_METADATA = os.path.join(CACHE_DIR, 'cache_metadata.json')
+CACHE_SIMBAD = os.path.join(CACHE_DIR, 'simbad_queries.json')
 
 # Velocity range for the Galactic center (km/s)
 VELO_RANGE_KMS = 200.0
 
-# S/N threshold for a candidate detection
-CANDIDATE_SNR = 5.0
+# S/N thresholds for line detection
+# Initial threshold for peak finding (more permissive to catch borderline cases)
+INITIAL_SNR_THRESHOLD = 4.0
+# Final threshold after Gaussian fitting (validates fit quality)
+FINAL_SNR_THRESHOLD = 4.5
+# Legacy name for compatibility (use FINAL_SNR_THRESHOLD in new code)
+CANDIDATE_SNR = FINAL_SNR_THRESHOLD
 
 # S/N threshold for source-vs-background confirmation
 SOURCE_VS_BG_FACTOR = 2.0
@@ -98,6 +106,8 @@ LINE_SPWS = {'spw25': 25, 'spw27': 27, 'spw33': 33, 'spw35': 35}
 
 # Plot directories
 SPECTRA_PLOT_DIR = os.path.join(SPECTRUM_DIR, 'plots')
+SPECTRA_PLOT_TOP40_DIR = os.path.join(SPECTRA_PLOT_DIR, 'top40')
+SPECTRA_PLOT_NOT_TOP40_DIR = os.path.join(SPECTRA_PLOT_DIR, 'not_top40')
 SPATIAL_PLOT_DIR = os.path.join(SPECTRUM_DIR, 'spatial_plots')
 
 
@@ -227,11 +237,11 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
         return None
 
     ydata_sub = ydata - baseline_est
-    
+
     # Find the peak closest to rest velocity (v=0)
     # Convert xdata (frequency) to velocity
     vel_data = (xdata * u.GHz).to(u.km / u.s, equivalencies=u.doppler_radio(rest_freq_ghz * u.GHz)).value
-    
+
     # Prefer peaks within ±50 km/s of rest, otherwise take the absolute max
     central_mask = np.abs(vel_data) <= 50.0
     if central_mask.sum() > 0 and np.nanmax(ydata_sub[central_mask]) > 0:
@@ -244,14 +254,14 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
         # Fall back to absolute maximum
         peak_val = np.nanmax(ydata_sub)
         peak_idx = np.nanargmax(ydata_sub)
-    
+
     rms = mad_std(clipped_data, ignore_nan=True)
     if rms == 0:
         log.error("RMS is zero after baseline estimation.")
         return None
     snr = peak_val / rms
 
-    if snr < CANDIDATE_SNR:
+    if snr < INITIAL_SNR_THRESHOLD:
         return None
 
     # Initial guess for Gaussian
@@ -309,7 +319,7 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
     else:
         fit_snr = fit_amp / rms_resid
 
-    if fit_snr < CANDIDATE_SNR:
+    if fit_snr < FINAL_SNR_THRESHOLD:
         return None
 
     return {
@@ -321,7 +331,156 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
         'peak_flux': fit_amp + baseline_est,
         'snr': fit_snr,
         'baseline': baseline_est,
+        'rms': rms,  # Include RMS for uncertainty estimation
     }
+
+
+def fit_multiple_gaussians_to_line(freq_ghz, flux, rest_freq_ghz,
+                                   velo_range_kms=VELO_RANGE_KMS,
+                                   max_iterations=5):
+    """Iteratively find and fit multiple Gaussian peaks near a spectral line.
+
+    This handles cases where multiple lines fall within the same velocity window
+    by iteratively finding peaks, fitting them, subtracting, and repeating.
+
+    Parameters
+    ----------
+    freq_ghz : array
+        Full frequency axis.
+    flux : array
+        Full flux array.
+    rest_freq_ghz : float
+        Rest frequency of the line in GHz.
+    velo_range_kms : float
+        Velocity window around the line in km/s.
+    max_iterations : int
+        Maximum number of peaks to find.
+
+    Returns
+    -------
+    results : list of dict
+        List of fit results, ordered by S/N (highest first).
+        Each dict has same structure as fit_gaussian_to_line output,
+        plus 'iteration' key indicating order found.
+    """
+    mask = find_channels_near_line(freq_ghz, rest_freq_ghz, velo_range_kms)
+    if mask.sum() < 5:
+        return []
+
+    xdata = freq_ghz[mask]
+    ydata_original = flux[mask].copy()
+    ydata_residual = ydata_original.copy()
+
+    # Estimate baseline and RMS once from original data
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        clipped = sigma_clip(ydata_original, sigma=3.0, maxiters=3, masked=True, stdfunc=mad_std)
+    clipped_data = clipped.compressed()
+
+    if len(clipped_data) < 3:
+        return []
+
+    baseline_est = np.nanmedian(clipped_data)
+    rms = mad_std(clipped_data, ignore_nan=True)
+    if rms == 0:
+        return []
+
+    results = []
+
+    for iteration in range(max_iterations):
+        ydata_sub = ydata_residual - baseline_est
+
+        # Find peak in residual
+        peak_val = np.nanmax(ydata_sub)
+        peak_idx = np.nanargmax(ydata_sub)
+        snr = peak_val / rms
+
+        # Stop if peak is below threshold
+        if snr < INITIAL_SNR_THRESHOLD:
+            break
+
+        # Initial guess for Gaussian
+        amp_init = peak_val
+        mean_init = xdata[peak_idx]
+
+        # Estimate width from half-maximum
+        above_half = ydata_sub > 0.5 * peak_val
+        if above_half.sum() > 1:
+            channel_width = np.abs(np.diff(xdata).mean())
+            stddev_init = above_half.sum() * channel_width / 2.35
+        else:
+            stddev_init = np.abs(np.diff(xdata).mean()) * 3
+
+        # Check for finite values
+        finite_mask = np.isfinite(xdata) & np.isfinite(ydata_residual)
+        if not np.any(finite_mask):
+            break
+
+        xdata_clean = xdata[finite_mask]
+        ydata_clean = ydata_residual[finite_mask]
+
+        # Fit Gaussian
+        gauss = models.Gaussian1D(amplitude=amp_init, mean=mean_init,
+                                  stddev=stddev_init)
+        fitter = fitting.LevMarLSQFitter()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            try:
+                fitted = fitter(gauss, xdata_clean, ydata_clean)
+            except:
+                break
+
+        fit_amp = fitted.amplitude.value
+        fit_mean = fitted.mean.value
+        fit_stddev = abs(fitted.stddev.value)
+
+        # Sanity checks
+        fit_vel = (fit_mean * u.GHz).to(u.km / u.s, equivalencies=u.doppler_radio(rest_freq_ghz * u.GHz)).value
+        if abs(fit_vel) > velo_range_kms:
+            break
+
+        fwhm_ghz = 2.3548 * fit_stddev
+        rest_freq_q = rest_freq_ghz * u.GHz
+        fwhm_vel = abs(
+            ((rest_freq_ghz + fwhm_ghz / 2) * u.GHz).to(u.km / u.s, equivalencies=u.doppler_radio(rest_freq_q)).value -
+            ((rest_freq_ghz - fwhm_ghz / 2) * u.GHz).to(u.km / u.s, equivalencies=u.doppler_radio(rest_freq_q)).value
+        )
+        if fwhm_vel > 300 or fwhm_vel < 0.5:
+            break
+
+        # Re-estimate S/N of the fit
+        residuals = ydata_original - fitted(xdata)
+        rms_resid = np.nanstd(residuals)
+        if rms_resid == 0:
+            fit_snr = snr
+        else:
+            fit_snr = fit_amp / rms_resid
+
+        if fit_snr < CANDIDATE_SNR:
+            break
+
+        # Store result
+        results.append({
+            'amplitude': fit_amp,
+            'mean_freq_ghz': fit_mean,
+            'stddev_freq_ghz': fit_stddev,
+            'centroid_vel_kms': fit_vel,
+            'fwhm_kms': fwhm_vel,
+            'peak_flux': fit_amp + baseline_est,
+            'snr': fit_snr,
+            'baseline': baseline_est,
+            'rms': rms,  # Include RMS for uncertainty estimation
+            'iteration': iteration,
+        })
+
+        # Subtract this Gaussian from residual for next iteration
+        ydata_residual = ydata_residual - fitted(xdata)
+
+    # Sort by S/N (highest first)
+    results.sort(key=lambda x: x['snr'], reverse=True)
+
+    return results
 
 
 # Importance ranking: more stars = higher priority
@@ -388,6 +547,67 @@ def deduplicate_detections(source_detections, linelist):
     return kept
 
 
+def select_best_candidates_by_velocity(source_detections, source_id=None):
+    """For lines with multiple candidate peaks, select the one most consistent
+    with the median velocity of all detections.
+
+    Parameters
+    ----------
+    source_detections : dict
+        {clean_name: fit_result_dict} where fit_result may have 'all_candidates' key.
+    source_id : int, optional
+        Source ID for diagnostic output.
+
+    Returns
+    -------
+    selected : dict
+        Same structure, but with best candidate selected for each line.
+    """
+    if len(source_detections) == 0:
+        return source_detections
+
+    # First pass: collect all velocities from single-peak detections
+    # These give us the "true" source velocity
+    single_peak_velocities = []
+    for clean_name, det in source_detections.items():
+        if 'all_candidates' not in det or len(det.get('all_candidates', [])) <= 1:
+            single_peak_velocities.append(det['centroid_vel_kms'])
+
+    # If we have at least 2 single-peak detections, use them to estimate source velocity
+    if len(single_peak_velocities) >= 2:
+        median_vel = np.median(single_peak_velocities)
+    else:
+        # Fall back to median of all detections (using current best candidates)
+        median_vel = np.median([det['centroid_vel_kms'] for det in source_detections.values()])
+
+    # Second pass: for multi-candidate lines, select the candidate closest to median_vel
+    selected = {}
+    for clean_name, det in source_detections.items():
+        if 'all_candidates' in det and len(det['all_candidates']) > 1:
+            # Find candidate closest to median velocity
+            candidates = det['all_candidates']
+            vel_diffs = [abs(c['centroid_vel_kms'] - median_vel) for c in candidates]
+            best_idx = np.argmin(vel_diffs)
+            best_candidate = candidates[best_idx].copy()
+
+            # Copy over metadata
+            best_candidate['line_name'] = det['line_name']
+            best_candidate['rest_freq_ghz'] = det['rest_freq_ghz']
+            best_candidate['spw'] = det['spw']
+            best_candidate['all_candidates'] = candidates  # Keep for reference
+
+            if best_idx > 0 and source_id is not None:
+                print(f"    Source {source_id}: {det['line_name']} - selected candidate {best_idx+1}/{len(candidates)} "
+                      f"at v={best_candidate['centroid_vel_kms']:.1f} km/s (median={median_vel:.1f} km/s, "
+                      f"S/N={best_candidate['snr']:.1f})", flush=True)
+
+            selected[clean_name] = best_candidate
+        else:
+            selected[clean_name] = det
+
+    return selected
+
+
 def check_velocity_consistency(source_detections, source_id=None, sigma_threshold=5.0, velo_threshold=5.0*u.km/u.s):
     """Flag detections whose velocity is inconsistent with the bulk.
 
@@ -448,6 +668,85 @@ def check_velocity_consistency(source_detections, source_id=None, sigma_threshol
     return consistent
 
 
+def query_simbad_for_source(glon, glat, radius_arcsec=5.0):
+    """Query SIMBAD for objects within radius of source coordinates.
+
+    Results are cached in CACHE_SIMBAD to avoid repeated queries.
+
+    Parameters
+    ----------
+    glon, glat : float
+        Galactic coordinates in degrees.
+    radius_arcsec : float
+        Search radius in arcseconds.
+
+    Returns
+    -------
+    result : dict or None
+        Dictionary with 'name' and 'citations' keys for most-cited object,
+        or None if no objects found.
+    """
+    # Load cache
+    if os.path.exists(CACHE_SIMBAD):
+        with open(CACHE_SIMBAD, 'r') as f:
+            simbad_cache = json.load(f)
+    else:
+        simbad_cache = {}
+
+    # Create cache key from rounded coordinates (to ~0.1 arcsec precision)
+    # This allows cache hits for nearby coordinates
+    cache_key = f"{glon:.5f}_{glat:.5f}_{radius_arcsec:.1f}"
+
+    # Check if we have a cached result
+    if cache_key in simbad_cache:
+        cached_result = simbad_cache[cache_key]
+        # Return None if cached as "no result", otherwise return the dict
+        if cached_result is None or cached_result == "null":
+            return None
+        return cached_result
+
+    # Not in cache, query SIMBAD
+    coord = SkyCoord(glon, glat, frame='galactic', unit=(u.deg, u.deg))
+
+    # Customize SIMBAD query to get citations
+    custom_simbad = Simbad()
+    custom_simbad.add_votable_fields('otype', 'nbref')
+
+    # Query within radius
+    result_table = custom_simbad.query_region(
+        coord, radius=radius_arcsec * u.arcsec
+    )
+
+    if result_table is None or len(result_table) == 0:
+        # Cache the "no result" response
+        simbad_cache[cache_key] = None
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        with open(CACHE_SIMBAD, 'w') as f:
+            json.dump(simbad_cache, f, indent=2)
+        return None
+
+    # Find the most-cited object
+    # nbref is the number of references (citations)
+    citations = result_table['nbref']
+    max_idx = np.argmax(citations)
+
+    most_cited = result_table[max_idx]
+
+    result = {
+        'name': str(most_cited['main_id']),
+        'citations': int(most_cited['nbref']),
+        'otype': str(most_cited['otype'])
+    }
+
+    # Cache the result
+    simbad_cache[cache_key] = result
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    with open(CACHE_SIMBAD, 'w') as f:
+        json.dump(simbad_cache, f, indent=2)
+
+    return result
+
+
 def load_linelist(filepath=LINELIST_PATH):
     """Load the ACES linelist CSV and extended linelist, returning a combined table.
 
@@ -457,7 +756,7 @@ def load_linelist(filepath=LINELIST_PATH):
         Columns include: 'Line', 'Rest (GHz)', '12m SPW', 'col9' (importance)
     """
     tbl = Table.read(filepath, format='ascii.csv')
-    
+
     # Also load extended linelist if it exists
     extended_path = filepath.replace('linelist.csv', 'extended_linelist.csv')
     if os.path.exists(extended_path):
@@ -919,15 +1218,29 @@ def scan_all_sources(catalog, linelist, spectrum_dir=SPECTRUM_DIR,
                 if rest_freq < freq_ghz.min() or rest_freq > freq_ghz.max():
                     continue
 
-                result = fit_gaussian_to_line(freq_ghz=freq_ghz, flux=flux, rest_freq_ghz=rest_freq)
-                if result is not None:
+                # Use multi-peak fitting to find all candidate peaks
+                candidates = fit_multiple_gaussians_to_line(
+                    freq_ghz=freq_ghz, flux=flux, rest_freq_ghz=rest_freq
+                )
+
+                if len(candidates) > 0:
                     clean_name = ll_row['clean_name']
+                    # Store the best candidate (highest S/N) initially
+                    # Velocity-based selection will choose the right one later
+                    result = candidates[0]
+                    result['line_name'] = ll_row['Line']
+                    result['rest_freq_ghz'] = rest_freq
+                    result['spw'] = spw_label
+                    result['all_candidates'] = candidates  # Keep all for velocity selection
                     source_detections[clean_name] = result
-                    source_detections[clean_name]['line_name'] = ll_row['Line']
-                    source_detections[clean_name]['rest_freq_ghz'] = rest_freq
-                    source_detections[clean_name]['spw'] = spw_label
 
         if source_detections:
+            # Velocity-based selection: for lines with multiple candidates,
+            # choose the one closest to the median velocity of all detections
+            source_detections = select_best_candidates_by_velocity(
+                source_detections, source_id=src_id
+            )
+
             # Deduplicate: when multiple lines fit the same peak, keep the
             # most important one (by col9 star-ranking)
             source_detections = deduplicate_detections(source_detections=source_detections, linelist=linelist)
@@ -1063,11 +1376,17 @@ def tally_detections(all_detections):
     return counts
 
 
-def augment_catalog(catalog, all_detections, line_counts):
+def augment_catalog(catalog, all_detections, line_counts, linelist=None,
+                    spectrum_dir=SPECTRUM_DIR, prefix=CATALOG_NAME_PREFIX):
     """Add line detection columns to the catalog.
 
-    Lines detected in >= MIN_DETECTIONS_FOR_COLUMN sources get three columns
-    each: {line}_peak, {line}_fwhm_kms, {line}_centroid_kms.
+    Lines detected in >= MIN_DETECTIONS_FOR_COLUMN sources get columns:
+    {line}_peak, {line}_fwhm_kms, {line}_centroid_kms, {line}_rms,
+    {line}_vmean, {line}_vwidth
+
+    For ALL sources (whether detected or not), RMS and peak values are measured.
+    For non-detections, peak and RMS are measured over the full velocity search range.
+    For detections, vmean and vwidth indicate the narrower velocity range used.
 
     Rare detections are returned as a dict to be written to JSON.
 
@@ -1079,6 +1398,12 @@ def augment_catalog(catalog, all_detections, line_counts):
         Detection results.
     line_counts : dict
         {line_name: count}.
+    linelist : astropy Table, optional
+        Linelist for looking up rest frequencies.
+    spectrum_dir : str
+        Directory containing spectra.
+    prefix : str
+        Catalog name prefix for finding spectrum files.
 
     Returns
     -------
@@ -1112,7 +1437,9 @@ def augment_catalog(catalog, all_detections, line_counts):
         catalog[f'{ln}_peak'] = np.full(n, np.nan)
         catalog[f'{ln}_fwhm_kms'] = np.full(n, np.nan)
         catalog[f'{ln}_centroid_kms'] = np.full(n, np.nan)
-        catalog[f'{ln}_snr'] = np.full(n, np.nan)
+        catalog[f'{ln}_rms'] = np.full(n, np.nan)
+        catalog[f'{ln}_vmean'] = np.full(n, np.nan)  # Mean velocity of measurement window
+        catalog[f'{ln}_vwidth'] = np.full(n, np.nan)  # Width of measurement window (km/s)
 
     # Build an index map: catalog index -> row position
     idx_to_row = {}
@@ -1131,7 +1458,11 @@ def augment_catalog(catalog, all_detections, line_counts):
                 catalog[f'{line_name}_peak'][row_idx] = det['amplitude']
                 catalog[f'{line_name}_fwhm_kms'][row_idx] = det['fwhm_kms']
                 catalog[f'{line_name}_centroid_kms'][row_idx] = det['centroid_vel_kms']
-                catalog[f'{line_name}_snr'][row_idx] = det['snr']
+                # For detected lines, use narrow window around the line (3x FWHM or min 10 km/s)
+                vwidth = max(3.0 * det['fwhm_kms'], 10.0)
+                catalog[f'{line_name}_rms'][row_idx] = det.get('rms', np.nan)
+                catalog[f'{line_name}_vmean'][row_idx] = det['centroid_vel_kms']
+                catalog[f'{line_name}_vwidth'][row_idx] = vwidth
             elif line_name in rare_lines:
                 src_key = str(src_id)
                 if src_key not in sparse_detections:
@@ -1144,6 +1475,96 @@ def augment_catalog(catalog, all_detections, line_counts):
                     'line_name': det.get('line_name', line_name),
                     'rest_freq_ghz': float(det['rest_freq_ghz']),
                 }
+
+    # For non-detected sources, measure RMS and peak over the full search range
+    # This provides upper limits and noise characterization for all sources
+    if linelist is not None:
+        print("\nMeasuring RMS and peak values for non-detected sources...")
+        # Create a lookup of line rest frequencies
+        line_freq_lookup = {}
+        for row in linelist:
+            clean_name = row['clean_name']
+            if clean_name in common_lines:
+                line_freq_lookup[clean_name] = {
+                    'rest_freq_ghz': row['rest_freq_ghz'],
+                    'spw': row['12m SPW']
+                }
+
+        # Map SPW numbers to labels
+        spw_num_to_label = {25: 'spw25', 27: 'spw27', 33: 'spw33', 35: 'spw35'}
+
+        n_measured = 0
+        for src_id in catalog['index']:
+            if src_id not in idx_to_row:
+                continue
+            row_idx = idx_to_row[src_id]
+
+            # Get spectrum files for this source
+            spw_files = get_source_spectra_files(src_id, spectrum_dir, prefix)
+            if not spw_files:
+                continue
+
+            # Check each common line
+            for line_name in common_lines:
+                # Skip if already detected
+                if not np.isnan(catalog[f'{line_name}_peak'][row_idx]):
+                    continue
+
+                # Get line info
+                if line_name not in line_freq_lookup:
+                    continue
+
+                rest_freq_ghz = line_freq_lookup[line_name]['rest_freq_ghz']
+                spw_num = line_freq_lookup[line_name]['spw']
+                spw_label = spw_num_to_label.get(spw_num)
+
+                if spw_label is None or spw_label not in spw_files:
+                    continue
+
+                # Load spectrum
+                try:
+                    freq_ghz, flux, header = load_spectrum(spw_files[spw_label])
+                except Exception:
+                    continue
+
+                # Find channels in the velocity window
+                mask = find_channels_near_line(freq_ghz, rest_freq_ghz, VELO_RANGE_KMS)
+                if mask.sum() < 5:
+                    continue
+
+                flux_window = flux[mask]
+                freq_window = freq_ghz[mask]
+
+                # Estimate RMS using sigma clipping
+                from astropy.stats import mad_std, sigma_clip
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    clipped = sigma_clip(flux_window, sigma=3.0, maxiters=3,
+                                        masked=True, stdfunc=mad_std)
+                clipped_data = clipped.compressed()
+
+                if len(clipped_data) < 3:
+                    continue
+
+                rms = mad_std(clipped_data, ignore_nan=True)
+                if rms == 0 or not np.isfinite(rms):
+                    continue
+
+                # Measure peak in window
+                baseline = np.nanmedian(clipped_data)
+                flux_sub = flux_window - baseline
+                peak = np.nanmax(flux_sub)
+
+                # Store measurements for non-detection
+                # Use full velocity search range since no line was detected
+                catalog[f'{line_name}_rms'][row_idx] = rms
+                catalog[f'{line_name}_peak'][row_idx] = peak  # Upper limit
+                catalog[f'{line_name}_vmean'][row_idx] = 0.0  # Centered at rest velocity
+                catalog[f'{line_name}_vwidth'][row_idx] = VELO_RANGE_KMS  # Full search range
+
+                n_measured += 1
+
+        print(f"  Measured RMS/peak for {n_measured} non-detection entries")
 
     return catalog, sparse_detections
 
@@ -1173,20 +1594,29 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
         Verified detection results. If provided, lines not in verified_detections
         will be marked as background-rejected.
     """
-    if source_id not in all_detections:
+    # Combine all_detections and verified_detections to handle cache inconsistencies
+    # Use verified as the primary source, supplemented by all_detections
+    detections = {}
+    bg_rejected_lines = set()
+
+    if source_id in all_detections:
+        detections = all_detections[source_id].copy()
+
+    if verified_detections is not None and source_id in verified_detections:
+        verified_lines = verified_detections[source_id]
+        # Add any verified lines not in all_detections (cache inconsistency)
+        for line_name, det in verified_lines.items():
+            if line_name not in detections:
+                detections[line_name] = det
+        # Identify truly rejected lines (in all but not verified)
+        bg_rejected_lines = set(detections.keys()) - set(verified_lines.keys())
+
+    if not detections:
         return
 
     spw_files = get_source_spectra_files(source_id, spectrum_dir, prefix)
     if not spw_files:
         return
-
-    detections = all_detections[source_id]
-    
-    # Identify which lines are background-rejected
-    bg_rejected_lines = set()
-    if verified_detections is not None and source_id in verified_detections:
-        verified_lines = set(verified_detections[source_id].keys())
-        bg_rejected_lines = set(detections.keys()) - verified_lines
 
     # Get source coordinates from catalog
     catalog_by_idx = {row['index']: row for row in catalog}
@@ -1229,6 +1659,8 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
         # Calculate RMS for offset
         rms = np.nanstd(flux)
         offset = -10 * rms  # Offset background by 10-sigma below
+        if offset < -0.02:
+            offset = -0.02  # Cap the offset to avoid going too far down
 
         # Load background spectrum if available
         bg_path = get_background_spectrum_path(source_id, spw_label, spectrum_dir, prefix)
@@ -1237,7 +1669,7 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
             bg_freq, bg_flux, _ = load_spectrum(bg_path)
             has_background = True
             # Plot background spectrum offset below
-            ax.plot(bg_freq, bg_flux + offset, 'b-', alpha=0.7, linewidth=0.5, 
+            ax.plot(bg_freq, bg_flux + offset, 'b-', alpha=0.7, linewidth=0.5,
                     label='Background (offset)')
 
         # Plot spectrum
@@ -1267,11 +1699,11 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
                 # Add legend entry with velocity
                 original_line_name = line_name_map.get(line_name, line_name)
                 vel = det['centroid_vel_kms']
-                
+
                 # Check if this line is background-rejected
                 is_bg_rejected = line_name in bg_rejected_lines
                 marker = " [BG]" if is_bg_rejected else ""
-                
+
                 legend_entries.append(
                     f"{original_line_name}{marker} "
                     f"(v={vel:.1f} km/s, S/N={det['snr']:.1f})"
@@ -1280,7 +1712,7 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
                 # Mark rest frequency
                 ax.axvline(det['rest_freq_ghz'], color='gray',
                           linestyle='--', alpha=0.2, linewidth=0.5)
-                
+
                 # For background-rejected lines, plot individual Gaussian in blue
                 # Only plot around the line (within velocity range) to avoid filled baseline
                 if is_bg_rejected:
@@ -1303,6 +1735,11 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
             for entry in legend_entries:
                 ax.plot([], [], ' ', label=entry)
 
+        ylim = ax.get_ylim()
+        if ylim[1] > 0.04:
+            ax.set_ylim(top=0.04)
+        if ylim[0] < -0.03:
+            ax.set_ylim(bottom=-0.03)
         ax.set_ylabel('Flux (Jy/beam)', fontsize=10)
         ax.set_xlabel(f'Frequency (GHz) - {spw_label}', fontsize=10)
         ax.legend(loc='best', fontsize=7, ncol=2)
@@ -1313,14 +1750,18 @@ def plot_source_spectra_with_fits(source_id, all_detections, catalog,
         if n_spws > 1:
             axes[idx].axis('off')
 
-    # Create title with coordinates
+    # Create title with coordinates and SIMBAD info
     if source_glon is not None and source_glat is not None:
         title = (f'Source {source_id} - {len(detections)} line detections\n'
                 f'(l={source_glon:.4f}°, b={source_glat:.4f}°)')
+        # Query SIMBAD for this source
+        simbad_result = query_simbad_for_source(source_glon, source_glat, radius_arcsec=5.0)
+        if simbad_result is not None:
+            title += f'\n{simbad_result["name"]} ({simbad_result["otype"]}, {simbad_result["citations"]} citations)'
     else:
         title = f'Source {source_id} - {len(detections)} line detections'
-    
-    plt.suptitle(title, fontsize=14, fontweight='bold')
+
+    plt.suptitle(title, fontsize=13, fontweight='bold')
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
@@ -1428,7 +1869,7 @@ def plot_spatial_by_n_lines(all_detections, catalog,
     # Get coordinates and line counts
     all_glon = catalog['GLON_peak']
     all_glat = catalog['GLAT_peak']
-    
+
     # Wrap longitude at 180 degrees
     crd = SkyCoord(all_glon, all_glat, frame='galactic', unit=(u.deg, u.deg))
     all_glon = crd.l.wrap_at(180 * u.deg).value
@@ -1447,7 +1888,7 @@ def plot_spatial_by_n_lines(all_detections, catalog,
     det_glon = np.array(det_glon)
     det_glat = np.array(det_glat)
     n_lines = np.array(n_lines)
-    
+
     # Wrap detection longitudes at 180 degrees
     crd = SkyCoord(det_glon, det_glat, frame='galactic', unit=(u.deg, u.deg))
     det_glon = crd.l.wrap_at(180 * u.deg).value
@@ -1496,6 +1937,142 @@ def plot_spatial_by_n_lines(all_detections, catalog,
     plt.close()
 
 
+def plot_spatial_by_mean_velocity(all_detections, catalog,
+                                  output_dir=SPATIAL_PLOT_DIR,
+                                  min_n_lines=4):
+    """Plot spatial distribution color-coded by mean velocity.
+
+    Only includes sources with >min_n_lines detections.
+    Symbol size scales with number of detections.
+
+    Parameters
+    ----------
+    all_detections : dict
+        Detection results.
+    catalog : astropy Table
+        Catalog.
+    output_dir : str
+        Output directory for plot.
+    min_n_lines : int
+        Minimum number of line detections to include.
+    """
+    # Calculate mean velocity and number of lines per source
+    source_velocities = {}
+    n_lines_per_source = {}
+
+    for src_id, dets in all_detections.items():
+        n_lines = len(dets)
+        if n_lines <= min_n_lines:
+            continue
+
+        # Calculate mean velocity across all detected lines
+        velocities = [det['centroid_vel_kms'] for det in dets.values()]
+        mean_vel = np.mean(velocities)
+
+        source_velocities[src_id] = mean_vel
+        n_lines_per_source[src_id] = n_lines
+
+    if len(source_velocities) == 0:
+        print(f"  No sources with >{min_n_lines} line detections for velocity plot")
+        return
+
+    # Create catalog index mapping
+    catalog_by_idx = {row['index']: row for row in catalog}
+
+    # Get coordinates for all sources
+    all_glon = catalog['GLON_peak']
+    all_glat = catalog['GLAT_peak']
+
+    crd = SkyCoord(all_glon, all_glat, frame='galactic', unit=(u.deg, u.deg))
+    all_glon = crd.l.wrap_at(180 * u.deg).value
+    all_glat = crd.b.value
+
+    # Get coordinates, velocities, and line counts for selected sources
+    det_glon = []
+    det_glat = []
+    velocities = []
+    n_lines = []
+
+    for src_id, vel in source_velocities.items():
+        if src_id in catalog_by_idx:
+            det_glon.append(catalog_by_idx[src_id]['GLON_peak'])
+            det_glat.append(catalog_by_idx[src_id]['GLAT_peak'])
+            velocities.append(vel)
+            n_lines.append(n_lines_per_source[src_id])
+
+    det_glon = np.array(det_glon)
+    det_glat = np.array(det_glat)
+    velocities = np.array(velocities)
+    n_lines = np.array(n_lines)
+
+    # Wrap detection longitudes at 180 degrees
+    crd = SkyCoord(det_glon, det_glat, frame='galactic', unit=(u.deg, u.deg))
+    det_glon = crd.l.wrap_at(180 * u.deg).value
+    det_glat = crd.b.value
+
+    # Create figure
+    fig, ax = plt.subplots(figsize=(14, 10))
+
+    # All sources as small gray dots
+    ax.scatter(all_glon, all_glat, c='gray', s=1, alpha=0.2,
+              label=f'All sources (N={len(catalog)})')
+
+    # Scale marker sizes by number of detections (10-200 points)
+    sizes = 10 + n_lines * 15
+    sizes = np.clip(sizes, 10, 250)
+
+    # Create scatter plot color-coded by velocity
+    scatter = ax.scatter(det_glon, det_glat, c=velocities, s=sizes,
+                        alpha=0.7, cmap='RdYlBu_r',  # Red=positive, Blue=negative
+                        edgecolors='black', linewidths=0.5,
+                        vmin=-100, vmax=100,  # Typical GC velocity range
+                        label=f'Sources with >{min_n_lines} lines (N={len(velocities)})')
+
+    # Add colorbar
+    cbar = plt.colorbar(scatter, ax=ax, label='Mean Velocity (km/s)')
+    cbar.ax.tick_params(labelsize=10)
+
+    # Add size legend
+    # Create dummy scatter plots for legend
+    legend_sizes = [5, 10, 15, 20]
+    legend_labels = ['5 lines', '10 lines', '15 lines', '20+ lines']
+    legend_elements = []
+
+    for i, (n, label) in enumerate(zip(legend_sizes, legend_labels)):
+        size = 10 + n * 15
+        legend_elements.append(plt.scatter([], [], s=size, c='gray',
+                                          edgecolors='black', linewidths=0.5,
+                                          alpha=0.7, label=label))
+
+    # Create legend for sizes
+    legend1 = ax.legend(handles=legend_elements, loc='upper right',
+                       fontsize=9, title='Number of lines',
+                       framealpha=0.9)
+    ax.add_artist(legend1)
+
+    ax.set_xlabel('Galactic Longitude (deg)', fontsize=12)
+    ax.set_ylabel('Galactic Latitude (deg)', fontsize=12)
+    ax.set_title(f'Spatial Distribution by Mean Velocity (sources with >{min_n_lines} line detections)',
+                fontsize=14, fontweight='bold')
+    ax.grid(alpha=0.3)
+    ax.invert_xaxis()
+
+    # Add statistics text box
+    textstr = f'N sources: {len(velocities)}\n'
+    textstr += f'Velocity range: [{velocities.min():.1f}, {velocities.max():.1f}] km/s\n'
+    textstr += f'Mean velocity: {velocities.mean():.1f} ± {velocities.std():.1f} km/s'
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
+    ax.text(0.02, 0.98, textstr, transform=ax.transAxes, fontsize=10,
+            verticalalignment='top', bbox=props)
+
+    plt.tight_layout()
+
+    os.makedirs(output_dir, exist_ok=True)
+    outfile = os.path.join(output_dir, f'spatial_by_mean_velocity_nlines_gt{min_n_lines}.png')
+    plt.savefig(outfile, dpi=150, bbox_inches='tight')
+    plt.close()
+
+
 # --------------------------------------------------------------------------
 # Entry point
 # --------------------------------------------------------------------------
@@ -1509,6 +2086,10 @@ if __name__ == "__main__":
                         help='Skip detection/verification and only generate plots from cached results')
     parser.add_argument('--skip-verification', action='store_true',
                         help='Skip background verification step (use all detections without background check)')
+    parser.add_argument('--regenerate-cache', action='store_true',
+                        help='Force regeneration of detection cache (ignore existing cache)')
+    parser.add_argument('--all-sources', action='store_true',
+                        help='Generate spectral plots for ALL sources with detections, not just the top 40')
     args = parser.parse_args()
 
     t0 = time.time()
@@ -1542,7 +2123,7 @@ if __name__ == "__main__":
                 f"No cached verified detections found at {CACHE_VERIFIED}. "
                 "Run with PLOT_ONLY=False first to generate detections."
             )
-        
+
         # Also load all detections (pre-verification) for plotting
         if os.path.exists(CACHE_DETECTIONS):
             all_detections_for_plotting, _ = load_detections_cache()
@@ -1567,7 +2148,7 @@ if __name__ == "__main__":
 
         # Check if we can use cached results
         print(f"\n[{time.time()-t0:.1f}s] Checking for cached detection results...", flush=True)
-        if is_cache_valid():
+        if not args.regenerate_cache and is_cache_valid():
             print(f"[{time.time()-t0:.1f}s]   Cache is valid, loading cached results...", flush=True)
             all_detections, line_counts = load_detections_cache()
             n_sources_with_det = len(all_detections)
@@ -1575,8 +2156,12 @@ if __name__ == "__main__":
             print(f"[{time.time()-t0:.1f}s]   Loaded: {n_sources_with_det} sources with "
                   f"{total_dets} total line detections", flush=True)
         else:
-            print(f"[{time.time()-t0:.1f}s]   No valid cache found, scanning all sources...", flush=True)
+            if args.regenerate_cache:
+                print(f"[{time.time()-t0:.1f}s]   --regenerate-cache specified, regenerating all detections...", flush=True)
+            else:
+                print(f"[{time.time()-t0:.1f}s]   No valid cache found, scanning all sources...", flush=True)
             print(f"\n[{time.time()-t0:.1f}s] Scanning all sources for line detections...", flush=True)
+            print(f"[{time.time()-t0:.1f}s] Using multi-peak fitting to handle blended lines...", flush=True)
             all_detections = scan_all_sources(catalog=catalog, linelist=linelist)
             n_sources_with_det = len(all_detections)
             total_dets = sum(len(d) for d in all_detections.values())
@@ -1623,7 +2208,7 @@ if __name__ == "__main__":
         # Use verified detections for catalog augmentation and plotting
         final_detections = verified_detections
         final_line_counts = tally_detections(final_detections)
-        
+
         # Keep all_detections for plotting (to show background-rejected lines)
         all_detections_for_plotting = all_detections
 
@@ -1642,15 +2227,29 @@ if __name__ == "__main__":
     print("="*70)
     for rank, (src_id, n_lines) in enumerate(top_sources, 1):
         line_names = list(final_detections[src_id].keys())
-        print(f"{rank:3d}. Source {src_id:5d}: {n_lines:2d} lines - "
-              f"{', '.join(line_names[:5])}"
-              f"{' ...' if len(line_names) > 5 else ''}")
+        glon = catalog[ catalog['index'] == src_id ]['GLON_peak'].value[0]
+        glat = catalog[ catalog['index'] == src_id ]['GLAT_peak'].value[0]
+
+        # Query SIMBAD for known objects within 5"
+        simbad_result = query_simbad_for_source(glon, glat, radius_arcsec=5.0)
+
+        base_msg = (f"{rank:3d}. Source {src_id:5d} {glon:6.3f} {glat:6.3f}: {n_lines:2d} lines - "
+                    f"{', '.join(line_names[:5])}"
+                    f"{' ...' if len(line_names) > 5 else ''}")
+
+        if simbad_result is not None:
+            print(f"{base_msg}")
+            print(f"     SIMBAD: {simbad_result['name']} ({simbad_result['otype']}, "
+                  f"{simbad_result['citations']} citations)")
+        else:
+            print(f"{base_msg}")
     print("="*70)
 
     # Augment catalog
     print(f"\n[{time.time()-t0:.1f}s] Augmenting catalog...", flush=True)
     catalog, sparse_dets = augment_catalog(catalog=catalog, all_detections=final_detections,
-                                           line_counts=final_line_counts)
+                                           line_counts=final_line_counts, linelist=linelist,
+                                           spectrum_dir=SPECTRUM_DIR, prefix=CATALOG_NAME_PREFIX)
 
     # Write outputs
     print(f"\n[{time.time()-t0:.1f}s] Writing augmented catalog to {OUTPUT_CATALOG_PATH}", flush=True)
@@ -1671,16 +2270,62 @@ if __name__ == "__main__":
     print(f"[{time.time()-t0:.1f}s] GENERATING PLOTS")
     print(f"[{time.time()-t0:.1f}s] " + "="*70)
 
+    # Create subdirectories for top40 and not_top40
+    os.makedirs(SPECTRA_PLOT_TOP40_DIR, exist_ok=True)
+    os.makedirs(SPECTRA_PLOT_NOT_TOP40_DIR, exist_ok=True)
+
+    # Move any existing non-top40 plots from the main plots/ directory into not_top40/
+    top40_source_ids = {src_id for src_id, _ in top_sources}
+    existing_plots = glob.glob(os.path.join(SPECTRA_PLOT_DIR, 'source_*_spectra.png'))
+    moved_count = 0
+    for plot_path in existing_plots:
+        basename = os.path.basename(plot_path)
+        # Extract source ID from filename like source_00490_spectra.png
+        try:
+            src_id_str = basename.split('_')[1]
+            src_id_int = int(src_id_str)
+        except (IndexError, ValueError):
+            continue
+        if src_id_int not in top40_source_ids:
+            dest = os.path.join(SPECTRA_PLOT_NOT_TOP40_DIR, basename)
+            shutil.move(plot_path, dest)
+            moved_count += 1
+        else:
+            # Move top40 plots into the top40/ subdirectory
+            dest = os.path.join(SPECTRA_PLOT_TOP40_DIR, basename)
+            shutil.move(plot_path, dest)
+    if moved_count > 0:
+        print(f"[{time.time()-t0:.1f}s]   Moved {moved_count} non-top40 plots to {SPECTRA_PLOT_NOT_TOP40_DIR}/", flush=True)
+
     # Plot spectra for top 40 sources
-    print(f"\n[{time.time()-t0:.1f}s] Creating spectral plots for top 40 sources in {SPECTRA_PLOT_DIR}/...", flush=True)
+    print(f"\n[{time.time()-t0:.1f}s] Creating spectral plots for top 40 sources in {SPECTRA_PLOT_TOP40_DIR}/...", flush=True)
     for rank, (src_id, n_lines) in enumerate(top_sources, 1):
         if rank % 10 == 0:
             print(f"[{time.time()-t0:.1f}s]   Plotted {rank}/40 sources...", flush=True)
         plot_source_spectra_with_fits(source_id=src_id, all_detections=all_detections_for_plotting, catalog=catalog,
                                      linelist=linelist, spectrum_dir=SPECTRUM_DIR,
-                                     prefix=CATALOG_NAME_PREFIX, output_dir=SPECTRA_PLOT_DIR,
+                                     prefix=CATALOG_NAME_PREFIX, output_dir=SPECTRA_PLOT_TOP40_DIR,
                                      verified_detections=final_detections)
-    print(f"[{time.time()-t0:.1f}s]   Spectral plots complete: {len(top_sources)} plots saved", flush=True)
+    print(f"[{time.time()-t0:.1f}s]   Top 40 spectral plots complete: {len(top_sources)} plots saved", flush=True)
+
+    # Optionally plot all remaining sources with detections
+    if args.all_sources:
+        remaining_sources = sorted(
+            [(src_id, len(dets)) for src_id, dets in final_detections.items()
+             if src_id not in top40_source_ids],
+            key=lambda x: -x[1]
+        )
+        print(f"\n[{time.time()-t0:.1f}s] Creating spectral plots for {len(remaining_sources)} remaining sources "
+              f"in {SPECTRA_PLOT_NOT_TOP40_DIR}/...", flush=True)
+        for rank, (src_id, n_lines) in enumerate(remaining_sources, 1):
+            if rank % 50 == 0:
+                print(f"[{time.time()-t0:.1f}s]   Plotted {rank}/{len(remaining_sources)} remaining sources...", flush=True)
+            plot_source_spectra_with_fits(source_id=src_id, all_detections=all_detections_for_plotting, catalog=catalog,
+                                         linelist=linelist, spectrum_dir=SPECTRUM_DIR,
+                                         prefix=CATALOG_NAME_PREFIX, output_dir=SPECTRA_PLOT_NOT_TOP40_DIR,
+                                         verified_detections=final_detections)
+        print(f"[{time.time()-t0:.1f}s]   All source spectral plots complete: "
+              f"{len(remaining_sources)} additional plots saved", flush=True)
 
     # Plot spatial distribution for each line
     print(f"\n[{time.time()-t0:.1f}s] Creating spatial plots for each line in {SPATIAL_PLOT_DIR}/...", flush=True)
@@ -1696,5 +2341,11 @@ if __name__ == "__main__":
     print(f"\n[{time.time()-t0:.1f}s] Creating spatial plot by number of lines...", flush=True)
     plot_spatial_by_n_lines(all_detections=final_detections, catalog=catalog, output_dir=SPATIAL_PLOT_DIR)
     print(f"[{time.time()-t0:.1f}s]   Spatial plot by N lines saved", flush=True)
+
+    # Plot spatial distribution by mean velocity (sources with >4 lines)
+    print(f"\n[{time.time()-t0:.1f}s] Creating spatial plot by mean velocity...", flush=True)
+    plot_spatial_by_mean_velocity(all_detections=final_detections, catalog=catalog,
+                                  output_dir=SPATIAL_PLOT_DIR, min_n_lines=4)
+    print(f"[{time.time()-t0:.1f}s]   Spatial velocity plot saved", flush=True)
 
     print(f"\n[{time.time()-t0:.1f}s] Done. Total elapsed time: {time.time()-t0:.1f}s ({(time.time()-t0)/60:.1f}m)", flush=True)
