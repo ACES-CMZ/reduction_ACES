@@ -294,6 +294,9 @@ beam_sizes = {
 # Cache for file WCS and bounds to avoid repeated file opening
 _file_cache = {}
 
+# Cache for ACES 3mm mosaic used by compactness measurement
+_aces_mosaic_cache = {}
+
 
 def select_best_file(coord, filepaths):
     """
@@ -459,6 +462,157 @@ def galactic_cutout(coord, hdu, size=50*u.arcsec):
         return None, None
 
     return final_data, final_wcs
+
+
+def measure_compactness_shells(coord, aces_3mm_file=None, n_shells=4):
+    """
+    Measure the compactness of an ACES continuum source using concentric shell
+    photometry on the ACES 3mm mosaic.
+
+    For each shell i (0-indexed), the mean Jy/beam flux is measured in the
+    annulus spanning [i, i+1) × beam_FWHM in radius from the source centre.
+    Shell 0 therefore captures the core (r < 1 beam FWHM), shell 1 captures
+    the first ring (1–2 FWHM), etc.
+
+    The compactness index is the fraction of the total area-weighted flux that
+    lives in the innermost shell::
+
+        C_meas = (mean_0 × area_0) / Σ_i (max(mean_i, 0) × area_i)
+
+    Values close to 1 indicate an unresolved (point-like) source; lower values
+    indicate increasingly extended emission.
+
+    Parameters
+    ----------
+    coord : SkyCoord
+        Source coordinate.
+    aces_3mm_file : str, optional
+        Path to the ACES 3 mm continuum mosaic.  Defaults to the standard
+        feathered mosaic path.
+    n_shells : int
+        Number of concentric shells to measure (default 4).
+
+    Returns
+    -------
+    compactness : float
+        Area-weighted flux fraction in the innermost shell (0–1), or np.nan
+        if measurement is not possible.
+    shell_profile : list of float
+        Shell mean fluxes (Jy/beam) normalised to the innermost-shell mean;
+        empty list on failure.
+    """
+    global _aces_mosaic_cache
+
+    if aces_3mm_file is None:
+        aces_3mm_file = ('/orange/adamginsburg/ACES/mosaics/continuum/'
+                         '12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits')
+
+    # ---------- load & cache the mosaic once ----------
+    if aces_3mm_file not in _aces_mosaic_cache:
+        if not Path(aces_3mm_file).exists():
+            print(f"  Compactness: ACES mosaic not found: {aces_3mm_file}")
+            _aces_mosaic_cache[aces_3mm_file] = None
+        else:
+            try:
+                with fits.open(aces_3mm_file) as hdul:
+                    image_hdu = next(
+                        (h for h in hdul
+                         if h.data is not None and h.data.ndim >= 2),
+                        None)
+                    if image_hdu is None:
+                        _aces_mosaic_cache[aces_3mm_file] = None
+                    else:
+                        mosaic_data = image_hdu.data.copy()
+                        while mosaic_data.ndim > 2:
+                            mosaic_data = mosaic_data[0]
+                        mosaic_wcs = WCS(image_hdu.header).celestial
+                        try:
+                            mosaic_beam = radio_beam.Beam.from_fits_header(image_hdu.header)
+                        except Exception:
+                            mosaic_beam = radio_beam.Beam(1.5 * u.arcsec)
+                        pixel_scale_asec = np.abs(mosaic_wcs.wcs.cdelt[0]) * 3600.0
+                        fwhm_pix = mosaic_beam.major.to(u.arcsec).value / pixel_scale_asec
+                        _aces_mosaic_cache[aces_3mm_file] = (
+                            mosaic_data, mosaic_wcs, fwhm_pix, pixel_scale_asec)
+                        print(f"  Compactness: cached ACES mosaic "
+                              f"(beam FWHM={mosaic_beam.major.to(u.arcsec):.2f}, "
+                              f"{fwhm_pix:.2f} pix)")
+            except Exception as exc:
+                print(f"  Compactness: failed to cache ACES mosaic: {exc}")
+                _aces_mosaic_cache[aces_3mm_file] = None
+
+    cache = _aces_mosaic_cache[aces_3mm_file]
+    if cache is None:
+        return np.nan, []
+
+    mosaic_data, mosaic_wcs, fwhm_pix, pixel_scale_asec = cache
+
+    # ---------- locate source in mosaic ----------
+    try:
+        xx, yy = mosaic_wcs.world_to_pixel(coord)
+        xx, yy = float(xx), float(yy)
+        if not (np.isfinite(xx) and np.isfinite(yy)):
+            return np.nan, []
+        if not (0 <= xx < mosaic_data.shape[1] and
+                0 <= yy < mosaic_data.shape[0]):
+            print("  Compactness: source outside mosaic bounds")
+            return np.nan, []
+    except Exception as exc:
+        print(f"  Compactness: world_to_pixel failed: {exc}")
+        return np.nan, []
+
+    # ---------- extract a postage-stamp subimage ----------
+    pad = int(np.ceil((n_shells + 0.5) * fwhm_pix)) + 3
+    x0 = max(0, int(round(xx)) - pad)
+    x1 = min(mosaic_data.shape[1], int(round(xx)) + pad + 1)
+    y0 = max(0, int(round(yy)) - pad)
+    y1 = min(mosaic_data.shape[0], int(round(yy)) + pad + 1)
+    sub = mosaic_data[y0:y1, x0:x1]
+
+    # pixel-radius grid relative to source centre
+    ys, xs = np.ogrid[y0:y1, x0:x1]
+    r_pix = np.sqrt((xs - xx) ** 2 + (ys - yy) ** 2)
+
+    # ---------- measure mean flux in each shell ----------
+    shell_means = []
+    shell_areas = []   # number of valid pixels
+    for i in range(n_shells):
+        r_in = i * fwhm_pix
+        r_out = (i + 1) * fwhm_pix
+        mask = (r_pix >= r_in) & (r_pix < r_out) & np.isfinite(sub)
+        n_pix = int(np.sum(mask))
+        shell_areas.append(n_pix)
+        if n_pix >= 1:
+            shell_means.append(float(np.mean(sub[mask])))
+        else:
+            shell_means.append(np.nan)
+
+    # ---------- normalised shell profile (relative to innermost shell) ----------
+    peak_val = shell_means[0] if (shell_means and np.isfinite(shell_means[0])) else np.nan
+    if not np.isfinite(peak_val) or peak_val == 0:
+        # Fall back to the maximum finite shell mean
+        finite_means = [m for m in shell_means if np.isfinite(m)]
+        peak_val = max(finite_means) if finite_means else np.nan
+    if not np.isfinite(peak_val) or peak_val == 0:
+        return np.nan, shell_means
+
+    shell_profile = [
+        m / peak_val if np.isfinite(m) else np.nan
+        for m in shell_means
+    ]
+
+    # ---------- area-weighted compactness index ----------
+    # Weight by pixel count (proportional to annular area) so shells at large
+    # radii are not under-represented merely because we use means.
+    core_contrib = max(shell_means[0], 0) * shell_areas[0] if shell_areas[0] > 0 else 0.0
+    total_contrib = sum(
+        max(m, 0) * a
+        for m, a in zip(shell_means, shell_areas)
+        if np.isfinite(m)
+    )
+    compactness = core_contrib / total_contrib if total_contrib > 0 else np.nan
+
+    return compactness, shell_profile
 
 
 def create_custom_colormap():
@@ -1062,6 +1216,9 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
     spec_row_start = n_cutout_rows  # Start at the row after cutouts+SED
     plot_spectra(source['index'], fig, gs, spec_row_start, n_cols=n_cols, glon=source['GLON_peak'], glat=source['GLAT_peak'])
 
+    # Measure compactness via concentric shell photometry on the ACES 3mm mosaic
+    c_meas, shell_profile = measure_compactness_shells(coord)
+
     # Add overall title with SIMBAD match if available
     source_idx_val = source['index']
 
@@ -1091,7 +1248,16 @@ def plot_multiwavelength_cutout(source_idx, catalog, data_files, output_dir,
     if 'cmzoom_flux' in source.colnames and not np.isnan(source['cmzoom_flux']):
         title += f", Flux (1mm) = {source['cmzoom_flux']:.3f} Jy"
 
-    title += f"\n CS={source['Mean_CS']:0.2f} MS={source['Mean_MS']:0.2f}"
+    # Build compactness string: measured index + normalised shell profile
+    if np.isfinite(c_meas) and shell_profile:
+        shells_str = "|".join(
+            f"{v:.2f}" if np.isfinite(v) else "nan"
+            for v in shell_profile
+        )
+        c_meas_str = f"C_meas={c_meas:.2f} [{shells_str}]"
+    else:
+        c_meas_str = "C_meas=N/A"
+    title += f"\n CS={source['Mean_CS']:0.2f} {c_meas_str} MS={source['Mean_MS']:0.2f}"
 
     fig.suptitle(title, fontsize=14, fontweight='bold', y=0.98)
 
