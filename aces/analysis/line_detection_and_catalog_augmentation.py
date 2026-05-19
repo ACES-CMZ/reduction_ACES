@@ -242,8 +242,8 @@ def fit_gaussian_to_line(freq_ghz, flux, rest_freq_ghz,
     # Convert xdata (frequency) to velocity
     vel_data = (xdata * u.GHz).to(u.km / u.s, equivalencies=u.doppler_radio(rest_freq_ghz * u.GHz)).value
 
-    # Prefer peaks within ±50 km/s of rest, otherwise take the absolute max
-    central_mask = np.abs(vel_data) <= 50.0
+    # Prefer peaks within ±150 km/s of rest, otherwise take the absolute max
+    central_mask = np.abs(vel_data) <= 150.0
     if central_mask.sum() > 0 and np.nanmax(ydata_sub[central_mask]) > 0:
         # Use peak in central region if it exists
         central_sub = ydata_sub.copy()

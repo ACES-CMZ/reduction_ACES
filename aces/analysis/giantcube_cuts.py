@@ -14,6 +14,7 @@ import pylab as pl
 from dask.diagnostics import ProgressBar
 from dask.diagnostics import ResourceProfiler
 from dask.distributed import progress
+from astropy import log
 import dafits
 
 from tqdm import tqdm
@@ -151,12 +152,16 @@ def get_pruned_mask(cube, noise, threshold1=1.0, threshold2=5.0):
         ndi = ndimage
         niter = -1
 
+    log.debug("Calculating low threshold mask")
     signal_mask_l = (cube > noise * threshold1).include()
+    log.debug("Dilating low threshold mask")
     signal_mask_l = func(signal_mask_l, npix=beam_area_pix * 3)
 
+    log.debug("Calculating high threshold mask")
     signal_mask_h = (cube > noise * threshold2).include()
     #signal_mask_h = func(signal_mask_h, npix=beam_area_pix)
 
+    log.debug("Dilating high threshold mask into low-threshold mask")
     signal_mask_both = ndi.binary_dilation(signal_mask_h, iterations=niter, mask=signal_mask_l)
 
     return signal_mask_both
