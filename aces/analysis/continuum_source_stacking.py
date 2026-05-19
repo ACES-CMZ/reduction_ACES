@@ -346,7 +346,7 @@ def add_cmzoom_spectral_index(catalog):
     # Compute spectral index (CMZoom at 1mm, ACES at 3mm)
     # alpha = log(S_3mm / S_1mm) / log(nu_3mm / nu_1mm)
     freq_aces = 96.0  # GHz (3mm)
-    freq_cmzoom = 260.0  # GHz (1mm)
+    freq_cmzoom = 226.0  # GHz (1mm)
 
     mask = np.isfinite(cmzoom_flux) & (cmzoom_flux > 0)
     if np.sum(mask) > 0:
