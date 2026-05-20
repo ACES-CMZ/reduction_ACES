@@ -74,7 +74,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 MATCH_RADIUS = {
     "2MASS":       3.0,  # 2″ 2MASS pixels; allow small offset
     "GLIMPSE":     3.0,  # ~2″ Spitzer/IRAC PSF
-    "MeerKAT":     5.0,  # ~7″ MeerKAT beam; be generous
+    "MeerKAT":     8.0,  # ~7″ MeerKAT GC mosaic beam; be generous
     "VLA_Lu2019":  3.0,  # ~2″ VLA CMZ data
     "Chandra_CSC": 3.0,  # sub-arcsec Chandra, but positional uncertainties
     "Muno_Xray":   3.0,  # Muno+ 2009 positional accuracy ~1″
@@ -116,7 +116,7 @@ VIZIER_COLUMNS = {
 # ---------------------------------------------------------------------------
 VIZIER_CATALOGS["MeerKAT"] = "J/A+A/673/A113/mals-ten"
 VIZIER_COLUMNS["MeerKAT"] = ["*"]
-MATCH_RADIUS["MeerKAT"] = 5.0
+MATCH_RADIUS["MeerKAT"] = 8.0
 
 
 # ===================================================================== #

@@ -46,18 +46,24 @@ target_hdu = acesmosaicfh[0].header
 ww_big = WCS(target_hdu)
 
 
-# Reproject MEERKAT to ACES
-meerkat_to_aces, _ = reproject.reproject_interp(meerkatfh, target_hdu) # Jy/beam
+# Reproject MEERKAT to ACES.  MeerKAT FITS data are Jy/beam; attach units now.
+meerkat_to_aces_arr, _ = reproject.reproject_interp(meerkatfh, target_hdu)
+meerkat_to_aces = u.Quantity(meerkat_to_aces_arr, u.Jy / u.beam)
 meerkat_beam = Beam.from_fits_header(meerkatfh[0].header)
 meerkat_convkernel = meerkat_beam.deconvolve(ACESbeam).as_kernel(pixscale)
-meerkat_reffreq = 1.4*u.GHz
+meerkat_reffreq = 1.284*u.GHz  # SARAO MeerKAT galactic centre mosaic (Heywood+ 2022) L-band center
 meerkat_jtok = meerkat_beam.jtok(meerkat_reffreq)
 
 # not used mustang_beam = Beam.from_fits_header(mustangfh[0].header)
 # not used mustang_jtok = mustang_beam.jtok(mustang_reffreq) # MUSTANG is in K
 # not used meerkat_to_mustang_convkernel = mustang_beam.deconvolve(meerkat_beam).as_kernel(pixscale)
 
-ACES_conv_MEER = convolve_fft(acesmosaicfeatherfh[0].data, meerkat_convkernel) # K
+# ACES feathered mosaic has BUNIT='K' (see joint_deconvolution/feather_continuum.py).
+# convolve_fft strips units; we re-attach K immediately so downstream math stays unit-aware.
+ACES_conv_MEER = u.Quantity(
+    convolve_fft(acesmosaicfeatherfh[0].data, meerkat_convkernel),
+    u.K,
+)
 # not used meerkat_conv_MUSTANG = convolve_fft(meerkat_to_aces, meerkat_to_mustang_convkernel)
 
 effective_index = -0.1
@@ -68,9 +74,17 @@ frequency_scale_meeralma = (ACES_reffreq / meerkat_reffreq)**(2+effective_index)
 
 # alpha_mustang_meerkat = np.log(mustang_meerkat_ratio) / np.log(mustang_reffreq / meerkat_reffreq)
 
-# ACES_conv_MEER is in Kelvin but is now in a MEERKAT beam, so we need to go K->Jy in Meerkat beam units
-aces_meerkatbeam_jtok = meerkat_beam.jtok(ACES_reffreq)
-alpha_aces_meerkat = np.log(ACES_conv_MEER / aces_meerkatbeam_jtok.value / (meerkat_to_aces)) / np.log(ACES_reffreq / meerkat_reffreq)
+# ACES_conv_MEER is in K at the ACES freq, evaluated in a MEERKAT-sized beam.
+# Divide by the MEERKAT-beam Jy<->K factor at the ACES frequency to get Jy/beam
+# (in the MEERKAT beam) at the ACES freq, then take the dimensionless flux ratio
+# vs the MEERKAT image (Jy/beam at MEERKAT freq) to compute the spectral index.
+aces_meerkatbeam_jtok = meerkat_beam.jtok(ACES_reffreq)  # K per (Jy/beam)
+aces_jybeam_at_meerkatbeam = (ACES_conv_MEER / aces_meerkatbeam_jtok).to(u.Jy / u.beam)
+flux_ratio = (aces_jybeam_at_meerkatbeam / meerkat_to_aces).decompose()
+# Guard: ratio must be truly dimensionless before log
+assert flux_ratio.unit == u.dimensionless_unscaled, f"non-dimensionless ratio: {flux_ratio.unit}"
+log_freq_ratio = np.log((ACES_reffreq / meerkat_reffreq).decompose().value)
+alpha_aces_meerkat = np.log(flux_ratio.value) / log_freq_ratio
 
-hdu = fits.PrimaryHDU(data=alpha_aces_meerkat.decompose().value, header=target_hdu)
+hdu = fits.PrimaryHDU(data=alpha_aces_meerkat, header=target_hdu)
 hdu.writeto(f'{basepath}/mosaics/continuum/alpha_aces_meerkat.fits', overwrite=True)

@@ -296,6 +296,21 @@ def update_mom1(mom1path, chwidth, cube):
         hdul[0].header['CRVAL3'] = (cube.spectral_axis.mean().value, 'Value of central pixel in parent cube')
 
 
+def update_collapsed(slicepath, fwidth, cube, comment='Spectral collapse map (max/madstd/etc)'):
+    """Annotate a 2D image collapsed along the spectral axis (e.g. max, madstd).
+
+    These are not moment maps; the spectral axis is fully integrated into a single
+    image plane.  We record the total bandwidth (fwidth) and parent-cube spectral
+    range so the provenance is unambiguous.
+    """
+    with fits.open(slicepath, mode='update') as hdul:
+        hdul[0].header['CDELT3'] = (fwidth.value, 'Bandwidth of parent cube')
+        hdul[0].header['CUNIT3'] = fwidth.unit.to_string('fits')
+        hdul[0].header['CRPIX3'] = 1
+        hdul[0].header['CRVAL3'] = (cube.spectral_axis.min().value, 'Value of first pixel in parent cube')
+        hdul[0].header['COMMENT'] = comment
+
+
 def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
                  howargs={}):
 
@@ -525,9 +540,10 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     nemx = cube.with_mask(noedge).max(axis=0, **howargs)
     print(f"Done computing no-edge max, now writing. dt={time.time() - t0}")
     nemx.write(f"{mompath}/{molname}_CubeMosaic_edgelessmax.fits", overwrite=True)
-    update_mom1(mom1path=f"{mompath}/{molname}_CubeMosaic_edgelessmax.fits",
-                chwidth=chwid,
-                cube=cube)
+    update_collapsed(slicepath=f"{mompath}/{molname}_CubeMosaic_edgelessmax.fits",
+                     fwidth=fwidth,
+                     cube=cube,
+                     comment='Per-pixel spectral max over edge-trimmed cube')
     print(f"Done writing no-edge max, now pnging. dt={time.time() - t0}")
     makepng(data=nemx.value, wcs=nemx.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_edgelessmax.png",
             stretch='asinh', min_percent=0.1, max_percent=99.9)
@@ -542,9 +558,10 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
         noise_madstd = cube.with_mask(noedge).mad_std(axis=0, how='ray', progressbar=True)
     print(f"Done with no-edge madstd. Writing noisemap to {mompath}/{molname}_CubeMosaic_madstd.fits.  dt={time.time() - t0}")
     noise_madstd.write(f"{mompath}/{molname}_CubeMosaic_edgelessmadstd.fits", overwrite=True)
-    update_mom1(mom1path=f"{mompath}/{molname}_CubeMosaic_edgelessmadstd.fits",
-                chwidth=chwid,
-                cube=cube)
+    update_collapsed(slicepath=f"{mompath}/{molname}_CubeMosaic_edgelessmadstd.fits",
+                     fwidth=fwidth,
+                     cube=cube,
+                     comment='Per-pixel MAD-std over edge-trimmed cube')
     makepng(data=noise_madstd.value, wcs=noise_madstd.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_edgelessmadstd.png",
             stretch='asinh', min_percent=0.5, max_percent=99.5)
 

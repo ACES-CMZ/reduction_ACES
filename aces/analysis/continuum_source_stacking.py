@@ -202,7 +202,7 @@ def compute_spectral_index(flux1, flux2, freq1, freq2, flux1_err=None, flux2_err
         with np.errstate(divide='ignore', invalid='ignore'):
             term1 = (flux1_err / flux1) ** 2
             term2 = (flux2_err / flux2) ** 2
-            alpha_err = np.abs(alpha) * np.sqrt(term1 + term2)
+            alpha_err = np.sqrt(term1 + term2) / np.abs(np.log(freq1 / freq2))
         return alpha, alpha_err
 
     return alpha
@@ -345,8 +345,8 @@ def add_cmzoom_spectral_index(catalog):
 
     # Compute spectral index (CMZoom at 1mm, ACES at 3mm)
     # alpha = log(S_3mm / S_1mm) / log(nu_3mm / nu_1mm)
-    freq_aces = 96.0  # GHz (3mm)
-    freq_cmzoom = 226.0  # GHz (1mm)
+    freq_aces = 97.21  # GHz (3mm, repo-standard ACES reference frequency)
+    freq_cmzoom = 226.0  # GHz (1mm, CMZoom band 6)
 
     mask = np.isfinite(cmzoom_flux) & (cmzoom_flux > 0)
     if np.sum(mask) > 0:
@@ -677,13 +677,16 @@ def create_cmzoom_catalog_with_aces_flux(output_path='/orange/adamginsburg/ACES/
                 cmzoom_flux_err = np.full(len(cmzoom_cat), np.nan)
 
     # Frequencies
-    freq_aces = 96.0  # GHz (3mm)
-    freq_cmzoom = 226.0  # GHz (1mm)
+    freq_aces = 97.21  # GHz (3mm, repo-standard ACES reference frequency)
+    freq_cmzoom = 226.0  # GHz (1mm, CMZoom band 6)
 
     # Compute spectral index for detections
     alpha = np.full(len(cmzoom_cat), np.nan)
     alpha_err = np.full(len(cmzoom_cat), np.nan)
-    alpha_limit = np.full(len(cmzoom_cat), np.nan)  # Upper/lower limits for nondetections
+    # For nondetections we substitute 5*rms (upper limit on ACES flux), which
+    # produces an upper limit on alpha (true flux is smaller -> true alpha is
+    # more negative).  Name is kept "alpha_limit" but described as upper limit.
+    alpha_limit = np.full(len(cmzoom_cat), np.nan)
 
     # Detections: S/N > 5 in ACES
     detection_mask = (aces_flux / aces_rms) > 5
@@ -714,7 +717,7 @@ def create_cmzoom_catalog_with_aces_flux(output_path='/orange/adamginsburg/ACES/
     cmzoom_cat['alpha_cmzoom_aces_err'] = Column(alpha_err,
                                                  description='Uncertainty in spectral index')
     cmzoom_cat['alpha_limit'] = Column(alpha_limit,
-                                       description='Spectral index limit for nondetections')
+                                       description='Upper limit on alpha for ACES nondetections (5*rms substituted)')
     cmzoom_cat['aces_detection'] = Column(detection_mask,
                                           description='ACES detection flag (S/N > 5)')
 
@@ -799,7 +802,7 @@ def stack_aces_at_cmzoom_nondetections(cmzoom_catalog=None,
             cmzoom_catalog = Table.read('/orange/adamginsburg/ACES/tables/cmzoom_complete_with_aces.fits')
 
     # Get nondetections
-    nondetection_mask = cmzoom_catalog['aces_detection'] is False
+    nondetection_mask = ~np.asarray(cmzoom_catalog['aces_detection'])
     nondetections = cmzoom_catalog[nondetection_mask]
 
     print(f"  Found {len(nondetections)} nondetections to stack")

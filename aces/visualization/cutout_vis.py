@@ -256,15 +256,15 @@ wavelengths = {
     'Herschel 160um': 160*u.um,
     '250um': 250*u.um,
     'Herschel 250um': 250*u.um,
-    '1mm': (230*u.GHz).to(u.um, u.spectral()),
-    'CMZoom 1mm': (230*u.GHz).to(u.um, u.spectral()),
-    '3mm': (96*u.GHz).to(u.um, u.spectral()),
-    'ACES 3mm': (96*u.GHz).to(u.um, u.spectral()),
+    '1mm': (226*u.GHz).to(u.um, u.spectral()),
+    'CMZoom 1mm': (226*u.GHz).to(u.um, u.spectral()),
+    '3mm': (97.21*u.GHz).to(u.um, u.spectral()),
+    'ACES 3mm': (97.21*u.GHz).to(u.um, u.spectral()),
     '6cm': 6*u.cm,
     'VLA 6cm': 6*u.cm,
     '20cm': 20*u.cm,
     'VLA 20cm': 20*u.cm,
-    'MEERKAT 20cm': 20*u.cm
+    'MEERKAT 20cm': (1.284*u.GHz).to(u.cm, u.spectral())
 }
 
 # Beam sizes from Traficante+ 2011 and instrument specs
