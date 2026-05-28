@@ -183,7 +183,9 @@ def get_cube_for_source(source_row, fieldmapwcs, fieldmapdata, uidtbl):
         return [], center
 
     mousid = uidtbl[field_id - 1]['12m MOUS ID']
-    cubefns = glob.glob(f'{PRODUCT_DIR}/member.uid___A001_{mousid}/calibrated/working/*Sgr_A_star*.cube.I.iter1.image.pbcor.fits')
+    # cube.I.*iter1 to accommodate .cube.I.iter1.reclean.image.pbcor.statcont.contsub.fits
+    cubefns = glob.glob(f'{PRODUCT_DIR}/member.uid___A001_{mousid}/calibrated/working/*Sgr_A_star*.cube.I.*iter1.image.pbcor.fits')
+    assert any('X15a0_X13c' in x for x in cubefns)
 
     return cubefns, center
 
