@@ -12,6 +12,7 @@ pwd
 # but at least as of 2025/01/19, non-dask works and dask fails
 export USE_DASK=False
 export USE_LOCAL=True
+export EXTRA_DILATION=${EXTRA_DILATION:-0}
 
 if [ "$USE_DASK" == "True" ]; then
     export DASK="_dask"
@@ -50,7 +51,7 @@ for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H
                --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT}_%j.log \
                --account=astronomy-dept --qos=astronomy-dept-b --ntasks=32 --nodes=1 \
                --mem=${mem}gb --time=96:00:00 \
-               --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},USE_LOCAL=${USE_LOCAL},DASK_CLIENT=${DASK_CLIENT},DOWNSAMPLE=${DOWNSAMPLE},DO_PV=${DO_PV} \
+               --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},USE_LOCAL=${USE_LOCAL},DASK_CLIENT=${DASK_CLIENT},DOWNSAMPLE=${DOWNSAMPLE},DO_PV=${DO_PV},EXTRA_DILATION=${EXTRA_DILATION} \
                --wrap /blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/aces_giantcube_analysis
     else
         echo "${MOLNAME}_CubeMosaic.fits does not exist"

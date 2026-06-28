@@ -312,10 +312,12 @@ def update_collapsed(slicepath, fwidth, cube, comment='Spectral collapse map (ma
 
 
 def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
-                 howargs={}):
+                 howargs={}, extra_dilation=0):
 
     os.makedirs(f"{mompath}", exist_ok=True)
     os.makedirs(f"{mompath}/spectra", exist_ok=True)
+
+    dil_suffix = f'_xdil{extra_dilation}' if extra_dilation > 0 else ''
 
     t0 = time.time()
     print(cube, flush=True)
@@ -405,47 +407,52 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     print(f"'good' spectrum: {cube.mask.include().sum(axis=(1, 2))}")
     print(f"noedge spectrum: {noedge.sum(axis=(1, 2))}")
     signal_mask_both = (get_pruned_mask(cube, noise, threshold1=1.5, threshold2=7.0) & noedge)
+    if extra_dilation > 0:
+        if hasattr(cube, 'rechunk'):
+            signal_mask_both = ndmorph.binary_dilation(daskarr(signal_mask_both), structure=np.ones([1, 3, 3]), iterations=extra_dilation)
+        else:
+            signal_mask_both = ndimage.binary_dilation(signal_mask_both, structure=np.ones([1, 3, 3]), iterations=extra_dilation)
     print(f"signal_mask_both spectrum: {signal_mask_both.sum(axis=(1, 2))}")
     print(f"Done creating pruned mask. dt={time.time() - t0}")
     if hasattr(signal_mask_both, 'compute'):
-        dafits.write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits",
+        dafits.write(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned{dil_suffix}.fits",
                      data=signal_mask_both.astype('int'),
                      header=cube.header,
                      overwrite=True)
     else:
         hdu = fits.PrimaryHDU(data=signal_mask_both.astype('int'), header=header)
-        hdu.writeto(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned.fits", overwrite=True)
+        hdu.writeto(f"{mompath}/{molname}_CubeMosaic_signal_mask_pruned{dil_suffix}.fits", overwrite=True)
         del hdu
 
     print(f"Dilated mask high-to-low sigma moment 0. dt={time.time() - t0}")
     mdcube_both = cube.with_mask(BooleanArrayMask(signal_mask_both, cube.wcs))
     mom0 = mdcube_both.moment0(axis=0, **howargs)
-    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits", overwrite=True)
-    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom0.fits",
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated{dil_suffix}_mom0.fits", overwrite=True)
+    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated{dil_suffix}_mom0.fits",
                 fwidth=fwidth,
                 cube=cube)
-    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom0.png",
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated{dil_suffix}_masked_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     print(f"Dilated mask high-to-low sigma moment 1. dt={time.time() - t0}")
     chwid = mdcube_both.spectral_axis[1] - mdcube_both.spectral_axis[0]
     mom1 = mdcube_both.moment1(axis=0, **howargs)
-    mom1.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom1.fits", overwrite=True)
-    update_mom1(mom1path=f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated_mom1.fits",
+    mom1.write(f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated{dil_suffix}_mom1.fits", overwrite=True)
+    update_mom1(mom1path=f"{mompath}/{molname}_CubeMosaic_masked_hlsig_dilated{dil_suffix}_mom1.fits",
                 chwidth=chwid,
                 cube=cube)
-    makepng(data=mom1.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated_masked_mom1.png",
+    makepng(data=mom1.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_hlsig_dilated{dil_suffix}_masked_mom1.png",
             stretch='linear', vmin=-0.1, max_percent=99.5, cmap=pl.cm.RdBu)
 
     howargs_spec = howargs.copy()
     howargs_spec['how'] = 'slice'
 
     maxspec = mdcube_both.max(axis=(1, 2), **howargs_spec)
-    maxspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated_maxspec.fits", overwrite=True)
+    maxspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated{dil_suffix}_maxspec.fits", overwrite=True)
     mean_spec = mdcube_both.mean(axis=(1, 2), **howargs_spec)
-    mean_spec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated_mean_spec.fits", overwrite=True)
+    mean_spec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated{dil_suffix}_mean_spec.fits", overwrite=True)
     stdspec = mdcube_both.mad_std(axis=(1, 2), **howargs_spec)
-    stdspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated_stdspec.fits", overwrite=True)
+    stdspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_masked_hlsig_dilated{dil_suffix}_stdspec.fits", overwrite=True)
     maxspec = cube.max(axis=(1, 2), **howargs_spec)
     maxspec.write(f"{mompath}/spectra/{molname}_CubeMosaic_maxspec.fits", overwrite=True)
     mean_spec = cube.mean(axis=(1, 2), **howargs_spec)
@@ -455,54 +462,54 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
 
     print(f"Third dilated mask (5-sigma). dt={time.time() - t0}")
     signal_mask_5p0 = cube > noise * 5.0
-    signal_mask_5p0 = ndmorph.binary_dilation(daskarr(signal_mask_5p0.include()), structure=np.ones([1, 3, 3]), iterations=1)
+    signal_mask_5p0 = ndmorph.binary_dilation(daskarr(signal_mask_5p0.include()), structure=np.ones([1, 3, 3]), iterations=1 + extra_dilation)
 
     dilated_mask_space_5p0 = signal_mask_5p0.sum(axis=0)
     fits.PrimaryHDU(data=dilated_mask_space_5p0,
-                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_5p0sig_mask.fits", overwrite=True)
+                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_5p0sig{dil_suffix}_mask.fits", overwrite=True)
 
     print(f"Dilated mask 5 sigma moment 0. dt={time.time() - t0}")
     mdcube_5p0 = cube.with_mask(BooleanArrayMask(mask=signal_mask_5p0, wcs=cube.wcs))
     mom0 = mdcube_5p0.moment0(axis=0, **howargs)
-    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.fits", overwrite=True)
-    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated_mom0.png",
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated{dil_suffix}_mom0.fits", overwrite=True)
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_5p0sig_dilated{dil_suffix}_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     print(f"Computing first signal mask (1-sigma). dt={time.time() - t0}")
     signal_mask = cube > noise
 
-    signal_mask = ndmorph.binary_dilation(daskarr(signal_mask.include()), structure=np.ones([1, 3, 3]), iterations=1)
+    signal_mask = ndmorph.binary_dilation(daskarr(signal_mask.include()), structure=np.ones([1, 3, 3]), iterations=1 + extra_dilation)
 
     dilated_mask_space = signal_mask.sum(axis=0)
     fits.PrimaryHDU(data=dilated_mask_space,
-                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_mask.fits", overwrite=True)
+                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated{dil_suffix}_mask.fits", overwrite=True)
 
     print(f"Dilated mask moment 0. dt={time.time() - t0}")
     mdcube = cube.with_mask(BooleanArrayMask(mask=signal_mask, wcs=cube.wcs))
     mom0 = mdcube.moment0(axis=0, **howargs)
-    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits", overwrite=True)
-    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.fits",
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_dilated{dil_suffix}_mom0.fits", overwrite=True)
+    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_masked_dilated{dil_suffix}_mom0.fits",
                 fwidth=fwidth,
                 cube=cube)
-    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated_mom0.png",
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_dilated{dil_suffix}_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     print(f"Second dilated mask (2.5-sigma). dt={time.time() - t0}")
     signal_mask_2p5 = cube > noise * 2.5
-    signal_mask_2p5 = ndmorph.binary_dilation(daskarr(signal_mask_2p5.include()), structure=np.ones([1, 3, 3]), iterations=1)
+    signal_mask_2p5 = ndmorph.binary_dilation(daskarr(signal_mask_2p5.include()), structure=np.ones([1, 3, 3]), iterations=1 + extra_dilation)
 
     dilated_mask_space_2p5 = signal_mask_2p5.sum(axis=0)
     fits.PrimaryHDU(data=dilated_mask_space_2p5,
-                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_2p5sig_mask.fits", overwrite=True)
+                    header=cube.wcs.celestial.to_header()).writeto(f"{mompath}/{molname}_CubeMosaic_dilated_2p5sig{dil_suffix}_mask.fits", overwrite=True)
 
     print(f"Dilated mask 2.5 sigma moment 0. dt={time.time() - t0}")
     mdcube_2p5 = cube.with_mask(BooleanArrayMask(mask=signal_mask_2p5, wcs=cube.wcs))
     mom0 = mdcube_2p5.moment0(axis=0, **howargs)
-    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.fits", overwrite=True)
-    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.fits",
+    mom0.write(f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated{dil_suffix}_mom0.fits", overwrite=True)
+    update_mom0(mom0path=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated{dil_suffix}_mom0.fits",
                 fwidth=fwidth,
                 cube=cube)
-    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated_mom0.png",
+    makepng(data=mom0.value, wcs=mom0.wcs, imfn=f"{mompath}/{molname}_CubeMosaic_masked_2p5sig_dilated{dil_suffix}_mom0.png",
             stretch='asinh', vmin=-0.1, max_percent=99.5)
 
     if hasattr(cube, 'rechunk'):
@@ -578,6 +585,7 @@ def main():
     do_pv = os.getenv('DO_PV')
     if do_pv and do_pv.lower() == 'false':
         do_pv = False
+    extra_dilation = int(os.getenv('EXTRA_DILATION', '0'))
 
     if os.getenv('MOLNAME'):
         molname = os.getenv('MOLNAME')
@@ -585,11 +593,11 @@ def main():
         molname = 'CS21'
 
     print("Relevant environment variables: "
-          f"MOLNAME={os.getenv('MOLNAME')} USE_DASK={os.getenv('USE_DASK')} DOWNSAMPLE={os.getenv('DOWNSAMPLE')} DO_PV={os.getenv('DO_PV')}"
+          f"MOLNAME={os.getenv('MOLNAME')} USE_DASK={os.getenv('USE_DASK')} DOWNSAMPLE={os.getenv('DOWNSAMPLE')} DO_PV={os.getenv('DO_PV')} EXTRA_DILATION={os.getenv('EXTRA_DILATION')}"
           f"DASK_CLIENT={os.getenv('DASK_CLIENT')} SLURM_MEM_PER_NODE={os.getenv('SLURM_MEM_PER_NODE')} SLURM_NTASKS_PER_NODE={os.getenv('SLURM_NTASKS_PER_NODE')} SLURM_NTASKS={os.getenv('SLURM_NTASKS')} SLURM_STEP_NUM_TASKS={os.getenv('SLURM_STEP_NUM_TASKS')} SLURM_TASKS_PER_NODE={os.getenv('SLURM_TASKS_PER_NODE')}"
     )
 
-    print(f"giantcube_cuts main parameters: molname{molname} dodask={dodask} dods={dods} do_pv={do_pv}")
+    print(f"giantcube_cuts main parameters: molname{molname} dodask={dodask} dods={dods} do_pv={do_pv} extra_dilation={extra_dilation}")
 
     cubefilename = f'{cubepath}/{molname}_CubeMosaic_spectrally.fits'
     if not os.path.exists(cubefilename):
@@ -698,7 +706,7 @@ def main():
             print(f"Dask client number of workers: {len(client.scheduler_info()['workers'])}")
             print(f"Using scheduler {scheduler}", flush=True)
 
-    signal_mask_both = do_all_stats(cube, molname=molname, howargs=howargs)
+    signal_mask_both = do_all_stats(cube, molname=molname, howargs=howargs, extra_dilation=extra_dilation)
 
     if do_pv:
         do_pvs(cube, molname=molname, howargs=howargs, mask=signal_mask_both)
