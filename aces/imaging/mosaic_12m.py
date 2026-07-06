@@ -663,6 +663,20 @@ def get_weightfile(filename, spw):
                 if match_pre:
                     break
 
+            # Fall back to flat (2D) weights when the full weight cube is missing.
+            # These are constant across the spectral axis (per-line moment weight
+            # images, or continuum weight images) and get broadcast across the
+            # cube's channels in make_giant_mosaic_cube.  .weight.tt0 CASA images
+            # are fine; they don't need to be exported to FITS.
+            if len(flist) != 1:
+                workingdir = f'{sgmpath}{mousid}/calibrated/working'
+                flat = sorted(glob.glob(f'{workingdir}/*spw{spw}*weight_*max.fits'))
+                if len(flat) == 0:
+                    # continuum weight images (flat across all channels)
+                    flat = sorted(glob.glob(f'{workingdir}/*cont.I.iter1.weight.tt0'))
+                if len(flat) >= 1:
+                    flist = [flat[0]]
+
     # we have to have exactly 1 match
     assert len(flist) == 1, f'{filename} failed to find a weightfile: flist={str(flist)}'
     return flist[0]
@@ -824,6 +838,39 @@ def make_giant_mosaic_cube_nsplus(**kwargs):
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
         make_downsampled_cube(f'{basepath}/mosaics/cubes/NSplus_CubeMosaic.fits',
                               f'{basepath}/mosaics/cubes/NSplus_CubeMosaic_downsampled9.fits',
+                              )
+
+
+def make_giant_mosaic_cube_ch3cho_3m13(**kwargs):
+    # CH3CHO 3(-1,3)-2(0,2) E at 101.343448 GHz, in Cont2 = SPW35
+    # (distinct from the SPW33 CH3CHO cube at 98.900951 GHz)
+
+    filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW35/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_35.image.statcont.contsub.fits'))
+
+    print(f"Found {len(filelist)} CH3CHO_3m13-containing spw35 files")
+
+    check_files(filelist)
+
+    weightfilelist = [get_weightfile(fn, spw=35) for fn in filelist]
+    for fn in weightfilelist:
+        assert os.path.exists(fn)
+
+    restfrq = 101.343448e9
+    cdelt_kms = 1.47015502
+    make_giant_mosaic_cube(filelist,
+                           weightfilelist=weightfilelist,
+                           reference_frequency=restfrq,
+                           cdelt_kms=cdelt_kms,
+                           cubename='CH3CHO_3m13',
+                           nchan=350,
+                           beam_threshold=2.75 * u.arcsec,
+                           channelmosaic_directory=f'{basepath}/mosaics/CH3CHO_3m13_Channels/',
+                           fail_if_cube_dropped=False,
+                           **kwargs,)
+
+    if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/CH3CHO_3m13_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/CH3CHO_3m13_CubeMosaic_downsampled9.fits',
                               )
 
 

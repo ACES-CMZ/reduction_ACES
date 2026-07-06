@@ -713,6 +713,44 @@ def check_channel(chanfn, verbose=True):
         return True
 
 
+def _weight_is_flat(fn):
+    """Return True if a weight file is 'flat': a 2D moment weight image or a
+    continuum weight image with no usable spectral axis.  Such weights are
+    constant across the spectral axis and must be broadcast onto the cube's
+    channels (see _flat_weightcube)."""
+    if fn.endswith('fits'):
+        header = fits.getheader(fn)
+        naxis = header['NAXIS']
+        nspatial = sum(1 for ii in range(1, naxis + 1) if header.get(f'NAXIS{ii}', 1) > 1)
+        return nspatial < 3
+    # CASA continuum weight images (.weight.tt0) are flat by construction
+    return fn.endswith('.tt0')
+
+
+def _flat_weightcube(fn, refcube):
+    """Read a flat 2D weight image and broadcast it across ``refcube``'s spectral
+    axis, returning a weightcube that shares ``refcube``'s WCS and shape.  This
+    is needed so the flat weight aligns channel-for-channel with its data cube in
+    the 'channel' mosaic method (which indexes weightcubes with the data cube's
+    channel indices)."""
+    import dask.array as da
+    if fn.endswith('fits'):
+        whdu = fits.open(fn)[0]
+        wdata = np.squeeze(whdu.data)
+        wwcs = WCS(whdu.header).celestial
+    else:
+        wcube = SpectralCube.read(fn, format='casa_image', use_dask=True)
+        wproj = wcube[0] if wcube.ndim == 3 else wcube
+        wdata = np.squeeze(np.asarray(wproj))
+        wwcs = wcube.wcs.celestial
+    plane, _ = reproject_interp((np.nan_to_num(wdata), wwcs),
+                                refcube.wcs.celestial,
+                                shape_out=refcube.shape[1:])
+    plane = np.nan_to_num(plane)
+    data3d = da.broadcast_to(da.asarray(plane)[None, :, :], refcube.shape)
+    return refcube._new_cube_with(data=data3d)
+
+
 def make_giant_mosaic_cube(filelist,
                            reference_frequency,
                            cdelt_kms,
@@ -773,12 +811,19 @@ def make_giant_mosaic_cube(filelist,
                                                 rest_value=reference_frequency)
                             ) for fn in filelist]
         elif weightfilelist is not None:
-            weightcubes = [SpectralCube.read(fn, format='fits' if fn.endswith('fits') else 'casa_image',
-                                             use_dask=True)
-                           .with_spectral_unit(u.km / u.s,
-                                               velocity_convention='radio',
-                                               rest_value=reference_frequency)
-                           for fn in weightfilelist]
+            weightcubes = []
+            for fn, refcube in zip(weightfilelist, cubes):
+                if _weight_is_flat(fn):
+                    # flat 2D weight (moment or continuum weight image); broadcast
+                    # it across the data cube's channels
+                    weightcubes.append(_flat_weightcube(fn, refcube))
+                else:
+                    weightcubes.append(
+                        SpectralCube.read(fn, format='fits' if fn.endswith('fits') else 'casa_image',
+                                          use_dask=True)
+                        .with_spectral_unit(u.km / u.s,
+                                            velocity_convention='radio',
+                                            rest_value=reference_frequency))
         else:
             weightcubes = []
         if len(weightcubes) == len(cubes) and min_weight_fraction is not None:
