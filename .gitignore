@@ -63,3 +63,4 @@ pip-wheel-metadata/
 
 # Mac OSX
 .DS_Store
+aces/cutout_scripts/**.fits
