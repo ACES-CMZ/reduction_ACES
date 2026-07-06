@@ -46,7 +46,7 @@ def read_primary_header(response):
         except UnicodeDecodeError as exc:
             raise RuntimeError("SODA response did not start with a FITS header") from exc
 
-        cards = [text[i : i + 80] for i in range(0, len(text), 80)]
+        cards = [text[i:i + 80] for i in range(0, len(text), 80)]
         if any(card.startswith("END") for card in cards):
             return {
                 card[:8].strip(): fits_value(card)
