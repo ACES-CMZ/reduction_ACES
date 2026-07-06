@@ -36,6 +36,13 @@ available.
 The `cutout_examples.ipynb` notebook uses the same requirements and shows image
 and cube examples using this script as an import.
 
+You can launch the example notebook on Binder here:
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/git/https%3A%2F%2Fgithub.com%2FACES-CMZ%2Freduction_ACES/dev_cutouts?urlpath=%2Fdoc%2Ftree%2Faces%2Fcutout_scripts%2Fcutout_examples.ipynb)
+
+Binder uses the repository-level `.binder/requirements.txt` file, which mirrors
+the dependencies listed here.
+
 ## Basic Usage
 
 General syntax:
