@@ -579,10 +579,10 @@ def make_spw_table():
              for x in lines]
 
     linefreqs = [", ".join(
-                           [str(x)
-                            for x in linetbl['Rest (GHz)'][((linetbl['12m SPW'] == row['SPW']) &
-                                                            (np.char.find(linetbl['col9'].filled('--'), '**') != -1))]])
-                 for row in ftbl]
+        [str(x)
+         for x in linetbl['Rest (GHz)'][((linetbl['12m SPW'] == row['SPW']) &
+                                         (np.char.find(linetbl['col9'].filled('--'), '**') != -1))]])
+        for row in ftbl]
 
     ftbl['Lines'] = [f'{x}\\\\ \n &&&&& {y}' for x, y in zip(lines, linefreqs)]
 

@@ -169,16 +169,16 @@ def check_files(filelist, funcname=None):
 
         for fn in filelist:
             assert os.path.exists(fn
-                .replace("image.pbcor.statcont.contsub.fits", "pb")
-                .replace("image.pbcor", "pb")
-                .replace("image.tt0.pbcor", "pb.tt0")
-                .replace('manual.pbcor.tt0', 'manual.pb.tt0')
+                                  .replace("image.pbcor.statcont.contsub.fits", "pb")
+                                  .replace("image.pbcor", "pb")
+                                  .replace("image.tt0.pbcor", "pb.tt0")
+                                  .replace('manual.pbcor.tt0', 'manual.pb.tt0')
             ), f"No pb found for {fn}"
             assert os.path.exists(fn
-                .replace("image.pbcor.statcont.contsub.fits", "weight")
-                .replace("image.pbcor", "weight")
-                .replace("image.tt0.pbcor", "weight.tt0")
-                .replace('manual.pbcor.tt0', 'manual.weight.tt0')
+                                  .replace("image.pbcor.statcont.contsub.fits", "weight")
+                                  .replace("image.pbcor", "weight")
+                                  .replace("image.tt0.pbcor", "weight.tt0")
+                                  .replace('manual.pbcor.tt0', 'manual.weight.tt0')
             ), f"No weight found for {fn}"
 
             if fn.endswith('fits'):

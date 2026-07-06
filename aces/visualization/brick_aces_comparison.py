@@ -145,7 +145,7 @@ mustang_to_brick, _ = reproject.reproject_interp(mustangfh, target_hdu)
 
 meerkat_beam = Beam.from_fits_header(meerkatfh[0].header)
 meerkat_convkernel = meerkat_beam.deconvolve(ACESbeam).as_kernel(pixscale)
-meerkat_reffreq = 1.4*u.GHz
+meerkat_reffreq = 1.284*u.GHz  # SARAO MeerKAT GC mosaic (Heywood+ 2022) L-band center
 meerkat_jtok = meerkat_beam.jtok(meerkat_reffreq)
 
 mustang_beam = Beam.from_fits_header(mustangfh[0].header)

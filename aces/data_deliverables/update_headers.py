@@ -12,19 +12,33 @@ Processes files in "products_for_ALMA" directory to ensure compliance with ALMA 
 """
 
 import re
+import os
 import sys
+import time
 import warnings
 from pathlib import Path
 from typing import Optional
 import numpy as np
+import dask
 from astropy import units as u
 from astropy.io import fits
+from astropy.table import Table
 from astropy.wcs import WCS
 from astropy.wcs.utils import add_stokes_axis_to_wcs
+from spectral_cube import SpectralCube
+from dask.diagnostics import ProgressBar
 
 BASE_DIR = Path("/orange/adamginsburg/ACES/products_for_ALMA/")
+STATS_DIR = Path("/orange/adamginsburg/ACES/reduction_ACES/aces/data/tables/")
+CUBE_STATS_PATH = STATS_DIR / "cube_stats.ecsv"
+FEATHERED_STATS_PATH = STATS_DIR / "feathered_cube_stats.ecsv"
+
 DEFAULT_DATE_OBS = "2021-10-17T01:21:04"
 DEFAULT_ORIGIN = "ACES team: see https://github.com/ACES-CMZ/"
+
+# Global cache for stats tables
+_CUBE_STATS = None
+_FEATHERED_STATS = None
 
 GAL_COORD_RE = re.compile(r"(G\d{1,3}\.\d+[pm]\d{1,2}\.\d+)")
 
@@ -40,6 +54,115 @@ MOMENT_SUFFIXES = (
 )
 
 MALFORMED_BUNIT = {'Jy beam-1', 'Jy.beam-1', 'beam-1.Jy', 'Jy beam^-1', 'Jy.beam^-1'}
+
+
+def has_datamax(fits_path: Path) -> bool:
+    """Check if a FITS file has DATAMAX header using astropy.io.fits."""
+    try:
+        with fits.open(fits_path, mode='readonly', memmap=True) as hdul:
+            return 'DATAMAX' in hdul[0].header
+    except (OSError, IOError):
+        # If file can't be opened, there's a big problem
+        raise
+
+
+def load_stats_tables():
+    """Load the stats tables once and cache them."""
+    global _CUBE_STATS, _FEATHERED_STATS
+
+    if _CUBE_STATS is None and CUBE_STATS_PATH.exists():
+        print(f"Loading cube stats from {CUBE_STATS_PATH}", flush=True)
+        _CUBE_STATS = Table.read(CUBE_STATS_PATH)
+
+    if _FEATHERED_STATS is None and FEATHERED_STATS_PATH.exists():
+        print(f"Loading feathered stats from {FEATHERED_STATS_PATH}", flush=True)
+        _FEATHERED_STATS = Table.read(FEATHERED_STATS_PATH)
+
+    return _CUBE_STATS, _FEATHERED_STATS
+
+
+def get_original_filename(current_path: Path) -> str:
+    """
+    Map from current filename to original filename used in stats tables.
+
+    The files were renamed by update_fns.py which changed:
+    'lp_2021.1.00172.L.slongmore' -> 'lp_slongmore'
+
+    Also need to handle the different naming conventions:
+    - products_for_ALMA uses: group.uid___A001_X1590_X30a9.lp_slongmore.*.fits
+    - cube_stats uses: uid___*.image
+    - feathered_stats uses: Sgr_A_st*.fits
+    """
+    filename = current_path.name
+
+    # Try to extract the core filename for matching
+    # For feathered files: look for pattern like Sgr_A_st_*.TP_7M_12M_feather*
+    if '12m7mTP' in filename or 'feather' in filename.lower():
+        # Try to match feathered naming pattern
+        # e.g., group...lp_slongmore.cmz_mosaic.icrs.12m7mTP.CH3CHO.cube.pbcor.fits
+        # might match: Sgr_A_st_*.TP_7M_12M_feather_all.SPW_*.image.statcont.contsub.fits
+        # This is complex, so we'll try to extract key parts
+        return filename  # For now return as-is, will refine
+    else:
+        # For non-feathered: might be in cube_stats
+        # Look for uid pattern in the filename
+        # e.g., group.uid___A001_X1590_X30a9.lp_slongmore.G000.029p0.041.12m7m.89.1-89.2GHz.cube.pbcor.fits
+        # should map to something in cube_stats
+        return filename
+
+
+def lookup_precomputed_stats(fits_path: Path) -> Optional[tuple[float, float]]:
+    """
+    Look up precomputed datamin and datamax from stats tables.
+
+    NOTE: Currently disabled - the mapping between current filenames in products_for_ALMA
+    and the original filenames in the stats tables is complex:
+    1. Stats tables (cube_stats, feathered_cube_stats) were created from intermediate
+       processing files with different UIDs and naming conventions
+    2. Files in products_for_ALMA went through renaming (update_fns.py) and reorganization
+    3. No direct mapping file exists between the two naming schemes
+
+    TODO: Create a proper mapping from products_for_ALMA filenames back to the original
+    intermediate filenames used when generating the stats tables. This would require:
+    - Tracking the processing pipeline to link final products to intermediate cubes
+    - Building a lookup table during the processing/renaming steps
+    - Or recomputing stats from the final products and saving a new stats table
+
+    For now, this function returns None and datamin/datamax are computed fresh.
+
+    Returns
+    -------
+    tuple of (datamin, datamax) or None if not found (currently always None)
+    """
+    # Disabled for now - uncomment and fix matching logic when mapping is available
+    return None
+
+    # The code below shows the intended structure:
+    #
+    # cube_stats, feathered_stats = load_stats_tables()
+    #
+    # if cube_stats is None and feathered_stats is None:
+    #     return None
+    #
+    # filename = fits_path.name
+    #
+    # # Extract UID and SPW for matching
+    # uid_match = re.search(r'(uid___A\d+_X[0-9a-f]+_X[0-9a-f]+)', filename)
+    # uid_str = uid_match.group(1) if uid_match else None
+    #
+    # if cube_stats is not None and uid_str:
+    #     for row in cube_stats:
+    #         table_filename = row['filename']
+    #         if uid_str in table_filename:
+    #             spw_match = re.search(r'spw(\d+)', filename.lower())
+    #             table_spw_match = re.search(r'spw(\d+)', table_filename.lower())
+    #
+    #             if spw_match and table_spw_match and spw_match.group(1) == table_spw_match.group(1):
+    #                 datamin = float(row['min'].value if hasattr(row['min'], 'value') else row['min'])
+    #                 datamax = float(row['max'].value if hasattr(row['max'], 'value') else row['max'])
+    #                 return (datamin, datamax)
+    #
+    # return None
 
 
 def extract_gal_target(name: str) -> Optional[str]:
@@ -159,11 +282,11 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
     """Apply all fixes to a FITS file. Returns (changed, error_messages)."""
     errors = []
     fname_lower = fits_path.name.lower()
+    t0 = time.time()
 
-    with fits.open(fits_path, mode="update", lazy_load_hdus=False) as hdul:
-        if not hdul:
-            return False, [f"no HDUs in {fits_path.name}"]
+    with fits.open(fits_path, mode="update") as hdul:
 
+        print(f"Loaded header of {os.path.basename(fits_path)}. dt={time.time() - t0:.2f}s", flush=True)
         h0 = hdul[0]
         hdr = h0.header
 
@@ -179,6 +302,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
         # Handle moment maps
         cube_wcs = None
         if is_moment and (cube_file := find_cube_for_moment(fits_path)):
+            print("Extracting spectral WCS from cube:", cube_file, flush=True)
             cube_wcs = extract_spectral_wcs(cube_file)
 
         # === Apply fixes ===
@@ -204,12 +328,23 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
         if target:
             hdr["TARGET"] = target
 
+        print(f"Loading cube from {fits_path} for further analysis... dt={time.time() - t0:.2f}s", flush=True)
         # 2. Dimension updates
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                cube = SpectralCube.read(fits_path, use_dask=True)
+        except Exception as ex:
+            print("This should only happen for 2D images and so we shouldn't be catching generic exceptions")
+            print(ex, flush=True)
+            cube = h0.data
+
         data = h0.data
 
         # Moment maps: 2D -> 3D
         if is_moment and cube_wcs and hdr.get("NAXIS") == 2:
             if should_add_freq_axis(hdr, {"freq": 1, "bw": 1}) and data is not None:
+                print(f"Converting moment map from 2d to 3d. dt={time.time() - t0:.2f}s", flush=True)
                 h0.data = data[np.newaxis, ...]
                 data = h0.data
                 hdr["NAXIS"] = 3
@@ -224,6 +359,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
 
         # Continuum: 2D -> 3D
         elif should_add_freq_axis(hdr, cont_params) and data is not None:
+            print(f"Converting continuum map from 2d to 3d. dt={time.time() - t0:.2f}s", flush=True)
             h0.data = data[np.newaxis, ...]
             data = h0.data
             hdr["NAXIS"] = 3
@@ -236,6 +372,7 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
 
         # 3D -> 4D with Stokes
         if should_add_stokes_axis(hdr, is_pv) and data is not None:
+            print(f"Adding Stokes axis to make 4D. dt={time.time() - t0:.2f}s", flush=True)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 old_wcs = WCS(hdr, naxis=3)
@@ -259,13 +396,45 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
             hdr["VELREF"] = 257
 
         # 4. Data min/max
-        if data is not None:
-            finite = data[np.isfinite(data)]
-            if finite.size > 0:
+        if data is not None and ('DATAMIN' not in hdr or 'DATAMAX' not in hdr):
+            # First try to get precomputed values from stats tables
+            precomputed = lookup_precomputed_stats(fits_path)
+
+            if precomputed is not None:
+                datamin, datamax = precomputed
+                print(f"Using precomputed datamin/datamax from stats tables. dt={time.time() - t0:.2f}s", flush=True)
+            else:
+                # Calculate from scratch
+                print(f"Calculating datamin/datamax for data with size {data.size/1024**3}Gpix... dt={time.time() - t0:.2f}s", flush=True)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    try:
+                        with dask.config.set(scheduler='threads'):
+                            with ProgressBar():
+                                datamax = cube.max()
+                                datamin = cube.min()
+
+                        # this shouldn't be necessary, but it has happened: they should _always_ be qty's
+                        if hasattr(datamax, 'value'):
+                            datamax = datamax.value
+                        if hasattr(datamin, 'value'):
+                            datamin = datamin.value
+                    except TypeError:
+                        # it's a moment map, we can afford to load the whole data
+                        datamax = np.nanmax(cube)
+                        datamin = np.nanmin(cube)
+
+            if np.isnan(datamax) or np.isnan(datamin):
+                errors.append("Could not compute DATAMIN/DATAMAX (resulted in NaN)")
+                print(f"Warning: could not compute DATAMIN/DATAMAX for file {fits_path} (resulted in NaN). dt={time.time() - t0:.2f}s", flush=True)
+            else:
                 if "DATAMIN" not in hdr:
-                    hdr["DATAMIN"] = float(finite.min())
+                    hdr["DATAMIN"] = float(datamin)
                 if "DATAMAX" not in hdr:
-                    hdr["DATAMAX"] = float(finite.max())
+                    hdr["DATAMAX"] = float(datamax)
+            print(f"Computed datamin/datamax for file {fits_path}, datamax={hdr.get('DATAMAX')}, datamin={hdr.get('DATAMIN')}. dt={time.time() - t0:.2f}s", flush=True)
+        else:
+            print(f"for file {fits_path}, datamax={hdr.get('DATAMAX')}, datamin={hdr.get('DATAMIN')}. dt={time.time() - t0:.2f}s", flush=True)
 
         # 5. BUNIT standardisation
         if not is_model_resid:
@@ -273,38 +442,85 @@ def apply_fixes(fits_path: Path) -> tuple[bool, list[str]]:
             if bunit and bunit.strip() in MALFORMED_BUNIT:
                 hdr["BUNIT"] = "Jy/beam"
 
+        print(f"Starting final flush to disk... dt={time.time() - t0:.2f}s", flush=True)
         hdul.flush()
         return True, errors
 
 
-def main():
+def main(force: bool = False):
+    """
+    Process FITS files to update headers.
+
+    Parameters
+    ----------
+    force : bool, optional
+        If True, process all files even if they already have DATAMAX.
+        If False (default), only process files missing DATAMAX.
+    """
     fits_list = sorted([
         f for f in BASE_DIR.glob("*/*.fits")
     ])
+    # PV files aren't valid anyway, no need to update them
+    fits_list = [x for x in fits_list if 'PV' not in str(x)]
+
+    if not force:
+        print(f"Found {len(fits_list)} FITS files (excluding PV), checking for DATAMAX...", flush=True)
+        # Filter out files that already have DATAMAX
+        fits_list = [f for f in fits_list if not has_datamax(f)]
+        print(f"Total of {len(fits_list)} FITS files without DATAMAX in {BASE_DIR}", flush=True)
+    else:
+        print(f"Force mode: processing all {len(fits_list)} FITS files in {BASE_DIR}", flush=True)
+
     total = len(fits_list)
 
-    print(f"Processing {total} FITS files in {BASE_DIR}")
+    # Check if running as SLURM array job
+    if os.getenv('SLURM_ARRAY_TASK_ID') is not None:
+        slurm_array_task_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
-    n_ok = n_err = 0
-    error_files = []
+        if slurm_array_task_id >= total:
+            print(f"SLURM_ARRAY_TASK_ID={slurm_array_task_id} >= total files ({total}), nothing to do", flush=True)
+            return
 
-    for f in fits_list:
+        # Process only the file assigned to this array task
+        f = fits_list[slurm_array_task_id]
+        print(f"SLURM array task {slurm_array_task_id}: Processing {f}", flush=True)
         ok, errs = apply_fixes(f)
+
         if ok:
-            n_ok += 1
+            print(f"Successfully updated: {f.name}", flush=True)
         else:
-            n_err += 1
-            error_files.append((f.name, errs))
+            print(f"ERROR updating {f.name}: {'; '.join(errs)}", flush=True)
+            sys.exit(1)
 
-    print("\n--- Summary ---")
-    print(f"Total files: {total}")
-    print(f"Successfully updated: {n_ok}")
-    print(f"Errors: {n_err}")
+    else:
+        # Non-parallel mode: process all files sequentially
+        print(f"Processing {total} FITS files in {BASE_DIR}", flush=True)
 
-    if error_files:
-        print("\nFiles with errors:")
-        for name, errs in error_files:
-            print(f"  {name}: {'; '.join(errs)}")
+        n_ok = n_err = 0
+        error_files = []
+
+        # Shuffle so we can parallelize
+        import random
+        random.shuffle(fits_list)
+
+        for ii, f in enumerate(fits_list):
+            print(f"Processing {f} ({ii} of {len(fits_list)})", flush=True)
+            ok, errs = apply_fixes(f)
+            if ok:
+                n_ok += 1
+            else:
+                n_err += 1
+                error_files.append((f.name, errs))
+
+        print("\n--- Summary ---", flush=True)
+        print(f"Total files: {total}", flush=True)
+        print(f"Successfully updated: {n_ok}", flush=True)
+        print(f"Errors: {n_err}", flush=True)
+
+        if error_files:
+            print("\nFiles with errors:", flush=True)
+            for name, errs in error_files:
+                print(f"  {name}: {'; '.join(errs)}", flush=True)
 
 
 if __name__ == "__main__":

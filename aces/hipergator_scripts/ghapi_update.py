@@ -435,7 +435,7 @@ def main(dryrun=False):
                               'column_id': col.id,
                               'content_type': 'Issue'
                               },
-                             headers={"Accept": "application/vnd.github.v3+json"}
+                        headers={"Accept": "application/vnd.github.v3+json"}
                         )
             else:
                 # check if issue is categorized right
@@ -463,7 +463,7 @@ def main(dryrun=False):
                                       'column_id': CADid,
                                       'content_type': 'Issue'
                                       },
-                                     headers={"Accept": "application/vnd.github.v3+json"}
+                                headers={"Accept": "application/vnd.github.v3+json"}
                                 )
 
     globals().update(locals())
