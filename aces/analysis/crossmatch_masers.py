@@ -1,14 +1,14 @@
 """
 Crossmatch the ACES compact continuum source catalog against maser catalogs.
 
-Included maser catalogs (bundled under ``aces/data/masers/``):
+Included maser catalogs (bundled under ``aces/data/masers/``; regenerate with
+prepare_maser_catalogs.py):
 
-* **H2O** water masers -- Walsh et al. (2014) ATCA survey, the SWAG water-maser
-  product covering the Galactic plane / Central Molecular Zone.
-* **CH3OH** 6.7 GHz class-II methanol masers -- GLOSTAR (Nguyen et al. 2022).
-
-Optionally (``--vizier``) the CMZ-specific class-I methanol maser survey of
-Lu et al. (2019, ApJS 244, 35) is fetched from VizieR and included.
+* **H2O** -- Walsh et al. (2014) ATCA/SWAG water masers (all-plane).
+* **H2O** -- Lu et al. (2019) CMZ water masers.
+* **CH3OH** -- Cotton & Yusef-Zadeh (2016) VLA 36 GHz class-I masers, the dense
+  CMZ methanol catalog (2240 spots).
+* **CH3OH** -- GLOSTAR 6.7 GHz class-II masers (Nguyen et al. 2022, all-plane).
 
 For every ACES source we record, within a configurable match radius:
 
@@ -45,21 +45,14 @@ MASER_DATA_DIR = Path(__file__).parent.parent / "data" / "masers"
 # Default association radius between a continuum source and a maser
 DEFAULT_RADIUS_ARCSEC = 2.0
 
-# Registry of bundled maser catalogs.  Coordinates are sexagesimal strings
-# (hms / dms), parsed with unit=(hourangle, deg).
-MASER_CATALOGS = [
-    dict(label="H2O_Walsh2014",
-         species="H2O",
-         filename="walsh2014_atca_water_masers.fits",
-         racol="RAJ2000", deccol="DEJ2000",
-         velcol="Vp", fluxcol="Sp", namecol="Name",
-         reference="Walsh et al. 2014 (SWAG/ATCA water masers)"),
-    dict(label="CH3OH_GLOSTAR",
-         species="CH3OH",
-         filename="glostar_methanol.fits",
-         racol="RAJ2000", deccol="DEJ2000",
-         velcol="Vlsr", fluxcol="Svp", namecol="Name",
-         reference="GLOSTAR 6.7 GHz methanol masers (Nguyen et al. 2022)"),
+# Bundled, pre-normalized maser catalogs (regenerate with
+# prepare_maser_catalogs.py).  Each file has uniform columns:
+# ra_deg, dec_deg, vlsr, flux, flux_unit, name, species, catalog, reference.
+MASER_CATALOG_FILES = [
+    "h2o_walsh2014.fits",        # H2O, SWAG/ATCA all-plane (Walsh et al. 2014)
+    "h2o_lu2019_cmz.fits",       # H2O, CMZ (Lu et al. 2019)
+    "ch3oh_cotton2016_cmz.fits",  # CH3OH 36 GHz class I, CMZ (Cotton & Yusef-Zadeh 2016)
+    "ch3oh_glostar.fits",        # CH3OH 6.7 GHz class II, all-plane (GLOSTAR)
 ]
 
 
@@ -79,86 +72,21 @@ def load_aces_catalog(catalog_path=DEFAULT_CATALOG_PATH):
     return cat
 
 
-def _normalize_maser_table(tbl, spec):
-    """Return a normalized maser Table (ra_deg, dec_deg, vlsr, flux, name,
-    species, catalog, reference), dropping rows without a valid position."""
-    ra_raw = np.array([str(x).strip() for x in tbl[spec["racol"]]])
-    dec_raw = np.array([str(x).strip() for x in tbl[spec["deccol"]]])
-    good = np.array([bool(r) and bool(d) and r not in ("--", "nan")
-                     and d not in ("--", "nan")
-                     for r, d in zip(ra_raw, dec_raw)])
-    tbl = tbl[good]
-    coords = SkyCoord(ra_raw[good], dec_raw[good], unit=(u.hourangle, u.deg))
-
-    out = Table()
-    out["ra_deg"] = coords.ra.deg
-    out["dec_deg"] = coords.dec.deg
-    out["vlsr"] = np.asarray(tbl[spec["velcol"]], dtype=float) if spec["velcol"] in tbl.colnames else np.full(len(tbl), np.nan)
-    out["flux"] = np.asarray(tbl[spec["fluxcol"]], dtype=float) if spec["fluxcol"] in tbl.colnames else np.full(len(tbl), np.nan)
-    out["name"] = np.array([str(x).strip() for x in tbl[spec["namecol"]]]) if spec["namecol"] in tbl.colnames else np.array([""] * len(tbl))
-    out["species"] = spec["species"]
-    out["catalog"] = spec["label"]
-    out["reference"] = spec["reference"]
-    return out
-
-
-def load_masers(specs=MASER_CATALOGS, data_dir=MASER_DATA_DIR, use_vizier=False):
-    """Load and concatenate all maser catalogs into one normalized Table."""
+def load_masers(data_dir=MASER_DATA_DIR, files=MASER_CATALOG_FILES):
+    """Load and concatenate the bundled (pre-normalized) maser catalogs."""
     tables = []
-    for spec in specs:
-        path = Path(data_dir) / spec["filename"]
+    for fn in files:
+        path = Path(data_dir) / fn
         if not path.exists():
-            print(f"WARNING: maser catalog {path} not found; skipping {spec['label']}")
+            print(f"WARNING: maser catalog {path} not found; skipping")
             continue
-        raw = Table.read(path)
-        norm = _normalize_maser_table(raw, spec)
-        print(f"Loaded {len(norm)} masers from {spec['label']} ({spec['species']})")
-        tables.append(norm)
-
-    if use_vizier:
-        vz = _load_lu2019_vizier()
-        if vz is not None:
-            print(f"Loaded {len(vz)} masers from CH3OH_Lu2019 (VizieR)")
-            tables.append(vz)
-
+        tbl = Table.read(path)
+        species = str(tbl["species"][0]) if len(tbl) else "?"
+        print(f"Loaded {len(tbl)} masers from {fn} ({species})")
+        tables.append(tbl)
     if not tables:
         raise RuntimeError("No maser catalogs could be loaded")
     return vstack(tables, metadata_conflicts="silent")
-
-
-def _load_lu2019_vizier():
-    """Fetch the Lu et al. (2019) CMZ class-I methanol maser table from VizieR.
-
-    Returns None on any failure so the crossmatch still runs offline.
-    """
-    from astroquery.vizier import Vizier
-    Vizier.ROW_LIMIT = -1
-    cats = Vizier.get_catalogs("J/ApJS/244/35")
-    tbl = None
-    for cat in cats:
-        cols = set(cat.colnames)
-        if {"RAJ2000", "DEJ2000"}.issubset(cols):
-            tbl = cat
-            break
-    if tbl is None:
-        return None
-    spec = dict(label="CH3OH_Lu2019", species="CH3OH",
-                racol="RAJ2000", deccol="DEJ2000",
-                velcol="VLSR" if "VLSR" in tbl.colnames else "Vlsr",
-                fluxcol="Speak" if "Speak" in tbl.colnames else "Sp",
-                namecol="Name" if "Name" in tbl.colnames else tbl.colnames[0],
-                reference="Lu et al. 2019 (CMZ class-I CH3OH masers)")
-    # coordinates here are already decimal degrees in most VizieR tables
-    out = Table()
-    out["ra_deg"] = np.asarray(tbl[spec["racol"]], dtype=float)
-    out["dec_deg"] = np.asarray(tbl[spec["deccol"]], dtype=float)
-    out["vlsr"] = np.asarray(tbl[spec["velcol"]], dtype=float) if spec["velcol"] in tbl.colnames else np.full(len(tbl), np.nan)
-    out["flux"] = np.asarray(tbl[spec["fluxcol"]], dtype=float) if spec["fluxcol"] in tbl.colnames else np.full(len(tbl), np.nan)
-    out["name"] = np.array([str(x).strip() for x in tbl[spec["namecol"]]])
-    out["species"] = spec["species"]
-    out["catalog"] = spec["label"]
-    out["reference"] = spec["reference"]
-    return out
 
 
 def crossmatch_masers(aces, masers, radius_arcsec=DEFAULT_RADIUS_ARCSEC):
@@ -225,8 +153,6 @@ def main(argv=None):
                         help="Match radius in arcsec (default 2)")
     parser.add_argument("--outdir", default=str(OUTPUT_DIR),
                         help="Output directory")
-    parser.add_argument("--vizier", action="store_true",
-                        help="Also fetch the Lu et al. (2019) CMZ CH3OH masers from VizieR")
     args = parser.parse_args(argv)
 
     outdir = Path(args.outdir)
@@ -236,7 +162,7 @@ def main(argv=None):
     aces = load_aces_catalog(args.catalog)
     print(f"  {len(aces)} sources")
 
-    masers = load_masers(use_vizier=args.vizier)
+    masers = load_masers()
     print(f"Total masers loaded: {len(masers)}")
 
     aces, match = crossmatch_masers(aces, masers, radius_arcsec=args.radius)
