@@ -575,6 +575,90 @@ def do_all_stats(cube, molname, mompath=f'{basepath}/mosaics/cubes/moments/',
     return BooleanArrayMask(signal_mask_both, cube.wcs)
 
 
+def get_guide_mask(cube, guide_molname, mompath=f'{basepath}/mosaics/cubes/moments/',
+                   mask_suffix='signal_mask_pruned'):
+    """Build a 3D (PPV) signal mask for `cube` from a *different* (brighter)
+    molecule's persisted signal mask.
+
+    The guide molecule's mask is written by do_all_stats to
+    ``{mompath}/{guide_molname}_CubeMosaic_{mask_suffix}.fits``.  The ACES line
+    mosaics share a common celestial WCS/shape, so no spatial reprojection is
+    needed, but each molecule has its own velocity grid, so the guide mask is
+    spectrally interpolated onto ``cube``'s spectral (velocity) axis.  Matching
+    is done by velocity: a target voxel is kept where the guide molecule has
+    emission at that same LSRK velocity.
+
+    Returns a BooleanArrayMask on ``cube``'s WCS.
+    """
+    guide_maskfile = f"{mompath}/{guide_molname}_CubeMosaic_{mask_suffix}.fits"
+    if not os.path.exists(guide_maskfile):
+        raise FileNotFoundError(f"Guide mask {guide_maskfile} does not exist; "
+                                f"run giantcube analysis for {guide_molname} first.")
+
+    print(f"Loading guide mask {guide_maskfile}", flush=True)
+    use_dask = hasattr(cube, 'rechunk')
+    guide = SpectralCube.read(guide_maskfile, use_dask=use_dask)
+
+    if guide.shape[1:] != cube.shape[1:]:
+        raise ValueError(f"Guide mask spatial shape {guide.shape[1:]} does not match "
+                         f"target cube spatial shape {cube.shape[1:]}; spatial reprojection "
+                         "is not implemented (ACES line mosaics are expected to share a grid).")
+
+    # match spectral unit (both cubes are on km/s LSRK axes) then interpolate the
+    # guide mask onto the target velocity axis
+    guide = guide.with_spectral_unit(cube.spectral_axis.unit)
+    print("Spectrally interpolating guide mask onto target velocity axis", flush=True)
+    guide_interp = guide.spectral_interpolate(cube.spectral_axis)
+
+    # interpolated float mask -> boolean (guide mask values are 0/1)
+    guide_bool = guide_interp.filled_data[:].value > 0.5
+
+    return BooleanArrayMask(daskarr(guide_bool) if use_dask else guide_bool, cube.wcs)
+
+
+def do_guided_moments(cube, molname, guide_molname,
+                      mompath=f'{basepath}/mosaics/cubes/moments/',
+                      howargs={}, mask_suffix='signal_mask_pruned'):
+    """Make moment 0/1 maps of `cube` (molname) using `guide_molname`'s signal
+    mask as the guide.  Intended to be run as the final analysis step so it can
+    reuse the guide molecule's already-persisted mask.
+    """
+    os.makedirs(f"{mompath}", exist_ok=True)
+
+    t0 = time.time()
+    print(f"Guided moments: {molname} guided by {guide_molname}.  dt={time.time() - t0}", flush=True)
+
+    # apply the same velocity mask that do_all_stats uses, then the guide mask
+    vmask = velocity_mask(cube)
+    cube = cube.with_mask(vmask)
+
+    guide_mask = get_guide_mask(cube, guide_molname, mompath=mompath, mask_suffix=mask_suffix)
+    mcube = cube.with_mask(guide_mask)
+
+    fwidth = cube.spectral_axis.max() - cube.spectral_axis.min()
+    chwid = cube.spectral_axis[1] - cube.spectral_axis[0]
+
+    print(f"Guided mom0.  dt={time.time() - t0}", flush=True)
+    mom0 = mcube.moment0(axis=0, **howargs)
+    mom0path = f"{mompath}/{molname}_CubeMosaic_guidedby_{guide_molname}_mom0.fits"
+    mom0.write(mom0path, overwrite=True)
+    update_mom0(mom0path=mom0path, fwidth=fwidth, cube=cube)
+    makepng(data=mom0.value, wcs=mom0.wcs,
+            imfn=f"{mompath}/{molname}_CubeMosaic_guidedby_{guide_molname}_mom0.png",
+            stretch='asinh', vmin=-0.1, max_percent=99.5)
+
+    print(f"Guided mom1.  dt={time.time() - t0}", flush=True)
+    mom1 = mcube.moment1(axis=0, **howargs)
+    mom1path = f"{mompath}/{molname}_CubeMosaic_guidedby_{guide_molname}_mom1.fits"
+    mom1.write(mom1path, overwrite=True)
+    update_mom1(mom1path=mom1path, chwidth=chwid, cube=cube)
+    makepng(data=mom1.value, wcs=mom1.wcs,
+            imfn=f"{mompath}/{molname}_CubeMosaic_guidedby_{guide_molname}_mom1.png",
+            stretch='linear', vmin=-0.1, max_percent=99.5, cmap=pl.cm.RdBu)
+
+    print(f"Done with guided moments.  dt={time.time() - t0}", flush=True)
+
+
 def main():
     dodask = os.getenv('USE_DASK')
     if dodask and dodask.lower() == 'false':
@@ -586,6 +670,9 @@ def main():
     if do_pv and do_pv.lower() == 'false':
         do_pv = False
     extra_dilation = int(os.getenv('EXTRA_DILATION', '0'))
+    guide_molname = os.getenv('GUIDE_MOLNAME')
+    if guide_molname and guide_molname.lower() == 'false':
+        guide_molname = False
 
     if os.getenv('MOLNAME'):
         molname = os.getenv('MOLNAME')
@@ -716,6 +803,12 @@ def main():
         from aces.imaging.make_mosaic import make_downsampled_cube, basepath
         make_downsampled_cube(f'{cubepath}/{molname}_CubeMosaic.fits', f'{cubepath}/{molname}_CubeMosaic_downsampled9.fits',
                               smooth_beam=12 * u.arcsec)
+
+    # Guided moments are the *last* step: they reuse a brighter molecule's
+    # already-persisted signal mask as the guide for this (fainter) molecule.
+    if guide_molname:
+        print(f"Guided moments using {guide_molname} as guide.  dt={time.time() - t0}")
+        do_guided_moments(cube, molname=molname, guide_molname=guide_molname, howargs=howargs)
 
 
 if __name__ == "__main__":
