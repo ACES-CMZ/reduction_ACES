@@ -7,7 +7,7 @@ import PIL
 from spectral_cube.lower_dimensional_structures import Projection
 from spectral_cube.spectral_cube import _regionlist_to_single_region
 from spectral_cube import SpectralCube
-from spectral_cube import BooleanArrayMask
+from spectral_cube.dask_spectral_cube import DaskSpectralCube
 from spectral_cube.wcs_utils import strip_wcs_from_header
 from spectral_cube.utils import NoBeamError
 from spectral_cube.cube_utils import mosaic_cubes
@@ -749,15 +749,17 @@ def _flat_weightcube(fn, refcube):
                                 shape_out=refcube.shape[1:])
     plane = np.nan_to_num(plane)
     data3d = da.broadcast_to(da.asarray(plane)[None, :, :], refcube.shape)
-    # Give the weightcube its own (deep-copied) WCS and an all-valid mask rather
-    # than inheriting refcube's WCS object and NaN mask: sharing them tripped a
-    # "WCS does not match mask WCS" error once make_mosaic mutates timesys and
-    # re-masks by min_weight_fraction.  The reprojected weight plane already
-    # carries the pb/edge falloff (zeros outside the field), so the data NaN mask
-    # is not needed.
+    # Build a fresh, mask-less DaskSpectralCube on its own (deep-copied) WCS with a
+    # normalised (lower-case) timesys.  Do NOT inherit refcube's WCS object or mask:
+    # make_mosaic later re-masks weightcubes by min_weight_fraction and then mutates
+    # each cube's timesys; a pre-existing (composite) mask whose sub-WCS the timesys
+    # loop can't reach desynchronises and raises "WCS does not match mask WCS".
+    # Starting mask-less means that re-masking produces a single, consistent mask.
+    # The reprojected weight plane already carries the pb/edge falloff (zeros outside
+    # the field), so the data NaN mask is not needed.
     newwcs = refcube.wcs.deepcopy()
-    mask = BooleanArrayMask(da.ones(refcube.shape, dtype=bool), newwcs)
-    return refcube._new_cube_with(data=data3d, wcs=newwcs, mask=mask)
+    newwcs.wcs.timesys = newwcs.wcs.timesys.lower()
+    return DaskSpectralCube(data=data3d, wcs=newwcs)
 
 
 def make_giant_mosaic_cube(filelist,
