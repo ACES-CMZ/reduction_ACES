@@ -23,8 +23,15 @@ else
 fi
 
 #for MOLNAME in SO21 H13CN HN13C H40a CH3CHO NSplus; do # H13COp CS21 HC3N HCOP SiO21 HNCO_7m12mTP; do
-for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H13CN HN13C H13COp CS21 HC3N HCOP SiO21 SO32; do
+for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO CH3CHO_3m13 NSplus H40a HC15N SO21 H13CN HN13C H13COp CS21 HC3N HCOP SiO21 SO32; do
 #for MOLNAME in HC15N H13COp; do
+
+    # Optional: guide the (fainter) molecule's moments with a brighter
+    # molecule's persisted signal mask.  Add cases here as needed.
+    case "$MOLNAME" in
+        CH3CHO_3m13) export GUIDE_MOLNAME=CS21 ;;
+        *)           export GUIDE_MOLNAME=False ;;
+    esac
 
     if [[ $MOLNAME == *"HNCO"* ]]; then
         export mem=512
@@ -50,7 +57,7 @@ for MOLNAME in HCOP_mopra HNCO_7m12mTP HCOP_noTP CH3CHO NSplus H40a HC15N SO21 H
                --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_giantcube_analysis_${MOLNAME}${DASK}${DASK_CLIENT}_%j.log \
                --account=astronomy-dept --qos=astronomy-dept-b --ntasks=32 --nodes=1 \
                --mem=${mem}gb --time=96:00:00 \
-               --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},USE_LOCAL=${USE_LOCAL},DASK_CLIENT=${DASK_CLIENT},DOWNSAMPLE=${DOWNSAMPLE},DO_PV=${DO_PV} \
+               --export=MOLNAME=${MOLNAME},USE_DASK=${USE_DASK},USE_LOCAL=${USE_LOCAL},DASK_CLIENT=${DASK_CLIENT},DOWNSAMPLE=${DOWNSAMPLE},DO_PV=${DO_PV},GUIDE_MOLNAME=${GUIDE_MOLNAME} \
                --wrap /blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/aces_giantcube_analysis
     else
         echo "${MOLNAME}_CubeMosaic.fits does not exist"
