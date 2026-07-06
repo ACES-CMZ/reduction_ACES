@@ -54,6 +54,15 @@ Arguments:
 - `vmax`: Optional maximum radio velocity in `km/s`.
 - `outfile`: Optional output FITS filename.
 
+You can find the available ACES group-level FITS filenames on the ALMA Science
+Archive page:
+
+https://almascience.eso.org/alma-data/lp/aces-group-level-data
+
+This directory also includes `known_aces_files.dat`, a local list of known ACES
+FITS filenames that can be compared against when choosing or checking a
+`filename` value.
+
 The supported command forms are:
 
 ```bash
