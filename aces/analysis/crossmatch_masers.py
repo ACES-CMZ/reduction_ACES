@@ -4,9 +4,12 @@ Crossmatch the ACES compact continuum source catalog against maser catalogs.
 Included maser catalogs (bundled under ``aces/data/masers/``; regenerate with
 prepare_maser_catalogs.py):
 
-* **H2O** -- SWAG 22 GHz water masers, CMZ (Ward, Ott & Meier, in prep.).
 * **H2O** -- Walsh et al. (2014) ATCA water masers (all-plane).
 * **H2O** -- Lu et al. (2019) CMZ water masers.
+
+Additionally, the SWAG 22 GHz water masers (Ward, Ott & Meier, in prep.; CMZ)
+are read from disk at runtime when present (``SWAG_DIR``) -- they are not
+redistributed with the package.
 * **CH3OH** -- Cotton & Yusef-Zadeh (2016) VLA 36 GHz class-I masers, the dense
   CMZ methanol catalog (2240 spots).
 * **CH3OH** -- GLOSTAR 6.7 GHz class-II masers (Nguyen et al. 2022, all-plane).
@@ -45,6 +48,10 @@ OUTPUT_DIR = basepath / "tables"
 # Maser catalogs bundled with the package
 MASER_DATA_DIR = Path(__file__).parent.parent / "data" / "masers"
 
+# SWAG water masers (Ward, Ott & Meier, in prep.) are NOT redistributed; they are
+# read from disk at runtime if the machine-readable tables are present.
+SWAG_DIR = Path("/orange/adamginsburg/cmz/swag/dylanward_watermasers/Tables")
+
 # Default association radius between a continuum source and a maser
 DEFAULT_RADIUS_ARCSEC = 2.0
 
@@ -52,7 +59,6 @@ DEFAULT_RADIUS_ARCSEC = 2.0
 # prepare_maser_catalogs.py).  Each file has uniform columns:
 # ra_deg, dec_deg, vlsr, flux, flux_unit, name, species, catalog, reference.
 MASER_CATALOG_FILES = [
-    "h2o_swag_ward.fits",        # H2O, CMZ (SWAG; Ward, Ott & Meier, in prep.)
     "h2o_walsh2014.fits",        # H2O, ATCA all-plane (Walsh et al. 2014)
     "h2o_lu2019_cmz.fits",       # H2O, CMZ (Lu et al. 2019)
     "ch3oh_cotton2016_cmz.fits",  # CH3OH 36 GHz class I, CMZ (Cotton & Yusef-Zadeh 2016)
@@ -76,8 +82,56 @@ def load_aces_catalog(catalog_path=DEFAULT_CATALOG_PATH):
     return cat
 
 
-def load_masers(data_dir=MASER_DATA_DIR, files=MASER_CATALOG_FILES):
-    """Load and concatenate the bundled (pre-normalized) maser catalogs."""
+def _load_swag_masers(swag_dir=SWAG_DIR):
+    """Read the SWAG water maser catalog (Ward, Ott & Meier, in prep.) from its
+    machine-readable tables on disk and normalize it to the bundled schema.
+
+    Returns None if the tables are not present (so the crossmatch runs without
+    it); the catalog is not redistributed with the package.
+    """
+    swag_dir = Path(swag_dir)
+    pos_path = swag_dir / "MR_astrodendro_ironclad_updated.txt"
+    fit_path = swag_dir / "MR_fits_updated.txt"
+    if not (pos_path.exists() and fit_path.exists()):
+        print(f"SWAG water masers not found at {swag_dir}; skipping (not bundled).")
+        return None
+
+    pos = Table.read(pos_path, format="ascii.cds")
+    fts = Table.read(fit_path, format="ascii.cds")
+    # per source, keep the strongest Gaussian component (blank ID rows are
+    # continuation components of the previous source)
+    fmask = fts["ID"].mask if hasattr(fts["ID"], "mask") else np.zeros(len(fts), bool)
+    amp = np.asarray(fts["Amp"], float)
+    cen = np.asarray(fts["Centroid"], float)
+    best = {}
+    last = -1
+    for i in range(len(fts)):
+        if not fmask[i]:
+            last = int(fts["ID"][i])
+        if last not in best or amp[i] > best[last][0]:
+            best[last] = (amp[i], cen[i])
+    pid = np.asarray(pos["ID"], int)
+    coords = SkyCoord(l=np.asarray(pos["GLON"], float) * u.deg,
+                      b=np.asarray(pos["GLAT"], float) * u.deg, frame=Galactic).icrs
+
+    out = Table()
+    out["ra_deg"] = coords.ra.deg
+    out["dec_deg"] = coords.dec.deg
+    out["vlsr"] = np.array([best.get(s, (np.nan, np.nan))[1] for s in pid])
+    out["flux"] = np.array([best.get(s, (np.nan, np.nan))[0] for s in pid])
+    out["flux_unit"] = "K"
+    out["name"] = np.array([f"SWAG-{s}" for s in pid])
+    out["species"] = "H2O"
+    out["maser_class"] = ""
+    out["maser_type"] = "H2O"
+    out["catalog"] = "H2O_SWAG_Ward"
+    out["reference"] = "Ward, Ott & Meier (SWAG 22 GHz water masers, CMZ; in prep.)"
+    return out
+
+
+def load_masers(data_dir=MASER_DATA_DIR, files=MASER_CATALOG_FILES, include_swag=True):
+    """Load and concatenate the bundled maser catalogs, plus the SWAG water
+    masers read from disk at runtime when available (not bundled)."""
     tables = []
     for fn in files:
         path = Path(data_dir) / fn
@@ -88,6 +142,11 @@ def load_masers(data_dir=MASER_DATA_DIR, files=MASER_CATALOG_FILES):
         species = str(tbl["species"][0]) if len(tbl) else "?"
         print(f"Loaded {len(tbl)} masers from {fn} ({species})")
         tables.append(tbl)
+    if include_swag:
+        swag = _load_swag_masers()
+        if swag is not None:
+            print(f"Loaded {len(swag)} masers from SWAG water masers (disk, H2O)")
+            tables.append(swag)
     if not tables:
         raise RuntimeError("No maser catalogs could be loaded")
     return vstack(tables, metadata_conflicts="silent")
