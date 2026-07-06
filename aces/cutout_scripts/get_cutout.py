@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Download an ALMA SODA cutout from Galactic coordinates."""
 
-from pathlib import Path
 import argparse
+from pathlib import Path
 
 
-C_M_PER_S = 299792458.0
 SODA_URL = "https://almascience.eso.org/soda/sync"
 
 
@@ -77,10 +76,16 @@ def fetch_primary_header(requests_module, params):
 
 
 def velocity_to_band(restfrq_hz, vmin, vmax):
+    from astropy import constants as const
+    from astropy import units as u
+
+    rest_frequency = restfrq_hz * u.Hz
     wavelengths = []
     for velocity_kms in (vmin, vmax):
-        frequency_hz = restfrq_hz * (1.0 - velocity_kms * 1000.0 / C_M_PER_S)
-        wavelengths.append(C_M_PER_S / frequency_hz)
+        velocity = velocity_kms * u.km / u.s
+        frequency = rest_frequency * (1.0 - (velocity / const.c).decompose())
+        wavelength = (const.c / frequency).to(u.m)
+        wavelengths.append(wavelength.value)
     return sorted(wavelengths)
 
 
@@ -104,10 +109,11 @@ def parse_extra_args(parser, extra_args):
 
 
 def get_cutout(filename, glon, glat, radius, vmin=None, vmax=None, outfile=None):
+    from astropy import units as u
     import requests
 
     ra, dec = galactic_to_icrs(glon, glat)
-    radius_deg = radius / 3600.0
+    radius_deg = (radius * u.arcsec).to_value(u.deg)
 
     params = {
         "REQUEST": "queryData",

@@ -13,6 +13,14 @@ Use a Python environment with:
 
 - `requests`
 - `astropy`
+- `matplotlib`
+- `numpy`
+
+Install them with:
+
+```bash
+python -m pip install -r requirements.txt
+```
 
 Check the command interface with:
 
@@ -21,8 +29,12 @@ python get_cutout.py --help
 ```
 
 If that Python environment does not have the required packages, activate an
-environment that includes `requests` and `astropy`. On this machine, the
-Anaconda Python at `/opt/anaconda3/bin/python` has these dependencies available.
+environment that includes the packages in `requirements.txt`. On this machine,
+the Anaconda Python at `/opt/anaconda3/bin/python` has these dependencies
+available.
+
+The `cutout_examples.ipynb` notebook uses the same requirements and shows image
+and cube examples using this script as an import.
 
 ## Basic Usage
 
