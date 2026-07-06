@@ -767,13 +767,13 @@ def make_giant_mosaic_cube_sio21(**kwargs):
                               )
 
 
-def make_giant_mosaic_cube_ch3oh(**kwargs):
+def make_giant_mosaic_cube_ch3oh_72_63(**kwargs):
     # CH3OH vt=0-2 7(2,5)-6(3,4)++ at 86.902947 GHz, a possible maser line
     # (Katha).  In the H13CO+/SiO band = SPW27 (same as SiO 2-1).
 
     filelist = sorted(glob.glob('/orange/adamginsburg/ACES/upload/Feather_12m_7m_TP/SPW27/cubes/Sgr_A_st_*.TP_7M_12M_feather_all.SPW_27.image.statcont.contsub.fits'))
 
-    print(f"Found {len(filelist)} CH3OH-containing spw27 files")
+    print(f"Found {len(filelist)} CH3OH_72-63-containing spw27 files")
 
     check_files(filelist)
 
@@ -787,19 +787,19 @@ def make_giant_mosaic_cube_ch3oh(**kwargs):
                            weightfilelist=weightfilelist,
                            reference_frequency=restfrq,
                            cdelt_kms=cdelt_kms,
-                           cubename='CH3OH',
+                           cubename='CH3OH_72-63',
                            nchan=600,
                            beam_threshold=3.3 * u.arcsec,
-                           channelmosaic_directory=f'{basepath}/mosaics/CH3OH_Channels/',
+                           channelmosaic_directory=f'{basepath}/mosaics/CH3OH_72-63_Channels/',
                            fail_if_cube_dropped=False,
                            **kwargs,)
 
     if not kwargs.get('skip_final_combination') and not kwargs.get('test'):
-        make_downsampled_cube(f'{basepath}/mosaics/cubes/CH3OH_CubeMosaic.fits',
-                              f'{basepath}/mosaics/cubes/CH3OH_CubeMosaic_downsampled9.fits',
+        make_downsampled_cube(f'{basepath}/mosaics/cubes/CH3OH_72-63_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/CH3OH_72-63_CubeMosaic_downsampled9.fits',
                               )
-        downsample_spectrally(f'{basepath}/mosaics/cubes/CH3OH_CubeMosaic.fits',
-                              f'{basepath}/mosaics/cubes/CH3OH_CubeMosaic_spectrally.fits',
+        downsample_spectrally(f'{basepath}/mosaics/cubes/CH3OH_72-63_CubeMosaic.fits',
+                              f'{basepath}/mosaics/cubes/CH3OH_72-63_CubeMosaic_spectrally.fits',
                               factor=2,
                               )
 
