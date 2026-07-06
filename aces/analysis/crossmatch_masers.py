@@ -4,7 +4,8 @@ Crossmatch the ACES compact continuum source catalog against maser catalogs.
 Included maser catalogs (bundled under ``aces/data/masers/``; regenerate with
 prepare_maser_catalogs.py):
 
-* **H2O** -- Walsh et al. (2014) ATCA/SWAG water masers (all-plane).
+* **H2O** -- SWAG 22 GHz water masers, CMZ (Ward, Ott & Meier, in prep.).
+* **H2O** -- Walsh et al. (2014) ATCA water masers (all-plane).
 * **H2O** -- Lu et al. (2019) CMZ water masers.
 * **CH3OH** -- Cotton & Yusef-Zadeh (2016) VLA 36 GHz class-I masers, the dense
   CMZ methanol catalog (2240 spots).
@@ -51,7 +52,8 @@ DEFAULT_RADIUS_ARCSEC = 2.0
 # prepare_maser_catalogs.py).  Each file has uniform columns:
 # ra_deg, dec_deg, vlsr, flux, flux_unit, name, species, catalog, reference.
 MASER_CATALOG_FILES = [
-    "h2o_walsh2014.fits",        # H2O, SWAG/ATCA all-plane (Walsh et al. 2014)
+    "h2o_swag_ward.fits",        # H2O, CMZ (SWAG; Ward, Ott & Meier, in prep.)
+    "h2o_walsh2014.fits",        # H2O, ATCA all-plane (Walsh et al. 2014)
     "h2o_lu2019_cmz.fits",       # H2O, CMZ (Lu et al. 2019)
     "ch3oh_cotton2016_cmz.fits",  # CH3OH 36 GHz class I, CMZ (Cotton & Yusef-Zadeh 2016)
     "ch3oh_glostar.fits",        # CH3OH 6.7 GHz class II, all-plane (GLOSTAR)

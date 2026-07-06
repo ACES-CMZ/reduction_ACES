@@ -29,6 +29,7 @@ MASER_DATA_DIR = Path(__file__).parent.parent / "data" / "masers"
 # Local raw catalogs (not in the repo)
 WALSH2014 = "/orange/adamginsburg/galactic_plane_surveys/water_masers/walsh2014_atca_water_masers.fits"
 GLOSTAR = "/orange/adamginsburg/salt/survey_2026/data/glostar_methanol.fits"
+SWAG_DIR = "/orange/adamginsburg/cmz/swag/dylanward_watermasers/Tables"
 
 
 def _sexagesimal(ra, dec):
@@ -80,6 +81,30 @@ def prepare():
                     "Walsh et al. 2014, MNRAS 442, 2240 (SWAG/ATCA water masers)")
     t.write(MASER_DATA_DIR / "h2o_walsh2014.fits", overwrite=True)
     print(f"h2o_walsh2014.fits: {len(t)}")
+
+    # --- H2O: SWAG water masers (Ward, Ott & Meier; CMZ, machine-readable tables) ---
+    # positions (Galactic) from the astrodendro "ironclad" table; velocity/amplitude
+    # from the Gaussian-fit table (strongest component per source).
+    pos = Table.read(f"{SWAG_DIR}/MR_astrodendro_ironclad_updated.txt", format="ascii.cds")
+    fts = Table.read(f"{SWAG_DIR}/MR_fits_updated.txt", format="ascii.cds")
+    fmask = fts["ID"].mask if hasattr(fts["ID"], "mask") else np.zeros(len(fts), bool)
+    amp = np.asarray(fts["Amp"], float)
+    cen = np.asarray(fts["Centroid"], float)
+    best = {}
+    last = -1
+    for i in range(len(fts)):
+        if not fmask[i]:
+            last = int(fts["ID"][i])
+        if last not in best or amp[i] > best[last][0]:
+            best[last] = (amp[i], cen[i])
+    pid = np.asarray(pos["ID"], int)
+    swag_flux = np.array([best.get(s, (np.nan, np.nan))[0] for s in pid])
+    swag_vlsr = np.array([best.get(s, (np.nan, np.nan))[1] for s in pid])
+    t = _normalized(_galactic(pos["GLON"], pos["GLAT"]), swag_vlsr, swag_flux, "K",
+                    [f"SWAG-{s}" for s in pid], "H2O", "H2O_SWAG_Ward",
+                    "Ward, Ott & Meier (SWAG 22 GHz water masers, CMZ; in prep.)")
+    t.write(MASER_DATA_DIR / "h2o_swag_ward.fits", overwrite=True)
+    print(f"h2o_swag_ward.fits: {len(t)}")
 
     # --- H2O: Lu 2019 CMZ water masers (VizieR J/ApJS/244/35 table4, sexagesimal) ---
     lu = Vizier.get_catalogs("J/ApJS/244/35/table4")[0]
