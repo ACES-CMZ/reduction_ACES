@@ -501,8 +501,6 @@ def measure_compactness_shells(coord, aces_3mm_file=None, n_shells=4):
         Shell mean fluxes (Jy/beam) normalised to the innermost-shell mean;
         empty list on failure.
     """
-    global _aces_mosaic_cache
-
     if aces_3mm_file is None:
         aces_3mm_file = ('/orange/adamginsburg/ACES/mosaics/continuum/'
                          '12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits')
