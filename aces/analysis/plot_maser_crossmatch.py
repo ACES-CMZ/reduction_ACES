@@ -37,9 +37,14 @@ DEFAULT_CONTINUUM = (basepath / "mosaics" / "continuum" /
                      "12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits")
 DEFAULT_OUTDIR = basepath / "figures"
 
-H2O_COLOR = "#1f77b4"
-CH3OH_COLOR = "#d62728"
-BOTH_COLOR = "#9467bd"
+# Maser types are kept distinct: H2O, CH3OH class I (36 GHz, collisionally
+# pumped, trace shocks/outflows) and CH3OH class II (6.7 GHz, radiatively
+# pumped, trace HMYSOs).  Each gets its own colour + marker in every figure.
+MASER_TYPES = [
+    ("H2O", "n_H2O_masers", "H2O", "#1f77b4", "o"),
+    ("CH3OH class I (36 GHz)", "n_CH3OH_classI_masers", "CH3OH_classI", "#ff7f0e", "^"),
+    ("CH3OH class II (6.7 GHz)", "n_CH3OH_classII_masers", "CH3OH_classII", "#2ca02c", "s"),
+]
 
 
 def _wrap_lon(lon):
@@ -48,25 +53,20 @@ def _wrap_lon(lon):
 
 
 def plot_lb_scatter(aces, outfile, radius_arcsec=DEFAULT_RADIUS_ARCSEC):
-    """l/b scatter: all sources faint, maser-matched sources highlighted."""
+    """l/b scatter: all sources faint, maser-matched sources highlighted by type."""
     lon = _wrap_lon(aces["GLON_peak"])
     lat = np.asarray(aces["GLAT_peak"], dtype=float)
-    h2o = np.asarray(aces["n_H2O_masers"], dtype=int) > 0
-    ch3oh = np.asarray(aces["n_CH3OH_masers"], dtype=int) > 0
-    both = h2o & ch3oh
 
     fig, ax = plt.subplots(figsize=(11, 4.2))
     ax.scatter(lon, lat, s=14, c="0.6", alpha=0.25, edgecolors="none",
                label=f"All ACES sources (N={len(aces)})", zorder=1)
-    ax.scatter(lon[h2o & ~both], lat[h2o & ~both], s=55, c=H2O_COLOR, alpha=0.95,
-               edgecolors="k", linewidths=0.4,
-               label=f"H2O maser (N={int((h2o & ~both).sum())})", zorder=3)
-    ax.scatter(lon[ch3oh & ~both], lat[ch3oh & ~both], s=55, c=CH3OH_COLOR, alpha=0.95,
-               edgecolors="k", linewidths=0.4,
-               label=f"CH3OH maser (N={int((ch3oh & ~both).sum())})", zorder=3)
-    ax.scatter(lon[both], lat[both], s=75, marker="D", c=BOTH_COLOR, alpha=0.98,
-               edgecolors="k", linewidths=0.5,
-               label=f"H2O + CH3OH (N={int(both.sum())})", zorder=4)
+    for label, col, _mt, color, marker in MASER_TYPES:
+        if col not in aces.colnames:
+            continue
+        sel = np.asarray(aces[col], dtype=int) > 0
+        ax.scatter(lon[sel], lat[sel], s=60, c=color, alpha=0.9, marker=marker,
+                   edgecolors="k", linewidths=0.4,
+                   label=f"{label} (N={int(sel.sum())})", zorder=3)
 
     ax.set_xlabel("Galactic Longitude [deg]")
     ax.set_ylabel("Galactic Latitude [deg]")
@@ -81,7 +81,7 @@ def plot_lb_scatter(aces, outfile, radius_arcsec=DEFAULT_RADIUS_ARCSEC):
 
 
 def plot_continuum_overlay(masers, outfile, continuum_fits=DEFAULT_CONTINUUM):
-    """ACES continuum mosaic with H2O and CH3OH masers overlaid."""
+    """ACES continuum mosaic with masers overlaid, by type (H2O, CH3OH I, II)."""
     with fits.open(continuum_fits) as hdul:
         data = np.squeeze(hdul[0].data)
         header = hdul[0].header
@@ -89,7 +89,7 @@ def plot_continuum_overlay(masers, outfile, continuum_fits=DEFAULT_CONTINUUM):
 
     maser_coords = SkyCoord(np.asarray(masers["ra_deg"]) * u.deg,
                             np.asarray(masers["dec_deg"]) * u.deg)
-    species = np.array([str(s) for s in masers["species"]])
+    maser_type = np.array([str(t) for t in masers["maser_type"]])
 
     # pixel coordinates; keep only masers that land within the mosaic
     px, py = ww.world_to_pixel(maser_coords.galactic)
@@ -101,16 +101,15 @@ def plot_continuum_overlay(masers, outfile, continuum_fits=DEFAULT_CONTINUUM):
     norm = simple_norm(data, stretch="asinh", min_percent=1, max_percent=99.7)
     ax.imshow(data, origin="lower", cmap="gray_r", norm=norm)
 
-    for label, color, marker, sp in [("H2O maser", H2O_COLOR, "o", "H2O"),
-                                     ("CH3OH maser", CH3OH_COLOR, "^", "CH3OH")]:
-        sel = in_field & (species == sp)
+    for label, _col, mt, color, marker in MASER_TYPES:
+        sel = in_field & (maser_type == mt)
         ax.scatter(px[sel], py[sel], s=45, facecolors="none", edgecolors=color,
                    linewidths=1.2, marker=marker,
                    label=f"{label} in field (N={int(sel.sum())})")
 
     ax.coords[0].set_axislabel("Galactic Longitude")
     ax.coords[1].set_axislabel("Galactic Latitude")
-    ax.set_title("ACES 12m continuum with H2O and CH3OH masers overlaid")
+    ax.set_title("ACES 12m continuum with H2O and CH3OH (class I / II) masers overlaid")
     ax.set_xlim(0, nx)
     ax.set_ylim(0, ny)
     ax.legend(loc="upper right", framealpha=0.9, fontsize=10)

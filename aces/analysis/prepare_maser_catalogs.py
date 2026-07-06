@@ -42,8 +42,15 @@ def _galactic(lon, lat):
                     frame=Galactic).icrs
 
 
-def _normalized(coords, vlsr, flux, flux_unit, name, species, catalog, reference):
+def _normalized(coords, vlsr, flux, flux_unit, name, species, catalog, reference,
+                maser_class=""):
     n = len(coords)
+    # maser_type distinguishes CH3OH class I vs II (critical: different pumping /
+    # physics); H2O has no class.
+    if species == "CH3OH" and maser_class:
+        maser_type = f"CH3OH_class{maser_class}"
+    else:
+        maser_type = species
     out = Table()
     out["ra_deg"] = coords.ra.deg
     out["dec_deg"] = coords.dec.deg
@@ -52,6 +59,8 @@ def _normalized(coords, vlsr, flux, flux_unit, name, species, catalog, reference
     out["flux_unit"] = flux_unit
     out["name"] = np.array([str(x).strip() for x in name]) if name is not None else np.array([""] * n)
     out["species"] = species
+    out["maser_class"] = maser_class
+    out["maser_type"] = maser_type
     out["catalog"] = catalog
     out["reference"] = reference
     return out
@@ -86,7 +95,8 @@ def prepare():
     flux_jy = np.asarray(co["Flux"], float) / 1000.0  # mJy -> Jy
     t = _normalized(_galactic(co["GLON"], co["GLAT"]), co["Vel"], flux_jy, "Jy",
                     co["Name"], "CH3OH", "CH3OH_Cotton2016_CMZ",
-                    "Cotton & Yusef-Zadeh 2016, ApJS 227, 10 (VLA 36 GHz class I CH3OH, CMZ)")
+                    "Cotton & Yusef-Zadeh 2016, ApJS 227, 10 (VLA 36 GHz class I CH3OH, CMZ)",
+                    maser_class="I")
     t.write(MASER_DATA_DIR / "ch3oh_cotton2016_cmz.fits", overwrite=True)
     print(f"ch3oh_cotton2016_cmz.fits: {len(t)}")
 
@@ -96,7 +106,8 @@ def prepare():
     g = g[good]
     t = _normalized(_sexagesimal(g["RAJ2000"], g["DEJ2000"]), g["Vlsr"], g["Svp"], "Jy/beam",
                     g["Name"], "CH3OH", "CH3OH_GLOSTAR",
-                    "Nguyen et al. 2022, A&A 666, A59 (GLOSTAR 6.7 GHz class II CH3OH)")
+                    "Nguyen et al. 2022, A&A 666, A59 (GLOSTAR 6.7 GHz class II CH3OH)",
+                    maser_class="II")
     t.write(MASER_DATA_DIR / "ch3oh_glostar.fits", overwrite=True)
     print(f"ch3oh_glostar.fits: {len(t)}")
 

@@ -12,10 +12,12 @@ prepare_maser_catalogs.py):
 
 For every ACES source we record, within a configurable match radius:
 
-* ``maser_match``            -- True if any maser (any species) is within radius
-* ``n_H2O_masers`` / ``n_CH3OH_masers`` -- number of masers within radius
+* ``maser_match``            -- True if any maser (any type) is within radius
+* ``n_H2O_masers``, ``n_CH3OH_classI_masers``, ``n_CH3OH_classII_masers``
+  -- number of masers within radius, counted separately by maser type.
+  CH3OH class I (36 GHz) and class II (6.7 GHz) are kept distinct throughout.
 * ``maser_nearest_*``        -- properties of the single nearest maser
-  (separation, catalog, species, name, V_lsr, flux) when within radius
+  (separation, catalog, species, class, type, name, V_lsr, flux) when within radius
 
 Outputs ``aces_compact_catalog_v0_withMasers.{fits,ecsv}`` and a per-match
 table ``aces_maser_matches.ecsv`` under ``{basepath}/tables/``.
@@ -97,7 +99,10 @@ def crossmatch_masers(aces, masers, radius_arcsec=DEFAULT_RADIUS_ARCSEC):
     maser_coords = SkyCoord(masers["ra_deg"] * u.deg, masers["dec_deg"] * u.deg)
 
     nsrc = len(aces)
-    species_list = sorted(set(str(s) for s in masers["species"]))
+    # count/report by maser_type, which distinguishes CH3OH class I vs II
+    # (H2O, CH3OH_classI, CH3OH_classII).
+    maser_type = np.array([str(t) for t in masers["maser_type"]])
+    type_list = sorted(set(maser_type))
 
     # nearest maser overall
     idx_near, sep_near, _ = aces_coords.match_to_catalog_sky(maser_coords)
@@ -108,6 +113,8 @@ def crossmatch_masers(aces, masers, radius_arcsec=DEFAULT_RADIUS_ARCSEC):
     aces["maser_nearest_sep_arcsec"] = np.where(within, sep_near.arcsec, np.nan)
     for col, key, fill in [("maser_nearest_catalog", "catalog", ""),
                            ("maser_nearest_species", "species", ""),
+                           ("maser_nearest_class", "maser_class", ""),
+                           ("maser_nearest_type", "maser_type", ""),
                            ("maser_nearest_name", "name", ""),
                            ("maser_nearest_reference", "reference", "")]:
         vals = np.array([str(masers[key][i]) for i in idx_near])
@@ -116,30 +123,31 @@ def crossmatch_masers(aces, masers, radius_arcsec=DEFAULT_RADIUS_ARCSEC):
         vals = np.asarray(masers[key])[idx_near]
         aces[col] = np.where(within, vals, np.nan)
 
-    # counts within radius, per species (search_around_sky finds all pairs).
+    # counts within radius, per maser_type (search_around_sky finds all pairs).
     # Function form: ia indexes aces_coords, im indexes maser_coords.
     ia, im, sep2d, _ = search_around_sky(aces_coords, maser_coords, radius)
-    for sp in species_list:
+    im_type = maser_type[im]
+    for mt in type_list:
         counts = np.zeros(nsrc, dtype=int)
-        sel = np.array([str(masers["species"][j]) == sp for j in im])
+        sel = im_type == mt
         if sel.any():
             np.add.at(counts, ia[sel], 1)
-        aces[f"n_{sp}_masers"] = counts
+        aces[f"n_{mt}_masers"] = counts
 
     # per-match table (one row per ACES-maser pair within radius)
     if len(ia):
         match = Table()
         match["index"] = np.asarray(aces["index"])[ia]
         match["sep_arcsec"] = sep2d.arcsec
-        for key in ("catalog", "species", "name", "vlsr", "flux", "reference"):
-            match[f"maser_{key}"] = np.asarray(masers[key])[im]
+        for key in ("catalog", "species", "maser_class", "maser_type", "name", "vlsr", "flux", "reference"):
+            match[f"maser_{key}" if not key.startswith("maser_") else key] = np.asarray(masers[key])[im]
         match["maser_ra_deg"] = np.asarray(masers["ra_deg"])[im]
         match["maser_dec_deg"] = np.asarray(masers["dec_deg"])[im]
         match.sort(["index", "sep_arcsec"])
     else:
         match = Table(names=["index", "sep_arcsec", "maser_catalog", "maser_species",
-                             "maser_name", "maser_vlsr", "maser_flux", "maser_reference",
-                             "maser_ra_deg", "maser_dec_deg"])
+                             "maser_class", "maser_type", "maser_name", "maser_vlsr",
+                             "maser_flux", "maser_reference", "maser_ra_deg", "maser_dec_deg"])
 
     return aces, match
 
@@ -169,10 +177,10 @@ def main(argv=None):
 
     nmatched = int(np.count_nonzero(aces["maser_match"]))
     print(f"\n{nmatched}/{len(aces)} ACES sources have a maser within {args.radius}\"")
-    for sp in sorted(set(str(s) for s in masers["species"])):
-        col = f"n_{sp}_masers"
+    for mt in sorted(set(str(t) for t in masers["maser_type"])):
+        col = f"n_{mt}_masers"
         if col in aces.colnames:
-            print(f"  sources with >=1 {sp} maser: {int(np.count_nonzero(aces[col]))}")
+            print(f"  sources with >=1 {mt} maser: {int(np.count_nonzero(aces[col]))}")
     print(f"  total ACES-maser pairs within radius: {len(match)}")
 
     out_fits = outdir / "aces_compact_catalog_v0_withMasers.fits"
