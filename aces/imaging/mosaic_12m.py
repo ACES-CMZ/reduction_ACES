@@ -663,6 +663,20 @@ def get_weightfile(filename, spw):
                 if match_pre:
                     break
 
+            # Fall back to flat (2D) weights when the full weight cube is missing.
+            # These are constant across the spectral axis (per-line moment weight
+            # images, or continuum weight images) and get broadcast across the
+            # cube's channels in make_giant_mosaic_cube.  .weight.tt0 CASA images
+            # are fine; they don't need to be exported to FITS.
+            if len(flist) != 1:
+                workingdir = f'{sgmpath}{mousid}/calibrated/working'
+                flat = sorted(glob.glob(f'{workingdir}/*spw{spw}*weight_*max.fits'))
+                if len(flat) == 0:
+                    # continuum weight images (flat across all channels)
+                    flat = sorted(glob.glob(f'{workingdir}/*cont.I.iter1.weight.tt0'))
+                if len(flat) >= 1:
+                    flist = [flat[0]]
+
     # we have to have exactly 1 match
     assert len(flist) == 1, f'{filename} failed to find a weightfile: flist={str(flist)}'
     return flist[0]
