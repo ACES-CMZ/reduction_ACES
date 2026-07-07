@@ -7,6 +7,7 @@ import shutil
 import glob
 import radio_beam
 import os
+import time
 import warnings
 from spectral_cube import SpectralCube
 from astropy import units as u
@@ -150,6 +151,17 @@ def main_():
     all_lines(header)
 
 
+def _path_exists_retry(path, retries=5, delay=1.0):
+    """``os.path.exists`` with retries.  Large parallel mosaic builds occasionally
+    get a transient NFS stat miss, which made check_files spuriously assert that a
+    pb/weight file is missing; retry a few times before believing it is gone."""
+    for _ in range(retries):
+        if os.path.exists(path):
+            return True
+        time.sleep(delay)
+    return False
+
+
 def check_files(filelist, funcname=None):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
@@ -168,17 +180,17 @@ def check_files(filelist, funcname=None):
                 raise ValueError(f"Missing {row['Obs ID']} or too many (sum(matches)= {sum(matches)}), matches={[fn for fn in filelist if row['12m MOUS ID'] in fn]}")
 
         for fn in filelist:
-            assert os.path.exists(fn
-                                  .replace("image.pbcor.statcont.contsub.fits", "pb")
-                                  .replace("image.pbcor", "pb")
-                                  .replace("image.tt0.pbcor", "pb.tt0")
-                                  .replace('manual.pbcor.tt0', 'manual.pb.tt0')
+            assert _path_exists_retry(fn
+                                      .replace("image.pbcor.statcont.contsub.fits", "pb")
+                                      .replace("image.pbcor", "pb")
+                                      .replace("image.tt0.pbcor", "pb.tt0")
+                                      .replace('manual.pbcor.tt0', 'manual.pb.tt0')
             ), f"No pb found for {fn}"
-            assert os.path.exists(fn
-                                  .replace("image.pbcor.statcont.contsub.fits", "weight")
-                                  .replace("image.pbcor", "weight")
-                                  .replace("image.tt0.pbcor", "weight.tt0")
-                                  .replace('manual.pbcor.tt0', 'manual.weight.tt0')
+            assert _path_exists_retry(fn
+                                      .replace("image.pbcor.statcont.contsub.fits", "weight")
+                                      .replace("image.pbcor", "weight")
+                                      .replace("image.tt0.pbcor", "weight.tt0")
+                                      .replace('manual.pbcor.tt0', 'manual.weight.tt0')
             ), f"No weight found for {fn}"
 
             if fn.endswith('fits'):
