@@ -7,12 +7,16 @@ prepare_maser_catalogs.py):
 * **H2O** -- Walsh et al. (2014) ATCA water masers (all-plane).
 * **H2O** -- Lu et al. (2019) CMZ water masers.
 
-Additionally, the SWAG 22 GHz water masers (Ward, Ott & Meier, in prep.; CMZ)
-are read from disk at runtime when present (``SWAG_DIR``) -- they are not
-redistributed with the package.
 * **CH3OH** -- Cotton & Yusef-Zadeh (2016) VLA 36 GHz class-I masers, the dense
   CMZ methanol catalog (2240 spots).
 * **CH3OH** -- GLOSTAR 6.7 GHz class-II masers (Nguyen et al. 2022, all-plane).
+
+Additionally read from disk at runtime when present (not redistributed):
+
+* **H2O** -- SWAG 22 GHz water masers (Ward, Ott & Meier, in prep.; CMZ;
+  ``SWAG_DIR``).
+* **SiO** -- ACES evolved-star (stellar) SiO masers detected in the ACES data
+  itself (``SIO_FILE``), collapsed to one entry per source.
 
 For every ACES source we record, within a configurable match radius:
 
@@ -51,6 +55,13 @@ MASER_DATA_DIR = Path(__file__).parent.parent / "data" / "masers"
 # SWAG water masers (Ward, Ott & Meier, in prep.) are NOT redistributed; they are
 # read from disk at runtime if the machine-readable tables are present.
 SWAG_DIR = Path("/orange/adamginsburg/cmz/swag/dylanward_watermasers/Tables")
+
+# ACES SiO masers -- evolved-star (stellar) SiO masers detected in the ACES data
+# itself.  These are an ACES data product, not a redistributed external catalog,
+# so like SWAG they are read from disk at runtime when present.  The
+# position_velocity table carries one row per fitted spectral peak; it is
+# collapsed to one row per source in _load_sio_masers.
+SIO_FILE = basepath / "upload" / "SiO_Masers" / "ACES_SiO_maser_position_velocity.fits"
 
 # Default association radius between a continuum source and a maser
 DEFAULT_RADIUS_ARCSEC = 2.0
@@ -129,9 +140,47 @@ def _load_swag_masers(swag_dir=SWAG_DIR):
     return out
 
 
-def load_masers(data_dir=MASER_DATA_DIR, files=MASER_CATALOG_FILES, include_swag=True):
+def _load_sio_masers(sio_file=SIO_FILE):
+    """Read the ACES SiO (evolved-star / stellar) maser catalog from disk and
+    normalize it to the bundled schema.
+
+    Returns None if the table is not present (so the crossmatch runs without it);
+    it is an ACES data product and is not redistributed with the package.  The
+    position_velocity table has one row per fitted spectral peak, so collapse it
+    to one row per source (the position is identical across a source's peaks;
+    keep the first peak's velocity as the representative V_lsr).
+    """
+    sio_file = Path(sio_file)
+    if not sio_file.exists():
+        print(f"ACES SiO masers not found at {sio_file}; skipping (not bundled).")
+        return None
+
+    t = Table.read(sio_file)
+    t = t.group_by("number")
+    src = t[t.groups.indices[:-1]]  # first row (peak) of each source group
+    coords = SkyCoord(l=np.asarray(src["GLON"], float) * u.deg,
+                      b=np.asarray(src["GLAT"], float) * u.deg, frame=Galactic).icrs
+
+    out = Table()
+    out["ra_deg"] = coords.ra.deg
+    out["dec_deg"] = coords.dec.deg
+    out["vlsr"] = np.asarray(src["velocity"], float)
+    out["flux"] = np.full(len(src), np.nan)
+    out["flux_unit"] = ""
+    out["name"] = np.array([f"ACES-SiO-{int(n)}" for n in src["number"]])
+    out["species"] = "SiO"
+    out["maser_class"] = "stellar"
+    out["maser_type"] = "SiO"
+    out["catalog"] = "SiO_ACES"
+    out["reference"] = "ACES SiO maser survey (evolved-star SiO masers, CMZ; this work)"
+    return out
+
+
+def load_masers(data_dir=MASER_DATA_DIR, files=MASER_CATALOG_FILES, include_swag=True,
+                include_sio=True):
     """Load and concatenate the bundled maser catalogs, plus the SWAG water
-    masers read from disk at runtime when available (not bundled)."""
+    masers and ACES SiO masers read from disk at runtime when available (neither
+    is bundled)."""
     tables = []
     for fn in files:
         path = Path(data_dir) / fn
@@ -147,6 +196,11 @@ def load_masers(data_dir=MASER_DATA_DIR, files=MASER_CATALOG_FILES, include_swag
         if swag is not None:
             print(f"Loaded {len(swag)} masers from SWAG water masers (disk, H2O)")
             tables.append(swag)
+    if include_sio:
+        sio = _load_sio_masers()
+        if sio is not None:
+            print(f"Loaded {len(sio)} masers from ACES SiO masers (disk, SiO stellar)")
+            tables.append(sio)
     if not tables:
         raise RuntimeError("No maser catalogs could be loaded")
     return vstack(tables, metadata_conflicts="silent")

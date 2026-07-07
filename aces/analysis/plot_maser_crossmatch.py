@@ -5,9 +5,9 @@ Produces:
 
 1. ``aces_maser_crossmatch_lb.png`` -- l/b scatter of all ACES compact
    continuum sources (low opacity) with maser-matched sources highlighted
-   (H2O, CH3OH, both), within the match radius.
+   (H2O, CH3OH class I/II, SiO), within the match radius.
 2. ``aces_continuum_masers_overlay.png`` -- the ACES 12m continuum mosaic with
-   all H2O and CH3OH masers in the field overlaid.
+   all H2O, CH3OH (class I/II) and SiO masers in the field overlaid.
 
 Run: ``aces_plot_maser_crossmatch`` (or
 ``python -m aces.analysis.plot_maser_crossmatch``).
@@ -38,12 +38,14 @@ DEFAULT_CONTINUUM = (basepath / "mosaics" / "continuum" /
 DEFAULT_OUTDIR = basepath / "figures"
 
 # Maser types are kept distinct: H2O, CH3OH class I (36 GHz, collisionally
-# pumped, trace shocks/outflows) and CH3OH class II (6.7 GHz, radiatively
-# pumped, trace HMYSOs).  Each gets its own colour + marker in every figure.
+# pumped, trace shocks/outflows), CH3OH class II (6.7 GHz, radiatively pumped,
+# trace HMYSOs), and SiO (evolved-star / stellar masers).  Each gets its own
+# colour + marker in every figure.
 MASER_TYPES = [
     ("H2O", "n_H2O_masers", "H2O", "#1f77b4", "o"),
     ("CH3OH class I (36 GHz)", "n_CH3OH_classI_masers", "CH3OH_classI", "#ff7f0e", "^"),
     ("CH3OH class II (6.7 GHz)", "n_CH3OH_classII_masers", "CH3OH_classII", "#2ca02c", "s"),
+    ("SiO (stellar)", "n_SiO_masers", "SiO", "#d62728", "D"),
 ]
 
 
@@ -81,7 +83,7 @@ def plot_lb_scatter(aces, outfile, radius_arcsec=DEFAULT_RADIUS_ARCSEC):
 
 
 def plot_continuum_overlay(masers, outfile, continuum_fits=DEFAULT_CONTINUUM):
-    """ACES continuum mosaic with masers overlaid, by type (H2O, CH3OH I, II)."""
+    """ACES continuum mosaic with masers overlaid, by type (H2O, CH3OH I/II, SiO)."""
     with fits.open(continuum_fits) as hdul:
         data = np.squeeze(hdul[0].data)
         header = hdul[0].header
@@ -109,7 +111,7 @@ def plot_continuum_overlay(masers, outfile, continuum_fits=DEFAULT_CONTINUUM):
 
     ax.coords[0].set_axislabel("Galactic Longitude")
     ax.coords[1].set_axislabel("Galactic Latitude")
-    ax.set_title("ACES 12m continuum with H2O and CH3OH (class I / II) masers overlaid")
+    ax.set_title("ACES 12m continuum with H2O, CH3OH (class I / II) and SiO masers overlaid")
     ax.set_xlim(0, nx)
     ax.set_ylim(0, ny)
     ax.legend(loc="upper right", framealpha=0.9, fontsize=10)
