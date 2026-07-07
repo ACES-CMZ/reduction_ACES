@@ -840,9 +840,19 @@ def make_giant_mosaic_cube(filelist,
         if len(weightcubes) == len(cubes) and min_weight_fraction is not None:
             # mask out the low-weight regions
             print(f"Masking out regions with weight < {min_weight_fraction} * max(weight)", flush=True)
-            # assume the middle of the cube is safe to save time
-            weightcubes = [weightcube.with_mask(weightcube > min_weight_fraction * weightcube[weightcube.shape[0] // 2, :, :].max())
-                           for weightcube in weightcubes]
+            # Build the footprint from the mid-channel plane and broadcast it across
+            # all channels, so the mask is CHANNEL-INDEPENDENT.  Masking each channel
+            # by its own weight makes a field's footprint edge drift with the mosaic-
+            # vs-native spectral-grid beat (mosaic cdelt != native cdelt), which
+            # flickers edge pixels in/out of the mask on a ~grid-beat period (seen as
+            # NaN blocks at single-coverage field margins, e.g. field ao in CH3CHO_3m13).
+            # A single 2D footprint per field removes that channel dependence.
+            new_weightcubes = []
+            for weightcube in weightcubes:
+                midplane = weightcube[weightcube.shape[0] // 2, :, :]
+                footprint = np.asarray(midplane > min_weight_fraction * midplane.max())
+                new_weightcubes.append(weightcube.with_mask(footprint[None, :, :]))
+            weightcubes = new_weightcubes
 
     # BUGFIX: there are FITS headers that incorrectly specify UTC in caps
     for cube in cubes + weightcubes:

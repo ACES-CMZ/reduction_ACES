@@ -11,5 +11,5 @@ sbatch --job-name=aces_ch3cho_3m13_mosaic_merge \
     --output=/blue/adamginsburg/adamginsburg/ACES/logs/aces_ch3cho_3m13_mosaic_merge_%j.log  \
     --dependency=afterok:$jobid \
     --account=astronomy-dept --qos=astronomy-dept-b \
-    --ntasks=8 --nodes=1 --mem=32gb --time=96:00:00 \
+    --ntasks=8 --nodes=1 --mem=256gb --time=96:00:00 \
     --wrap "/blue/adamginsburg/adamginsburg/miniconda3/envs/python312/bin/python -c \"from aces.imaging.mosaic_12m import make_giant_mosaic_cube_ch3cho_3m13; make_giant_mosaic_cube_ch3cho_3m13(channels='all', skip_channel_mosaicing=True, verbose=True,)\""
