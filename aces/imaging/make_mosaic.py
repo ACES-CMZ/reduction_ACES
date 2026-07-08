@@ -1106,6 +1106,9 @@ def make_downsampled_cube(cubename, outcubename, factor=9, overwrite=True,
     header['NAXIS1'] = int(header['NAXIS1'] // factor)
     header['NAXIS2'] = int(header['NAXIS2'] // factor)
     header['BITPIX'] = -32
+    header['BMAJ'] = smooth_beam.to(u.deg).value
+    header['BMIN'] = smooth_beam.to(u.deg).value
+    header['BPA'] = 0.0
 
     if not os.path.exists(outcubename):
         header.tofile(outcubename, overwrite=False)
