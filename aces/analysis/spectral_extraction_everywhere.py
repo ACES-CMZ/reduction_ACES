@@ -12,6 +12,7 @@ import regions
 import os
 import sys
 import warnings
+import re
 import numpy as np
 from numpy import floor, ceil
 from astropy import coordinates
@@ -152,6 +153,73 @@ def load_support_data():
     return catalog, fieldmapwcs, fieldmapdata, uidtbl
 
 
+# Science SPWs imaged as cubes for every 12m MOUS.
+SCIENCE_SPWS = ('25', '27', '29', '31', '33', '35')
+
+
+def spw_of_cube(path):
+    """Return the SPW number (as a string) implied by a cube filename, or None.
+
+    Handles both the standard ``.spwNN.`` token and the manual-imaging
+    ``Sgr_A_star_sciNN.cube`` naming used for a few fields.
+    """
+    base = os.path.basename(path)
+    match = re.search(r'\.spw(\d+)\.', base)
+    if match:
+        return match.group(1)
+    match = re.search(r'Sgr_A_star_sci(\d+)\.cube', base)
+    if match:
+        return match.group(1)
+    return None
+
+
+def output_cube_token(cubefn):
+    """Basename used to tag an output spectrum, guaranteed to carry ``.spwNN.``.
+
+    Manual-imaging cubes are named ``Sgr_A_star_sciNN.cube...`` with no
+    ``.spwNN.`` token; downstream code keys the SPW off that token, so it is
+    inserted here.
+    """
+    base = os.path.basename(cubefn)
+    spw = spw_of_cube(base)
+    if spw is not None and f'.spw{spw}.' not in base:
+        base = base.replace(f'Sgr_A_star_sci{spw}.cube',
+                            f'Sgr_A_star_sci.spw{spw}.cube')
+    return base
+
+
+def resolve_cubes_for_mous(mousid):
+    """Find the best available image cube per science SPW for a 12m MOUS.
+
+    Beyond the standard pipeline product this also picks up re-imaged cubes
+    whose filenames differ and would otherwise be missed: reclean
+    (``*.iter1.reclean.image.pbcor.fits`` in ``working/`` or a ``*reclean*``
+    directory), manual (``*.manual.image.pbcor.fits`` or
+    ``manual/Sgr_A_star_sciNN.cube.I.manual.pbcor.fits``), and the delivered
+    ``product/member*.spwNN.cube.I.pbcor.fits``. Cubes under a ``failed*`` or
+    ``sizemitigated`` directory are never used. Exactly one cube is returned
+    per SPW, chosen by the priority order below.
+    """
+    member = f'{PRODUCT_DIR}/member.uid___A001_{mousid}'
+    cubes = []
+    for spw in SCIENCE_SPWS:
+        patterns = [
+            f'{member}/calibrated/working/*Sgr_A_star_sci.spw{spw}.cube.I.iter1.image.pbcor.fits',
+            f'{member}/calibrated/working/*Sgr_A_star_sci.spw{spw}.cube.I.iter1.reclean.image.pbcor.fits',
+            f'{member}/*reclean*/*Sgr_A_star_sci.spw{spw}.cube.I.*reclean.image.pbcor.fits',
+            f'{member}/calibrated/working/*Sgr_A_star_sci.spw{spw}.cube.I.manual.image.pbcor.fits',
+            f'{member}/manual/Sgr_A_star_sci{spw}.cube.I.manual.pbcor.fits',
+            f'{member}/product/member*Sgr_A_star_sci.spw{spw}.cube.I.pbcor.fits',
+        ]
+        for pattern in patterns:
+            hits = [h for h in glob.glob(pattern)
+                    if '/failed' not in h and 'sizemitigated' not in h]
+            if hits:
+                cubes.append(sorted(hits)[0])
+                break
+    return cubes
+
+
 def get_cube_for_source(source_row, fieldmapwcs, fieldmapdata, uidtbl):
     """Find cube files for a given source.
 
@@ -183,8 +251,7 @@ def get_cube_for_source(source_row, fieldmapwcs, fieldmapdata, uidtbl):
         return [], center
 
     mousid = uidtbl[field_id - 1]['12m MOUS ID']
-    # cube.I.*iter1 to accommodate .cube.I.iter1.reclean.image.pbcor.statcont.contsub.fits
-    cubefns = glob.glob(f'{PRODUCT_DIR}/member.uid___A001_{mousid}/calibrated/working/*Sgr_A_star*.cube.I.*iter1.image.pbcor.fits')
+    cubefns = resolve_cubes_for_mous(mousid)
 
     return cubefns, center
 
@@ -236,7 +303,7 @@ def extract_spectra_for_source(source_row, fieldmapwcs, fieldmapdata, uidtbl,
     homecube = ''
 
     for cubefn in cubefns:
-        outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{source_row['index']}_ellipseaverage_" + cubefn.split("/")[-1]
+        outfn = f"{spectrum_dir}/{catalog_name_prefix}_source{source_row['index']}_ellipseaverage_" + output_cube_token(cubefn)
 
         if skip_existing and os.path.exists(outfn) and os.path.exists(outfn.replace('.fits', '_background.fits')):
             # Test that the file is openable
