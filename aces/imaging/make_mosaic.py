@@ -728,22 +728,14 @@ def _weight_is_flat(fn):
     return fn.endswith('.tt0')
 
 
-def _flat_weightcube(fn, refcube):
-    """Read a flat 2D weight image and broadcast it across ``refcube``'s spectral
-    axis, returning a weightcube that shares ``refcube``'s WCS and shape.  This
-    is needed so the flat weight aligns channel-for-channel with its data cube in
-    the 'channel' mosaic method (which indexes weightcubes with the data cube's
-    channel indices)."""
+def _broadcast_plane_to_cube(wdata, wwcs, refcube):
+    """Reproject a single 2D weight plane (``wdata`` on celestial WCS ``wwcs``)
+    onto ``refcube``'s celestial grid and broadcast it across ``refcube``'s
+    spectral axis, returning a weightcube that shares ``refcube``'s WCS and
+    shape.  This makes the (constant-in-frequency) weight align channel-for-
+    channel with its data cube in the 'channel' mosaic method, which requires the
+    weight to be on the same grid as the data."""
     import dask.array as da
-    if fn.endswith('fits'):
-        whdu = fits.open(fn)[0]
-        wdata = np.squeeze(whdu.data)
-        wwcs = WCS(whdu.header).celestial
-    else:
-        wcube = SpectralCube.read(fn, format='casa_image', use_dask=True)
-        wproj = wcube[0] if wcube.ndim == 3 else wcube
-        wdata = np.squeeze(np.asarray(wproj))
-        wwcs = wcube.wcs.celestial
     plane, _ = reproject_interp((np.nan_to_num(wdata), wwcs),
                                 refcube.wcs.celestial,
                                 shape_out=refcube.shape[1:])
@@ -760,6 +752,45 @@ def _flat_weightcube(fn, refcube):
     newwcs = refcube.wcs.deepcopy()
     newwcs.wcs.timesys = newwcs.wcs.timesys.lower()
     return DaskSpectralCube(data=data3d, wcs=newwcs)
+
+
+def _flat_weightcube(fn, refcube):
+    """Read a flat 2D weight image and broadcast it across ``refcube``'s spectral
+    axis (see _broadcast_plane_to_cube)."""
+    if fn.endswith('fits'):
+        whdu = fits.open(fn)[0]
+        wdata = np.squeeze(whdu.data)
+        wwcs = WCS(whdu.header).celestial
+    else:
+        wcube = SpectralCube.read(fn, format='casa_image', use_dask=True)
+        wproj = wcube[0] if wcube.ndim == 3 else wcube
+        wdata = np.squeeze(np.asarray(wproj))
+        wwcs = wcube.wcs.celestial
+    return _broadcast_plane_to_cube(wdata, wwcs, refcube)
+
+
+def _weightcube_matches(wcube, refcube):
+    """True if a 3D weight cube is on the same grid as its data cube: identical
+    shape and a spectral axis aligned to within 10% of a channel.  When False,
+    the channel mosaic method would mis-index the weight (e.g. a feathered data
+    cube whose spectral axis is trimmed/shifted relative to the raw weight cube),
+    so the caller falls back to a broadcast flat weight instead."""
+    if tuple(wcube.shape) != tuple(refcube.shape):
+        return False
+    wsa = wcube.spectral_axis.to(u.Hz).value
+    rsa = refcube.spectral_axis.to(u.Hz).value
+    dch = np.median(np.abs(np.diff(rsa))) if len(rsa) > 1 else 1.0
+    return bool(np.all(np.abs(wsa - rsa) < 0.1 * dch))
+
+
+def _flat_weightcube_from_cube(wcube, refcube):
+    """Collapse a 3D weight cube to a single (mid-channel) plane and broadcast it
+    across ``refcube``'s channels.  Used when the weight cube is not on the data
+    cube's grid; weights are ~constant along frequency so a single plane is a
+    faithful, correctly-located weight that shares the data grid."""
+    mid = wcube.shape[0] // 2
+    wdata = np.squeeze(np.asarray(wcube[mid, :, :]))
+    return _broadcast_plane_to_cube(wdata, wcube.wcs.celestial, refcube)
 
 
 def make_giant_mosaic_cube(filelist,
@@ -829,12 +860,24 @@ def make_giant_mosaic_cube(filelist,
                     # it across the data cube's channels
                     weightcubes.append(_flat_weightcube(fn, refcube))
                 else:
-                    weightcubes.append(
-                        SpectralCube.read(fn, format='fits' if fn.endswith('fits') else 'casa_image',
-                                          use_dask=True)
-                        .with_spectral_unit(u.km / u.s,
-                                            velocity_convention='radio',
-                                            rest_value=reference_frequency))
+                    wcube = (SpectralCube.read(fn, format='fits' if fn.endswith('fits') else 'casa_image',
+                                               use_dask=True)
+                             .with_spectral_unit(u.km / u.s,
+                                                 velocity_convention='radio',
+                                                 rest_value=reference_frequency))
+                    if _weightcube_matches(wcube, refcube):
+                        weightcubes.append(wcube)
+                    else:
+                        # No weight cube on the data cube's grid (e.g. a feathered
+                        # data cube whose spectral axis is trimmed/shifted relative
+                        # to the raw weight cube -- see field 'ao' in SPW33/35,
+                        # NAXIS3=3839/CRPIX3=0 vs weight 3840/CRPIX3=1).  The channel
+                        # mosaic method requires the weight on the data grid, so fall
+                        # back to a single (mid-channel) weight plane broadcast across
+                        # channels (weights are ~constant in frequency).
+                        print(f"Weight cube {fn} grid {wcube.shape} != data grid "
+                              f"{refcube.shape}; using flat broadcast weight", flush=True)
+                        weightcubes.append(_flat_weightcube_from_cube(wcube, refcube))
         else:
             weightcubes = []
         if len(weightcubes) == len(cubes) and min_weight_fraction is not None:
