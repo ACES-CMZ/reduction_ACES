@@ -2,3 +2,4 @@ astropy
 matplotlib
 numpy
 requests
+spectral-cube

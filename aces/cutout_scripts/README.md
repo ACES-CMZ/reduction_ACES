@@ -3,9 +3,16 @@
 This directory contains a small helper script, `get_cutout.py`, for downloading
 ALMA Science Archive SODA cutouts from Galactic coordinates.
 
+It also contains `get_cutout_velocity_cube.py`, a simple wrapper for downloading a
+cutout around a supplied line rest frequency and saving the result with a
+radio-velocity axis in `km/s` and brightness units of `K`. The wrapper uses
+`get_cutout.py` for all SODA operations, so the download code is maintained in
+only one place.
+
 The script accepts a SODA dataset ID, a Galactic longitude and latitude, and a
-spatial radius. For spectral cubes, it can also accept a radio velocity range
-and translate that range into the wavelength `BAND` parameter expected by SODA.
+spatial radius. For spectral cubes, it can also accept either a radio velocity
+range or a frequency range and translate it into the wavelength `BAND`
+parameter expected by SODA.
 
 ## Requirements
 
@@ -15,6 +22,7 @@ Use a Python environment with:
 - `astropy`
 - `matplotlib`
 - `numpy`
+- `spectral-cube`
 
 Install them with:
 
@@ -49,6 +57,7 @@ General syntax:
 
 ```bash
 python get_cutout.py filename glon glat radius [vmin vmax] [outfile]
+python get_cutout.py filename glon glat radius fmin fmax [outfile] --freq
 ```
 
 Arguments:
@@ -59,7 +68,11 @@ Arguments:
 - `radius`: Spatial cutout radius in arcsec.
 - `vmin`: Optional minimum radio velocity in `km/s`.
 - `vmax`: Optional maximum radio velocity in `km/s`.
+- `fmin`: Minimum frequency in GHz when `--freq` is supplied.
+- `fmax`: Maximum frequency in GHz when `--freq` is supplied.
 - `outfile`: Optional output FITS filename.
+- `--freq`: Interpret the two spectral limits as frequencies in GHz instead of
+  velocities in `km/s`.
 
 You can find the available ACES group-level FITS filenames on the ALMA Science
 Archive page:
@@ -77,10 +90,60 @@ python get_cutout.py filename glon glat radius
 python get_cutout.py filename glon glat radius output.fits
 python get_cutout.py filename glon glat radius vmin vmax
 python get_cutout.py filename glon glat radius vmin vmax output.fits
+python get_cutout.py filename glon glat radius fmin fmax --freq
+python get_cutout.py filename glon glat radius fmin fmax output.fits --freq
 ```
 
 If `outfile` is not provided, the script writes a generated filename based on
-the dataset ID, position, radius, and optional velocity range.
+the dataset ID, position, radius, and optional velocity or frequency range.
+
+## Simple Spectral-Line Wrapper
+
+Use `get_cutout_velocity_cube.py` when you know a line rest frequency and want a
+ready-to-use velocity cube in Kelvin:
+
+```bash
+python get_cutout_velocity_cube.py filename glon glat radius rfreq vrange output.fits
+```
+
+Arguments:
+
+- `filename`: ALMA SODA dataset ID or archive FITS filename.
+- `glon`: Galactic longitude in degrees.
+- `glat`: Galactic latitude in degrees.
+- `radius`: Spatial cutout radius in arcsec.
+- `rfreq`: Rest frequency of the spectral line in GHz.
+- `vrange`: Positive velocity half-range in `km/s`. For example, `100` means
+  the interval from `-100` to `+100 km/s`.
+- `output.fits`: Name of the final processed FITS cube.
+
+For example, this requests a 20 arcsec radius cutout around the H40-alpha rest
+frequency, covering `-100` to `+100 km/s`:
+
+```bash
+python get_cutout_velocity_cube.py \
+  group.uid___A001_X1590_X30a9.lp_slongmore.cmz_mosaic.icrs.12m7mTP.H40a.cube.pbcor.fits \
+  0.0 0.0 20 \
+  99.02295 100 \
+  h40a_velocity_K.fits
+```
+
+The wrapper:
+
+1. Converts the requested velocity limits around `rfreq` into lower and upper
+   frequencies using the radio velocity convention.
+2. Passes those frequencies to the shared `get_cutout.py` SODA downloader.
+3. Opens the downloaded file with `SpectralCube` and enables large-cube
+   operations.
+4. Converts the spectral axis to radio velocity in `km/s`, using the supplied
+   `rfreq`.
+5. Converts the brightness units to `K`.
+6. Overwrites the SODA-downloaded file with the processed cube, so only
+   `output.fits` remains.
+
+Converting from `Jy/beam` to `K` requires the downloaded FITS cube to contain
+valid beam information and compatible brightness units. If either is missing,
+`SpectralCube` will report that it cannot perform the conversion.
 
 ## Examples
 
@@ -127,6 +190,21 @@ cutout and the spectral `BAND` interval, for example:
 POS=CIRCLE+266.40498829+-28.93617776+0.00555556&BAND=3.02649529e-03+3.02851502e-03
 ```
 
+### Frequency Cutout From A Cube
+
+This downloads the portion of a cube between 87.8 and 88.0 GHz. Frequency
+limits do not require a `RESTFRQ` keyword because they are converted directly
+to the wavelength interval expected by SODA.
+
+```bash
+python get_cutout.py \
+  group.uid___A001_X1590_X30a9.lp_slongmore.cmz_mosaic.icrs.12m7mTP.HNCO.cube.pbcor.fits \
+  0.0 0.0 20 \
+  87.8 88.0 \
+  frequency_cutout.fits \
+  --freq
+```
+
 ## What The Script Does
 
 For every request, the script:
@@ -154,6 +232,18 @@ lambda_m = c / nu
 ```
 
 The two wavelengths are sorted before being passed to SODA as `BAND`.
+
+For frequency cutouts, the two limits are interpreted in GHz and converted
+directly to wavelength in metres:
+
+```text
+lambda_m = c / frequency_hz
+```
+
+Frequency limits must be finite positive numbers. Their converted wavelengths
+are sorted before being passed to SODA, so reversed frequency bounds are also
+handled correctly. Frequency mode does not make the preliminary FITS header
+request used by velocity mode.
 
 The script does not transform velocity frames. It assumes the requested
 velocities are in the same practical frame as the archive cube header and rest
@@ -230,7 +320,7 @@ python get_cutout.py --help
 Expected output:
 
 ```text
-usage: get_cutout.py [-h] filename glon glat radius [extra_args ...]
+usage: get_cutout.py [-h] [--freq] filename glon glat radius [extra_args ...]
 
 Download an ALMA SODA cutout using Galactic coordinates.
 
@@ -239,9 +329,10 @@ positional arguments:
   glon        Galactic longitude in degrees
   glat        Galactic latitude in degrees
   radius      Cutout radius in arcsec
-  extra_args  Optional [vmin vmax] in km/s followed by optional output FITS
-              filename
+  extra_args  Optional [vmin vmax] in km/s, or [fmin fmax] in GHz with
+              --freq, followed by optional output FITS filename
 
 options:
   -h, --help  show this help message and exit
+  --freq      Interpret the two spectral limits as frequencies in GHz
 ```
