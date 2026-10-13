@@ -249,14 +249,30 @@ def continuum(header):
                               overwrite=True)
 
 
-def reimaged(header):
-    logprint("12m continuum reimaged (glob is *.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor)")
+def reimaged_filelists():
+    """
+    File selection for the reimaged aggregate (spw25_27_29_31_33_35) 12m
+    continuum mosaic.  Returns (filelist, weightfiles, pbfiles), all in the same
+    order.
+    """
     filelist = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor')
     #filelist += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*25_27_29_31_33_35*cont*tt0.pbcor.fits')
 
     # special-case field am: there are multiple hits and we have to squeeze down to just one
     filelist = [x for x in filelist if 'uid___A001_X15a0_X184' not in x]
     filelist.append(f'{basepath}/data/2021.1.00172.L/science_goal.uid___A001_X1590_X30a8/group.uid___A001_X1590_X30a9/member.uid___A001_X15a0_X184/calibrated/working/uid___A001_X15a0_X184.Sgr_A_star_sci.spw25_27_29_31_33_35.cont.I.manual.lower_plus_upper.image.tt0.pbcor.fits')  # noqa: E501
+
+    #weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
+    #weightfiles_ = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*I.iter1.pb.tt0')
+    #weightfiles_ += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.pb.tt0.fits')
+    weightfiles = [fn.replace(".image.tt0.pbcor", ".weight.tt0").replace(".I.tt0.pbcor", ".I.weight.tt0") for fn in filelist]
+    pbfiles = [fn.replace(".image.tt0.pbcor", ".pb.tt0").replace(".I.tt0.pbcor", ".I.pb.tt0") for fn in filelist]
+    return filelist, weightfiles, pbfiles
+
+
+def reimaged(header):
+    logprint("12m continuum reimaged (glob is *.spw25_27_29_31_33_35.cont.I*image.tt0.pbcor)")
+    filelist, weightfiles, pbfiles = reimaged_filelists()
 
     tt1filelist = [x.replace("tt0", "tt1") for x in filelist]
 
@@ -266,11 +282,6 @@ def reimaged(header):
     hdus = [read_as_2d(fn) for fn in filelist]
     print(flush=True)
     logprint(filelist)
-    #weightfiles = [x.replace(".image.tt0.pbcor", ".pb.tt0") for x in filelist]
-    #weightfiles_ = glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/calibrated/working/*25_27_29_31_33_35*I.iter1.pb.tt0')
-    #weightfiles_ += glob.glob(f'{basepath}/rawdata/2021.1.00172.L/s*/g*/m*/manual/*.pb.tt0.fits')
-    weightfiles = [fn.replace(".image.tt0.pbcor", ".weight.tt0").replace(".I.tt0.pbcor", ".I.weight.tt0") for fn in filelist]
-    pbfiles = [fn.replace(".image.tt0.pbcor", ".pb.tt0").replace(".I.tt0.pbcor", ".I.pb.tt0") for fn in filelist]
     #assert len(weightfiles) == len(filelist)
     #for missing in set(weightfiles_) - set(weightfiles):
     #    logprint(f"Missing {missing}")
@@ -352,6 +363,158 @@ def reimaged(header):
         fits.PrimaryHDU(data=ealpha, header=tt0[0].header).writeto(
             f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_alphaerror_mosaic.fits',
             overwrite=True)
+
+
+SGRB2_2013_CONTINUUM = ('/orange/adamginsburg/sgrb2/2013.1.00269.S/continuum/'
+                        'SgrB2_selfcal_full_TCTE7m_try2_selfcal6_ampphase_deeper_mask1.5mJy.image.tt0.pbcor.fits')
+
+
+def reimaged_with_replacement(header=None,
+                              replacement_image=SGRB2_2013_CONTINUUM,
+                              replacement_pb=None,
+                              pb_threshold=0.2,
+                              name='continuum_commonbeam_circular_reimaged_SgrB2_2013replaced',
+                              outbasepath=basepath,
+                              doplots=True,
+                              feather_with_mustang=True,
+                              mustang_niter=30):
+    """
+    Make the ``reimaged`` 12m aggregate continuum mosaic
+    (``12m_continuum_commonbeam_circular_reimaged_mosaic.fits``) with the area
+    covered by an external continuum image (default: the Sgr B2 2013.1.00269.S
+    12m+7m image) replaced by that image, convolved to the ACES common beam.
+
+    The replacement image is added to the weighted mosaic as one more field.
+    Its weight is pb**2 inside its footprint (pb >= ``pb_threshold``) and zero
+    outside, while every ACES per-field weight is set to zero wherever the
+    footprint (nearest-neighbor reprojected onto that field's grid) is true.
+    Inside the footprint the mosaic is therefore the replacement image and
+    outside it is the normal ACES mosaic.  The common beam is computed from the
+    ACES fields alone, so it is identical to that of the ``reimaged`` mosaic.
+
+    No frequency scaling is applied to the replacement image.
+
+    Parameters
+    ----------
+    header : fits.Header, optional
+        Target header; defaults to ``aces/imaging/data/header_12m.hdr``.
+    replacement_image : str or None
+        FITS image (Jy/beam, pbcor) to put into the mosaic.  ``None`` makes the
+        plain ``reimaged`` mosaic (useful for checking reproducibility).
+    replacement_pb : str, optional
+        Primary beam image for ``replacement_image``.  Defaults to the
+        ``.pb.tt0`` file next to it; if that does not exist, the finite pixels
+        of ``replacement_image`` define the footprint with uniform weight.
+    pb_threshold : float
+        The footprint is ``pb >= pb_threshold``.
+    name : str
+        Mosaic name; output is ``{outbasepath}/mosaics/continuum/12m_{name}_mosaic.fits``.
+    outbasepath : str
+        Base path for the outputs (must contain ``mosaics/continuum/``).
+    doplots : bool
+        Passed to ``make_mosaic``.  The plots need ``outbasepath`` to contain
+        ``reduction_ACES``.
+    feather_with_mustang : bool
+        Feather the result with MUSTANG+Planck using
+        `aces.joint_deconvolution.feather_continuum.feather_aces_with_mustang`.
+    mustang_niter : int
+        Edge-erosion iterations passed to ``feather_aces_with_mustang``.
+
+    Returns
+    -------
+    outfile : str
+        The mosaic filename.
+    """
+    from reproject import reproject_interp
+    from aces.imaging.make_mosaic import get_common_beam
+
+    if header is None:
+        header = fits.Header.fromtextfile(f'{basepath}/reduction_ACES/aces/imaging/data/header_12m.hdr')
+
+    logprint(f"12m continuum reimaged, replacing the footprint of {replacement_image}")
+    filelist, weightfiles, pbfiles = reimaged_filelists()
+    check_files(filelist, funcname='reimaged_with_replacement')
+
+    print("Reading as 2d for files (reimaged_with_replacement): ", end=None, flush=True)
+    hdus = [read_as_2d(fn) for fn in filelist]
+    print(flush=True)
+    print("Reading as 2d for weightfiles (reimaged_with_replacement): ", end=None, flush=True)
+    wthdus = [read_as_2d(fn, minval=0.05) for fn in weightfiles]
+    print(flush=True)
+
+    # common beam from the ACES fields only, exactly as make_mosaic(commonbeam='circular') does
+    aces_beams = [radio_beam.Beam.from_fits_header(hdul[0].header) for hdul in hdus]
+    cb = get_common_beam(radio_beam.Beams(beams=aces_beams))
+    cb = radio_beam.Beam(major=cb.major, minor=cb.major, pa=0)
+    logprint(f"ACES circular common beam: {cb.major.to(u.arcsec):0.4f}")
+    beams = aces_beams
+
+    footprint_hdu = None
+    if replacement_image is not None:
+        if replacement_pb is None:
+            replacement_pb = replacement_image.replace('.image.tt0.pbcor', '.pb.tt0')
+        rhdul = read_as_2d(replacement_image)
+        rheader = rhdul[0].header
+        rdata = rhdul[0].data
+        rwcs = WCS(rheader).celestial
+        rbeam = radio_beam.Beam.from_fits_header(rheader)
+        if rbeam.major >= cb.major:
+            raise ValueError(f"Replacement beam {rbeam} is not smaller than the ACES common beam {cb}")
+        if os.path.exists(replacement_pb):
+            pb = read_as_2d(replacement_pb)[0].data
+            footprint = np.isfinite(pb) & (pb >= pb_threshold) & np.isfinite(rdata)
+            rweight = np.where(footprint, pb**2, 0.0)
+            logprint(f"Replacement footprint: {replacement_pb} >= {pb_threshold} ({footprint.sum()} pixels)")
+        else:
+            footprint = np.isfinite(rdata)
+            rweight = footprint.astype('float')
+            logprint(f"No pb file {replacement_pb} found: replacement footprint is the finite pixels of "
+                     f"{replacement_image} ({footprint.sum()} pixels), with uniform weight")
+        rwthdul = fits.HDUList([fits.PrimaryHDU(data=rweight, header=rheader)])
+
+        # zero out the ACES weights inside the replacement footprint
+        fpmask = (footprint.astype('float'), rwcs)
+        for wthdul, fn in zip(wthdus, weightfiles):
+            wdata = wthdul[0].data
+            infp, _ = reproject_interp(fpmask, WCS(wthdul[0].header).celestial,
+                                       shape_out=wdata.shape, order='nearest-neighbor')
+            sel = np.nan_to_num(infp) > 0.5
+            if sel.any():
+                logprint(f"Zeroing {sel.sum()} weight pixels ({(sel & (wdata > 0)).sum()} nonzero) in {fn}")
+                wdata[sel] = 0
+
+        footprint_out, _ = reproject_interp(fpmask, header, order='nearest-neighbor')
+        footprint_hdu = fits.PrimaryHDU(data=(np.nan_to_num(footprint_out) > 0.5).astype('uint8'),
+                                        header=WCS(header).to_header())
+        footprint_hdu.header['THRESH'] = (pb_threshold, 'replacement pb threshold')
+        footprint_hdu.header['REPLIMG'] = os.path.basename(replacement_image)
+
+        hdus.append(rhdul)
+        wthdus.append(rwthdul)
+        beams = aces_beams + [rbeam]
+
+    make_mosaic(hdus, name=name,
+                commonbeam=cb, beams=radio_beam.Beams(beams=beams),
+                weights=wthdus, cbar_unit='Jy/beam',
+                array='12m', basepath=outbasepath,
+                norm_kwargs=dict(stretch='asinh', vmax=0.008,
+                                 vmin=-0.0002),
+                target_header=header,
+                folder='continuum',
+                doplots=doplots,
+                )
+    outfile = f'{outbasepath}/mosaics/continuum/12m_{name}_mosaic.fits'
+    if footprint_hdu is not None:
+        footprint_hdu.writeto(outfile.replace('_mosaic.fits', '_replacement_footprint.fits'), overwrite=True)
+
+    if feather_with_mustang:
+        from aces.joint_deconvolution.feather_continuum import feather_aces_with_mustang
+        feather_aces_with_mustang(input_filename=outfile,
+                                  output_filename=outfile.replace('.fits', '_MUSTANGfeathered.fits'),
+                                  use_cached=False, niter=mustang_niter,
+                                  remake_mustang_planck=False)
+
+    return outfile
 
 
 def reimaged_high(header, spws=('33_35', '25_27'), spw_names=('reimaged_high', 'reimaged_low')):

@@ -266,7 +266,8 @@ def make_mosaic(twod_hdus, name, norm_kwargs={}, slab_kwargs=None,
         target_wcs = wcs.WCS(target_header)
         shape_out = (target_header['NAXIS2'], target_header['NAXIS1'])
 
-    if bool(commonbeam) and commonbeam is not None:
+    # radio_beam.Beam objects raise on bool(), so check for them explicitly
+    if commonbeam is not None and (isinstance(commonbeam, radio_beam.Beam) or bool(commonbeam)):
         if beams is None:
             beams = radio_beam.Beams(beams=[radio_beam.Beam.from_fits_header(hdul[0].header)
                                             for hdul in twod_hdus])
@@ -494,7 +495,10 @@ def all_lines(header, parallel=False, array='12m',
         if use_weights:
             weightfiles = [fn.replace("image.pbcor.statcont.contsub.fits", "weight") for fn in filelist]
             for ii, (ifn, wfn) in enumerate(zip(list(filelist), list(weightfiles))):
-                if not os.path.exists(wfn):
+                # the weight cubes get deleted to save space, but the cached
+                # peak-weight maps they produced are all we actually need
+                cached_wfn = wfn.replace(".fits", "") + f'_{line}_max.fits'
+                if not os.path.exists(wfn) and not (use_cache and os.path.exists(cached_wfn)):
                     log.error(f"Missing file {wfn}")
                     filelist.remove(ifn)
                     weightfiles.remove(wfn)

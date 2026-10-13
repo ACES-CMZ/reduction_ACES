@@ -22,7 +22,8 @@ from aces import conf
 basepath = conf.basepath
 
 
-def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
+def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20,
+                              input_filename=None, remake_mustang_planck=True):
     """
     Feather ACES continuum data with MUSTANG data.
 
@@ -32,14 +33,25 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
         The filename to save the feathered data to. If None, will use default path.
     use_cached : bool, optional
         If True, use cached feathered data if it exists.
+    niter : int, optional
+        Number of binary erosion iterations applied to the ACES footprint edge.
+    input_filename : str, optional
+        The ACES 12m continuum mosaic to feather.  If None, use
+        ``12m_continuum_commonbeam_circular_reimaged_mosaic.fits``.
+    remake_mustang_planck : bool, optional
+        If False and the MUSTANG+Planck combined map already exists, use it
+        instead of regenerating it.
 
     Returns
     -------
     rslt : fits.PrimaryHDU
         The feathered data.
     """
+    default_input_filename = f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits'
+    if input_filename is None:
+        input_filename = default_input_filename
     if output_filename is None:
-        output_filename = f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits'
+        output_filename = input_filename.replace('.fits', '_MUSTANGfeathered.fits')
         print(f"Set output_filename to {output_filename}")
 
     if use_cached and os.path.exists(output_filename):
@@ -51,7 +63,7 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
     mustang_reffreq = 87.85e9
 
     # Load ACES continuum image
-    ACES = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits')
+    ACES = fits.open(input_filename)
     ACESheader = ACES[0].header
     ACESwcs = WCS(ACES[0].header)
     ACESheader['BUNIT'] = 'K'
@@ -105,29 +117,30 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
     fh[0].header['REFFREQ'] = mustang_central_frequency.to(u.Hz).value
     fh[0].header['BUNIT'] = 'Jy/beam'
 
-    # Smooth MUSTANG data to target beam
-    target_beam = Beam(15*u.arcsec)
-    pixscale_mustang = (mustangwcs.proj_plane_pixel_area()**0.5).to(u.arcsec)
-    kernel = target_beam.deconvolve(mustangbeam).as_kernel(pixscale_mustang)
+    if remake_mustang_planck or not os.path.exists(mustang_plus_planck_fn):
+        # Smooth MUSTANG data to target beam (MUSTANG+Planck is regenerated unless cached and remake_mustang_planck=False)
+        target_beam = Beam(15*u.arcsec)
+        pixscale_mustang = (mustangwcs.proj_plane_pixel_area()**0.5).to(u.arcsec)
+        kernel = target_beam.deconvolve(mustangbeam).as_kernel(pixscale_mustang)
 
-    sm = convolve_fft(fh[0].data.astype('float64'), kernel).real
-    fh[0].header['BMAJ'] = target_beam.major.to(u.deg).value
-    fh[0].header['BMIN'] = target_beam.minor.to(u.deg).value
+        sm = convolve_fft(fh[0].data.astype('float64'), kernel).real
+        fh[0].header['BMAJ'] = target_beam.major.to(u.deg).value
+        fh[0].header['BMIN'] = target_beam.minor.to(u.deg).value
 
-    # Convert MUSTANG data from Jy/beam to K
-    jtok_mustang = mustangbeam.jtok(mustang_central_frequency)
-    header_copy = fh[0].header.copy()
-    header_copy['BUNIT'] = 'K'
-    fh_K = fits.PrimaryHDU(sm*jtok_mustang, header=header_copy)
+        # Convert MUSTANG data from Jy/beam to K
+        jtok_mustang = mustangbeam.jtok(mustang_central_frequency)
+        header_copy = fh[0].header.copy()
+        header_copy['BUNIT'] = 'K'
+        fh_K = fits.PrimaryHDU(sm*jtok_mustang, header=header_copy)
 
-    # Feather MUSTANG+Planck
-    rslt = feather_simple(fh_K, planckfn_scaled)
+        # Feather MUSTANG+Planck
+        rslt = feather_simple(fh_K, planckfn_scaled)
 
-    # Save MUSTANG+Planck
-    fh[0].data = rslt.real
-    fh[0].header['BUNIT'] = 'K'
-    hdu = fits.PrimaryHDU(data=rslt.real.astype('>f8'), header=fh[0].header.copy())
-    hdu.writeto(mustang_plus_planck_fn, overwrite=True, checksum=True)
+        # Save MUSTANG+Planck
+        fh[0].data = rslt.real
+        fh[0].header['BUNIT'] = 'K'
+        hdu = fits.PrimaryHDU(data=rslt.real.astype('>f8'), header=fh[0].header.copy())
+        hdu.writeto(mustang_plus_planck_fn, overwrite=True, checksum=True)
 
     # Load MUSTANG+Planck data for feathering with ACES
     mustang_planck_image = fits.open(mustang_plus_planck_fn)
@@ -144,7 +157,7 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
 
     # Check alignment between ACES and MUSTANG
     # First smooth ACES to match MUSTANG resolution
-    aces_smooth_fn = f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic_smoothed_to_mustang.fits'
+    aces_smooth_fn = input_filename.replace('.fits', '_smoothed_to_mustang.fits')
 
     # Convert ACES data to Kelvin
     jtok_aces = (1*u.Jy).to(u.K, Beam.from_fits_header(ACESheader).jtok_equiv(97.3*u.GHz)).value
@@ -181,7 +194,7 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
         mustang_planck_image[0].header['CRVAL2'] -= (yoff*pixscale_mustang).to(u.deg).value
 
     # Reload ACES to make sure we don't multiply by jtok_aces twice
-    ACES = fits.open(f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits')
+    ACES = fits.open(input_filename)
     ACESheader = ACES[0].header
     ACESwcs = WCS(ACES[0].header)
     ACESheader['BUNIT'] = 'K'
@@ -211,12 +224,13 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20):
     rslt.writeto(output_filename, overwrite=True)
     print(f"Saved to {output_filename}")
 
-    # Create a link to TENS directory if needed
-    try:
-        tens_output = f'{TENS_DIR}/12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits'
-        os.link(output_filename, tens_output)
-    except FileExistsError:
-        pass  # all is good
+    # Create a link to TENS directory if needed (only for the default product)
+    if input_filename == default_input_filename:
+        try:
+            tens_output = f'{TENS_DIR}/12m_continuum_commonbeam_circular_reimaged_mosaic_MUSTANGfeathered.fits'
+            os.link(output_filename, tens_output)
+        except FileExistsError:
+            pass  # all is good
 
     return rslt
 
