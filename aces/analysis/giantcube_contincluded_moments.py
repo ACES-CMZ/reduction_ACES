@@ -96,6 +96,8 @@ def contincluded_moments(cube, molname, cont, mask, howargs={}):
     nocont = ~np.isfinite(cont.value)
 
     for maskname, mcube in (('', cube), ('masked_hlsig_dilated_', cube.with_mask(mask))):
+        # the dask arithmetic is lazy, so the size guard on cube arithmetic is not needed
+        mcube.allow_huge_operations = True
         # plain quantity: the continuum beam can differ slightly from the cube beam
         withcont = mcube + u.Quantity(cont)
         products = {'withcont': withcont,
