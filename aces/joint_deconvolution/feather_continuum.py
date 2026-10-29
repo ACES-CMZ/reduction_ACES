@@ -23,7 +23,8 @@ basepath = conf.basepath
 
 
 def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20,
-                              input_filename=None, remake_mustang_planck=True):
+                              input_filename=None, remake_mustang_planck=True,
+                              feather_beam=None, lowresscalefactor=1.0):
     """
     Feather ACES continuum data with MUSTANG data.
 
@@ -41,6 +42,14 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20,
     remake_mustang_planck : bool, optional
         If False and the MUSTANG+Planck combined map already exists, use it
         instead of regenerating it.
+    feather_beam : `~astropy.units.Quantity`, optional
+        Smooth the aligned MUSTANG+Planck map to this circular FWHM before
+        feathering, so that the interferometer data supply all scales smaller
+        than it.  None keeps the map's own 15" beam.  At Sgr B2 M the TENS map
+        holds about half the flux of MGPS90 (and of the ALMA data) at 20", and
+        feathering at 15" digs bowls of -2.5 to -5.4 K around M.
+    lowresscalefactor : float, optional
+        Scale factor for the MUSTANG+Planck map, passed to ``feather_simple``.
 
     Returns
     -------
@@ -189,9 +198,21 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20,
     print(f"MUSTANG is shifted from ACES by dl={xoff*pixscale_mustang:0.3f}, db={yoff*pixscale_mustang:0.3f}")
 
     if 'SHIFTED' not in mustang_planck_image[0].header:
+        # MUSTANG appears displaced by (+xoff, +yoff) pixels, so move it by (-xoff, -yoff):
+        # CRVAL -= offset * CDELT, with the sign of CDELT (negative for GLON)
+        cdelt1, cdelt2 = np.diag(mustangwcs.celestial.pixel_scale_matrix)
         mustang_planck_image[0].header['SHIFTED'] = (-xoff, -yoff)
-        mustang_planck_image[0].header['CRVAL1'] -= (xoff*pixscale_mustang).to(u.deg).value
-        mustang_planck_image[0].header['CRVAL2'] -= (yoff*pixscale_mustang).to(u.deg).value
+        mustang_planck_image[0].header['CRVAL1'] -= xoff * cdelt1
+        mustang_planck_image[0].header['CRVAL2'] -= yoff * cdelt2
+
+    if feather_beam is not None:
+        sdbeam = Beam.from_fits_header(mustang_planck_image[0].header)
+        newbeam = Beam(feather_beam)
+        mustang_planck_image[0].data = convolve_fft(mustang_planck_image[0].data,
+                                                    newbeam.deconvolve(sdbeam).as_kernel(pixscale_mustang),
+                                                    allow_huge=True)
+        mustang_planck_image[0].header.update(newbeam.to_header_keywords())
+        print(f"Smoothed MUSTANG+Planck from {sdbeam.major.to(u.arcsec):0.1f} to {newbeam.major.to(u.arcsec):0.1f} before feathering")
 
     # Reload ACES to make sure we don't multiply by jtok_aces twice
     ACES = fits.open(input_filename)
@@ -217,6 +238,7 @@ def feather_aces_with_mustang(output_filename=None, use_cached=True, niter=20,
     rslt = feather_simple(
         hires=ACES[0],
         lores=mustang_planck_image[0],
+        lowresscalefactor=lowresscalefactor,
         return_hdu=True
     )
 
