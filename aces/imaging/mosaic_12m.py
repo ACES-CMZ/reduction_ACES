@@ -415,7 +415,7 @@ def reimaged_with_replacement(header=None,
         Passed to ``make_mosaic``.  The plots need ``outbasepath`` to contain
         ``reduction_ACES``.
     feather_with_mustang : bool
-        Feather the result with MUSTANG+Planck using
+        Feather the result with the single-dish map of
         `aces.joint_deconvolution.feather_continuum.feather_aces_with_mustang`.
     mustang_niter : int
         Edge-erosion iterations passed to ``feather_aces_with_mustang``.
@@ -608,12 +608,12 @@ def reimaged_with_blend(replacement_image,
     outbasepath : str
         Base path for the outputs (must contain ``mosaics/continuum/``).
     feather_with_mustang : bool
-        Feather the result with MUSTANG+Planck using
+        Feather the result with the single-dish map of
         `aces.joint_deconvolution.feather_continuum.feather_aces_with_mustang`.
     mustang_niter : int
         Edge-erosion iterations passed to ``feather_aces_with_mustang``.
     mustang_feather_beam : `~astropy.units.Quantity`, optional
-        ``feather_beam`` passed to ``feather_aces_with_mustang`` (smooth MUSTANG+Planck to
+        ``feather_beam`` passed to ``feather_aces_with_mustang`` (smooth the single-dish map to
         this FWHM before the feather).
     mustang_scale : float
         ``lowresscalefactor`` passed to ``feather_aces_with_mustang``.
