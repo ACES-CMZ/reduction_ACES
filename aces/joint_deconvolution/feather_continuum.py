@@ -21,9 +21,10 @@ from image_registration import chi2_shift
 from aces import conf
 basepath = conf.basepath
 
-# MUSTANG-2 (minkasi remap of all CMZ data, calibrated against ACT+Planck) feathered with the
-# ACT+Planck 90 GHz coadd: K at 90 GHz, all angular scales; the beam (10.7" core, 26% of the
-# area, + 30" shoulder 26% + 115" error beam 48%) is deconvolved to the 10.7" core
+# MUSTANG-2 (minkasi remap of all CMZ data with per-TOD pointing corrections against ACES,
+# calibrated against ACT+Planck) feathered with the ACT+Planck 90 GHz coadd: K at 90 GHz, all
+# angular scales; the beam (9.5" core, 31% of the area, + 30" shoulder 27% + 115" error beam 42%)
+# is deconvolved to the 9.5" core
 MUSTANG_ACT_FEATHERED = '/orange/adamginsburg/cmz/MUSTANG/act_feather/mustang_act_feather_3c30_K.fits'
 # the TENS MUSTANG-2 map of Sgr B2 (Jy/beam, no large scales: needs combine_with_planck=True)
 TENS_DIR = '/orange/adamginsburg/ACES/TENS/'
