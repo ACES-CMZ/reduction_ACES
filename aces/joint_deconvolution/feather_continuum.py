@@ -23,8 +23,8 @@ basepath = conf.basepath
 
 # MUSTANG-2 (minkasi remap of all CMZ data with per-TOD pointing corrections against ACES and
 # per-session gains, calibrated against ACT+Planck) feathered with the ACT+Planck 90 GHz coadd: K at
-# 90 GHz, all angular scales; the beam (9.75" core, 32% of the area, + 30" shoulder 29% + 115" error
-# beam 39%) is deconvolved to the 9.75" core
+# 90 GHz, all angular scales; the beam (9.75" core, 31% of the area, + 30" shoulder 28% + 115" error
+# beam 41%) is deconvolved to the 9.75" core
 MUSTANG_ACT_FEATHERED = '/orange/adamginsburg/cmz/MUSTANG/act_feather/mustang_act_feather_3c30_K.fits'
 # the TENS MUSTANG-2 map of Sgr B2 (Jy/beam, no large scales: needs combine_with_planck=True)
 TENS_DIR = '/orange/adamginsburg/ACES/TENS/'
