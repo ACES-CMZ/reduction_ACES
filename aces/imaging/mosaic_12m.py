@@ -415,7 +415,7 @@ def reimaged_with_replacement(header=None,
         Passed to ``make_mosaic``.  The plots need ``outbasepath`` to contain
         ``reduction_ACES``.
     feather_with_mustang : bool
-        Feather the result with MUSTANG+Planck using
+        Feather the result with the single-dish map of
         `aces.joint_deconvolution.feather_continuum.feather_aces_with_mustang`.
     mustang_niter : int
         Edge-erosion iterations passed to ``feather_aces_with_mustang``.
@@ -513,6 +513,210 @@ def reimaged_with_replacement(header=None,
                                   output_filename=outfile.replace('.fits', '_MUSTANGfeathered.fits'),
                                   use_cached=False, niter=mustang_niter,
                                   remake_mustang_planck=False)
+
+    return outfile
+
+
+# midpoint of Sgr B2 N and M
+SGRB2_BLEND_CENTER = '17:47:20.023 -28:22:41.66'
+# Weight of the replacement image vs distance (arcsec) from SGRB2_BLEND_CENTER: inverse-variance
+# weights from the 8" high-pass scatter at the 2.3" beam of the 2013 12m-only taper image (also used
+# for the 12m + forced-7m image, whose residual scatter is the same within 10%; the 12m-only image's
+# residual: 0.21-0.22 mJy/beam within 120", 0.17-0.21 beyond 150") and of its difference from the
+# reimaged mosaic (the ACES error: 5.0 mJy/beam within 30", 0.44 at 90-120", 0.11-0.15 beyond
+# 150").  Within 60" (N and M) the inverse-variance weight is 0.99-1; 1 keeps N and M entirely
+# from the replacement.
+SGRB2_BLEND_PROFILE = ((0, 1.0), (45, 1.0), (75, 0.95), (105, 0.80), (135, 0.53), (165, 0.39),
+                       (200, 0.27), (250, 0.34), (300, 0.34))
+# reference frequency of the tt0 images of the reimaged mosaic (the per-field
+# spw25_27_29_31_33_35.cont.I.iter1.image.tt0 images: 93.689-93.709 GHz)
+ACES_CONTINUUM_REFFREQ = 93.70e9 * u.Hz
+# Flux scale of the 2013.1.00269.S Sgr B2 image relative to ACES: within 45" of N and M the 2013 image
+# is 8-17% above the ACES 7m+12m image at 5-90" resolution, and the 2013 visibilities in the band shared
+# with ACES (100.4-101.4 GHz) are 1.08-1.13 times the ACES visibilities on the N and M pointings.  The
+# ACT-calibrated MUSTANG-2 map is 0.89-0.93 times the 2013 image there (90 vs 93.7 GHz, alpha 3-3.5).
+# Scaling the 2013 image by 0.91 makes the feather bowls around N and M ~40% shallower.
+SGRB2_REPLACEMENT_SCALE = 0.91
+
+
+def reimaged_with_blend(replacement_image,
+                        replacement_pb=None,
+                        blend_center=SGRB2_BLEND_CENTER,
+                        blend_profile=SGRB2_BLEND_PROFILE,
+                        pb_ramp=(0.6, 0.8),
+                        replacement_tt1=None,
+                        replacement_reffreq=None,
+                        target_reffreq=ACES_CONTINUUM_REFFREQ,
+                        replacement_scale=1.0,
+                        plain_mosaic=None,
+                        name='continuum_commonbeam_circular_reimaged_SgrB2_blended',
+                        outbasepath=basepath,
+                        feather_with_mustang=True,
+                        mustang_niter=30,
+                        mustang_feather_beam=None,
+                        mustang_scale=1.0):
+    """
+    Blend an external continuum image into the ``reimaged`` 12m continuum mosaic in the
+    image plane: ``f * replacement + (1 - f) * mosaic``, with the replacement convolved to
+    the mosaic's circular common beam.  ``f`` is a linear ramp in the replacement's primary
+    beam (0 at ``pb_ramp[0]``, 1 at ``pb_ramp[1]``) times ``blend_profile``, a
+    piecewise-linear function of the distance from ``blend_center``.
+
+    The Sgr B2 product uses the 1.5"-taper image of the 2013.1.00269.S 12m data (2017
+    self-calibration) plus its 7m data with gains forced onto the 12m-only clean model
+    (variant taper2017f7mpbx of the Sgr B2 re-imaging tests)::
+
+        J = '/blue/adamginsburg/adamginsburg/sgrb2_aces_joint/'
+        reimaged_with_blend(J + 'taper2017f7mpbx_sc0.image.tt0.pbcor.fits',
+                            replacement_pb=J + 'taper2017f7mpbx_sc0.pb.tt0.fits',
+                            replacement_tt1=J + 'taper2017f7mpbx_sc0.image.tt1.fits',
+                            replacement_reffreq=96.351872226898e9 * u.Hz,
+                            replacement_scale=SGRB2_REPLACEMENT_SCALE)
+
+    Unlike `reimaged_with_replacement`, the ACES data keep part of the weight inside the
+    replacement footprint.  At Sgr B2 the 2013.1.00269.S 12m data are 1.3-1.6 times as noisy
+    as the ACES mosaic away from N and M and better where the ACES deconvolution is limited
+    by N and M (within ~150" of their midpoint), so ``SGRB2_BLEND_PROFILE`` gives the
+    replacement its inverse-variance weight.  The ramp in pb avoids a seam at the edge
+    of the footprint, where the replacement's noise rises as 1/pb.
+
+    With ``replacement_tt1``, the replacement is evaluated at ``target_reffreq`` from its
+    Taylor terms, ``tt0 + tt1 / pb * (target_reffreq - replacement_reffreq) / replacement_reffreq``,
+    so that it matches the frequency of the mosaic's tt0 images.  For the 2013 data (96.35 GHz)
+    at 93.70 GHz this lowers Sgr B2 N by ~9% (alpha ~3.2) and M by ~2% (alpha ~0.8).  Without
+    it, no frequency scaling is applied.
+
+    Parameters
+    ----------
+    replacement_image : str
+        FITS image (Jy/beam, pbcor) with a beam smaller than the mosaic's.
+    replacement_pb : str, optional
+        Its primary beam; defaults to the ``.pb.tt0`` file next to it.
+    blend_center : str or SkyCoord
+        Center of ``blend_profile`` (a string is read as ICRS hourangle/degrees).
+    blend_profile : sequence of (radius_arcsec, weight)
+        Replacement weight vs distance from ``blend_center``, linear between the points and
+        constant beyond the last.
+    pb_ramp : (float, float)
+        Primary-beam values where the replacement weight starts and where it is full.
+    replacement_tt1 : str, optional
+        The replacement's second Taylor-term image (as tclean writes it, not PB-corrected).
+    replacement_reffreq : `~astropy.units.Quantity`, optional
+        Reference frequency of the replacement's Taylor terms; read from the tt0 header
+        (a FREQ axis) if not given; used only with ``replacement_tt1``.  FITS exports made with
+        ``dropdeg=True`` have no FREQ axis and need it (2013 data: 96.351872e9 Hz).
+    target_reffreq : `~astropy.units.Quantity`
+        Frequency at which to evaluate the replacement (used only with ``replacement_tt1``).
+    replacement_scale : float
+        Factor applied to the replacement (after the frequency evaluation) to put it on the
+        mosaic's flux scale; ``SGRB2_REPLACEMENT_SCALE`` for the 2013 Sgr B2 image.
+    plain_mosaic : str, optional
+        The mosaic to blend into; defaults to
+        ``12m_continuum_commonbeam_circular_reimaged_mosaic.fits`` (made by `reimaged`).
+    name : str
+        Output is ``{outbasepath}/mosaics/continuum/12m_{name}_mosaic.fits``; the blend
+        weight ``f`` (on a cutout around the replacement) is ``12m_{name}_blendweight.fits``.
+    outbasepath : str
+        Base path for the outputs (must contain ``mosaics/continuum/``).
+    feather_with_mustang : bool
+        Feather the result with the single-dish map of
+        `aces.joint_deconvolution.feather_continuum.feather_aces_with_mustang`.
+    mustang_niter : int
+        Edge-erosion iterations passed to ``feather_aces_with_mustang``.
+    mustang_feather_beam : `~astropy.units.Quantity`, optional
+        ``feather_beam`` passed to ``feather_aces_with_mustang`` (smooth the single-dish map to
+        this FWHM before the feather).
+    mustang_scale : float
+        ``lowresscalefactor`` passed to ``feather_aces_with_mustang``.
+
+    Returns
+    -------
+    outfile : str
+        The mosaic filename.
+    """
+    from astropy.convolution import convolve_fft
+    from astropy.coordinates import SkyCoord
+    from astropy.nddata import Cutout2D
+    from reproject import reproject_interp
+
+    if plain_mosaic is None:
+        plain_mosaic = f'{basepath}/mosaics/continuum/12m_continuum_commonbeam_circular_reimaged_mosaic.fits'
+    if replacement_pb is None:
+        replacement_pb = replacement_image.replace('.image.tt0.pbcor', '.pb.tt0')
+    if isinstance(blend_center, str):
+        blend_center = SkyCoord(blend_center, unit=(u.hourangle, u.deg), frame='icrs')
+    logprint(f"Blending {replacement_image} into {plain_mosaic} around {blend_center.to_string('hmsdms')}")
+
+    plain = fits.open(plain_mosaic)[0]
+    cb = radio_beam.Beam.from_fits_header(plain.header)
+
+    rhdu = read_as_2d(replacement_image)[0]
+    rwcs = WCS(rhdu.header).celestial
+    rbeam = radio_beam.Beam.from_fits_header(rhdu.header)
+    if rbeam.major >= cb.major:
+        raise ValueError(f"Replacement beam {rbeam} is not smaller than the mosaic beam {cb}")
+    rdata = rhdu.data.astype('float64')
+    pb = read_as_2d(replacement_pb)[0].data
+    if replacement_tt1 is not None:
+        if replacement_reffreq is None:
+            hdr = fits.getheader(replacement_image)
+            freqaxes = [key[-1] for key in hdr if key.startswith('CTYPE') and hdr[key] == 'FREQ']
+            if not freqaxes:
+                raise ValueError(f"{replacement_image} has no frequency axis; pass replacement_reffreq")
+            replacement_reffreq = hdr['CRVAL' + freqaxes[0]] * u.Hz
+        fracdiff = ((target_reffreq - replacement_reffreq) / replacement_reffreq).decompose().value
+        tt1 = read_as_2d(replacement_tt1)[0].data.astype('float64')
+        rdata = rdata + np.where(pb > 0, tt1 / pb, np.nan) * fracdiff
+        logprint(f"Replacement evaluated at {target_reffreq.to(u.GHz):0.3f} (reference {replacement_reffreq.to(u.GHz):0.3f})")
+    if replacement_scale != 1:
+        rdata = rdata * replacement_scale
+        logprint(f"Replacement scaled by {replacement_scale}")
+    good = np.isfinite(rdata)
+    rpix = np.abs(rwcs.proj_plane_pixel_scales()[0]).to(u.arcsec)
+    rconv = convolve_fft(np.where(good, rdata, 0), cb.deconvolve(rbeam).as_kernel(rpix),
+                         allow_huge=True) * (cb.sr / rbeam.sr).decompose().value
+    rconv[~good] = np.nan
+
+    # blend on a cutout of the mosaic that contains the replacement image
+    ny, nx = rdata.shape
+    rcenter = rwcs.pixel_to_world((nx - 1) / 2, (ny - 1) / 2)
+    cutout = Cutout2D(plain.data, rcenter, 1.5 * max(nx, ny) * rpix, wcs=WCS(plain.header).celestial,
+                      mode='partial', fill_value=np.nan)
+    rproj, _ = reproject_interp((rconv, rwcs), cutout.wcs, shape_out=cutout.shape)
+    pbproj, _ = reproject_interp((pb, rwcs), cutout.wcs, shape_out=cutout.shape)
+    yy, xx = np.indices(cutout.shape)
+    radius = cutout.wcs.pixel_to_world(xx, yy).separation(blend_center).to(u.arcsec).value
+    radii, weights = np.array(blend_profile, dtype='float').T
+    frac = (np.clip((np.nan_to_num(pbproj) - pb_ramp[0]) / (pb_ramp[1] - pb_ramp[0]), 0, 1)
+            * np.interp(radius, radii, weights) * np.isfinite(rproj))
+    use = frac > 0
+    blended = cutout.data.copy()
+    blended[use] = frac[use] * rproj[use] + (1 - frac[use]) * cutout.data[use]
+    logprint(f"Blend weight > 0 on {use.sum()} pixels, = 1 on {(frac >= 1).sum()}")
+
+    outdata = plain.data.copy()
+    outdata[cutout.slices_original] = blended[cutout.slices_cutout]
+    outheader = plain.header.copy()
+    outheader['BLENDIMG'] = os.path.basename(replacement_image)
+    outheader['BLENDPB'] = (f'{pb_ramp[0]}-{pb_ramp[1]}', 'replacement pb ramp')
+    if replacement_tt1 is not None:
+        outheader['BLENDFRQ'] = (target_reffreq.to(u.Hz).value, '[Hz] replacement evaluated at')
+    outheader['BLENDSCL'] = (replacement_scale, 'replacement flux scale factor')
+    outfile = f'{outbasepath}/mosaics/continuum/12m_{name}_mosaic.fits'
+    fits.PrimaryHDU(data=outdata, header=outheader).writeto(outfile, overwrite=True)
+    weighthdr = cutout.wcs.to_header()
+    weighthdr['BLENDIMG'] = os.path.basename(replacement_image)
+    fits.PrimaryHDU(data=frac.astype('float32'), header=weighthdr).writeto(
+        outfile.replace('_mosaic.fits', '_blendweight.fits'), overwrite=True)
+
+    if feather_with_mustang:
+        from aces.joint_deconvolution.feather_continuum import feather_aces_with_mustang
+        feather_aces_with_mustang(input_filename=outfile,
+                                  output_filename=outfile.replace('.fits', '_MUSTANGfeathered.fits'),
+                                  use_cached=False, niter=mustang_niter,
+                                  remake_mustang_planck=False,
+                                  feather_beam=mustang_feather_beam,
+                                  lowresscalefactor=mustang_scale)
 
     return outfile
 
