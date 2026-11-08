@@ -531,6 +531,12 @@ SGRB2_BLEND_PROFILE = ((0, 1.0), (45, 1.0), (75, 0.95), (105, 0.80), (135, 0.53)
 # reference frequency of the tt0 images of the reimaged mosaic (the per-field
 # spw25_27_29_31_33_35.cont.I.iter1.image.tt0 images: 93.689-93.709 GHz)
 ACES_CONTINUUM_REFFREQ = 93.70e9 * u.Hz
+# Flux scale of the 2013.1.00269.S Sgr B2 image relative to ACES: within 45" of N and M the 2013 image
+# is 8-17% above the ACES 7m+12m image at 5-90" resolution, and the 2013 visibilities in the band shared
+# with ACES (100.4-101.4 GHz) are 1.08-1.13 times the ACES visibilities on the N and M pointings.  The
+# ACT-calibrated MUSTANG-2 map is 0.89-0.93 times the 2013 image there (90 vs 93.7 GHz, alpha 3-3.5).
+# Scaling the 2013 image by 0.91 makes the feather bowls around N and M ~40% shallower.
+SGRB2_REPLACEMENT_SCALE = 0.91
 
 
 def reimaged_with_blend(replacement_image,
@@ -541,6 +547,7 @@ def reimaged_with_blend(replacement_image,
                         replacement_tt1=None,
                         replacement_reffreq=None,
                         target_reffreq=ACES_CONTINUUM_REFFREQ,
+                        replacement_scale=1.0,
                         plain_mosaic=None,
                         name='continuum_commonbeam_circular_reimaged_SgrB2_blended',
                         outbasepath=basepath,
@@ -563,7 +570,8 @@ def reimaged_with_blend(replacement_image,
         reimaged_with_blend(J + 'taper2017f7mpbx_sc0.image.tt0.pbcor.fits',
                             replacement_pb=J + 'taper2017f7mpbx_sc0.pb.tt0.fits',
                             replacement_tt1=J + 'taper2017f7mpbx_sc0.image.tt1.fits',
-                            replacement_reffreq=96.351872226898e9 * u.Hz)
+                            replacement_reffreq=96.351872226898e9 * u.Hz,
+                            replacement_scale=SGRB2_REPLACEMENT_SCALE)
 
     Unlike `reimaged_with_replacement`, the ACES data keep part of the weight inside the
     replacement footprint.  At Sgr B2 the 2013.1.00269.S 12m data are 1.3-1.6 times as noisy
@@ -599,6 +607,9 @@ def reimaged_with_blend(replacement_image,
         ``dropdeg=True`` have no FREQ axis and need it (2013 data: 96.351872e9 Hz).
     target_reffreq : `~astropy.units.Quantity`
         Frequency at which to evaluate the replacement (used only with ``replacement_tt1``).
+    replacement_scale : float
+        Factor applied to the replacement (after the frequency evaluation) to put it on the
+        mosaic's flux scale; ``SGRB2_REPLACEMENT_SCALE`` for the 2013 Sgr B2 image.
     plain_mosaic : str, optional
         The mosaic to blend into; defaults to
         ``12m_continuum_commonbeam_circular_reimaged_mosaic.fits`` (made by `reimaged`).
@@ -657,6 +668,9 @@ def reimaged_with_blend(replacement_image,
         tt1 = read_as_2d(replacement_tt1)[0].data.astype('float64')
         rdata = rdata + np.where(pb > 0, tt1 / pb, np.nan) * fracdiff
         logprint(f"Replacement evaluated at {target_reffreq.to(u.GHz):0.3f} (reference {replacement_reffreq.to(u.GHz):0.3f})")
+    if replacement_scale != 1:
+        rdata = rdata * replacement_scale
+        logprint(f"Replacement scaled by {replacement_scale}")
     good = np.isfinite(rdata)
     rpix = np.abs(rwcs.proj_plane_pixel_scales()[0]).to(u.arcsec)
     rconv = convolve_fft(np.where(good, rdata, 0), cb.deconvolve(rbeam).as_kernel(rpix),
@@ -687,6 +701,7 @@ def reimaged_with_blend(replacement_image,
     outheader['BLENDPB'] = (f'{pb_ramp[0]}-{pb_ramp[1]}', 'replacement pb ramp')
     if replacement_tt1 is not None:
         outheader['BLENDFRQ'] = (target_reffreq.to(u.Hz).value, '[Hz] replacement evaluated at')
+    outheader['BLENDSCL'] = (replacement_scale, 'replacement flux scale factor')
     outfile = f'{outbasepath}/mosaics/continuum/12m_{name}_mosaic.fits'
     fits.PrimaryHDU(data=outdata, header=outheader).writeto(outfile, overwrite=True)
     weighthdr = cutout.wcs.to_header()
