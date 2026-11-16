@@ -534,8 +534,8 @@ ACES_CONTINUUM_REFFREQ = 93.70e9 * u.Hz
 # Flux scale of the 2013.1.00269.S Sgr B2 image relative to ACES: within 45" of N and M the 2013 image
 # is 8-17% above the ACES 7m+12m image at 5-90" resolution, and the 2013 visibilities in the band shared
 # with ACES (100.4-101.4 GHz) are 1.08-1.13 times the ACES visibilities on the N and M pointings.  The
-# ACT-calibrated MUSTANG-2 map is 0.89-0.93 times the 2013 image there (90 vs 93.7 GHz, alpha 3-3.5).
-# Scaling the 2013 image by 0.91 makes the feather bowls around N and M ~40% shallower.
+# ACT-calibrated MUSTANG-2 map is about 0.92-0.96 times the 2013 image there (90 vs 93.7 GHz, alpha 3-3.5).
+# Scaling the 2013 image by 0.91 makes the 15" feather bowls around N and M 17-23% shallower.
 SGRB2_REPLACEMENT_SCALE = 0.91
 
 
