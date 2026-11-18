@@ -27,10 +27,11 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Python 3.10 with minimal dependencies
+          # spectral-cube (main) requires python>=3.11
+          - name: Python 3.11 with minimal dependencies
             os: ubuntu-latest
-            python: '3.10'
-            toxenv: py310-test
+            python: '3.11'
+            toxenv: py311-test
 
           - name: Python 3.12 with minimal dependencies
             os: ubuntu-latest
